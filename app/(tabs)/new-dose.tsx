@@ -1,185 +1,205 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Camera, Syringe, FlaskRound as Flask, ArrowRight, ChevronRight, Check, Award, ShieldCheck } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useState } from 'react';
+import { Camera, ArrowRight } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 
-const ACHIEVEMENTS = [
-  { id: 1, title: 'First Steps', description: 'Complete your first guided dose preparation', icon: Award },
-  { id: 2, title: 'Precision Master', description: 'Achieve perfect measurement accuracy', icon: Check },
-  { id: 3, title: 'Safety First', description: 'Follow all safety protocols correctly', icon: ShieldCheck },
-];
-
 export default function NewDoseScreen() {
-  const [step, setStep] = useState<'intro' | 'scan' | 'guide' | 'success'>('intro');
-  const [score, setScore] = useState(0);
-  const [achievements, setAchievements] = useState<number[]>([]);
+  const [step, setStep] = useState<'intro' | 'scan' | 'input' | 'result'>('intro');
+  const [inputStep, setInputStep] = useState<'setup' | 'concentration' | 'amount'>('setup');
+  const [detectedItems, setDetectedItems] = useState<string[]>([]);
+  const [syringeType, setSyringeType] = useState<'Standard' | 'Insulin' | null>(null);
+  const [medication, setMedication] = useState<'Insulin' | 'TRT' | 'GLP-1' | 'Other' | null>(null);
+  const [vialConcentration, setVialConcentration] = useState<string>('');
+  const [prescribedAmount, setPrescribedAmount] = useState<string>('');
 
-  const handleSuccess = () => {
-    setScore(prev => prev + 100);
-    if (!achievements.includes(1)) {
-      setAchievements([...achievements, 1]);
+  const handleDetection = (items: string[], syringe: 'Standard' | 'Insulin' | null, med: 'Insulin' | 'TRT' | 'GLP-1' | 'Other' | null) => {
+    setDetectedItems(items);
+    setSyringeType(syringe);
+    setMedication(med);
+    setVialConcentration('');
+    setPrescribedAmount('');
+    setInputStep('setup');
+    setStep('input');
+  };
+
+  const handleNextInput = () => {
+    if (inputStep === 'setup') {
+      if (!syringeType || !medication) return alert('Please select syringe type and medication.');
+      if (medication === 'Insulin') setInputStep('amount'); // Skip concentration for insulin
+      else setInputStep('concentration');
+    } else if (inputStep === 'concentration') {
+      if (!vialConcentration) return alert('Please enter vial concentration.');
+      setInputStep('amount');
+    } else if (inputStep === 'amount') {
+      if (!prescribedAmount) return alert('Please enter prescribed amount.');
+      setStep('result');
     }
-    setStep('success');
   };
 
   const renderIntro = () => (
-    <View style={styles.contentContainer}>
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreLabel}>Safety Score</Text>
-        <Text style={styles.scoreValue}>{score}</Text>
-        {achievements.length > 0 && (
-          <View style={styles.achievementBadge}>
-            <Award size={16} color="#FFD700" />
-            <Text style={styles.achievementCount}>{achievements.length}</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.cardsContainer}>
-        <TouchableOpacity 
-          style={styles.optionCard}
-          onPress={() => setStep('scan')}
-        >
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800' }}
-            style={styles.cardImage}
-          />
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Prepare Medication</Text>
-            <Text style={styles.cardDescription}>Master the art of precise dose preparation</Text>
-            <View style={styles.cardAction}>
-              <Text style={styles.cardActionText}>Start Challenge</Text>
-              <ArrowRight size={20} color="#007AFF" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.optionCard}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800' }}
-            style={styles.cardImage}
-          />
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Advanced Techniques</Text>
-            <Text style={styles.cardDescription}>Unlock new skills and achievements</Text>
-            <View style={styles.cardAction}>
-              <Text style={styles.cardActionText}>Coming Soon</Text>
-              <ChevronRight size={20} color="#8E8E93" />
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {achievements.length > 0 && (
-        <View style={styles.achievementsContainer}>
-          <Text style={styles.achievementsTitle}>Your Achievements</Text>
-          {ACHIEVEMENTS.filter(a => achievements.includes(a.id)).map(achievement => (
-            <View key={achievement.id} style={styles.achievementItem}>
-              <achievement.icon size={24} color="#FFD700" />
-              <View style={styles.achievementContent}>
-                <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                <Text style={styles.achievementDescription}>{achievement.description}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
+    <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
+      <Camera color={'#fff'} size={64} style={styles.icon} />
+      <Text style={styles.text}>
+        Use your camera to scan your syringe and medication vial to get started.
+      </Text>
+      <TouchableOpacity style={styles.button} onPress={() => setStep('scan')}>
+        <Text style={styles.buttonText}>Begin Preparation</Text>
+        <ArrowRight color={'#fff'} size={24} />
+      </TouchableOpacity>
+    </Animated.View>
   );
 
   const renderScan = () => (
     <View style={styles.scanContainer}>
-      <View style={styles.cameraPreview}>
-        <View style={styles.scanOverlay}>
-          <View style={styles.scanArea}>
-            <Camera size={48} color="#FFFFFF" />
-            <Text style={styles.scanText}>Position your medication and syringe in frame</Text>
-          </View>
-        </View>
+      <Text style={styles.scanText}>Simulate Detection</Text>
+      <View style={styles.simulationButtons}>
+        <TouchableOpacity
+          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'Insulin' && styles.selectedButton]}
+          onPress={() => handleDetection(['syringe', 'vial'], 'Insulin', 'Insulin')}
+        >
+          <Text style={styles.buttonText}>Insulin setup</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'TRT' && styles.selectedButton]}
+          onPress={() => handleDetection(['syringe', 'vial'], 'Standard', 'TRT')}
+        >
+          <Text style={styles.buttonText}>TRT setup</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'GLP-1' && styles.selectedButton]}
+          onPress={() => handleDetection(['syringe', 'vial'], 'Standard', 'GLP-1')}
+        >
+          <Text style={styles.buttonText}>GLP-1 setup</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.simulationButton, detectedItems.length === 0 && styles.selectedButton]}
+          onPress={() => handleDetection([], null, null)}
+        >
+          <Text style={styles.buttonText}>Custom setup</Text>
+        </TouchableOpacity>
       </View>
-      
-      <View style={styles.instructions}>
-        <View style={styles.progressBar}>
-          <Animated.View 
-            entering={FadeInRight.duration(1000)}
-            style={[styles.progressFill, { width: '33%' }]} 
+    </View>
+  );
+
+  const renderInput = () => (
+    <View style={styles.content}>
+      {inputStep === 'setup' && (
+        <>
+          <Text style={styles.text}>
+            Detected: {detectedItems.length > 0 ? detectedItems.join(', ') : 'Nothing'}
+          </Text>
+          {!syringeType && (
+            <View style={styles.syringeSelection}>
+              <Text style={styles.text}>Select syringe type:</Text>
+              <View style={styles.syringeButtons}>
+                {['Standard', 'Insulin'].map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.syringeButton, syringeType === type && styles.selectedButton]}
+                    onPress={() => setSyringeType(type as 'Standard' | 'Insulin')}
+                  >
+                    <Text style={styles.buttonText}>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+          {!medication && (
+            <View style={styles.medicationSelection}>
+              <Text style={styles.text}>Select medication:</Text>
+              <View style={styles.medicationButtons}>
+                {['Insulin', 'TRT', 'GLP-1', 'Other'].map((med) => (
+                  <TouchableOpacity
+                    key={med}
+                    style={[styles.medicationButton, medication === med && styles.selectedButton]}
+                    onPress={() => setMedication(med as 'Insulin' | 'TRT' | 'GLP-1' | 'Other')}
+                  >
+                    <Text style={styles.buttonText}>{med}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </>
+      )}
+
+      {inputStep === 'concentration' && (
+        <View style={styles.inputField}>
+          <Text style={styles.text}>Enter vial concentration (e.g., 5 mg/mL):</Text>
+          <TextInput
+            style={styles.input}
+            value={vialConcentration}
+            onChangeText={setVialConcentration}
+            placeholder="e.g., 5 mg/mL"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
           />
         </View>
-        
-        <View style={styles.instructionStep}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>1</Text>
-          </View>
-          <Syringe size={24} color="#007AFF" />
-          <Text style={styles.instructionText}>Place your syringe on a clean surface</Text>
-          <TouchableOpacity 
-            style={styles.checkButton}
-            onPress={() => handleSuccess()}
-          >
-            <Check size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
 
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => setStep('intro')}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
+      {inputStep === 'amount' && (
+        <View style={styles.inputField}>
+          <Text style={styles.text}>
+            Enter prescribed amount (e.g., {medication === 'Insulin' ? '10 units' : '50 mg'}):
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={prescribedAmount}
+            onChangeText={setPrescribedAmount}
+            placeholder={medication === 'Insulin' ? 'e.g., 10 units' : 'e.g., 50 mg'}
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+          />
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.button} onPress={handleNextInput}>
+        <Text style={styles.buttonText}>{inputStep === 'amount' ? 'Calculate' : 'Next'}</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const renderSuccess = () => (
-    <Animated.View 
-      entering={FadeIn.duration(500)}
-      style={styles.successContainer}
-    >
-      <View style={styles.successContent}>
-        <View style={styles.trophyContainer}>
-          <Award size={64} color="#FFD700" />
-        </View>
-        <Text style={styles.congratsTitle}>Excellent Work!</Text>
-        <Text style={styles.congratsText}>You've mastered the basics of dose preparation</Text>
-        
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>100</Text>
-            <Text style={styles.statLabel}>Points Earned</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>1</Text>
-            <Text style={styles.statLabel}>Achievement</Text>
-          </View>
-        </View>
+  const renderResult = () => {
+    const amount = parseFloat(prescribedAmount) || 0;
+    let volume: number;
+    let instruction: string;
 
-        <TouchableOpacity 
-          style={styles.continueButton}
-          onPress={() => setStep('intro')}
-        >
-          <Text style={styles.continueButtonText}>Continue Learning</Text>
-          <ArrowRight size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
-  );
+    if (medication === 'Insulin' && syringeType === 'Insulin') {
+      volume = amount; // Assuming 100 units/mL, units = volume in syringe
+      instruction = `Pull the syringe to the ${volume} unit mark`;
+    } else {
+      const concentration = medication === 'Insulin' ? 100 : parseFloat(vialConcentration) || 1;
+      volume = amount / concentration;
+      instruction = `Pull the syringe to ${volume.toFixed(1)} mL`;
+    }
+
+    return (
+      <Animated.View entering={FadeInRight.duration(400)} style={styles.content}>
+        <Text style={styles.text}>
+          For {medication}, {instruction} for {amount} {medication === 'Insulin' ? 'units' : 'mg'}.
+        </Text>
+        <Text style={styles.note}>Always confirm with your healthcare provider.</Text>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>New Dose</Text>
         <Text style={styles.subtitle}>
-          {step === 'intro' 
-            ? "Master the art of medication preparation"
-            : step === 'success'
-            ? "Achievement Unlocked!"
-            : "Follow the guide to earn points"}
+          {step === 'intro'
+            ? 'Prepare your medication safely and accurately'
+            : step === 'result'
+            ? 'Your Preparation Instructions'
+            : 'Follow the guide for accurate preparation'}
         </Text>
       </View>
 
       {step === 'intro' && renderIntro()}
       {step === 'scan' && renderScan()}
-      {step === 'success' && renderSuccess()}
+      {step === 'input' && renderInput()}
+      {step === 'result' && renderResult()}
     </View>
   );
 }
@@ -187,295 +207,126 @@ export default function NewDoseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#0f172a',
+    padding: 16,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#FFFFFF',
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  subtitle: {
-    fontSize: 17,
-    color: '#6B6B6B',
-    marginTop: 4,
-  },
-  contentContainer: {
-    flex: 1,
-    padding: 16,
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  scoreLabel: {
-    fontSize: 17,
-    color: '#6B6B6B',
-  },
-  scoreValue: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginLeft: 8,
-  },
-  achievementBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9E6',
-    padding: 8,
-    borderRadius: 20,
-    marginLeft: 'auto',
-  },
-  achievementCount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFB100',
-    marginLeft: 4,
-  },
-  cardsContainer: {
-    gap: 16,
-  },
-  optionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  cardContent: {
-    padding: 16,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  cardDescription: {
-    fontSize: 15,
-    color: '#6B6B6B',
-    marginBottom: 16,
-  },
-  cardAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardActionText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#007AFF',
-    marginRight: 4,
-  },
-  achievementsContainer: {
-    marginTop: 24,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  achievementsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 16,
-  },
-  achievementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    backgroundColor: '#FFF9E6',
-    padding: 12,
-    borderRadius: 12,
-  },
-  achievementContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  achievementDescription: {
-    fontSize: 14,
-    color: '#6B6B6B',
-    marginTop: 2,
-  },
-  scanContainer: {
-    flex: 1,
-  },
-  cameraPreview: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-  scanOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanArea: {
-    width: 280,
-    height: 280,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  scanText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  instructions: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 2,
-    marginBottom: 16,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 2,
-  },
-  instructionStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  stepNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  stepNumberText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#000000',
-    marginLeft: 12,
-  },
-  checkButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#34C759',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButton: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
-  },
-  backButtonText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#007AFF',
-    textAlign: 'center',
-  },
-  successContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  successContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  trophyContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#FFF9E6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  congratsTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  congratsText: {
-    fontSize: 17,
-    color: '#6B6B6B',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 24,
+    marginTop: 48,
     marginBottom: 32,
   },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
+  title: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#007AFF',
+    fontWeight: 'bold',
+    color: '#f8fafc',
   },
-  statLabel: {
-    fontSize: 15,
-    color: '#6B6B6B',
-    marginTop: 4,
+  subtitle: {
+    fontSize: 18,
+    color: '#94a3b8',
   },
-  continueButton: {
-    backgroundColor: '#007AFF',
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 24,
+  },
+  icon: {
+    marginBottom: 16,
+  },
+  text: {
+    fontSize: 18,
+    color: '#f8fafc',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  note: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  button: {
+    backgroundColor: '#1e293b',
+    paddingVertical: 12,
     paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 30,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+  buttonText: {
+    color: '#f8fafc',
+    fontSize: 16,
+  },
+  scanContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
+  scanText: {
+    fontSize: 18,
+    color: '#f8fafc',
+  },
+  simulationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  simulationButton: {
+    backgroundColor: '#1e293b',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  selectedButton: {
+    backgroundColor: '#3b82f6',
+  },
+  inputField: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  input: {
+    backgroundColor: '#1e293b',
+    color: '#f8fafc',
+    padding: 12,
+    borderRadius: 8,
+    width: '80%',
+    textAlign: 'center',
+  },
+  syringeSelection: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  syringeButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  syringeButton: {
+    backgroundColor: '#1e293b',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  medicationSelection: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  medicationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  medicationButton: {
+    backgroundColor: '#1e293b',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
 });
