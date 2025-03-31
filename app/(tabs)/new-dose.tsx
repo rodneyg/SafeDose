@@ -1,46 +1,90 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { useState } from 'react';
-import { Camera, ArrowRight } from 'lucide-react-native';
-import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { Camera as CameraIcon, ArrowRight } from 'lucide-react-native';
+import { Camera, CameraDevice } from 'react-native-vision-camera';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import * as FileSystem from 'expo-file-system';
+import OpenAI from 'openai';
+import Constants from 'expo-constants';
 
 export default function NewDoseScreen() {
-  const [step, setStep] = useState<'intro' | 'scan' | 'input' | 'result'>('intro');
-  const [inputStep, setInputStep] = useState<'setup' | 'concentration' | 'amount'>('setup');
-  const [detectedItems, setDetectedItems] = useState<string[]>([]);
-  const [syringeType, setSyringeType] = useState<'Standard' | 'Insulin' | null>(null);
-  const [medication, setMedication] = useState<'Insulin' | 'TRT' | 'GLP-1' | 'Other' | null>(null);
-  const [vialConcentration, setVialConcentration] = useState<string>('');
-  const [prescribedAmount, setPrescribedAmount] = useState<string>('');
+  const [step, setStep] = useState<'intro' | 'scan' | 'result'>('intro');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [detectionResult, setDetectionResult] = useState<
+    | { syringe: { type: string | null; volume: string | null; markings: string | null } | null; vial: { medication: string | null; concentration: string | null; expiration: string | null } | null }
+    | string
+  >('');
+  const cameraRef = useRef<Camera>(null);
+  const [devices, setDevices] = useState<CameraDevice[]>([]);
 
-  const handleDetection = (items: string[], syringe: 'Standard' | 'Insulin' | null, med: 'Insulin' | 'TRT' | 'GLP-1' | 'Other' | null) => {
-    setDetectedItems(items);
-    setSyringeType(syringe);
-    setMedication(med);
-    setVialConcentration('');
-    setPrescribedAmount('');
-    setInputStep('setup');
-    setStep('input');
-  };
+  // OpenAI API setup with environment variable from expo-constants
+  const openai = new OpenAI({
+    apiKey: Constants.expoConfig.extra.OPENAI_API_KEY,
+  });
 
-  const handleNextInput = () => {
-    if (inputStep === 'setup') {
-      if (!syringeType || !medication) return alert('Please select syringe type and medication.');
-      if (medication === 'Insulin') setInputStep('amount'); // Skip concentration for insulin
-      else setInputStep('concentration');
-    } else if (inputStep === 'concentration') {
-      if (!vialConcentration) return alert('Please enter vial concentration.');
-      setInputStep('amount');
-    } else if (inputStep === 'amount') {
-      if (!prescribedAmount) return alert('Please enter prescribed amount.');
-      setStep('result');
+  // Request camera permission and get devices on mount
+  useEffect(() => {
+    (async () => {
+      const permission = await Camera.requestCameraPermission();
+      setHasPermission(permission === 'granted');
+
+      if (permission === 'granted') {
+        const availableDevices = await Camera.getAvailableCameraDevices();
+        setDevices(availableDevices);
+      }
+    })();
+  }, []);
+
+  // Capture image and analyze with OpenAI Vision API
+  const captureImage = async () => {
+    if (cameraRef.current) {
+      setLoading(true);
+      try {
+        const photo = await cameraRef.current.takePhoto();
+        const base64Image = await FileSystem.readAsStringAsync(photo.path, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Analyze this image and provide the following information in JSON format: { "syringe": { "type": "insulin or standard", "volume": "number in ml", "markings": "any text or numbers visible" }, "vial": { "medication": "name", "concentration": "e.g., 100 units/ml", "expiration": "date if visible" } }. If an item is not present, set its value to null. Ensure the response is valid JSON without markdown formatting.',
+                },
+                {
+                  type: 'image_url',
+                  image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+                },
+              ],
+            },
+          ],
+        });
+
+        const content = response.choices[0].message.content || '{}';
+        const jsonContent = content.replace(/```json\n|\n```/g, '').trim();
+        const result = JSON.parse(jsonContent);
+        setDetectionResult(result);
+        setStep('result');
+      } catch (error) {
+        console.error('Error capturing or analyzing image:', error);
+        setDetectionResult('error');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
+  // Render intro screen
   const renderIntro = () => (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
-      <Camera color={'#fff'} size={64} style={styles.icon} />
+      <CameraIcon color={'#fff'} size={64} style={styles.icon} />
       <Text style={styles.text}>
-        Use your camera to scan your syringe and medication vial to get started.
+        Use your camera to scan your syringe and medication vial.
       </Text>
       <TouchableOpacity style={styles.button} onPress={() => setStep('scan')}>
         <Text style={styles.buttonText}>Begin Preparation</Text>
@@ -49,137 +93,99 @@ export default function NewDoseScreen() {
     </Animated.View>
   );
 
-  const renderScan = () => (
-    <View style={styles.scanContainer}>
-      <Text style={styles.scanText}>Simulate Detection</Text>
-      <View style={styles.simulationButtons}>
-        <TouchableOpacity
-          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'Insulin' && styles.selectedButton]}
-          onPress={() => handleDetection(['syringe', 'vial'], 'Insulin', 'Insulin')}
-        >
-          <Text style={styles.buttonText}>Insulin setup</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'TRT' && styles.selectedButton]}
-          onPress={() => handleDetection(['syringe', 'vial'], 'Standard', 'TRT')}
-        >
-          <Text style={styles.buttonText}>TRT setup</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.simulationButton, detectedItems.join(',') === 'syringe,vial' && medication === 'GLP-1' && styles.selectedButton]}
-          onPress={() => handleDetection(['syringe', 'vial'], 'Standard', 'GLP-1')}
-        >
-          <Text style={styles.buttonText}>GLP-1 setup</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.simulationButton, detectedItems.length === 0 && styles.selectedButton]}
-          onPress={() => handleDetection([], null, null)}
-        >
-          <Text style={styles.buttonText}>Custom setup</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderInput = () => (
-    <View style={styles.content}>
-      {inputStep === 'setup' && (
-        <>
-          <Text style={styles.text}>
-            Detected: {detectedItems.length > 0 ? detectedItems.join(', ') : 'Nothing'}
-          </Text>
-          {!syringeType && (
-            <View style={styles.syringeSelection}>
-              <Text style={styles.text}>Select syringe type:</Text>
-              <View style={styles.syringeButtons}>
-                {['Standard', 'Insulin'].map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.syringeButton, syringeType === type && styles.selectedButton]}
-                    onPress={() => setSyringeType(type as 'Standard' | 'Insulin')}
-                  >
-                    <Text style={styles.buttonText}>{type}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-          {!medication && (
-            <View style={styles.medicationSelection}>
-              <Text style={styles.text}>Select medication:</Text>
-              <View style={styles.medicationButtons}>
-                {['Insulin', 'TRT', 'GLP-1', 'Other'].map((med) => (
-                  <TouchableOpacity
-                    key={med}
-                    style={[styles.medicationButton, medication === med && styles.selectedButton]}
-                    onPress={() => setMedication(med as 'Insulin' | 'TRT' | 'GLP-1' | 'Other')}
-                  >
-                    <Text style={styles.buttonText}>{med}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-        </>
-      )}
-
-      {inputStep === 'concentration' && (
-        <View style={styles.inputField}>
-          <Text style={styles.text}>Enter vial concentration (e.g., 5 mg/mL):</Text>
-          <TextInput
-            style={styles.input}
-            value={vialConcentration}
-            onChangeText={setVialConcentration}
-            placeholder="e.g., 5 mg/mL"
-            placeholderTextColor="#94a3b8"
-            keyboardType="numeric"
-          />
+  // Render scan screen
+  const renderScan = () => {
+    if (hasPermission === null) {
+      return (
+        <View style={styles.scanContainer}>
+          <Text style={styles.text}>Requesting camera permission...</Text>
         </View>
-      )}
-
-      {inputStep === 'amount' && (
-        <View style={styles.inputField}>
-          <Text style={styles.text}>
-            Enter prescribed amount (e.g., {medication === 'Insulin' ? '10 units' : '50 mg'}):
-          </Text>
-          <TextInput
-            style={styles.input}
-            value={prescribedAmount}
-            onChangeText={setPrescribedAmount}
-            placeholder={medication === 'Insulin' ? 'e.g., 10 units' : 'e.g., 50 mg'}
-            placeholderTextColor="#94a3b8"
-            keyboardType="numeric"
-          />
+      );
+    }
+    if (hasPermission === false) {
+      return (
+        <View style={styles.scanContainer}>
+          <Text style={styles.text}>Camera permission denied.</Text>
         </View>
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={handleNextInput}>
-        <Text style={styles.buttonText}>{inputStep === 'amount' ? 'Calculate' : 'Next'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderResult = () => {
-    const amount = parseFloat(prescribedAmount) || 0;
-    let volume: number;
-    let instruction: string;
-
-    if (medication === 'Insulin' && syringeType === 'Insulin') {
-      volume = amount; // Assuming 100 units/mL, units = volume in syringe
-      instruction = `Pull the syringe to the ${volume} unit mark`;
-    } else {
-      const concentration = medication === 'Insulin' ? 100 : parseFloat(vialConcentration) || 1;
-      volume = amount / concentration;
-      instruction = `Pull the syringe to ${volume.toFixed(1)} mL`;
+      );
+    }
+    if (devices.length === 0) {
+      return (
+        <View style={styles.scanContainer}>
+          <Text style={styles.text}>No camera devices available.</Text>
+        </View>
+      );
     }
 
+    const device = devices.find(d => d.position === 'back') || devices[0];
+
     return (
-      <Animated.View entering={FadeInRight.duration(400)} style={styles.content}>
-        <Text style={styles.text}>
-          For {medication}, {instruction} for {amount} {medication === 'Insulin' ? 'units' : 'mg'}.
-        </Text>
-        <Text style={styles.note}>Always confirm with your healthcare provider.</Text>
-      </Animated.View>
+      <View style={styles.scanContainer}>
+        <Camera
+          ref={cameraRef}
+          style={styles.camera}
+          device={device}
+          isActive={true}
+          photo={true}
+        />
+        <View style={styles.overlay}>
+          <Text style={styles.scanText}>Point at your syringe and vial</Text>
+          <TouchableOpacity style={styles.captureButton} onPress={captureImage}>
+            <Text style={styles.buttonText}>Capture</Text>
+          </TouchableOpacity>
+        </View>
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Analyzing...</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // Render result screen
+  const renderResult = () => {
+    if (detectionResult === 'error') {
+      return (
+        <View style={styles.content}>
+          <Text style={styles.text}>Error analyzing image. Please try again.</Text>
+          <TouchableOpacity style={styles.button} onPress={() => setStep('scan')}>
+            <Text style={styles.buttonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    const result = detectionResult as { syringe: any; vial: any };
+    const syringeDetected = result.syringe !== null;
+    const vialDetected = result.vial !== null;
+
+    return (
+      <View style={styles.content}>
+        {syringeDetected && (
+          <View style={styles.resultSection}>
+            <Text style={styles.resultTitle}>Syringe:</Text>
+            <Text style={styles.resultText}>Type: {result.syringe.type || 'Unknown'}</Text>
+            <Text style={styles.resultText}>Volume: {result.syringe.volume || 'Unknown'}</Text>
+            <Text style={styles.resultText}>Markings: {result.syringe.markings || 'None'}</Text>
+          </View>
+        )}
+        {vialDetected && (
+          <View style={styles.resultSection}>
+            <Text style={styles.resultTitle}>Vial:</Text>
+            <Text style={styles.resultText}>Medication: {result.vial.medication || 'Unknown'}</Text>
+            <Text style={styles.resultText}>Concentration: {result.vial.concentration || 'Unknown'}</Text>
+            <Text style={styles.resultText}>Expiration: {result.vial.expiration || 'Unknown'}</Text>
+          </View>
+        )}
+        {!syringeDetected && !vialDetected && (
+          <Text style={styles.text}>No syringe or vial found.</Text>
+        )}
+        <TouchableOpacity style={styles.button} onPress={() => setStep('scan')}>
+          <Text style={styles.buttonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -189,16 +195,14 @@ export default function NewDoseScreen() {
         <Text style={styles.title}>New Dose</Text>
         <Text style={styles.subtitle}>
           {step === 'intro'
-            ? 'Prepare your medication safely and accurately'
-            : step === 'result'
-            ? 'Your Preparation Instructions'
-            : 'Follow the guide for accurate preparation'}
+            ? 'Prepare your medication safely'
+            : step === 'scan'
+            ? 'Scan your items'
+            : 'Detection Result'}
         </Text>
       </View>
-
       {step === 'intro' && renderIntro()}
       {step === 'scan' && renderScan()}
-      {step === 'input' && renderInput()}
       {step === 'result' && renderResult()}
     </View>
   );
@@ -238,12 +242,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
   },
-  note: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 8,
-  },
   button: {
     backgroundColor: '#1e293b',
     paddingVertical: 12,
@@ -259,74 +257,64 @@ const styles = StyleSheet.create({
   },
   scanContainer: {
     flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  camera: {
+    width: '100%',
+    height: '80%',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
   },
   scanText: {
     fontSize: 18,
-    color: '#f8fafc',
+    color: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 8,
+    borderRadius: 4,
+    marginBottom: 20,
   },
-  simulationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  simulationButton: {
+  captureButton: {
     backgroundColor: '#1e293b',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     borderRadius: 8,
   },
-  selectedButton: {
-    backgroundColor: '#3b82f6',
-  },
-  inputField: {
-    width: '100%',
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
-  input: {
-    backgroundColor: '#1e293b',
-    color: '#f8fafc',
-    padding: 12,
-    borderRadius: 8,
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
+  },
+  resultSection: {
+    alignItems: 'flex-start',
     width: '80%',
-    textAlign: 'center',
   },
-  syringeSelection: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 8,
+  resultTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    marginBottom: 8,
   },
-  syringeButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  syringeButton: {
-    backgroundColor: '#1e293b',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  medicationSelection: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 8,
-  },
-  medicationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    flexWrap: 'wrap',
-  },
-  medicationButton: {
-    backgroundColor: '#1e293b',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  resultText: {
+    fontSize: 16,
+    color: '#f8fafc',
+    marginBottom: 4,
   },
 });
