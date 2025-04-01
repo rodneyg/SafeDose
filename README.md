@@ -26,7 +26,7 @@ It will include:
 - Instant dose visualization
 - Preloaded medications and syringe presets
 
-Stay tuned at [https://safedose.app](https://safedose.app)
+Stay tuned at [TBD)
 
 ---
 
