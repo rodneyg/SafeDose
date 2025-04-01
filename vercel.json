@@ -9,11 +9,15 @@
         "src": "package.json",
         "use": "@vercel/static-build",
         "config": {
-          "distDir": "dist/web"
+          "distDir": "dist"
         }
       }
     ],
     "routes": [
+      {
+        "src": "/_expo/(.*)",
+        "dest": "/dist/_expo/$1"
+      },
       {
         "src": "/(.*)",
         "dest": "/index.html"
