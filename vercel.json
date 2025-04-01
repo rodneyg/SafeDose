@@ -4,13 +4,19 @@
         "NODE_ENV": "production"
       }
     },
+    "builds": [
+      {
+        "src": "package.json",
+        "use": "@vercel/static-build",
+        "config": {
+          "distDir": "web-build"
+        }
+      }
+    ],
     "routes": [
       {
-        "handle": "filesystem"
-      },
-      {
-        "src": "/.*",
-        "dest": "index.html"
+        "src": "/(.*)",
+        "dest": "/index.html"
       }
     ]
   }

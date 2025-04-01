@@ -1,8 +1,9 @@
 require('dotenv').config(); // Load .env file
 
 module.exports = {
-  name: 'bolt-expo-nativewind',
-  slug: 'bolt-expo-nativewind',
+  name: 'SafeDose',
+  slug: 'SafeDose',
+  platforms: ['ios', 'android', 'web'], // Include 'web'
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',

@@ -5,7 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
+    "start": "expo start",
+    "web": "expo start --web",
     "build:web": "expo export --platform web",
+    "build": "expo build:web",
     "lint": "expo lint",
     "android": "expo run:android",
     "ios": "expo run:ios"
