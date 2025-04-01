@@ -674,7 +674,7 @@ export default function NewDoseScreen() {
             {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
           </Text>
           <Text style={styles.instructionText}>
-            For a {doseValue} {unit} dose of {substanceName || 'this economies'}:
+            For a {doseValue} {unit} dose{substanceName ? ` of ${substanceName}` : ''}:
           </Text>
           <Text style={styles.instructionTextLarge}>
             Draw up to the {recommendedMarking} mark
