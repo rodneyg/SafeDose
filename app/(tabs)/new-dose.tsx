@@ -54,7 +54,7 @@ type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'tot
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
 export default function NewDoseScreen() {
-  // State Management
+  // **State Management**
   const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('scan');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanLoading, setScanLoading] = useState(false);
@@ -77,8 +77,12 @@ export default function NewDoseScreen() {
   const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  // New states for soft guidance hints
+  const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
+  const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
+  const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
 
-  // Constants
+  // **Constants**
   const syringeOptions = {
     Insulin: {
       '0.3 ml': '5,10,15,20,25,30',
@@ -94,12 +98,12 @@ export default function NewDoseScreen() {
   const insulinVolumes = ['0.3 ml', '0.5 ml', '1 ml'];
   const standardVolumes = ['1 ml', '3 ml', '5 ml'];
 
-  // OpenAI Client
+  // **OpenAI Client**
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
   });
 
-  // Effects
+  // **Effects**
   useEffect(() => {
     (async () => {
       const permission = await Camera.requestCameraPermission();
@@ -128,7 +132,7 @@ export default function NewDoseScreen() {
     }
   }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe]);
 
-  // Helper Functions
+  // **Helper Functions**
   const resetFullForm = (startStep: ManualEntryStep = 'dose') => {
     setDose('');
     setUnit('mg');
@@ -145,10 +149,13 @@ export default function NewDoseScreen() {
     setCalculationError(null);
     setFormError(null);
     setScanError(null);
+    setSubstanceNameHint(null);
+    setConcentrationHint(null);
+    setTotalAmountHint(null);
     setManualStep(startStep);
   };
 
-  // Scan Function
+  // **Scan Function with Soft Guidance**
   const captureImage = async () => {
     if (!cameraRef.current) { Alert.alert("Camera Error", "Camera not ready."); return; }
     if (!openai.apiKey) { Alert.alert("Config Error", "OpenAI Key missing."); return; }
@@ -206,7 +213,10 @@ export default function NewDoseScreen() {
       setManualSyringe({ type: scannedType, volume: selectedVolume });
 
       const substance = (result.vial?.substance && result.vial.substance !== 'unreadable') ? result.vial.substance : '';
-      setSubstanceName(substance);
+      if (substance) {
+        setSubstanceName(substance);
+        setSubstanceNameHint("Detected from vial"); // Set hint for substance name
+      }
 
       const concentrationStr = (result.vial?.concentration && result.vial.concentration !== 'unreadable') ? result.vial.concentration : null;
       const totalAmountStr = (result.vial?.totalAmount && result.vial.totalAmount !== 'unreadable') ? result.vial.totalAmount : null;
@@ -214,9 +224,11 @@ export default function NewDoseScreen() {
       if (concentrationStr) {
         setConcentrationAmount(concentrationStr);
         setMedicationInputType('concentration');
+        setConcentrationHint("Detected from vial"); // Set hint for concentration
       } else if (totalAmountStr) {
         setTotalAmount(totalAmountStr);
         setMedicationInputType('totalAmount');
+        setTotalAmountHint("Detected from vial"); // Set hint for total amount
       }
 
       setScreenStep('manualEntry');
@@ -235,7 +247,7 @@ export default function NewDoseScreen() {
     }
   };
 
-  // Core Calculation Logic
+  // **Core Calculation Logic**
   const calculateDoseVolumeAndMarking = () => {
     setCalculatedVolume(null);
     setRecommendedMarking(null);
@@ -304,7 +316,7 @@ export default function NewDoseScreen() {
     }
   };
 
-  // Navigation Handlers
+  // **Navigation Handlers**
   const handleNextDose = () => {
     setFormError(null);
     const parsedDose = parseFloat(dose);
@@ -424,7 +436,7 @@ export default function NewDoseScreen() {
     setScreenStep('intro');
   };
 
-  // Render Functions
+  // **Render Functions**
   const renderIntro = () => (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
       <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
@@ -490,7 +502,7 @@ export default function NewDoseScreen() {
     );
   };
 
-  // Manual Entry Render Functions
+  // **Manual Entry Render Functions with Soft Guidance**
   const renderDoseInputStep = () => (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Step 1: Prescribed Dose</Text>
@@ -523,8 +535,12 @@ export default function NewDoseScreen() {
         placeholder="Substance Name (Optional)"
         placeholderTextColor="#9ca3af"
         value={substanceName}
-        onChangeText={setSubstanceName}
+        onChangeText={(text) => {
+          setSubstanceName(text);
+          setSubstanceNameHint(null); // Clear hint on user edit
+        }}
       />
+      {substanceNameHint && <Text style={styles.helperHint}>{substanceNameHint}</Text>}
       <Text style={styles.labelText}>Select how the medication amount is specified on the vial label:</Text>
       <View style={styles.radioContainerVertical}>
         <TouchableOpacity style={[styles.radioButtonFlexWide, medicationInputType === 'concentration' && styles.radioButtonSelected]} onPress={() => setMedicationInputType('concentration')}>
@@ -544,11 +560,15 @@ export default function NewDoseScreen() {
       <TextInput
         style={styles.inputLarge}
         value={concentrationAmount}
-        onChangeText={setConcentrationAmount}
+        onChangeText={(text) => {
+          setConcentrationAmount(text);
+          setConcentrationHint(null); // Clear hint on user edit
+        }}
         keyboardType="numeric"
         placeholder="e.g., 10"
         placeholderTextColor="#9ca3af"
       />
+      {concentrationHint && <Text style={styles.helperHint}>{concentrationHint}</Text>}
       <Text style={styles.labelText}>Unit:</Text>
       <View style={styles.radioContainerHorizontal}>
         <TouchableOpacity style={[styles.radioButtonFlex, concentrationUnit === 'mg/ml' && styles.radioButtonSelected]} onPress={() => setConcentrationUnit('mg/ml')}>
@@ -569,11 +589,15 @@ export default function NewDoseScreen() {
       <TextInput
         style={styles.inputLarge}
         value={totalAmount}
-        onChangeText={setTotalAmount}
+        onChangeText={(text) => {
+          setTotalAmount(text);
+          setTotalAmountHint(null); // Clear hint on user edit
+        }}
         keyboardType="numeric"
         placeholder="e.g., 50"
         placeholderTextColor="#9ca3af"
       />
+      {totalAmountHint && <Text style={styles.helperHint}>{totalAmountHint}</Text>}
       <Text style={styles.inputHelperText}>Enter the total amount of substance in the vial as a number. Unit is '{unit}'.</Text>
     </View>
   );
@@ -650,7 +674,7 @@ export default function NewDoseScreen() {
             {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
           </Text>
           <Text style={styles.instructionText}>
-            For a {doseValue} {unit} dose of {substanceName || 'this substance'}:
+            For a {doseValue} {unit} dose of {substanceName || 'this economies'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
             Draw up to the {recommendedMarking} mark
@@ -690,7 +714,7 @@ export default function NewDoseScreen() {
     </View>
   );
 
-  // Main Manual Entry Renderer
+  // **Main Manual Entry Renderer**
   const renderManualEntry = () => {
     let currentStepComponent;
     let progress = 0;
@@ -763,7 +787,7 @@ export default function NewDoseScreen() {
     );
   };
 
-  // Main Return
+  // **Main Return**
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -791,7 +815,7 @@ export default function NewDoseScreen() {
   );
 }
 
-// Styles
+// **Styles**
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
@@ -857,4 +881,5 @@ const styles = StyleSheet.create({
   progressBar: { height: 4, borderRadius: 2, marginBottom: 10 },
   finalButtonsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, width: '90%', alignSelf: 'center' },
   manualEntryContainer: { flex: 1 },
+  helperHint: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, marginBottom: 8, fontStyle: 'italic', width: '90%', alignSelf: 'center' },
 });

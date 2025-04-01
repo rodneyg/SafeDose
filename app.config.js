@@ -30,6 +30,7 @@ module.exports = {
   },
   plugins: ['expo-router', 'expo-dev-client'],
   experiments: {
+    staticRendering: true,  // Enable static rendering for all routes
     typedRoutes: true,
   },
   extra: {
