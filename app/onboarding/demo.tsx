@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, Platform } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
@@ -16,7 +16,11 @@ export default function Demo() {
     if (step < 2) {
       setStep(step + 1);
     } else {
-      router.push('/(tabs)/new-dose');
+      const targetPath = Platform.OS === "web" ? '/new-dose' : '/(tabs)/new-dose';
+      router.push(targetPath);
+      if (Platform.OS === "web") {
+        window.location.href = targetPath;
+      }
     }
   }, [step, router]);
 
@@ -42,7 +46,11 @@ export default function Demo() {
                 accessibilityLabel="Camera scanning medication"
               />
               <View style={styles.imageOverlay}>
-                <Camera size={48} color="#FFFFFF" />
+                {Platform.OS === "web" ? (
+                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>📷</Text> // Fallback for web
+                ) : (
+                  <Camera size={48} color="#FFFFFF" />
+                )}
               </View>
             </View>
             <Text style={styles.stepTitle}>Smart Recognition</Text>
@@ -78,7 +86,11 @@ export default function Demo() {
           >
             <View style={styles.successContainer}>
               <View style={styles.successCircle}>
-                <Check size={48} color="#FFFFFF" />
+                {Platform.OS === "web" ? (
+                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>✔</Text> // Fallback for web
+                ) : (
+                  <Check size={48} color="#FFFFFF" />
+                )}
               </View>
               <Text style={styles.stepTitle}>Ready to Start</Text>
               <Text style={styles.stepDescription}>
@@ -123,9 +135,17 @@ export default function Demo() {
             {step === 2 ? "Let's Start" : "Next"}
           </Text>
           {step === 2 ? (
-            <Check size={20} color="#FFFFFF" />
+            Platform.OS === "web" ? (
+              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>✔</Text>
+            ) : (
+              <Check size={20} color="#FFFFFF" />
+            )
           ) : (
-            <ArrowRight size={20} color="#FFFFFF" />
+            Platform.OS === "web" ? (
+              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>→</Text>
+            ) : (
+              <ArrowRight size={20} color="#FFFFFF" />
+            )
           )}
         </TouchableOpacity>
       </Animated.View>

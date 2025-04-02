@@ -7,6 +7,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { Camera as CameraIcon, ArrowRight, Syringe, Pill, RotateCcw, Home, Check, X, Plus } from 'lucide-react-native';
@@ -54,6 +55,15 @@ type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'tot
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
 export default function NewDoseScreen() {
+  if (Platform.OS === "web") {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>New Dose Screen (Web Version)</Text>
+        <Text>Camera scanning is not supported on web yet.</Text>
+      </View>
+    );
+  }
+
   // **State Management**
   const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('scan');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);

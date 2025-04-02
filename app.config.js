@@ -1,9 +1,9 @@
-require('dotenv').config(); // Load .env file
+require('dotenv').config();
 
 module.exports = {
   name: 'SafeDose',
   slug: 'SafeDose',
-  platforms: ['ios', 'android', 'web'], // Include 'web'
+  platforms: ['ios', 'android', 'web'],
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
@@ -24,16 +24,17 @@ module.exports = {
   },
   web: {
     bundler: 'metro',
-    output: 'single',
+    output: 'static',
     favicon: './assets/images/favicon.png',
-    publicPath: "/_expo"  // Match the path in index.html
+    publicPath: "/_expo"
   },
-  plugins: ['expo-router', 'expo-dev-client'],
+  plugins: ['expo-router'],
   experiments: {
-    staticRendering: true,  // Enable static rendering for all routes
+    staticRendering: true,
     typedRoutes: true,
+    sitemap: true // Explicitly enable sitemap generation
   },
   extra: {
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY, // Pull from .env
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
 };
