@@ -1,34 +1,40 @@
-// app/index.tsx (Workaround Idea)
-import React, { useEffect, useState } from 'react';
+// app/index.tsx
+import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
-export default function AppEntry() {
+export default function InitialScreen() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      // Replace with your actual logic
-      // const onboardingComplete = await AsyncStorage.getItem('onboardingComplete');
-      const onboardingComplete = false; // Assume not complete for testing
-
-      if (onboardingComplete) {
-        router.replace('/(tabs)'); // Go to tabs if complete
-      } else {
-        router.replace('/onboarding'); // Go to onboarding if not complete
+    async function checkOnboarding() {
+      try {
+        const value = await AsyncStorage.getItem('onboardingComplete');
+        if (value === 'true') {
+          router.replace('/new-dose');
+        } else {
+          router.replace('/onboarding');
+        }
+      } catch (e) {
+        console.warn('Error checking onboarding status:', e);
+        router.replace('/onboarding'); // Default to onboarding on error
       }
-      // setIsLoading(false); // Not strictly needed if replacing
-    };
-
-    checkOnboardingStatus();
+    }
+    checkOnboarding();
   }, [router]);
 
-  // Optionally show a loading indicator
-  if (isLoading) {
-    return <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}><ActivityIndicator /></View>;
-  }
-
-  return null; // Or loading indicator
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

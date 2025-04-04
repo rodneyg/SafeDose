@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { Camera, History, MessageCircle, Book, ArrowRight, Check } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const features = [
   {
@@ -33,7 +34,7 @@ export default function Features() {
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (currentIndex < features.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
@@ -41,7 +42,12 @@ export default function Features() {
       });
       setCurrentIndex(currentIndex + 1);
     } else {
-      router.push('/(tabs)');
+      try {
+        // Navigate to the main tabs screen, replacing the current stack
+        router.replace('/(tabs)');
+      } catch (e) {
+        console.warn('Error saving onboarding status:', e);
+      }
     }
   }, [currentIndex, router]);
 

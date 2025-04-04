@@ -1,8 +1,10 @@
-import { useState, useCallback, Platform } from 'react';
+import { useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -12,14 +14,19 @@ export default function Demo() {
   const router = useRouter();
   const { width } = useWindowDimensions();
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (step < 2) {
       setStep(step + 1);
     } else {
-      const targetPath = Platform.OS === "web" ? '/new-dose' : '/(tabs)/new-dose';
-      router.push(targetPath);
-      if (Platform.OS === "web") {
-        window.location.href = targetPath;
+      try {
+        // Persist onboarding completion status
+        await AsyncStorage.setItem('onboardingComplete', 'true');
+        // Navigate to the main tabs screen, replacing the stack
+        router.replace('/new-dose'); // Consistent path for all platforms
+      } catch (e) {
+        console.warn('Error completing onboarding:', e);
+        // Fallback navigation in case of error
+        router.replace('/new-dose');
       }
     }
   }, [step, router]);
@@ -47,7 +54,7 @@ export default function Demo() {
               />
               <View style={styles.imageOverlay}>
                 {Platform.OS === "web" ? (
-                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>📷</Text> // Fallback for web
+                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>📷</Text>
                 ) : (
                   <Camera size={48} color="#FFFFFF" />
                 )}
@@ -87,7 +94,7 @@ export default function Demo() {
             <View style={styles.successContainer}>
               <View style={styles.successCircle}>
                 {Platform.OS === "web" ? (
-                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>✔</Text> // Fallback for web
+                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>✔</Text>
                 ) : (
                   <Check size={48} color="#FFFFFF" />
                 )}
@@ -99,6 +106,8 @@ export default function Demo() {
             </View>
           </Animated.View>
         );
+      default:
+        return null;
     }
   };
 
@@ -130,7 +139,8 @@ export default function Demo() {
           onPress={handleNext}
           accessibilityRole="button"
           accessibilityLabel={step === 2 ? "Start using SafeDose" : "Next step"}
-          accessibilityHint={step === 2 ? "Begins using the SafeDose app" : "Shows the next demonstration step"}>
+          accessibilityHint={step === 2 ? "Begins using the SafeDose app" : "Shows the next demonstration step"}
+        >
           <Text style={styles.buttonText}>
             {step === 2 ? "Let's Start" : "Next"}
           </Text>

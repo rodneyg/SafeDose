@@ -1,18 +1,11 @@
+// app/_layout.tsx
+import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 export default function RootLayout() {
-  useFrameworkReady();
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
-  return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </>
-  );
+  return <Slot />;
 }
