@@ -107,6 +107,7 @@ export default function NewDoseScreen() {
   };
   const insulinVolumes = ['0.3 ml', '0.5 ml', '1 ml'];
   const standardVolumes = ['1 ml', '3 ml', '5 ml'];
+  const isMobileWeb = Platform.OS === 'web' && /Android|iPhone|iPad/i.test(navigator.userAgent);
 
   // OpenAI Client
   const openai = new OpenAI({
@@ -155,263 +156,279 @@ export default function NewDoseScreen() {
     setManualStep(startStep);
   };
 
-   // Updated Scan Function
-   const captureImage = async () => {
-    if (!cameraRef.current) {
-      Alert.alert("Camera Error", "Camera not ready.");
-      return;
-    }
-    if (!openai.apiKey) {
-      Alert.alert("Config Error", "OpenAI Key missing.");
-      return;
-    }
-
+  const processImage = async (base64Image: string, mimeType: string) => {
+    console.log("Processing image with OpenAI...");
+    Alert.alert("Processing", "Image captured, starting analysis...");
     setScanLoading(true);
     setScanError(null);
-    resetFullForm(); // Reset form state when starting a new scan
+    resetFullForm();
 
     try {
-      // Capture image with base64, try higher quality if needed, but 0.5 is usually good balance
-      console.log("Taking picture...");
-      const photo = await cameraRef.current.takePictureAsync({
-        base64: true,
-        quality: 0.5, // Adjust quality if needed, lower quality = smaller size
-        // skipProcessing: true // Might help on some platforms if base64 is corrupted
-      });
-
-      let base64Image = photo.base64;
-
-      // Fallback if base64 isn't directly available but URI is
-      if (!base64Image && photo.uri) {
-        console.log("Base64 missing, reading from URI:", photo.uri);
-        try {
-            base64Image = await FileSystem.readAsStringAsync(photo.uri, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-            console.log("Successfully read base64 from file system.");
-        } catch (readError) {
-            console.error("Error reading file system URI:", readError);
-            throw new Error("Failed to process captured image from URI.");
-        }
-      }
-
-      if (!base64Image) {
-        throw new Error("Failed to capture image data (no base64 or readable URI).");
-      }
-
-      console.log("Raw base64 captured (first 100 chars):", base64Image.substring(0, 100));
-      console.log("Raw base64 length:", base64Image.length);
-
-      // --- Robust Base64 Handling ---
-
-      // 1. Check for and strip potential data URI prefix (some libraries might add it)
-      let mimeType = ''; // We will determine this
-      if (base64Image.startsWith('data:image/')) {
-        const prefixMatch = base64Image.match(/^data:image\/([a-z]+);base64,/);
-        if (prefixMatch) {
-          mimeType = `image/${prefixMatch[1]}`;
-          base64Image = base64Image.substring(prefixMatch[0].length);
-          console.log(`Stripped data URI prefix. Detected MIME type from prefix: ${mimeType}`);
-          console.log("Base64 after stripping (first 100 chars):", base64Image.substring(0, 100));
-        } else {
-          // It starts with data: but doesn't match the expected format, this is odd.
-          console.warn("Base64 starts with 'data:image/' but format is unexpected. Proceeding with caution.");
-          // Attempt to remove a generic prefix part if possible, or maybe error out
-          const commaIndex = base64Image.indexOf(',');
-          if(commaIndex !== -1) {
-            base64Image = base64Image.substring(commaIndex + 1);
-          }
-        }
-      }
-
-      // 2. Determine MIME type based on base64 magic numbers (if not already found)
-      if (!mimeType) {
-          if (base64Image.startsWith('/9j/')) {
-            mimeType = 'image/jpeg';
-            console.log("Detected MIME type: image/jpeg");
-          } else if (base64Image.startsWith('iVBORw0KGgo=')) {
-            mimeType = 'image/png';
-            console.log("Detected MIME type: image/png"); // Matches the error!
-          } else if (base64Image.startsWith('UklGR')) {
-            mimeType = 'image/webp';
-             console.log("Detected MIME type: image/webp");
-          } else if (base64Image.startsWith('R0lGODlh')) {
-            mimeType = 'image/gif';
-             console.log("Detected MIME type: image/gif");
-          } else {
-            // If we cannot determine the type, we cannot send it reliably
-             console.error("Could not determine image type from base64 prefix:", base64Image.substring(0, 20));
-             throw new Error(
-               "Captured image format is not recognized or supported by this app. Base64 starts with: " + base64Image.substring(0, 20)
-             );
-          }
-      }
-
-      // 3. Ensure correct Base64 padding
-      // Base64 strings should have a length divisible by 4. Pad with '=' if needed.
-      if (base64Image.length % 4 !== 0) {
-        const paddingNeeded = (4 - (base64Image.length % 4)) % 4;
-        console.log(`Base64 length ${base64Image.length} is not divisible by 4. Adding ${paddingNeeded} padding characters.`);
-        base64Image += "=".repeat(paddingNeeded);
-        console.log("Padded base64 length:", base64Image.length);
-      }
-
-      // --- End Robust Handling ---
-
-
-      // Construct the data URL for OpenAI API
       const imageUrl = `data:${mimeType};base64,${base64Image}`;
-      console.log("Constructed Image URL for OpenAI (first 150 chars):", imageUrl.substring(0, 150));
-
-
+      console.log("Constructed Image URL (first 150 chars):", imageUrl.substring(0, 150));
       console.log("Sending request to OpenAI...");
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o', // Ensure using a model that supports image input like gpt-4o or gpt-4-vision-preview
+        model: 'gpt-4o',
         messages: [
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                // Slightly refined prompt for clarity and robustness
                 text: 'Analyze the image for syringe and vial details. Provide ONLY a valid JSON object with the following structure: { "syringe": { "type": "Insulin | Standard | unreadable | null", "volume": "e.g., \'1 ml\', \'0.5 ml\', \'unreadable\', null", "markings": "e.g., \'0.1,0.2,...\', \'unreadable\', null" }, "vial": { "substance": "name | unreadable | null", "totalAmount": "e.g., \'20 mg\', \'1000 units\', \'unreadable\', null", "concentration": "e.g., \'100 units/ml\', \'10 mg/ml\', \'unreadable\', null", "expiration": "YYYY-MM-DD | unreadable | null" } }. Use "unreadable" if text is present but illegible. Use null if the information is completely absent or not visible. Do not include any explanatory text before or after the JSON.',
               },
               {
                 type: 'image_url',
-                image_url: {
-                   url: imageUrl,
-                   // detail: "low" // Optional: Use "low" if high detail isn't needed, saves tokens/time
-                }
+                image_url: { url: imageUrl },
               },
             ],
           },
         ],
-        // Optional: set max_tokens if you expect a concise JSON response
-        // max_tokens: 300
       });
 
-      console.log("Received response from OpenAI.");
+      console.log("Received response from OpenAI:", response.status);
       const content = response.choices[0].message.content;
+      console.log("Raw OpenAI response content:", content);
 
       if (!content) {
         throw new Error("OpenAI returned an empty response.");
       }
 
-      console.log("Raw OpenAI response content:", content);
-
-      // Attempt to extract JSON, handling potential markdown code blocks
       const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
       const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      console.log("Extracted JSON content:", jsonContent);
 
       let result;
       try {
         result = JSON.parse(jsonContent);
-        console.log("Parsed JSON result:", result);
-        // Basic validation of the parsed structure
+        console.log("Parsed JSON result:", JSON.stringify(result, null, 2));
         if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
-            console.error("Parsed JSON has incorrect structure:", result);
-            throw new Error("Invalid JSON structure received from analysis.");
+          console.error("Invalid JSON structure:", result);
+          throw new Error("Invalid JSON structure received from analysis.");
         }
       } catch (parseError) {
-        console.error("Failed to parse JSON response:", parseError);
-        console.error("Content that failed parsing:", jsonContent);
-        setScanError('Could not understand the analysis result. Response format was invalid.');
-        setScanLoading(false);
-        return;
+        console.error("JSON parse error:", parseError.message, parseError.stack);
+        throw new Error("Could not parse analysis result.");
       }
 
-      // --- Populate state based on parsed results (similar to your existing logic) ---
+      // Populate state with scanned results
+      console.log("Populating state with scanned results...");
       const scannedSyringe = result.syringe || {};
       const scannedVial = result.vial || {};
 
       const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
       const scannedVolume = scannedSyringe.volume;
       const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-      const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml'; // Sensible defaults
+      const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
       let selectedVolume = defaultVolume;
 
       if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
         const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-        // Find the closest match in available options
         selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-        console.log(`Detected syringe volume: ${scannedVolume}, selected standard volume: ${selectedVolume}`);
+        console.log(`Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
       } else {
-         console.log(`Syringe volume unreadable or null (${scannedVolume}), using default: ${selectedVolume}`);
+        console.log(`Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
       }
       setManualSyringe({ type: scannedType, volume: selectedVolume });
 
-      // Populate substance name if valid
       if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
         setSubstanceName(String(scannedVial.substance));
         setSubstanceNameHint("Detected from vial scan");
+        console.log("Set substance name:", scannedVial.substance);
       }
 
-      // Populate concentration or total amount (prefer concentration)
       const vialConcentration = scannedVial.concentration;
       const vialTotalAmount = scannedVial.totalAmount;
 
       if (vialConcentration && vialConcentration !== 'unreadable') {
-        // Try to extract number and unit for concentration
         const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
         if (concMatch) {
           setConcentrationAmount(concMatch[1]);
           const detectedUnit = concMatch[2].toLowerCase();
           if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
           else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-          // Add more unit checks if needed
           console.log(`Detected concentration: ${concMatch[1]} ${detectedUnit}`);
         } else {
-           setConcentrationAmount(String(vialConcentration)); // Fallback to raw string if regex fails
-           console.log(`Detected concentration (raw): ${vialConcentration}`);
+          setConcentrationAmount(String(vialConcentration));
+          console.log(`Detected concentration (raw): ${vialConcentration}`);
         }
         setMedicationInputType('concentration');
         setConcentrationHint("Detected from vial scan");
-        setTotalAmountHint(null); // Clear other hint
+        setTotalAmountHint(null);
       } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-         // Try to extract number for total amount
-         const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-         if (amountMatch) {
-            setTotalAmount(amountMatch[1]);
-            console.log(`Detected total amount: ${amountMatch[1]}`);
-         } else {
-            setTotalAmount(String(vialTotalAmount)); // Fallback
-             console.log(`Detected total amount (raw): ${vialTotalAmount}`);
-         }
+        const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
+        if (amountMatch) {
+          setTotalAmount(amountMatch[1]);
+          console.log(`Detected total amount: ${amountMatch[1]}`);
+        } else {
+          setTotalAmount(String(vialTotalAmount));
+          console.log(`Detected total amount (raw): ${vialTotalAmount}`);
+        }
         setMedicationInputType('totalAmount');
         setTotalAmountHint("Detected from vial scan");
-        setConcentrationHint(null); // Clear other hint
+        setConcentrationHint(null);
       } else {
-         console.log("Neither concentration nor total amount detected reliably.");
-         // Keep default or previously set medicationInputType
+        console.log("No reliable concentration or total amount detected.");
       }
 
-      // --- End state population ---
-
-      console.log("Scan successful, transitioning to manual entry step 'dose'.");
+      console.log("Scan successful, transitioning to manual entry.");
+      Alert.alert("Success", "Image analyzed, proceeding to manual entry.");
       setScreenStep('manualEntry');
       setManualStep('dose');
-
     } catch (error) {
-      console.error("Error during image capture or analysis:", error);
-      // Provide a more user-friendly error message
+      console.error("Error processing image:", error.message, error.stack);
       let message = 'An unexpected error occurred during scanning.';
       if (error instanceof Error) {
-          // Check for specific known error messages if needed
-          if (error.message.includes("format is not recognized")) {
-              message = "The format of the captured image could not be processed. Please try again or use manual entry.";
-          } else if (error.message.includes("OpenAI")) {
-              message = "Error communicating with the analysis service. Please check your connection or try again later.";
-          } else if (error.message.includes("Failed to capture")) {
-               message = "Could not capture image data. Please ensure the camera works and permissions are granted.";
-          }
-          else {
-            message = error.message; // Show the specific error message
-          }
+        if (error.message.includes("format is not recognized")) {
+          message = "Image format could not be processed.";
+        } else if (error.message.includes("OpenAI")) {
+          message = "Error communicating with analysis service.";
+        } else {
+          message = error.message;
+        }
       }
       setScanError(`${message} Consider using manual entry.`);
+      Alert.alert("Error", message);
     } finally {
       setScanLoading(false);
-      console.log("Scan process finished.");
+      console.log("Image processing complete.");
+    }
+  };
+
+  const captureImage = async () => {
+    console.log("Capture button pressed");
+    Alert.alert("Capture", "Button pressed, starting capture process...");
+
+    if (!openai.apiKey) {
+      console.log("OpenAI API key missing");
+      Alert.alert("Config Error", "OpenAI Key missing.");
+      return;
+    }
+
+    try {
+      if (isMobileWeb) {
+        console.log("Mobile web detected, using browser-native camera input...");
+        Alert.alert("Mobile Web", "Opening camera or gallery...");
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment'; // Prefers back camera
+        input.onchange = async (event) => {
+          console.log("Input change event triggered");
+          const file = (event.target as HTMLInputElement).files?.[0];
+          if (!file) {
+            console.log("No file selected");
+            setScanError("No image selected. Please try again.");
+            Alert.alert("No Selection", "No image was selected.");
+            return;
+          }
+          console.log("File selected:", file.name, "Size:", file.size);
+          Alert.alert("File Selected", `Selected: ${file.name}`);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            console.log("File reader onload triggered");
+            const base64Image = (reader.result as string).split(',')[1]; // Remove data URI prefix
+            console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
+            Alert.alert("Base64 Ready", "Image converted to base64, processing...");
+            processImage(base64Image, file.type);
+          };
+          reader.onerror = (error) => {
+            console.error("Error reading file:", error);
+            setScanError("Failed to read image. Please try again.");
+            Alert.alert("Read Error", "Failed to read the image file.");
+          };
+          reader.readAsDataURL(file);
+        };
+        input.onerror = (error) => {
+          console.error("Input error:", error);
+          setScanError("Error accessing camera or gallery.");
+          Alert.alert("Input Error", "Failed to access camera or gallery.");
+        };
+        document.body.appendChild(input);
+        input.click();
+        document.body.removeChild(input);
+      } else {
+        if (!cameraRef.current) {
+          console.log("Camera ref is null or undefined");
+          Alert.alert("Camera Error", "Camera not ready.");
+          return;
+        }
+
+        if (permission?.status !== 'granted') {
+          console.log("Camera permission not granted:", permission?.status);
+          Alert.alert("Permission Error", "Camera permission is required.");
+          return;
+        }
+
+        console.log("Starting capture with expo-camera...");
+        Alert.alert("Expo Camera", "Capturing with expo-camera...");
+        setScanLoading(true);
+        setScanError(null);
+        resetFullForm();
+
+        console.log("Attempting to take picture with takePictureAsync...");
+        const photo = await cameraRef.current.takePictureAsync({
+          base64: true,
+          quality: 0.5,
+        });
+        console.log("Picture taken successfully. Photo object:", JSON.stringify(photo, null, 2));
+        Alert.alert("Photo Taken", "Image captured successfully.");
+
+        let base64Image = photo.base64;
+        if (!base64Image && photo.uri) {
+          console.log("Base64 missing, reading from URI:", photo.uri);
+          base64Image = await FileSystem.readAsStringAsync(photo.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log("Base64 read from URI. Length:", base64Image.length);
+          Alert.alert("Base64 Fallback", "Base64 read from URI.");
+        }
+
+        if (!base64Image) {
+          console.error("No base64 data available");
+          throw new Error("Failed to capture image data.");
+        }
+
+        console.log("Raw base64 (first 100 chars):", base64Image.substring(0, 100));
+        let mimeType = '';
+        if (base64Image.startsWith('data:image/')) {
+          const prefixMatch = base64Image.match(/^data:image\/([a-z]+);base64,/);
+          if (prefixMatch) {
+            mimeType = `image/${prefixMatch[1]}`;
+            base64Image = base64Image.substring(prefixMatch[0].length);
+            console.log(`Stripped prefix. MIME type: ${mimeType}`);
+          }
+        }
+
+        if (!mimeType) {
+          if (base64Image.startsWith('/9j/')) mimeType = 'image/jpeg';
+          else if (base64Image.startsWith('iVBORw0KGgo=')) mimeType = 'image/png';
+          else if (base64Image.startsWith('UklGR')) mimeType = 'image/webp';
+          else if (base64Image.startsWith('R0lGODlh')) mimeType = 'image/gif';
+          else {
+            console.error("Unknown image format:", base64Image.substring(0, 20));
+            throw new Error("Unrecognized image format.");
+          }
+          console.log("Detected MIME type:", mimeType);
+        }
+
+        if (base64Image.length % 4 !== 0) {
+          const paddingNeeded = (4 - (base64Image.length % 4)) % 4;
+          base64Image += "=".repeat(paddingNeeded);
+          console.log("Padded base64 length:", base64Image.length);
+        }
+
+        await processImage(base64Image, mimeType);
+      }
+    } catch (error) {
+      console.error("Error in captureImage:", error.message, error.stack);
+      setScanError("An error occurred during image capture. Please try again.");
+      Alert.alert("Capture Error", error.message || "Unknown error during capture.");
+    } finally {
+      if (!isMobileWeb) setScanLoading(false);
+      console.log("Capture process finished.");
     }
   };
 
