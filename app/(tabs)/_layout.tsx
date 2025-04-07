@@ -12,41 +12,41 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#8E8E93',
         headerShown: false,
       }}>
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="new-dose"
         options={{
-          title: 'New Dose',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="logs"
         options={{
           title: 'Logs',
           tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
         }}
-      />
-      <Tabs.Screen
+      /> */}
+      {/* <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
         }}
-      />
-      <Tabs.Screen
+      /> */}
+      {/* <Tabs.Screen
         name="learn"
         options={{
           title: 'Learn',
           tabBarIcon: ({ color, size }) => <Book size={size} color={color} />,
         }}
-      />
+      /> */}
     </Tabs>
   );
 }

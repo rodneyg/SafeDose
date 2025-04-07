@@ -18,7 +18,7 @@ import * as FileSystem from 'expo-file-system';
 
 // SyringeIllustration Component
 const SyringeIllustration = ({ syringeType, syringeVolume, recommendedMarking, syringeOptions }) => {
-  const unit = syringeType === 'Insulin' ? 'units' : 'ml';
+  const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
   const markingsString = syringeOptions[syringeType][syringeVolume];
   const markings = [0, ...markingsString.split(',').map(m => parseFloat(m))];
   const maxMarking = Math.max(...markings);
@@ -29,22 +29,28 @@ const SyringeIllustration = ({ syringeType, syringeVolume, recommendedMarking, s
 
   return (
     <View style={{ width: syringeWidth, height: 100, position: 'relative' }}>
+      {/* Syringe barrel outline */}
+      <View style={{ position: 'absolute', left: 0, top: 40, width: syringeWidth, height: 20, backgroundColor: '#E0E0E0', borderRadius: 10 }} />
       <View style={{ position: 'absolute', left: 0, top: 50, width: syringeWidth, height: 2, backgroundColor: '#000' }} />
       {markings.map((m, index) => (
         <View key={m} style={{ position: 'absolute', left: markingPositions[index], top: 40, width: 1, height: 20, backgroundColor: '#000' }} />
       ))}
       {markings.map((m, index) => (
         <Text key={`label-${m}`} style={{ position: 'absolute', left: markingPositions[index] - 10, top: 65, fontSize: 10 }}>
-          {m} {unit}
+          {m}
         </Text>
       ))}
-      <View style={{ position: 'absolute', left: recommendedPosition, top: 30, width: 2, height: 40, backgroundColor: 'red' }} />
+      {/* Enhanced recommended marking */}
+      <View style={{ position: 'absolute', left: recommendedPosition - 2, top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 }} />
+      <Text style={{ position: 'absolute', left: Math.max(0, recommendedPosition - 30), top: 85, fontSize: 12, color: '#FF0000', fontWeight: 'bold' }}>
+        Draw to here
+      </Text>
     </View>
   );
 };
 
 // Custom Progress Bar Component
-const CustomProgressBar = ({ progress }: { progress: number }) => {
+const CustomProgressBar = ({ progress }) => {
   const totalSteps = 5;
   const currentStep = Math.round(progress * totalSteps);
   const progressWidth = (progress * 100) + '%';
@@ -296,8 +302,11 @@ export default function NewDoseScreen() {
   };
 
   const captureImage = async () => {
-    console.log("Capture button pressed");
-    Alert.alert("Capture", "Button pressed, starting capture process...");
+    console.log("Capture button pressed - Start");
+    Alert.alert("Capture", "Button pressed, starting capture...");
+
+    // Basic test to ensure event fires
+    console.log("Event test: Button click registered");
 
     if (!openai.apiKey) {
       console.log("OpenAI API key missing");
@@ -313,9 +322,10 @@ export default function NewDoseScreen() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.capture = 'environment'; // Prefers back camera
+        input.capture = 'environment';
         input.onchange = async (event) => {
           console.log("Input change event triggered");
+          Alert.alert("Input", "File input changed.");
           const file = (event.target as HTMLInputElement).files?.[0];
           if (!file) {
             console.log("No file selected");
@@ -329,7 +339,7 @@ export default function NewDoseScreen() {
           const reader = new FileReader();
           reader.onload = () => {
             console.log("File reader onload triggered");
-            const base64Image = (reader.result as string).split(',')[1]; // Remove data URI prefix
+            const base64Image = (reader.result as string).split(',')[1];
             console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
             Alert.alert("Base64 Ready", "Image converted to base64, processing...");
             processImage(base64Image, file.type);
@@ -347,6 +357,7 @@ export default function NewDoseScreen() {
           Alert.alert("Input Error", "Failed to access camera or gallery.");
         };
         document.body.appendChild(input);
+        console.log("Triggering file input click...");
         input.click();
         document.body.removeChild(input);
       } else {
@@ -469,7 +480,7 @@ export default function NewDoseScreen() {
     }
 
     const markings = markingsString.split(',').map(m => parseFloat(m)).sort((a, b) => a - b);
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * concentration : requiredVolume;
+    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
     const markingScaleUnit = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
 
     let recommendedMarkingValue = markingScaleValue;
@@ -615,7 +626,14 @@ export default function NewDoseScreen() {
           <View style={styles.overlayBottom}>
             {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
             <Text style={styles.scanText}>Position syringe & vial clearly</Text>
-            <TouchableOpacity style={styles.captureButton} onPress={captureImage} disabled={scanLoading}>
+            <TouchableOpacity 
+              style={styles.captureButton} 
+              onPress={() => {
+                console.log("Capture button clicked - TouchableOpacity");
+                captureImage();
+              }} 
+              disabled={scanLoading}
+            >
               {scanLoading ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
             <View style={styles.bottomButtons}>
@@ -1102,13 +1120,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: '#8E8E93',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '80%',
-    minHeight: 50,
+    flex: 0,
+    width: '45%',
   },
   manualEntryContainer: { 
     flex: 1,
@@ -1227,13 +1245,14 @@ const styles = StyleSheet.create({
   nextButton: {
     backgroundColor: '#007AFF',
     paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    flex: 1,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginLeft: 10,
+    flex: 0,
+    width: '45%',
   },
   disabledButton: {
     backgroundColor: '#C7C7CC',
@@ -1244,13 +1263,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 600,
     marginTop: 20,
+    gap: 10,
   },
   instructionCard: {
     padding: 16,
     borderRadius: 12,
+    width: '100%',
     borderWidth: 2,
     marginBottom: 16,
-    width: '100%',
   },
   instructionTitle: {
     fontSize: 18,
