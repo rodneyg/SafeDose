@@ -26,27 +26,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
         }}
       />
-      {/* <Tabs.Screen
-        name="logs"
-        options={{
-          title: 'Logs',
-          tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
-        }}
-      /> */}
-      {/* <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chat',
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
-        }}
-      /> */}
-      {/* <Tabs.Screen
-        name="learn"
-        options={{
-          title: 'Learn',
-          tabBarIcon: ({ color, size }) => <Book size={size} color={color} />,
-        }}
-      /> */}
     </Tabs>
   );
 }

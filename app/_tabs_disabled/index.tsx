@@ -27,7 +27,7 @@ export default function HomeScreen() {
           title="New Dose"
           route="/new-dose"
         />
-        <QuickAction
+        {/* <QuickAction
           icon={History}
           title="View Logs"
           route="/logs"
@@ -41,7 +41,7 @@ export default function HomeScreen() {
           icon={Book}
           title="Learn"
           route="/learn"
-        />
+        /> */}
       </View>
     </View>
   );
