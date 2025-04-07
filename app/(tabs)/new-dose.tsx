@@ -232,7 +232,7 @@ export default function NewDoseScreen() {
         await delay(0);
 
         // Create a promise to handle file input selection
-        const filePromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
+        const filePromise = new Promise<{ file: File }>((resolve, reject) => {
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = 'image/*';
@@ -250,25 +250,7 @@ export default function NewDoseScreen() {
             }
 
             console.log("File selected:", file.name, "Size:", file.size);
-
-            const reader = new FileReader();
-            reader.onload = () => {
-              console.log("File reader onload triggered");
-              const result = reader.result as string;
-              if (!result || !result.includes(',')) {
-                console.error("Error reading file or invalid format");
-                reject(new Error("Failed to read image data"));
-                return;
-              }
-              const base64Image = result.split(',')[1];
-              console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
-              resolve({ base64Image, mimeType: file.type });
-            };
-            reader.onerror = (error) => {
-              console.error("Error reading file:", error);
-              reject(new Error("Failed to read image"));
-            };
-            reader.readAsDataURL(file);
+            resolve({ file });
           };
 
           input.onerror = (error) => {
@@ -288,8 +270,29 @@ export default function NewDoseScreen() {
           }, 1000);
         });
 
-        // Wait for the file to be selected and processed
-        const { base64Image, mimeType } = await filePromise;
+        // Wait for the file to be selected
+        const { file } = await filePromise;
+
+        // Use Web Worker to read the file
+        const worker = new Worker('workers/fileReaderWorker.js'); // Adjust path if necessary
+        const workerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
+          worker.onmessage = (e) => {
+            if (e.data.error) {
+              reject(new Error(e.data.error));
+            } else {
+              resolve({ base64Image: e.data.base64Image, mimeType: e.data.mimeType });
+            }
+            worker.terminate();
+          };
+          worker.onerror = (error) => {
+            console.error("Worker error:", error);
+            reject(new Error("Worker failed to process image"));
+            worker.terminate();
+          };
+          worker.postMessage(file);
+        });
+
+        const { base64Image, mimeType } = await workerPromise;
         console.log("Processing image now");
         await processImage(base64Image, mimeType);
       } else {
