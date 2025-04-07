@@ -160,6 +160,15 @@ export default function NewDoseScreen() {
   // Web-specific camera permission request
   const requestWebCameraPermission = async () => {
     if (!isMobileWeb) return;
+
+    // Check if navigator.mediaDevices is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("navigator.mediaDevices.getUserMedia is not supported");
+      setPermissionStatus('denied');
+      setMobileWebPermissionDenied(true);
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setPermissionStatus('granted');
@@ -196,6 +205,9 @@ export default function NewDoseScreen() {
     setScanLoading(false);
   };
 
+  // Utility to wait for a specified time
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const captureImage = async () => {
     console.log("Capture button pressed - Start");
 
@@ -205,75 +217,81 @@ export default function NewDoseScreen() {
       return;
     }
 
+    // Reset state before starting
     setScanError(null);
     resetFullForm();
 
     try {
       if (isMobileWeb) {
         console.log("Mobile web detected, using file input...");
+        // Show loading indicator immediately
         setScanLoading(true);
+        console.log("scanLoading set to true");
 
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.capture = 'environment';
+        // Wait for the UI to update
+        await delay(0);
 
-        input.onchange = async (event) => {
-          console.log("Input change event triggered");
-          const target = event.target as HTMLInputElement;
-          const file = target.files?.[0];
+        // Create a promise to handle file input selection
+        const filePromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.capture = 'environment';
 
-          if (!file) {
-            console.log("No file selected or user cancelled.");
-            setScanLoading(false);
-            return;
-          }
+          input.onchange = (event) => {
+            console.log("Input change event triggered");
+            const target = event.target as HTMLInputElement;
+            const file = target.files?.[0];
 
-          console.log("File selected:", file.name, "Size:", file.size);
-
-          const reader = new FileReader();
-          reader.onload = () => {
-            console.log("File reader onload triggered");
-            const result = reader.result as string;
-            if (!result || !result.includes(',')) {
-              console.error("Error reading file or invalid format");
-              setScanError("Failed to read image data. Please try again.");
-              Alert.alert("Read Error", "Failed to read the image file data.");
-              setScanLoading(false);
+            if (!file) {
+              console.log("No file selected or user cancelled.");
+              reject(new Error("No file selected"));
               return;
             }
-            const base64Image = result.split(',')[1];
-            console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
-            console.log("Processing image now");
-            processImage(base64Image, file.type);
+
+            console.log("File selected:", file.name, "Size:", file.size);
+
+            const reader = new FileReader();
+            reader.onload = () => {
+              console.log("File reader onload triggered");
+              const result = reader.result as string;
+              if (!result || !result.includes(',')) {
+                console.error("Error reading file or invalid format");
+                reject(new Error("Failed to read image data"));
+                return;
+              }
+              const base64Image = result.split(',')[1];
+              console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
+              resolve({ base64Image, mimeType: file.type });
+            };
+            reader.onerror = (error) => {
+              console.error("Error reading file:", error);
+              reject(new Error("Failed to read image"));
+            };
+            reader.readAsDataURL(file);
           };
-          reader.onerror = (error) => {
-            console.error("Error reading file:", error);
-            setScanError("Failed to read image. Please try again.");
-            Alert.alert("Read Error", "Failed to read the image file.");
-            setScanLoading(false);
+
+          input.onerror = (error) => {
+            console.error("Input error:", error);
+            reject(new Error("Error accessing camera or gallery"));
           };
-          reader.readAsDataURL(file);
-        };
 
-        input.onerror = (error) => {
-          console.error("Input error:", error);
-          setScanError("Error accessing camera or gallery.");
-          Alert.alert("Input Error", "Failed to access camera or gallery.");
-          setScanLoading(false);
-        };
+          document.body.appendChild(input);
+          console.log("Triggering file input click...");
+          input.click();
 
-        document.body.appendChild(input);
-        console.log("Triggering file input click...");
-        input.click();
+          setTimeout(() => {
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+              console.log("Removed file input element");
+            }
+          }, 1000);
+        });
 
-        setTimeout(() => {
-          if (document.body.contains(input)) {
-            document.body.removeChild(input);
-            console.log("Removed file input element");
-          }
-        }, 1000);
-
+        // Wait for the file to be selected and processed
+        const { base64Image, mimeType } = await filePromise;
+        console.log("Processing image now");
+        await processImage(base64Image, mimeType);
       } else {
         if (!cameraRef.current) {
           console.log("Camera ref is null or undefined");
@@ -289,6 +307,7 @@ export default function NewDoseScreen() {
 
         console.log("Starting capture with expo-camera...");
         setScanLoading(true);
+        console.log("scanLoading set to true");
 
         console.log("Attempting to take picture with takePictureAsync...");
         const photo = await cameraRef.current.takePictureAsync({
@@ -351,6 +370,9 @@ export default function NewDoseScreen() {
 
   const processImage = async (base64Image: string, mimeType: string) => {
     console.log("Processing image with OpenAI...");
+    setScanLoading(true);
+    console.log("scanLoading set to true in processImage");
+
     Alert.alert("Processing", "Image captured, starting analysis...");
     setScanError(null);
     resetFullForm();
@@ -481,7 +503,7 @@ export default function NewDoseScreen() {
       Alert.alert("Error", message);
     } finally {
       setScanLoading(false);
-      console.log("Image processing complete.");
+      console.log("Image processing complete, scanLoading set to false");
     }
   };
 
@@ -714,7 +736,7 @@ export default function NewDoseScreen() {
           {scanLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.loadingText}>Analyzing... This may take a few seconds</Text>
+              <Text style={styles.loadingText}>Processing image... This may take a few seconds</Text>
             </View>
           )}
         </View>
@@ -763,7 +785,7 @@ export default function NewDoseScreen() {
           {scanLoading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.loadingText}>Analyzing... This may take a few seconds</Text>
+              <Text style={styles.loadingText}>Processing image... This may take a few seconds</Text>
             </View>
           )}
         </View>
