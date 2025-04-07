@@ -116,7 +116,17 @@ export default function NewDoseScreen() {
   };
   const insulinVolumes = ['0.3 ml', '0.5 ml', '1 ml'];
   const standardVolumes = ['1 ml', '3 ml', '5 ml'];
-  const isMobileWeb = Platform.OS === 'web' && /Android|iPhone|iPad/i.test(navigator.userAgent);
+  const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
+  const userAgent = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
+  const isMobileDevice = userAgent ? /Android|iPhone|iPad/i.test(userAgent) : false;
+  const isMobileWeb = isWeb && (isMobileDevice || Platform.OS === 'web' || (Platform.OS === 'ios' && isWeb));
+
+  // Debug logging
+  console.log('isWeb:', isWeb);
+  console.log('User Agent:', userAgent);
+  console.log('isMobileDevice:', isMobileDevice);
+  console.log('isMobileWeb:', isMobileWeb);
+  console.log('Platform.OS:', Platform.OS);
 
   // OpenAI Client
   const openai = new OpenAI({
@@ -149,7 +159,7 @@ export default function NewDoseScreen() {
 
   // Web-specific camera permission request
   const requestWebCameraPermission = async () => {
-    if (Platform.OS !== 'web' || !isMobileWeb) return;
+    if (!isMobileWeb) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setPermissionStatus('granted');
@@ -162,7 +172,6 @@ export default function NewDoseScreen() {
     }
   };
 
-  // Helper Functions
   const resetFullForm = (startStep: ManualEntryStep = 'dose') => {
     setDose('');
     setUnit('mg');
@@ -184,6 +193,160 @@ export default function NewDoseScreen() {
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setManualStep(startStep);
+    setScanLoading(false);
+  };
+
+  const captureImage = async () => {
+    console.log("Capture button pressed - Start");
+
+    if (!openai.apiKey) {
+      console.log("OpenAI API key missing");
+      Alert.alert("Config Error", "OpenAI Key missing.");
+      return;
+    }
+
+    setScanError(null);
+    resetFullForm();
+
+    try {
+      if (isMobileWeb) {
+        console.log("Mobile web detected, using file input...");
+        setScanLoading(true);
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+
+        input.onchange = async (event) => {
+          console.log("Input change event triggered");
+          const target = event.target as HTMLInputElement;
+          const file = target.files?.[0];
+
+          if (!file) {
+            console.log("No file selected or user cancelled.");
+            setScanLoading(false);
+            return;
+          }
+
+          console.log("File selected:", file.name, "Size:", file.size);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            console.log("File reader onload triggered");
+            const result = reader.result as string;
+            if (!result || !result.includes(',')) {
+              console.error("Error reading file or invalid format");
+              setScanError("Failed to read image data. Please try again.");
+              Alert.alert("Read Error", "Failed to read the image file data.");
+              setScanLoading(false);
+              return;
+            }
+            const base64Image = result.split(',')[1];
+            console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
+            console.log("Processing image now");
+            processImage(base64Image, file.type);
+          };
+          reader.onerror = (error) => {
+            console.error("Error reading file:", error);
+            setScanError("Failed to read image. Please try again.");
+            Alert.alert("Read Error", "Failed to read the image file.");
+            setScanLoading(false);
+          };
+          reader.readAsDataURL(file);
+        };
+
+        input.onerror = (error) => {
+          console.error("Input error:", error);
+          setScanError("Error accessing camera or gallery.");
+          Alert.alert("Input Error", "Failed to access camera or gallery.");
+          setScanLoading(false);
+        };
+
+        document.body.appendChild(input);
+        console.log("Triggering file input click...");
+        input.click();
+
+        setTimeout(() => {
+          if (document.body.contains(input)) {
+            document.body.removeChild(input);
+            console.log("Removed file input element");
+          }
+        }, 1000);
+
+      } else {
+        if (!cameraRef.current) {
+          console.log("Camera ref is null or undefined");
+          Alert.alert("Camera Error", "Camera not ready.");
+          return;
+        }
+
+        if (permission?.status !== 'granted') {
+          console.log("Camera permission not granted:", permission?.status);
+          Alert.alert("Permission Error", "Camera permission is required.");
+          return;
+        }
+
+        console.log("Starting capture with expo-camera...");
+        setScanLoading(true);
+
+        console.log("Attempting to take picture with takePictureAsync...");
+        const photo = await cameraRef.current.takePictureAsync({
+          base64: true,
+          quality: 0.5,
+        });
+        console.log("Picture taken successfully.");
+
+        let base64Image = photo.base64;
+        if (!base64Image && photo.uri) {
+          console.log("Base64 missing, reading from URI:", photo.uri);
+          base64Image = await FileSystem.readAsStringAsync(photo.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log("Base64 read from URI. Length:", base64Image.length);
+        }
+
+        if (!base64Image) {
+          console.error("No base64 data available");
+          throw new Error("Failed to capture image data.");
+        }
+
+        let mimeType = '';
+        if (base64Image.startsWith('data:image/')) {
+          const prefixMatch = base64Image.match(/^data:image\/([a-z]+);base64,/);
+          if (prefixMatch) {
+            mimeType = `image/${prefixMatch[1]}`;
+            base64Image = base64Image.substring(prefixMatch[0].length);
+            console.log(`Stripped prefix. MIME type: ${mimeType}`);
+          }
+        }
+
+        if (!mimeType) {
+          if (base64Image.startsWith('/9j/')) mimeType = 'image/jpeg';
+          else if (base64Image.startsWith('iVBORw0KGgo=')) mimeType = 'image/png';
+          else if (base64Image.startsWith('UklGR')) mimeType = 'image/webp';
+          else if (base64Image.startsWith('R0lGODlh')) mimeType = 'image/gif';
+          else {
+            console.error("Unknown image format:", base64Image.substring(0, 20));
+            throw new Error("Unrecognized image format.");
+          }
+          console.log("Detected MIME type:", mimeType);
+        }
+
+        if (base64Image.length % 4 !== 0) {
+          const paddingNeeded = (4 - (base64Image.length % 4)) % 4;
+          base64Image += "=".repeat(paddingNeeded);
+          console.log("Padded base64 length:", base64Image.length);
+        }
+
+        await processImage(base64Image, mimeType);
+      }
+    } catch (error) {
+      console.error("Error in captureImage:", error.message, error.stack);
+      setScanError(`An error occurred during image capture: ${error.message}. Please try again.`);
+      Alert.alert("Capture Error", error.message || "Unknown error during capture.");
+      setScanLoading(false);
+    }
   };
 
   const processImage = async (base64Image: string, mimeType: string) => {
@@ -322,154 +485,6 @@ export default function NewDoseScreen() {
     }
   };
 
-  const captureImage = async () => {
-    console.log("Capture button pressed - Start");
-
-    if (!openai.apiKey) {
-      console.log("OpenAI API key missing");
-      Alert.alert("Config Error", "OpenAI Key missing.");
-      return;
-    }
-
-    try {
-      if (isMobileWeb) {
-        console.log("Mobile web detected, using file input...");
-        setScanError(null);
-        resetFullForm(); // Keep this reset
-
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        // Consider removing 'capture' if you want users to choose between camera/gallery
-        // input.capture = 'environment';
-        input.onchange = (event) => { // No need for async here, onload will be async
-          console.log("Input change event triggered");
-          const file = (event.target as HTMLInputElement).files?.[0];
-          if (!file) {
-            console.log("No file selected");
-            setScanError("No image selected. Please try again.");
-            Alert.alert("No Selection", "No image was selected.");
-            return;
-          }
-          console.log("File selected:", file.name, "Size:", file.size);
-          // Maybe remove this alert or make it less intrusive
-          // Alert.alert("File Selected", `Selected: ${file.name}`);
-
-          const reader = new FileReader();
-
-          // Make the onload handler async
-          reader.onload = async () => {
-            console.log("File reader onload triggered");
-            try {
-              const base64Image = (reader.result as string).split(',')[1];
-              if (!base64Image) {
-                 throw new Error("Could not read image data from file.");
-              }
-              console.log("Base64 from file (first 100 chars):", base64Image.substring(0, 100));
-              // Alert.alert("Base64 Ready", "Image converted to base64, starting processing..."); // Optional alert
-
-              // *** FIX START ***
-              // Set loading state immediately before processing
-              setScanLoading(true);
-              console.log("scanLoading set to true, calling processImage directly");
-
-              // Call processImage directly and await its completion
-              await processImage(base64Image, file.type);
-              // Note: processImage handles setting scanLoading=false and navigation internally
-
-              // *** FIX END ***
-
-            } catch (error) {
-              // Catch errors specifically from reading or processing started here
-              console.error("Error during file read or processImage call:", error);
-              let message = 'An unexpected error occurred processing the image.';
-               if (error instanceof Error) {
-                 message = error.message;
-               }
-              setScanError(`${message} Please try again.`);
-              Alert.alert("Processing Error", message);
-              setScanLoading(false); // Ensure loading is off if processImage fails early
-            }
-          };
-
-          reader.onerror = (error) => {
-            console.error("Error reading file:", error);
-            setScanError("Failed to read image. Please try again.");
-            Alert.alert("Read Error", "Failed to read the image file.");
-            setScanLoading(false); // Ensure loading is off
-          };
-
-          reader.readAsDataURL(file);
-        };
-        input.onerror = (error) => {
-          console.error("Input error:", error);
-          setScanError("Error accessing camera or gallery.");
-          Alert.alert("Input Error", "Failed to access camera or gallery.");
-          setScanLoading(false); // Ensure loading is off
-        };
-        document.body.appendChild(input);
-        console.log("Triggering file input click...");
-        input.click();
-        // Cleanup the input element
-        input.onchange = null; // Prevent potential memory leaks
-        input.onerror = null;
-        setTimeout(() => {
-          if (document.body.contains(input)) {
-             document.body.removeChild(input);
-          }
-        }, 1000); // Delay removal slightly
-
-      } else {
-        // --- Native Camera Logic (Keep as is) ---
-        if (!cameraRef.current) {
-          console.log("Camera ref is null or undefined");
-          Alert.alert("Camera Error", "Camera not ready.");
-          return;
-        }
-        // ... (rest of native camera logic remains unchanged) ...
-        console.log("Starting capture with expo-camera...");
-        // Alert.alert("Expo Camera", "Capturing with expo-camera..."); // Optional
-
-        // Set loading state BEFORE taking the picture or right after?
-        // Let's set it right before calling takePictureAsync for consistency
-        setScanLoading(true);
-        setScanError(null);
-        resetFullForm(); // Keep this reset
-
-        console.log("Attempting to take picture with takePictureAsync...");
-        const photo = await cameraRef.current.takePictureAsync({
-          base64: true,
-          quality: 0.5, // Keep quality reasonable
-        });
-        console.log("Picture taken successfully."); // Simplified log
-        // Alert.alert("Photo Taken", "Image captured successfully."); // Optional
-
-        let base64Image = photo.base64;
-        // ... (rest of base64 handling and MIME type detection remains unchanged) ...
-        if (!base64Image) {
-          console.error("No base64 data available");
-          setScanLoading(false); // Turn off loading on error
-          throw new Error("Failed to capture image data.");
-        }
-        // ... (MIME type detection and padding logic) ...
-
-        // Call processImage after getting base64
-        await processImage(base64Image, mimeType);
-        // processImage handles loading=false and navigation
-      }
-    } catch (error) {
-      console.error("Error in captureImage:", error.message, error.stack);
-      let message = 'An error occurred during image capture or processing.';
-      if (error instanceof Error) {
-          message = error.message;
-      }
-      setScanError(`${message} Please try again.`);
-      Alert.alert("Capture Error", message);
-      setScanLoading(false); // Ensure loading is off on any top-level error
-    }
-  };
-
-  // Core Calculation Logic
   const calculateDoseVolumeAndMarking = () => {
     setCalculatedVolume(null);
     setRecommendedMarking(null);
@@ -525,7 +540,6 @@ export default function NewDoseScreen() {
     if (precisionMessage && !calculationError) setCalculationError(precisionMessage);
   };
 
-  // Navigation Handlers
   const handleNextDose = () => {
     setFormError(null);
     const parsedDose = parseFloat(dose);
@@ -614,7 +628,6 @@ export default function NewDoseScreen() {
     setScreenStep('intro');
   };
 
-  // Render Functions
   const renderIntro = () => (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
       <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
@@ -672,10 +685,9 @@ export default function NewDoseScreen() {
 
       return (
         <View style={styles.scanContainer}>
-          <View style={StyleSheet.absoluteFill} />
           <View style={styles.overlayBottom}>
             {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
-            <Text style={styles.scanText}>Position syringe & vial clearly</Text>
+            <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
             <TouchableOpacity
               style={styles.captureButton}
               onPress={captureImage}
@@ -1102,7 +1114,6 @@ export default function NewDoseScreen() {
     );
   };
 
-  // Main Return
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -1130,7 +1141,6 @@ export default function NewDoseScreen() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
@@ -1533,7 +1543,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Increased opacity for visibility
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     zIndex: 1000,
   },
   loadingText: {
