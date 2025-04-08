@@ -264,26 +264,30 @@ export default function NewDoseScreen() {
 
         const { file } = await filePromise;
 
-        const worker = new Worker('/workers/fileReaderWorker.js');
-        const workerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
-          worker.onmessage = (e) => {
-            if (e.data.error) {
-              reject(new Error('Worker error: ' + e.data.error));
-            } else {
-              resolve({ base64Image: e.data.base64Image, mimeType: e.data.mimeType });
+        // Read file in main thread using FileReader
+        const reader = new FileReader();
+        const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
+          reader.onload = () => {
+            const result = reader.result;
+            if (typeof result !== 'string' || !result.includes(',')) {
+              reject(new Error('Failed to read image data'));
+              return;
             }
-            worker.terminate();
+            const base64Image = result.split(',')[1];
+            const mimeType = file.type || 'image/jpeg'; // Default to jpeg if type is unavailable
+            console.log('[Capture] Image converted to base64, starting processing');
+            resolve({ base64Image, mimeType });
           };
-          worker.onerror = (error) => {
-            console.error('[Capture] Worker error:', error);
-            reject(new Error('Worker failed to process image: ' + (error.message || 'Unknown error')));
-            worker.terminate();
+
+          reader.onerror = () => {
+            console.error('[Capture] FileReader error');
+            reject(new Error('Failed to read image'));
           };
-          worker.postMessage(file);
+
+          reader.readAsDataURL(file);
         });
 
-        const { base64Image, mimeType } = await workerPromise;
-        console.log('[Capture] Image converted to base64, starting processing');
+        const { base64Image, mimeType } = await readerPromise;
         await processImage(base64Image, mimeType);
       } else {
         if (!cameraRef.current) {
