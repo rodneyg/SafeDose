@@ -9,7 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import { Camera as CameraIcon, ArrowRight, Syringe, Pill, RotateCcw, Home, Check, X, Plus } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -79,7 +78,7 @@ export default function NewDoseScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
-  const [scanLoading, setScanLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Unified state for loading
   const [scanError, setScanError] = useState<string | null>(null);
   const cameraRef = useRef(null);
   const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
@@ -159,10 +158,10 @@ export default function NewDoseScreen() {
     }
   }, [screenStep]);
 
-  // Log scanLoading changes
+  // Log isProcessing changes
   useEffect(() => {
-    console.log("scanLoading changed to:", scanLoading);
-  }, [scanLoading]);
+    console.log("isProcessing changed to:", isProcessing);
+  }, [isProcessing]);
 
   // Web-specific camera permission request
   const requestWebCameraPermission = async () => {
@@ -194,26 +193,28 @@ export default function NewDoseScreen() {
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setManualStep(startStep);
-    setScanLoading(false);
+    // Do NOT reset isProcessing here; let captureImage manage it
+    console.log('[Reset] Form reset complete');
   };
 
   const captureImage = async () => {
-    console.log("Capture button pressed - Start");
+    console.log('[Capture] Button pressed - Start');
 
     const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
     if (!apiKey) {
-      console.log("OpenAI API key missing");
-      Alert.alert("Config Error", "OpenAI Key missing. Please check your configuration.");
+      console.error('[Capture] OpenAI API key missing');
+      Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
       return;
     }
 
-    // Reset state before starting
-    setScanError(null);
+    // Reset state and set loading immediately
     resetFullForm();
+    setIsProcessing(true);
+    console.log('[Capture] isProcessing set to true');
 
     try {
       if (isMobileWeb) {
-        console.log("Mobile web detected, using file input...");
+        console.log('[Capture] Mobile web detected, using file input');
 
         const filePromise = new Promise<{ file: File }>((resolve, reject) => {
           const input = document.createElement('input');
@@ -222,35 +223,43 @@ export default function NewDoseScreen() {
           input.capture = 'environment';
 
           input.onchange = (event) => {
-            console.log("Input change event triggered");
+            console.log('[Capture] File input change event');
             const target = event.target as HTMLInputElement;
             const file = target.files?.[0];
-
             if (!file) {
-              console.log("No file selected or user cancelled.");
-              reject(new Error("No file selected or user cancelled"));
+              console.log('[Capture] No file selected');
+              reject(new Error('No file selected or user cancelled'));
               return;
             }
-
-            console.log("File selected:", file.name, "Size:", file.size);
+            console.log('[Capture] File selected:', file.name, 'Size:', file.size);
             resolve({ file });
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+              console.log('[Capture] File input removed after selection');
+            }
           };
 
           input.onerror = (error) => {
-            console.error("Input error:", error);
-            reject(new Error("Error accessing camera or gallery: " + (error.message || "Unknown error")));
+            console.error('[Capture] File input error:', error);
+            reject(new Error('File input failed: ' + (error.message || 'Unknown error')));
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+              console.log('[Capture] File input removed on error');
+            }
           };
 
           document.body.appendChild(input);
-          console.log("Triggering file input click...");
+          console.log('[Capture] Triggering file input click');
           input.click();
 
+          // Detect cancellation
           setTimeout(() => {
-            if (document.body.contains(input)) {
+            if (document.body.contains(input) && !input.files?.length) {
               document.body.removeChild(input);
-              console.log("Removed file input element");
+              reject(new Error('File selection cancelled'));
+              console.log('[Capture] File input cancelled');
             }
-          }, 1000);
+          }, 5000); // Timeout to catch hanging inputs
         });
 
         const { file } = await filePromise;
@@ -259,56 +268,56 @@ export default function NewDoseScreen() {
         const workerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
           worker.onmessage = (e) => {
             if (e.data.error) {
-              reject(new Error("Worker error: " + e.data.error));
+              reject(new Error('Worker error: ' + e.data.error));
             } else {
               resolve({ base64Image: e.data.base64Image, mimeType: e.data.mimeType });
             }
             worker.terminate();
           };
           worker.onerror = (error) => {
-            console.error("Worker error:", error);
-            reject(new Error("Worker failed to process image: " + (error.message || "Unknown error")));
+            console.error('[Capture] Worker error:', error);
+            reject(new Error('Worker failed to process image: ' + (error.message || 'Unknown error')));
             worker.terminate();
           };
           worker.postMessage(file);
         });
 
         const { base64Image, mimeType } = await workerPromise;
-        console.log("Processing image now");
+        console.log('[Capture] Image converted to base64, starting processing');
         await processImage(base64Image, mimeType);
       } else {
         if (!cameraRef.current) {
-          console.log("Camera ref is null or undefined");
-          Alert.alert("Camera Error", "Camera not ready.");
-          throw new Error("Camera not ready");
+          console.log('[Capture] Camera ref is null or undefined');
+          Alert.alert('Camera Error', 'Camera not ready.');
+          throw new Error('Camera not ready');
         }
 
         if (permission?.status !== 'granted') {
-          console.log("Camera permission not granted:", permission?.status);
-          Alert.alert("Permission Error", "Camera permission is required.");
-          throw new Error("Camera permission required");
+          console.log('[Capture] Camera permission not granted:', permission?.status);
+          Alert.alert('Permission Error', 'Camera permission is required.');
+          throw new Error('Camera permission required');
         }
 
-        console.log("Starting capture with expo-camera...");
-        console.log("Attempting to take picture with takePictureAsync...");
+        console.log('[Capture] Starting capture with expo-camera');
+        console.log('[Capture] Attempting to take picture with takePictureAsync');
         const photo = await cameraRef.current.takePictureAsync({
           base64: true,
           quality: 0.5,
         });
-        console.log("Picture taken successfully.");
+        console.log('[Capture] Picture taken successfully');
 
         let base64Image = photo.base64;
         if (!base64Image && photo.uri) {
-          console.log("Base64 missing, reading from URI:", photo.uri);
+          console.log('[Capture] Base64 missing, reading from URI:', photo.uri);
           base64Image = await FileSystem.readAsStringAsync(photo.uri, {
             encoding: FileSystem.EncodingType.Base64,
           });
-          console.log("Base64 read from URI. Length:", base64Image.length);
+          console.log('[Capture] Base64 read from URI. Length:', base64Image.length);
         }
 
         if (!base64Image) {
-          console.error("No base64 data available");
-          throw new Error("Failed to capture image data.");
+          console.error('[Capture] No base64 data available');
+          throw new Error('Failed to capture image data.');
         }
 
         let mimeType = '';
@@ -317,7 +326,7 @@ export default function NewDoseScreen() {
           if (prefixMatch) {
             mimeType = `image/${prefixMatch[1]}`;
             base64Image = base64Image.substring(prefixMatch[0].length);
-            console.log(`Stripped prefix. MIME type: ${mimeType}`);
+            console.log(`[Capture] Stripped prefix. MIME type: ${mimeType}`);
           }
         }
 
@@ -327,44 +336,46 @@ export default function NewDoseScreen() {
           else if (base64Image.startsWith('UklGR')) mimeType = 'image/webp';
           else if (base64Image.startsWith('R0lGODlh')) mimeType = 'image/gif';
           else {
-            console.error("Unknown image format:", base64Image.substring(0, 20));
-            throw new Error("Unrecognized image format.");
+            console.error('[Capture] Unknown image format:', base64Image.substring(0, 20));
+            throw new Error('Unrecognized image format.');
           }
-          console.log("Detected MIME type:", mimeType);
+          console.log('[Capture] Detected MIME type:', mimeType);
         }
 
         if (base64Image.length % 4 !== 0) {
           const paddingNeeded = (4 - (base64Image.length % 4)) % 4;
           base64Image += "=".repeat(paddingNeeded);
-          console.log("Padded base64 length:", base64Image.length);
+          console.log('[Capture] Padded base64 length:', base64Image.length);
         }
 
         await processImage(base64Image, mimeType);
       }
     } catch (error) {
-      console.error("Error in captureImage:", error.message, error.stack);
-      const message = error.message || "Unknown error during capture";
+      console.error('[Capture] Error in captureImage:', error.message, error.stack);
+      const message = error.message || 'Unknown error during capture';
       setScanError(`An error occurred: ${message}. Please try again or use manual entry.`);
       Alert.alert(
-        "Capture Error",
+        'Capture Error',
         message,
         [
-          { text: "Retry", onPress: () => captureImage() },
-          { text: "Use Manual Entry", onPress: () => { resetFullForm('dose'); setScreenStep('manualEntry'); } },
-          { text: "Cancel", style: "cancel" },
+          { text: 'Retry', onPress: () => captureImage() },
+          { text: 'Use Manual Entry', onPress: () => { resetFullForm('dose'); setScreenStep('manualEntry'); } },
+          { text: 'Cancel', style: 'cancel' },
         ]
       );
+    } finally {
+      setIsProcessing(false);
+      console.log('[Capture] isProcessing set to false');
     }
   };
 
   const processImage = async (base64Image: string, mimeType: string) => {
-    console.log("Processing image with OpenAI...");
-    flushSync(() => setScanLoading(true));
-    console.log("scanLoading set to true");
+    console.log('[Process] Starting image processing');
 
     try {
       const imageUrl = `data:${mimeType};base64,${base64Image}`;
-      console.log("Sending request to OpenAI...");
+      console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
+      console.log('[Process] Sending request to OpenAI');
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
@@ -374,37 +385,41 @@ export default function NewDoseScreen() {
             content: [
               {
                 type: 'text',
-                text: 'Analyze the image for syringe and vial details. Provide ONLY a valid JSON object with { "syringe": { "type": "Insulin | Standard | unreadable | null", "volume": "e.g., \'1 ml\' | unreadable | null", "markings": "e.g., \'0.1,0.2,...\' | unreadable | null" }, "vial": { "substance": "name | unreadable | null", "totalAmount": "e.g., \'20 mg\' | unreadable | null", "concentration": "e.g., \'10 mg/ml\' | unreadable | null", "expiration": "YYYY-MM-DD | unreadable | null" } }',
+                text: 'Analyze the image for syringe and vial details. Provide ONLY a valid JSON object with the following structure: { "syringe": { "type": "Insulin | Standard | unreadable | null", "volume": "e.g., \'1 ml\', \'0.5 ml\', \'unreadable\', null", "markings": "e.g., \'0.1,0.2,...\', \'unreadable\', null" }, "vial": { "substance": "name | unreadable | null", "totalAmount": "e.g., \'20 mg\', \'1000 units\', \'unreadable\', null", "concentration": "e.g., \'100 units/ml\', \'10 mg/ml\', \'unreadable\', null", "expiration": "YYYY-MM-DD | unreadable | null" } }. Use "unreadable" if text is present but illegible. Use null if the information is completely absent or not visible. Do not include any explanatory text before or after the JSON.',
               },
-              { type: 'image_url', image_url: { url: imageUrl } },
+              {
+                type: 'image_url',
+                image_url: { url: imageUrl },
+              },
             ],
           },
         ],
       });
 
-      console.log("Received response from OpenAI");
+      console.log('[Process] Received response from OpenAI:', JSON.stringify(response, null, 2));
+
       const content = response.choices[0].message.content;
-      console.log("Raw OpenAI response content:", content);
+      console.log('[Process] Raw OpenAI response content:', content);
 
       if (!content) {
-        throw new Error("OpenAI returned an empty response.");
+        throw new Error('OpenAI returned an empty response.');
       }
 
       const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
       const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
-      console.log("Extracted JSON content:", jsonContent);
+      console.log('[Process] Extracted JSON content:', jsonContent);
 
       let result;
       try {
         result = JSON.parse(jsonContent);
-        console.log("Parsed JSON result:", JSON.stringify(result, null, 2));
+        console.log('[Process] Parsed JSON result:', JSON.stringify(result, null, 2));
         if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
-          console.error("Invalid JSON structure:", result);
-          throw new Error("Invalid JSON structure received from analysis.");
+          console.error('[Process] Invalid JSON structure:', result);
+          throw new Error('Invalid JSON structure received from analysis.');
         }
       } catch (parseError) {
-        console.error("JSON parse error:", parseError.message, parseError.stack);
-        throw new Error("Could not parse analysis result.");
+        console.error('[Process] JSON parse error:', parseError.message, parseError.stack);
+        throw new Error('Could not parse analysis result.');
       }
 
       const scannedSyringe = result.syringe || {};
@@ -419,16 +434,16 @@ export default function NewDoseScreen() {
       if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
         const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
         selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-        console.log(`Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
+        console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
       } else {
-        console.log(`Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+        console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
       }
       setManualSyringe({ type: scannedType, volume: selectedVolume });
 
       if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
         setSubstanceName(String(scannedVial.substance));
-        setSubstanceNameHint("Detected from vial scan");
-        console.log("Set substance name:", scannedVial.substance);
+        setSubstanceNameHint('Detected from vial scan');
+        console.log('[Process] Set substance name:', scannedVial.substance);
       }
 
       const vialConcentration = scannedVial.concentration;
@@ -441,42 +456,61 @@ export default function NewDoseScreen() {
           const detectedUnit = concMatch[2].toLowerCase();
           if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
           else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-          console.log(`Detected concentration: ${concMatch[1]} ${detectedUnit}`);
+          console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
         } else {
           setConcentrationAmount(String(vialConcentration));
-          console.log(`Detected concentration (raw): ${vialConcentration}`);
+          console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
         }
         setMedicationInputType('concentration');
-        setConcentrationHint("Detected from vial scan");
+        setConcentrationHint('Detected from vial scan');
         setTotalAmountHint(null);
       } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
         const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
         if (amountMatch) {
           setTotalAmount(amountMatch[1]);
-          console.log(`Detected total amount: ${amountMatch[1]}`);
+          console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
         } else {
           setTotalAmount(String(vialTotalAmount));
-          console.log(`Detected total amount (raw): ${vialTotalAmount}`);
+          console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
         }
         setMedicationInputType('totalAmount');
-        setTotalAmountHint("Detected from vial scan");
+        setTotalAmountHint('Detected from vial scan');
         setConcentrationHint(null);
       } else {
-        console.log("No reliable concentration or total amount detected.");
+        console.log('[Process] No reliable concentration or total amount detected.');
       }
 
+      console.log('[Process] Scan successful, transitioning to manual entry');
+      Alert.alert('Success', 'Image analyzed, proceeding to manual entry.');
       setScreenStep('manualEntry');
       setManualStep('dose');
-      Alert.alert("Success", "Image analyzed successfully.");
     } catch (error) {
-      console.error("Error in processImage:", error.message);
-      setScanError(`Processing failed: ${error.message}. Using manual entry.`);
+      console.error('[Process] Error processing image:', error.message, error.stack);
+      let message = 'An unexpected error occurred during scanning.';
+      if (error instanceof Error) {
+        if (error.message.includes('format is not recognized')) {
+          message = 'Image format could not be processed.';
+        } else {
+          message = `Error communicating with analysis service: ${error.message}`;
+        }
+      }
+
+      // Fallback response to proceed to manual entry
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setSubstanceName('');
+      setMedicationInputType('concentration');
+      setConcentrationAmount('');
+      setTotalAmount('');
       setScreenStep('manualEntry');
       setManualStep('dose');
-      Alert.alert("Warning", "Image analysis failed. Proceeding to manual entry.");
-    } finally {
-      flushSync(() => setScanLoading(false));
-      console.log("scanLoading set to false");
+      Alert.alert(
+        'Warning',
+        `Failed to analyze image: ${message}. Proceeding to manual entry with default values.`,
+        [
+          { text: 'OK', onPress: () => {} },
+          { text: 'Retry', onPress: () => captureImage() },
+        ]
+      );
     }
   };
 
@@ -644,7 +678,7 @@ export default function NewDoseScreen() {
   );
 
   const renderScan = () => {
-    console.log("Rendering scan screen, scanLoading:", scanLoading);
+    console.log('[Render] Rendering scan screen, isProcessing:', isProcessing);
     if (isMobileWeb) {
       if (permissionStatus === 'undetermined') {
         return (
@@ -687,9 +721,9 @@ export default function NewDoseScreen() {
             <TouchableOpacity
               style={styles.captureButton}
               onPress={captureImage}
-              disabled={scanLoading}
+              disabled={isProcessing}
             >
-              {scanLoading ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
             <View style={styles.bottomButtons}>
               <TouchableOpacity
@@ -701,7 +735,7 @@ export default function NewDoseScreen() {
               <TouchableOpacity
                 style={styles.backButtonScan}
                 onPress={handleGoHome}
-                disabled={scanLoading}
+                disabled={isProcessing}
               >
                 <Text style={styles.backButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -730,9 +764,9 @@ export default function NewDoseScreen() {
             <TouchableOpacity
               style={styles.captureButton}
               onPress={captureImage}
-              disabled={scanLoading}
+              disabled={isProcessing}
             >
-              {scanLoading ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
             <View style={styles.bottomButtons}>
               <TouchableOpacity
@@ -744,7 +778,7 @@ export default function NewDoseScreen() {
               <TouchableOpacity
                 style={styles.backButtonScan}
                 onPress={handleGoHome}
-                disabled={scanLoading}
+                disabled={isProcessing}
               >
                 <Text style={styles.backButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -1121,7 +1155,7 @@ export default function NewDoseScreen() {
       {screenStep === 'intro' && renderIntro()}
       {screenStep === 'scan' && renderScan()}
       {screenStep === 'manualEntry' && renderManualEntry()}
-      {scanLoading && (
+      {isProcessing && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>Processing image... This may take a few seconds</Text>
