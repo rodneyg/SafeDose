@@ -197,102 +197,175 @@ export default function NewDoseScreen() {
     setScanLoading(false);
   };
 
-  // Utility to wait for a specified time
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
   const captureImage = async () => {
     console.log("Capture button pressed - Start");
-  
+
     const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
     if (!apiKey) {
       console.log("OpenAI API key missing");
       Alert.alert("Config Error", "OpenAI Key missing. Please check your configuration.");
       return;
     }
-  
+
     // Reset state before starting
     setScanError(null);
     resetFullForm();
-  
+
     try {
-      // Delegate image capture and processing to processImage
       if (isMobileWeb) {
         console.log("Mobile web detected, using file input...");
-  
+
         const filePromise = new Promise<{ file: File }>((resolve, reject) => {
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = 'image/*';
           input.capture = 'environment';
-  
+
           input.onchange = (event) => {
+            console.log("Input change event triggered");
             const target = event.target as HTMLInputElement;
             const file = target.files?.[0];
+
             if (!file) {
-              reject(new Error("No file selected"));
+              console.log("No file selected or user cancelled.");
+              reject(new Error("No file selected or user cancelled"));
               return;
             }
+
+            console.log("File selected:", file.name, "Size:", file.size);
             resolve({ file });
           };
-  
-          input.onerror = () => reject(new Error("Error accessing camera or gallery"));
+
+          input.onerror = (error) => {
+            console.error("Input error:", error);
+            reject(new Error("Error accessing camera or gallery: " + (error.message || "Unknown error")));
+          };
+
           document.body.appendChild(input);
+          console.log("Triggering file input click...");
           input.click();
-          setTimeout(() => document.body.removeChild(input), 1000);
+
+          setTimeout(() => {
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+              console.log("Removed file input element");
+            }
+          }, 1000);
         });
-  
+
         const { file } = await filePromise;
+
         const worker = new Worker('/workers/fileReaderWorker.js');
         const workerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
           worker.onmessage = (e) => {
-            e.data.error ? reject(new Error(e.data.error)) : resolve(e.data);
+            if (e.data.error) {
+              reject(new Error("Worker error: " + e.data.error));
+            } else {
+              resolve({ base64Image: e.data.base64Image, mimeType: e.data.mimeType });
+            }
             worker.terminate();
           };
           worker.onerror = (error) => {
-            reject(error);
+            console.error("Worker error:", error);
+            reject(new Error("Worker failed to process image: " + (error.message || "Unknown error")));
             worker.terminate();
           };
           worker.postMessage(file);
         });
-  
+
         const { base64Image, mimeType } = await workerPromise;
+        console.log("Processing image now");
         await processImage(base64Image, mimeType);
       } else {
-        if (!cameraRef.current || permission?.status !== 'granted') {
-          throw new Error("Camera not ready or permission denied");
+        if (!cameraRef.current) {
+          console.log("Camera ref is null or undefined");
+          Alert.alert("Camera Error", "Camera not ready.");
+          throw new Error("Camera not ready");
         }
-  
-        const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.5 });
-        let base64Image = photo.base64 || (await FileSystem.readAsStringAsync(photo.uri, { encoding: 'Base64' }));
-        if (!base64Image) throw new Error("Failed to capture image data");
-  
-        const mimeType = base64Image.startsWith('/9j/') ? 'image/jpeg' : 'image/png'; // Simplified MIME detection
+
+        if (permission?.status !== 'granted') {
+          console.log("Camera permission not granted:", permission?.status);
+          Alert.alert("Permission Error", "Camera permission is required.");
+          throw new Error("Camera permission required");
+        }
+
+        console.log("Starting capture with expo-camera...");
+        console.log("Attempting to take picture with takePictureAsync...");
+        const photo = await cameraRef.current.takePictureAsync({
+          base64: true,
+          quality: 0.5,
+        });
+        console.log("Picture taken successfully.");
+
+        let base64Image = photo.base64;
+        if (!base64Image && photo.uri) {
+          console.log("Base64 missing, reading from URI:", photo.uri);
+          base64Image = await FileSystem.readAsStringAsync(photo.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log("Base64 read from URI. Length:", base64Image.length);
+        }
+
+        if (!base64Image) {
+          console.error("No base64 data available");
+          throw new Error("Failed to capture image data.");
+        }
+
+        let mimeType = '';
+        if (base64Image.startsWith('data:image/')) {
+          const prefixMatch = base64Image.match(/^data:image\/([a-z]+);base64,/);
+          if (prefixMatch) {
+            mimeType = `image/${prefixMatch[1]}`;
+            base64Image = base64Image.substring(prefixMatch[0].length);
+            console.log(`Stripped prefix. MIME type: ${mimeType}`);
+          }
+        }
+
+        if (!mimeType) {
+          if (base64Image.startsWith('/9j/')) mimeType = 'image/jpeg';
+          else if (base64Image.startsWith('iVBORw0KGgo=')) mimeType = 'image/png';
+          else if (base64Image.startsWith('UklGR')) mimeType = 'image/webp';
+          else if (base64Image.startsWith('R0lGODlh')) mimeType = 'image/gif';
+          else {
+            console.error("Unknown image format:", base64Image.substring(0, 20));
+            throw new Error("Unrecognized image format.");
+          }
+          console.log("Detected MIME type:", mimeType);
+        }
+
+        if (base64Image.length % 4 !== 0) {
+          const paddingNeeded = (4 - (base64Image.length % 4)) % 4;
+          base64Image += "=".repeat(paddingNeeded);
+          console.log("Padded base64 length:", base64Image.length);
+        }
+
         await processImage(base64Image, mimeType);
       }
     } catch (error) {
-      console.error("Error in captureImage:", error.message);
-      setScanError(`Capture failed: ${error.message}. Try again or use manual entry.`);
+      console.error("Error in captureImage:", error.message, error.stack);
+      const message = error.message || "Unknown error during capture";
+      setScanError(`An error occurred: ${message}. Please try again or use manual entry.`);
       Alert.alert(
         "Capture Error",
-        error.message,
+        message,
         [
           { text: "Retry", onPress: () => captureImage() },
-          { text: "Manual Entry", onPress: () => { resetFullForm('dose'); setScreenStep('manualEntry'); } },
-          { text: "Cancel" },
+          { text: "Use Manual Entry", onPress: () => { resetFullForm('dose'); setScreenStep('manualEntry'); } },
+          { text: "Cancel", style: "cancel" },
         ]
       );
     }
   };
-  
+
   const processImage = async (base64Image: string, mimeType: string) => {
     console.log("Processing image with OpenAI...");
     flushSync(() => setScanLoading(true));
     console.log("scanLoading set to true");
-  
+
     try {
       const imageUrl = `data:${mimeType};base64,${base64Image}`;
       console.log("Sending request to OpenAI...");
-  
+
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -308,25 +381,90 @@ export default function NewDoseScreen() {
           },
         ],
       });
-  
+
       console.log("Received response from OpenAI");
-      const result = JSON.parse(response.choices[0].message.content.trim());
-      console.log("Parsed result:", result);
-  
-      // Populate state with scanned data (simplified for brevity)
-      setManualSyringe({
-        type: result.syringe.type === 'Insulin' ? 'Insulin' : 'Standard',
-        volume: result.syringe.volume || '3 ml',
-      });
-      if (result.vial.substance) setSubstanceName(result.vial.substance);
-      if (result.vial.concentration) {
-        setConcentrationAmount(result.vial.concentration.split(' ')[0]);
-        setMedicationInputType('concentration');
-      } else if (result.vial.totalAmount) {
-        setTotalAmount(result.vial.totalAmount.split(' ')[0]);
-        setMedicationInputType('totalAmount');
+      const content = response.choices[0].message.content;
+      console.log("Raw OpenAI response content:", content);
+
+      if (!content) {
+        throw new Error("OpenAI returned an empty response.");
       }
-  
+
+      const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
+      const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      console.log("Extracted JSON content:", jsonContent);
+
+      let result;
+      try {
+        result = JSON.parse(jsonContent);
+        console.log("Parsed JSON result:", JSON.stringify(result, null, 2));
+        if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
+          console.error("Invalid JSON structure:", result);
+          throw new Error("Invalid JSON structure received from analysis.");
+        }
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError.message, parseError.stack);
+        throw new Error("Could not parse analysis result.");
+      }
+
+      const scannedSyringe = result.syringe || {};
+      const scannedVial = result.vial || {};
+
+      const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
+      const scannedVolume = scannedSyringe.volume;
+      const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
+      const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
+      let selectedVolume = defaultVolume;
+
+      if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
+        const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
+        selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
+        console.log(`Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
+      } else {
+        console.log(`Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+      }
+      setManualSyringe({ type: scannedType, volume: selectedVolume });
+
+      if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
+        setSubstanceName(String(scannedVial.substance));
+        setSubstanceNameHint("Detected from vial scan");
+        console.log("Set substance name:", scannedVial.substance);
+      }
+
+      const vialConcentration = scannedVial.concentration;
+      const vialTotalAmount = scannedVial.totalAmount;
+
+      if (vialConcentration && vialConcentration !== 'unreadable') {
+        const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
+        if (concMatch) {
+          setConcentrationAmount(concMatch[1]);
+          const detectedUnit = concMatch[2].toLowerCase();
+          if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
+          else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
+          console.log(`Detected concentration: ${concMatch[1]} ${detectedUnit}`);
+        } else {
+          setConcentrationAmount(String(vialConcentration));
+          console.log(`Detected concentration (raw): ${vialConcentration}`);
+        }
+        setMedicationInputType('concentration');
+        setConcentrationHint("Detected from vial scan");
+        setTotalAmountHint(null);
+      } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
+        const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
+        if (amountMatch) {
+          setTotalAmount(amountMatch[1]);
+          console.log(`Detected total amount: ${amountMatch[1]}`);
+        } else {
+          setTotalAmount(String(vialTotalAmount));
+          console.log(`Detected total amount (raw): ${vialTotalAmount}`);
+        }
+        setMedicationInputType('totalAmount');
+        setTotalAmountHint("Detected from vial scan");
+        setConcentrationHint(null);
+      } else {
+        console.log("No reliable concentration or total amount detected.");
+      }
+
       setScreenStep('manualEntry');
       setManualStep('dose');
       Alert.alert("Success", "Image analyzed successfully.");
@@ -537,7 +675,6 @@ export default function NewDoseScreen() {
             <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
               <Text style={styles.buttonText}>Go Back</Text>
             </TouchableOpacity>
-            {/* Removed Toggle Loading Indicator button for mobile web */}
           </View>
         );
       }
@@ -1087,7 +1224,7 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   tryCameraAgainButton: {
-    backgroundColor: '#FF9500', // Orange for distinction
+    backgroundColor: '#FF9500',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 8,
