@@ -494,11 +494,11 @@ export default function NewDoseScreen() {
           **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
         </Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={() => setScreenStep('scan')}>
+      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={() => setScreenStep('scan')}>
         <CameraIcon color={'#fff'} size={20} style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Scan Items</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.button, styles.manualButton]} onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}>
+      <TouchableOpacity style={[styles.button, styles.manualButton, isMobileWeb && styles.buttonMobile]} onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}>
         <Pill color={'#fff'} size={20} style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Enter Details Manually</Text>
       </TouchableOpacity>
@@ -512,10 +512,10 @@ export default function NewDoseScreen() {
         return (
           <View style={styles.content}>
             <Text style={styles.text}>Camera access is needed to scan items.</Text>
-            <TouchableOpacity style={styles.button} onPress={requestWebCameraPermission}>
+            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
               <Text style={styles.buttonText}>Grant Camera Access</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.backButton} onPress={() => setScreenStep('intro')}>
+            <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
               <Text style={styles.buttonText}>Go Back</Text>
             </TouchableOpacity>
           </View>
@@ -528,24 +528,16 @@ export default function NewDoseScreen() {
             <Text style={styles.errorText}>
               Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
             </Text>
-            <TouchableOpacity style={styles.button} onPress={captureImage}>
+            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={captureImage}>
               <Text style={styles.buttonText}>Take or Upload Photo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={requestWebCameraPermission}>
+            <TouchableOpacity style={[styles.tryCameraAgainButton, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
               <Text style={styles.buttonText}>Try Camera Again</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.backButton} onPress={() => setScreenStep('intro')}>
+            <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
               <Text style={styles.buttonText}>Go Back</Text>
             </TouchableOpacity>
-            {/* Debug button to toggle loading indicator */}
-            <TouchableOpacity style={styles.button} onPress={() => {
-              flushSync(() => {
-                setScanLoading(!scanLoading);
-              });
-              console.log("Toggled scanLoading to:", !scanLoading);
-            }}>
-              <Text style={styles.buttonText}>Toggle Loading Indicator</Text>
-            </TouchableOpacity>
+            {/* Removed Toggle Loading Indicator button for mobile web */}
           </View>
         );
       }
@@ -629,10 +621,10 @@ export default function NewDoseScreen() {
       return (
         <View style={styles.content}>
           <Text style={styles.errorText}>Camera permission is required to scan items.</Text>
-          <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestPermission}>
             <Text style={styles.buttonText}>Request Permissions</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => setScreenStep('intro')}>
+          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -643,10 +635,10 @@ export default function NewDoseScreen() {
       return (
         <View style={styles.content}>
           <Text style={styles.text}>Camera permission is needed to scan items.</Text>
-          <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestPermission}>
             <Text style={styles.buttonText}>Grant Permission</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => setScreenStep('intro')}>
+          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -885,11 +877,11 @@ export default function NewDoseScreen() {
         </Text>
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
           <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>New Dose</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }]} onPress={() => setScreenStep('scan')}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
           <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>Scan Again</Text>
         </TouchableOpacity>
@@ -942,11 +934,11 @@ export default function NewDoseScreen() {
           {formError && <Text style={styles.errorText}>{formError}</Text>}
           {manualStep !== 'finalResult' && (
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={handleBack}>
                 <Text style={styles.buttonText}>Back</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.nextButton, (manualStep === 'dose' && !dose) && styles.disabledButton]}
+                style={[styles.nextButton, (manualStep === 'dose' && !dose) && styles.disabledButton, isMobileWeb && styles.nextButtonMobile]}
                 onPress={() => {
                   if (manualStep === 'dose') handleNextDose();
                   else if (manualStep === 'medicationSource') handleNextMedicationSource();
@@ -1089,6 +1081,23 @@ const styles = StyleSheet.create({
     width: '80%', 
     minHeight: 50,
   },
+  buttonMobile: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    minHeight: 60,
+  },
+  tryCameraAgainButton: {
+    backgroundColor: '#FF9500', // Orange for distinction
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '80%',
+    minHeight: 50,
+  },
   manualButton: { 
     backgroundColor: '#6366f1',
   },
@@ -1099,8 +1108,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 0,
     width: '45%',
+    minHeight: 50,
+  },
+  backButtonMobile: {
+    paddingVertical: 14,
+    minHeight: 55,
   },
   manualEntryContainer: { 
     flex: 1,
@@ -1225,8 +1238,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    flex: 0,
     width: '45%',
+    minHeight: 50,
+  },
+  nextButtonMobile: {
+    paddingVertical: 14,
+    minHeight: 55,
   },
   disabledButton: {
     backgroundColor: '#C7C7CC',
@@ -1284,6 +1301,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 5,
+    minHeight: 50,
+  },
+  actionButtonMobile: {
+    paddingVertical: 16,
+    minHeight: 60,
   },
   presetContainer: {
     flexDirection: 'row',
