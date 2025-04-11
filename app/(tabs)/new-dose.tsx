@@ -41,7 +41,7 @@ const SyringeIllustration = ({ syringeType, syringeVolume, recommendedMarking, s
         </Text>
       ))}
       <Text style={{ position: 'absolute', left: syringeWidth - 30, top: 65, fontSize: 12, color: '#000', fontWeight: 'bold' }}>
-        {unit}
+        
       </Text>
       <View style={{ position: 'absolute', left: recommendedPosition - 2, top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 }} />
       <Text style={{ position: 'absolute', left: Math.max(0, recommendedPosition - 30), top: 85, fontSize: 12, color: '#FF0000', fontWeight: 'bold' }}>
