@@ -7,6 +7,7 @@ import {
   TextInput,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { Camera as CameraIcon, ArrowRight, Syringe, Pill, RotateCcw, Home, Check, X, Plus } from 'lucide-react-native';
@@ -73,7 +74,6 @@ type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'tot
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
 export default function NewDoseScreen() {
-  // State Management
   const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('intro');
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
@@ -84,11 +84,11 @@ export default function NewDoseScreen() {
   const cameraRef = useRef(null);
   const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
   const [dose, setDose] = useState<string>('');
-  const [unit, setUnit] = useState<'mg' | 'units'>('mg');
+  const [unit, setUnit] = useState<'mg' | 'mcg' | 'units'>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
   const [medicationInputType, setMedicationInputType] = useState<MedicationInputType>('concentration');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
-  const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'units/ml'>('mg/ml');
+  const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('1');
   const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
@@ -101,8 +101,8 @@ export default function NewDoseScreen() {
   const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
+  const [syringeHint, setSyringeHint] = useState<string | null>(null);
 
-  // Constants
   const syringeOptions = {
     Insulin: {
       '0.3 ml': '5,10,15,20,25,30',
@@ -121,9 +121,8 @@ export default function NewDoseScreen() {
   const userAgent = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
   const isMobileDevice = userAgent ? /Android|iPhone|iPad/i.test(userAgent) : false;
   const isMobileWeb = isWeb && (isMobileDevice || Platform.OS === 'web' || (Platform.OS === 'ios' && isWeb));
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB limit
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  // Debug logging
   console.log('isWeb:', isWeb);
   console.log('User Agent:', userAgent);
   console.log('isMobileDevice:', isMobileDevice);
@@ -131,17 +130,15 @@ export default function NewDoseScreen() {
   console.log('Platform.OS:', Platform.OS);
   console.log('OpenAI API Key:', Constants.expoConfig?.extra?.OPENAI_API_KEY || 'Not set');
 
-  // OpenAI Client
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
     dangerouslyAllowBrowser: true,
   });
 
-  // Effects
   useEffect(() => {
     if (screenStep !== 'scan') {
       setScanError(null);
-      setIsProcessing(false); // Reset processing when leaving scan screen
+      setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }
   }, [screenStep]);
@@ -195,6 +192,7 @@ export default function NewDoseScreen() {
     setSubstanceNameHint(null);
     setConcentrationHint(null);
     setTotalAmountHint(null);
+    setSyringeHint(null);
     setManualStep(startStep);
     console.log('[Reset] Form reset complete');
   };
@@ -209,13 +207,11 @@ export default function NewDoseScreen() {
       return;
     }
 
-    // Reset state before starting
     setIsProcessing(false);
     setScanError(null);
     setProcessingMessage('Waiting for photo selection...');
     resetFullForm();
 
-    // Debounce to prevent rapid clicks
     await new Promise(resolve => setTimeout(resolve, 300));
     setIsProcessing(true);
     console.log('[Capture] isProcessing set to true');
@@ -271,10 +267,10 @@ export default function NewDoseScreen() {
           setTimeout(() => {
             if (document.body.contains(input) && !input.files?.length) {
               document.body.removeChild(input);
-              reject(new Error('File selection cancelled after 55 seconds'));
+              reject(new Error('File selection cancelled after 15 seconds'));
               console.log('[Capture] File input cancelled');
             }
-          }, 55000); // Increased to 15 seconds
+          }, 15000);
         });
 
         const { file } = await filePromise;
@@ -463,6 +459,7 @@ export default function NewDoseScreen() {
         console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
       }
       setManualSyringe({ type: scannedType, volume: selectedVolume });
+      setSyringeHint('Detected from image scan');
 
       if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
         setSubstanceName(String(scannedVial.substance));
@@ -480,6 +477,7 @@ export default function NewDoseScreen() {
           const detectedUnit = concMatch[2].toLowerCase();
           if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
           else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
+          else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
           console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
         } else {
           setConcentrationAmount(String(vialConcentration));
@@ -537,58 +535,88 @@ export default function NewDoseScreen() {
   };
 
   const calculateDoseVolumeAndMarking = () => {
+    console.log('[Calculate] Starting calculation');
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
 
     if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
-      setCalculationError('Internal Error: Dose value is invalid.');
+      setCalculationError('Dose value is invalid or missing.');
+      console.log('[Calculate] Error: Invalid dose value');
       return;
     }
 
     if (concentration === null || isNaN(concentration) || concentration <= 0) {
-      setCalculationError('Internal Error: Medication concentration is invalid or missing.');
+      setCalculationError('Concentration is invalid or missing.');
+      console.log('[Calculate] Error: Invalid concentration');
       return;
     }
 
     if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
       setCalculationError('Syringe details are missing.');
+      console.log('[Calculate] Error: Missing syringe details');
       return;
     }
-    const isValidSyringeOption = syringeOptions[manualSyringe.type]?.[manualSyringe.volume];
-    if (!isValidSyringeOption) {
-      setCalculationError(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
-      return;
-    }
-    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
 
-    const requiredVolume = doseValue / concentration;
+    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
+    if (!markingsString) {
+      setCalculationError(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
+      console.log('[Calculate] Error: Invalid syringe option');
+      return;
+    }
+
+    let requiredVolume = doseValue / concentration;
+    console.log('[Calculate] Initial required volume (ml):', requiredVolume);
+
+    // Adjust based on units
+    if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = doseValue / concentration; // mcg / (mcg/ml) = ml
+    } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = doseValue / concentration; // mg / (mg/ml) = ml
+    } else if (unit === 'units' && concentrationUnit === 'units/ml') {
+      requiredVolume = doseValue / concentration; // units / (units/ml) = ml
+    } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = (doseValue / 1000) / concentration; // (mcg -> mg) / (mg/ml) = ml
+    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = (doseValue * 1000) / concentration; // (mg -> mcg) / (mcg/ml) = ml
+    } else {
+      setCalculationError('Unit mismatch between dose and concentration.');
+      console.log('[Calculate] Error: Unit mismatch');
+      return;
+    }
+
+    console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
     setCalculatedVolume(requiredVolume);
 
     const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
     if (requiredVolume > maxVolume) {
-      setCalculationError(`Required volume (${requiredVolume.toFixed(3)} ml) exceeds selected syringe capacity (${maxVolume} ml). Use a larger syringe or split dose.`);
+      setCalculationError(`Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`);
+      console.log('[Calculate] Error: Volume exceeds capacity');
       return;
     }
 
-    const markings = markingsString.split(',').map(m => parseFloat(m)).sort((a, b) => a - b);
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
-    const markingScaleUnit = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+    const markings = markingsString.split(',').map(m => parseFloat(m));
+    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume; // Insulin: ml -> units (100 units/ml), Standard: ml
+    console.log('[Calculate] Marking scale value:', markingScaleValue);
 
-    let recommendedMarkingValue = markingScaleValue;
-    let precisionMessage: string | null = null;
+    const nearestMarking = markings.reduce((prev, curr) =>
+      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
+    );
+    console.log('[Calculate] Nearest marking:', nearestMarking);
 
-    const lowerOrEqualMarkings = markings.filter(m => m <= markingScaleValue + 1e-9);
-    if (lowerOrEqualMarkings.length === 0) {
-      precisionMessage = `Calculated dose (${markingScaleValue.toFixed(3)} ${markingScaleUnit}) is below the smallest mark (${markings[0]} ${markingScaleUnit}). Verify the dose carefully.`;
-      Alert.alert('Volume Below Smallest Mark', precisionMessage);
-    } else if (!markings.some(m => Math.abs(m - markingScaleValue) < 1e-9)) {
-      const nearestBelow = Math.max(...lowerOrEqualMarkings);
-      precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(3)} ${markingScaleUnit}. Nearest visible mark below is ${nearestBelow} ${markingScaleUnit}.`;
+    let precisionMessage = null;
+    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+      precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
     }
 
-    setRecommendedMarking(recommendedMarkingValue.toString());
-    if (precisionMessage && !calculationError) setCalculationError(precisionMessage);
+    setRecommendedMarking(nearestMarking.toString());
+    console.log('[Calculate] Set recommended marking:', nearestMarking);
+
+    if (precisionMessage) {
+      setCalculationError(precisionMessage);
+      console.log('[Calculate] Precision message:', precisionMessage);
+    }
   };
 
   const handleNextDose = () => {
@@ -600,6 +628,7 @@ export default function NewDoseScreen() {
     }
     setDoseValue(parsedDose);
     setManualStep('medicationSource');
+    console.log('[Navigation] Moving to medicationSource');
   };
 
   const handleNextMedicationSource = () => {
@@ -609,6 +638,7 @@ export default function NewDoseScreen() {
       return;
     }
     setManualStep(medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
+    console.log('[Navigation] Moving to', medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
   };
 
   const handleNextConcentrationInput = () => {
@@ -624,7 +654,15 @@ export default function NewDoseScreen() {
       return;
     }
     setConcentration(parsedConc);
+    if (unit === 'units' || unit === 'mcg') {
+      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
+      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
+    } else {
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setSyringeHint('Standard syringe selected for milligrams.');
+    }
     setManualStep('syringe');
+    console.log('[Navigation] Moving to syringe with concentration:', parsedConc);
   };
 
   const handleNextTotalAmountInput = () => {
@@ -635,6 +673,7 @@ export default function NewDoseScreen() {
       return;
     }
     setManualStep('reconstitution');
+    console.log('[Navigation] Moving to reconstitution');
   };
 
   const handleNextReconstitution = () => {
@@ -644,16 +683,28 @@ export default function NewDoseScreen() {
       setFormError('Please enter a valid, positive volume (in ml) added for reconstitution.');
       return;
     }
-    const totalAmountValue = parseFloat(totalAmount);
+    let totalAmountValue = parseFloat(totalAmount);
+    if (unit === 'mcg') {
+      totalAmountValue *= 1000; // Convert mg to mcg for mcg dose unit
+    }
     const calculatedConc = totalAmountValue / parsedSolutionVol;
     setConcentration(calculatedConc);
+    if (unit === 'units' || unit === 'mcg') {
+      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
+      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
+    } else {
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setSyringeHint('Standard syringe selected for milligrams.');
+    }
     setManualStep('syringe');
+    console.log('[Navigation] Moving to syringe with calculated concentration:', calculatedConc);
   };
 
   const handleCalculateFinal = () => {
     setFormError(null);
     calculateDoseVolumeAndMarking();
     setManualStep('finalResult');
+    console.log('[Navigation] Moving to finalResult');
   };
 
   const handleBack = () => {
@@ -668,15 +719,18 @@ export default function NewDoseScreen() {
       case 'medicationSource': setManualStep('dose'); break;
       case 'dose': setScreenStep('intro'); resetFullForm(); break;
     }
+    console.log('[Navigation] Going back to', manualStep);
   };
 
   const handleStartOver = () => {
     resetFullForm('dose');
+    console.log('[Navigation] Starting over');
   };
 
   const handleGoHome = () => {
     resetFullForm();
     setScreenStep('intro');
+    console.log('[Navigation] Going home');
   };
 
   const renderIntro = () => (
@@ -860,6 +914,12 @@ export default function NewDoseScreen() {
           <Text style={[styles.radioText, unit === 'mg' && styles.radioTextSelected]}>mg</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.radioButton, unit === 'mcg' && styles.radioButtonSelected]}
+          onPress={() => setUnit('mcg')}
+        >
+          <Text style={[styles.radioText, unit === 'mcg' && styles.radioTextSelected]}>mcg</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.radioButton, unit === 'units' && styles.radioButtonSelected]}
           onPress={() => setUnit('units')}
         >
@@ -887,7 +947,7 @@ export default function NewDoseScreen() {
           onPress={() => setMedicationInputType('concentration')}
         >
           <Text style={[styles.radioText, medicationInputType === 'concentration' && styles.radioTextSelected]}>
-            Concentration (e.g., 10 mg/ml, 100 units/ml)
+            Concentration (e.g., 10 mg/ml, 100 mcg/ml, 100 units/ml)
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -895,7 +955,7 @@ export default function NewDoseScreen() {
           onPress={() => setMedicationInputType('totalAmount')}
         >
           <Text style={[styles.radioText, medicationInputType === 'totalAmount' && styles.radioTextSelected]}>
-            Total Amount in Vial (e.g., 50 mg, 1000 units)
+            Total Amount in Vial (e.g., 50 mg, 500 mcg, 1000 units)
           </Text>
         </TouchableOpacity>
       </View>
@@ -924,6 +984,12 @@ export default function NewDoseScreen() {
           <Text style={[styles.radioText, concentrationUnit === 'mg/ml' && styles.radioTextSelected]}>mg/ml</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.radioButton, concentrationUnit === 'mcg/ml' && styles.radioButtonSelected]}
+          onPress={() => setConcentrationUnit('mcg/ml')}
+        >
+          <Text style={[styles.radioText, concentrationUnit === 'mcg/ml' && styles.radioTextSelected]}>mcg/ml</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.radioButton, concentrationUnit === 'units/ml' && styles.radioButtonSelected]}
           onPress={() => setConcentrationUnit('units/ml')}
         >
@@ -937,7 +1003,7 @@ export default function NewDoseScreen() {
   const renderTotalAmountInputStep = () => (
     <View style={styles.formContainer}>
       <Text style={styles.formTitle}>Step 2b: Enter Total Amount</Text>
-      <Text style={styles.labelText}>Total Amount in Vial ({unit}):</Text>
+      <Text style={styles.labelText}>Total Amount in Vial ({unit === 'mcg' ? 'mg' : unit}):</Text>
       <TextInput
         style={styles.input}
         value={totalAmount}
@@ -947,7 +1013,10 @@ export default function NewDoseScreen() {
         placeholderTextColor="#9ca3af"
       />
       {totalAmountHint && <Text style={styles.helperHint}>{totalAmountHint}</Text>}
-      <Text style={styles.inputHelperText}>Enter the total amount of substance in the vial as a number. Unit is '{unit}'.</Text>
+      <Text style={styles.inputHelperText}>
+        Enter the total amount of substance in the vial as a number. Unit is '{unit === 'mcg' ? 'mg' : unit}'.
+        {unit === 'mcg' && ' (Note: Converted to mcg for calculation.)'}
+      </Text>
     </View>
   );
 
@@ -989,17 +1058,18 @@ export default function NewDoseScreen() {
         <View style={styles.presetContainer}>
           <TouchableOpacity
             style={[styles.optionButton, manualSyringe.type === 'Insulin' && styles.selectedOption]}
-            onPress={() => setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2] })}
+            onPress={() => { setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2] }); setSyringeHint(null); }}
           >
             <Text style={[styles.buttonText, manualSyringe.type === 'Insulin' && styles.selectedButtonText]}>Insulin (units)</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.optionButton, manualSyringe.type === 'Standard' && styles.selectedOption]}
-            onPress={() => setManualSyringe({ type: 'Standard', volume: standardVolumes[1] })}
+            onPress={() => { setManualSyringe({ type: 'Standard', volume: standardVolumes[1] }); setSyringeHint(null); }}
           >
             <Text style={[styles.buttonText, manualSyringe.type === 'Standard' && styles.selectedButtonText]}>Standard (ml)</Text>
           </TouchableOpacity>
         </View>
+        {syringeHint && <Text style={styles.helperHint}>{syringeHint}</Text>}
         <Text style={styles.labelText}>Syringe Volume:</Text>
         <View style={styles.presetContainer}>
           {availableVolumes.map(volume => (
@@ -1021,66 +1091,69 @@ export default function NewDoseScreen() {
     );
   };
 
-  const renderFinalResultDisplay = () => (
-    <View style={styles.formContainer}>
-      {calculationError && !recommendedMarking && (
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
-          <X color="#f87171" size={24} />
-          <Text style={{ fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 }}>{calculationError}</Text>
-        </View>
-      )}
-      {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
-          <Text style={styles.instructionTitle}>
-            {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
-          </Text>
-          <Text style={styles.instructionText}>
-            For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
-          </Text>
-          <Text style={styles.instructionTextLarge}>
-            Draw up to the {recommendedMarking} mark
-          </Text>
-          <Text style={styles.instructionNote}>
-            ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
-          </Text>
-          {calculatedVolume !== null && (
-            <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(3)} ml)
-            </Text>
-          )}
-          {calculationError && (
-            <Text style={{ fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' }}>
-              {calculationError}
-            </Text>
-          )}
-          <View style={{ marginTop: 20, alignItems: 'center' }}>
-            <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
-            <SyringeIllustration
-              syringeType={manualSyringe.type}
-              syringeVolume={manualSyringe.volume}
-              recommendedMarking={recommendedMarking}
-              syringeOptions={syringeOptions}
-            />
+  const renderFinalResultDisplay = () => {
+    console.log('[Render] Rendering final result, recommendedMarking:', recommendedMarking);
+    return (
+      <ScrollView contentContainerStyle={styles.formContainer}>
+        {calculationError && !recommendedMarking && (
+          <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+            <X color="#f87171" size={24} />
+            <Text style={{ fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 }}>{calculationError}</Text>
           </View>
+        )}
+        {recommendedMarking && (
+          <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+            <Text style={styles.instructionTitle}>
+              {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
+            </Text>
+            <Text style={styles.instructionText}>
+              For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
+            </Text>
+            <Text style={styles.instructionTextLarge}>
+              Draw up to the {recommendedMarking} mark
+            </Text>
+            <Text style={styles.instructionNote}>
+              ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
+            </Text>
+            {calculatedVolume !== null && (
+              <Text style={styles.instructionNote}>
+                (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
+              </Text>
+            )}
+            {calculationError && (
+              <Text style={{ fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' }}>
+                {calculationError}
+              </Text>
+            )}
+            <View style={{ marginTop: 20, alignItems: 'center' }}>
+              <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
+              <SyringeIllustration
+                syringeType={manualSyringe.type}
+                syringeVolume={manualSyringe.volume}
+                recommendedMarking={recommendedMarking}
+                syringeOptions={syringeOptions}
+              />
+            </View>
+          </View>
+        )}
+        <View style={styles.disclaimerContainer}>
+          <Text style={styles.disclaimerText}>
+            **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
+          </Text>
         </View>
-      )}
-      <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerText}>
-          **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
-        </Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
-          <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>New Dose</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
-          <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Scan Again</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
+            <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>New Dose</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
+            <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>Scan Again</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  };
 
   const renderManualEntry = () => {
     let currentStepComponent;
@@ -1120,7 +1193,7 @@ export default function NewDoseScreen() {
     }
 
     return (
-      <View style={styles.manualEntryContainer}>
+      <ScrollView style={styles.manualEntryContainer}>
         <CustomProgressBar progress={progress} />
         <View style={styles.formWrapper}>
           {currentStepComponent}
@@ -1150,7 +1223,7 @@ export default function NewDoseScreen() {
             </View>
           )}
         </View>
-      </View>
+      </ScrollView>
     );
   };
 
@@ -1310,7 +1383,6 @@ const styles = StyleSheet.create({
   },
   manualEntryContainer: { 
     flex: 1,
-    ...(Platform.OS === 'web' && { minHeight: '100vh' }),
   },
   progressContainer: {
     marginBottom: 10,
@@ -1334,11 +1406,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   formWrapper: {
-    flex: 1,
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 20,
-    ...(Platform.OS === 'web' && { minHeight: '80vh' }),
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
