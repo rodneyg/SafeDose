@@ -78,7 +78,8 @@ export default function NewDoseScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // Unified state for loading
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
   const cameraRef = useRef(null);
   const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
@@ -120,6 +121,7 @@ export default function NewDoseScreen() {
   const userAgent = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
   const isMobileDevice = userAgent ? /Android|iPhone|iPad/i.test(userAgent) : false;
   const isMobileWeb = isWeb && (isMobileDevice || Platform.OS === 'web' || (Platform.OS === 'ios' && isWeb));
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB limit
 
   // Debug logging
   console.log('isWeb:', isWeb);
@@ -137,7 +139,11 @@ export default function NewDoseScreen() {
 
   // Effects
   useEffect(() => {
-    if (screenStep !== 'scan') setScanError(null);
+    if (screenStep !== 'scan') {
+      setScanError(null);
+      setIsProcessing(false); // Reset processing when leaving scan screen
+      setProcessingMessage('Processing image... This may take a few seconds');
+    }
   }, [screenStep]);
 
   useEffect(() => {
@@ -158,15 +164,12 @@ export default function NewDoseScreen() {
     }
   }, [screenStep]);
 
-  // Log isProcessing changes
   useEffect(() => {
     console.log("isProcessing changed to:", isProcessing);
   }, [isProcessing]);
 
-  // Web-specific camera permission request
   const requestWebCameraPermission = async () => {
     if (!isMobileWeb) return;
-
     console.warn("Skipping getUserMedia check due to lack of support");
     setPermissionStatus('denied');
     setMobileWebPermissionDenied(true);
@@ -193,7 +196,6 @@ export default function NewDoseScreen() {
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setManualStep(startStep);
-    // Do NOT reset isProcessing here; let captureImage manage it
     console.log('[Reset] Form reset complete');
   };
 
@@ -207,8 +209,14 @@ export default function NewDoseScreen() {
       return;
     }
 
-    // Reset state and set loading immediately
+    // Reset state before starting
+    setIsProcessing(false);
+    setScanError(null);
+    setProcessingMessage('Waiting for photo selection...');
     resetFullForm();
+
+    // Debounce to prevent rapid clicks
+    await new Promise(resolve => setTimeout(resolve, 300));
     setIsProcessing(true);
     console.log('[Capture] isProcessing set to true');
 
@@ -217,6 +225,10 @@ export default function NewDoseScreen() {
         console.log('[Capture] Mobile web detected, using file input');
 
         const filePromise = new Promise<{ file: File }>((resolve, reject) => {
+          const existingInputs = document.querySelectorAll('input[type="file"]');
+          existingInputs.forEach(input => input.remove());
+          console.log('[Capture] Cleared existing file inputs');
+
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = 'image/*';
@@ -232,6 +244,10 @@ export default function NewDoseScreen() {
               return;
             }
             console.log('[Capture] File selected:', file.name, 'Size:', file.size);
+            if (file.size > MAX_FILE_SIZE) {
+              reject(new Error(`File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds 5 MB limit`));
+              return;
+            }
             resolve({ file });
             if (document.body.contains(input)) {
               document.body.removeChild(input);
@@ -252,30 +268,31 @@ export default function NewDoseScreen() {
           console.log('[Capture] Triggering file input click');
           input.click();
 
-          // Detect cancellation
           setTimeout(() => {
             if (document.body.contains(input) && !input.files?.length) {
               document.body.removeChild(input);
-              reject(new Error('File selection cancelled'));
+              reject(new Error('File selection cancelled after 55 seconds'));
               console.log('[Capture] File input cancelled');
             }
-          }, 5000); // Timeout to catch hanging inputs
+          }, 55000); // Increased to 15 seconds
         });
 
         const { file } = await filePromise;
+        setProcessingMessage('Reading image data...');
 
-        // Read file in main thread using FileReader
         const reader = new FileReader();
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
           reader.onload = () => {
+            console.log('[Capture] FileReader onload triggered');
             const result = reader.result;
             if (typeof result !== 'string' || !result.includes(',')) {
+              console.error('[Capture] Invalid FileReader result');
               reject(new Error('Failed to read image data'));
               return;
             }
             const base64Image = result.split(',')[1];
-            const mimeType = file.type || 'image/jpeg'; // Default to jpeg if type is unavailable
-            console.log('[Capture] Image converted to base64, starting processing');
+            const mimeType = file.type || 'image/jpeg';
+            console.log('[Capture] Image converted to base64, length:', base64Image.length);
             resolve({ base64Image, mimeType });
           };
 
@@ -284,10 +301,12 @@ export default function NewDoseScreen() {
             reject(new Error('Failed to read image'));
           };
 
+          console.log('[Capture] Starting FileReader readAsDataURL');
           reader.readAsDataURL(file);
         });
 
         const { base64Image, mimeType } = await readerPromise;
+        setProcessingMessage('Analyzing image with AI...');
         await processImage(base64Image, mimeType);
       } else {
         if (!cameraRef.current) {
@@ -303,7 +322,6 @@ export default function NewDoseScreen() {
         }
 
         console.log('[Capture] Starting capture with expo-camera');
-        console.log('[Capture] Attempting to take picture with takePictureAsync');
         const photo = await cameraRef.current.takePictureAsync({
           base64: true,
           quality: 0.5,
@@ -313,6 +331,7 @@ export default function NewDoseScreen() {
         let base64Image = photo.base64;
         if (!base64Image && photo.uri) {
           console.log('[Capture] Base64 missing, reading from URI:', photo.uri);
+          setProcessingMessage('Reading image data...');
           base64Image = await FileSystem.readAsStringAsync(photo.uri, {
             encoding: FileSystem.EncodingType.Base64,
           });
@@ -352,6 +371,7 @@ export default function NewDoseScreen() {
           console.log('[Capture] Padded base64 length:', base64Image.length);
         }
 
+        setProcessingMessage('Analyzing image with AI...');
         await processImage(base64Image, mimeType);
       }
     } catch (error) {
@@ -498,8 +518,6 @@ export default function NewDoseScreen() {
           message = `Error communicating with analysis service: ${error.message}`;
         }
       }
-
-      // Fallback response to proceed to manual entry
       setManualSyringe({ type: 'Standard', volume: '3 ml' });
       setSubstanceName('');
       setMedicationInputType('concentration');
@@ -704,7 +722,7 @@ export default function NewDoseScreen() {
             <Text style={styles.errorText}>
               Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
             </Text>
-            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={captureImage}>
+            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={captureImage} disabled={isProcessing}>
               <Text style={styles.buttonText}>Take or Upload Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.tryCameraAgainButton, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
@@ -723,7 +741,7 @@ export default function NewDoseScreen() {
             {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
             <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
             <TouchableOpacity
-              style={styles.captureButton}
+              style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={captureImage}
               disabled={isProcessing}
             >
@@ -766,7 +784,7 @@ export default function NewDoseScreen() {
             {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
             <Text style={styles.scanText}>Position syringe & vial clearly</Text>
             <TouchableOpacity
-              style={styles.captureButton}
+              style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={captureImage}
               disabled={isProcessing}
             >
@@ -1162,7 +1180,7 @@ export default function NewDoseScreen() {
       {isProcessing && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Processing image... This may take a few seconds</Text>
+          <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
       )}
     </View>
