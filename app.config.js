@@ -32,9 +32,10 @@ module.exports = {
   experiments: {
     staticRendering: true,
     typedRoutes: true,
-    sitemap: true // Explicitly enable sitemap generation
+    sitemap: true
   },
   extra: {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
   },
 };

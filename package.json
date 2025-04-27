@@ -7,11 +7,15 @@
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "start": "expo start",
     "web": "expo start --web",
-    "build:web": "expo export --platform web",
+    "build:web": "rimraf dist && expo export --platform web --output-dir dist",
+    "build:functions": "esbuild api/*.js --bundle --platform=node --target=node16 --outdir=functions",
     "build": "expo export --platform web",
     "lint": "expo lint",
     "android": "expo run:android",
     "ios": "expo run:ios"
+  },
+  "vercel": {
+    "projectRoot": "."
   },
   "dependencies": {
     "@expo/cli": "latest",
@@ -20,6 +24,10 @@
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "@stripe/stripe-js": "^7.2.0",
+    "@types/next": "^8.0.7",
+    "@types/stripe": "^8.0.416",
+    "class-variance-authority": "^0.7.1",
     "dotenv": "^16.4.7",
     "expo": "^52.0.42",
     "expo-blur": "^14.0.3",
@@ -36,7 +44,12 @@
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "^4.0.7",
     "expo-web-browser": "^14.0.2",
+    "framer-motion": "^12.7.4",
+    "lucide-react": "^0.488.0",
     "lucide-react-native": "^0.475.0",
+    "micro": "^10.0.1",
+    "nativewind": "^4.1.23",
+    "next": "^15.3.1",
     "openai": "^4.90.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -45,17 +58,28 @@
     "react-native-gesture-handler": "~2.20.2",
     "react-native-paper": "^5.13.1",
     "react-native-picker-select": "^9.3.1",
-    "react-native-reanimated": "^3.17.2",
-    "react-native-safe-area-context": "4.12.0",
+    "react-native-reanimated": "^3.17.5",
+    "react-native-safe-area-context": "^4.14.1",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "stripe": "^18.0.0",
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
-    "typescript": "^5.3.3"
+    "rimraf": "^6.0.1",
+    "typescript": "^5.3.3",
+    "vercel": "^28.4.8"
+  },
+  "overrides": {
+    "ts-node": "10.9.1"
+  },
+  "@vercel/node": {
+    "ts-node": "10.9.1",
+    "typescript": "4.8.4"
   }
 }

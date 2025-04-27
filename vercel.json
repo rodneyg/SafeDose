@@ -1,26 +1,14 @@
 {
-    "build": {
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "builds": [
-      {
-        "src": "package.json",
-        "use": "@vercel/static-build",
-        "config": {
-          "distDir": "dist"
-        }
-      }
-    ],
-    "routes": [
-      {
-        "src": "/_expo/(.*)",
-        "dest": "/dist/_expo/$1"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "/index.html"
-      }
-    ]
-  }
+  "version": 2,
+  "builds": [
+    { "src": "package.json",      "use": "@vercel/static-build", "config": { "buildCommand":"npm run build:web", "outputDirectory":"dist" } },
+    { "src": "api/**/*.js",       "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1.js" },
+
+    { "handle": "filesystem" },
+
+    { "src": "/(.*)",      "dest": "/index.html" }
+  ]
+}

@@ -28,7 +28,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.safedoseapp.boltexponativewind"/>
-        <data android:scheme="exp+bolt-expo-nativewind"/>
+        <data android:scheme="exp+safedose"/>
       </intent-filter>
     </activity>
   </application>
