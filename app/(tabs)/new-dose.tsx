@@ -1,75 +1,21 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  Platform,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, ArrowRight, Syringe, Pill, RotateCcw, Home, Check, X, Plus } from 'lucide-react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Alert, ScrollView } from 'react-native';
+import { Camera as CameraIcon, ArrowRight, Syringe, Pill } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
+import { isMobileWeb, MAX_FILE_SIZE, syringeOptions, insulinVolumes, standardVolumes } from '../../lib/utils';
+import CustomProgressBar from '../../components/CustomProgressBar';
+import DoseInputStep from '../../components/DoseInputStep';
+import MedicationSourceStep from '../../components/MedicationSourceStep';
+import ConcentrationInputStep from '../../components/ConcentrationInputStep';
+import TotalAmountInputStep from '../../components/TotalAmountInputStep';
+import ReconstitutionStep from '../../components/ReconstitutionStep';
+import SyringeStep from '../../components/SyringeStep';
+import FinalResultDisplay from '../../components/FinalResultDisplay';
 
-// SyringeIllustration Component
-const SyringeIllustration = ({ syringeType, syringeVolume, recommendedMarking, syringeOptions }) => {
-  const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
-  const markingsString = syringeOptions[syringeType][syringeVolume];
-  const markings = [0, ...markingsString.split(',').map(m => parseFloat(m))];
-  const maxMarking = Math.max(...markings);
-  const syringeWidth = 300;
-  const markingPositions = markings.map(m => (m / maxMarking) * syringeWidth);
-  const recommendedValue = parseFloat(recommendedMarking);
-  const recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
-
-  return (
-    <View style={{ width: syringeWidth, height: 100, position: 'relative' }}>
-      <View style={{ position: 'absolute', left: 0, top: 40, width: syringeWidth, height: 20, backgroundColor: '#E0E0E0', borderRadius: 10 }} />
-      <View style={{ position: 'absolute', left: 0, top: 50, width: syringeWidth, height: 2, backgroundColor: '#000' }} />
-      {markings.map((m, index) => (
-        <View key={m} style={{ position: 'absolute', left: markingPositions[index], top: 40, width: 1, height: 20, backgroundColor: '#000' }} />
-      ))}
-      {markings.map((m, index) => (
-        <Text key={`label-${m}`} style={{ position: 'absolute', left: markingPositions[index] - 10, top: 65, fontSize: 10 }}>
-          {m}
-        </Text>
-      ))}
-      <Text style={{ position: 'absolute', left: syringeWidth - 30, top: 65, fontSize: 12, color: '#000', fontWeight: 'bold' }}>
-        
-      </Text>
-      <View style={{ position: 'absolute', left: recommendedPosition - 2, top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 }} />
-      <Text style={{ position: 'absolute', left: Math.max(0, recommendedPosition - 30), top: 85, fontSize: 12, color: '#FF0000', fontWeight: 'bold' }}>
-        Draw to here
-      </Text>
-    </View>
-  );
-};
-
-// Custom Progress Bar Component
-const CustomProgressBar = ({ progress }) => {
-  const totalSteps = 5;
-  const currentStep = Math.round(progress * totalSteps);
-  const progressWidth = (progress * 100) + '%';
-
-  return (
-    <View style={styles.progressContainer}>
-      <View style={styles.progressBarBackground}>
-        <View style={[styles.progressBarFill, { width: progressWidth }]} />
-      </View>
-      <Text style={styles.progressText}>
-        Step {currentStep} of {totalSteps}
-      </Text>
-    </View>
-  );
-};
-
-// Define steps for manual entry
 type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
@@ -102,33 +48,6 @@ export default function NewDoseScreen() {
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
-
-  const syringeOptions = {
-    Insulin: {
-      '0.3 ml': '5,10,15,20,25,30',
-      '0.5 ml': '5,10,15,20,25,30,35,40,45,50',
-      '1 ml': '10,20,30,40,50,60,70,80,90,100',
-    },
-    Standard: {
-      '1 ml': '0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0',
-      '3 ml': '0.5,1.0,1.5,2.0,2.5,3.0',
-      '5 ml': '1.0,2.0,3.0,4.0,5.0',
-    },
-  };
-  const insulinVolumes = ['0.3 ml', '0.5 ml', '1 ml'];
-  const standardVolumes = ['1 ml', '3 ml', '5 ml'];
-  const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
-  const userAgent = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
-  const isMobileDevice = userAgent ? /Android|iPhone|iPad/i.test(userAgent) : false;
-  const isMobileWeb = isWeb && (isMobileDevice || Platform.OS === 'web' || (Platform.OS === 'ios' && isWeb));
-  const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-  console.log('isWeb:', isWeb);
-  console.log('User Agent:', userAgent);
-  console.log('isMobileDevice:', isMobileDevice);
-  console.log('isMobileWeb:', isMobileWeb);
-  console.log('Platform.OS:', Platform.OS);
-  console.log('OpenAI API Key:', Constants.expoConfig?.extra?.OPENAI_API_KEY || 'Not set');
 
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
@@ -568,17 +487,16 @@ export default function NewDoseScreen() {
     let requiredVolume = doseValue / concentration;
     console.log('[Calculate] Initial required volume (ml):', requiredVolume);
 
-    // Adjust based on units
     if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = doseValue / concentration; // mcg / (mcg/ml) = ml
+      requiredVolume = doseValue / concentration;
     } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = doseValue / concentration; // mg / (mg/ml) = ml
+      requiredVolume = doseValue / concentration;
     } else if (unit === 'units' && concentrationUnit === 'units/ml') {
-      requiredVolume = doseValue / concentration; // units / (units/ml) = ml
+      requiredVolume = doseValue / concentration;
     } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = (doseValue / 1000) / concentration; // (mcg -> mg) / (mg/ml) = ml
+      requiredVolume = (doseValue / 1000) / concentration;
     } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = (doseValue * 1000) / concentration; // (mg -> mcg) / (mcg/ml) = ml
+      requiredVolume = (doseValue * 1000) / concentration;
     } else {
       setCalculationError('Unit mismatch between dose and concentration.');
       console.log('[Calculate] Error: Unit mismatch');
@@ -596,7 +514,7 @@ export default function NewDoseScreen() {
     }
 
     const markings = markingsString.split(',').map(m => parseFloat(m));
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume; // Insulin: ml -> units (100 units/ml), Standard: ml
+    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
     console.log('[Calculate] Marking scale value:', markingScaleValue);
 
     const nearestMarking = markings.reduce((prev, curr) =>
@@ -685,7 +603,7 @@ export default function NewDoseScreen() {
     }
     let totalAmountValue = parseFloat(totalAmount);
     if (unit === 'mcg') {
-      totalAmountValue *= 1000; // Convert mg to mcg for mcg dose unit
+      totalAmountValue *= 1000;
     }
     const calculatedConc = totalAmountValue / parsedSolutionVol;
     setConcentration(calculatedConc);
@@ -893,299 +811,95 @@ export default function NewDoseScreen() {
     }
   };
 
-  const renderDoseInputStep = () => (
-    <View style={styles.formContainer}>
-      <Text style={styles.formTitle}>Step 1: Prescribed Dose</Text>
-      <Text style={styles.labelText}>Dose Amount:</Text>
-      <TextInput
-        style={styles.input}
-        value={dose}
-        onChangeText={setDose}
-        keyboardType="numeric"
-        placeholder="e.g., 100"
-        placeholderTextColor="#9ca3af"
-      />
-      <Text style={styles.labelText}>Unit:</Text>
-      <View style={styles.radioContainer}>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'mg' && styles.radioButtonSelected]}
-          onPress={() => setUnit('mg')}
-        >
-          <Text style={[styles.radioText, unit === 'mg' && styles.radioTextSelected]}>mg</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'mcg' && styles.radioButtonSelected]}
-          onPress={() => setUnit('mcg')}
-        >
-          <Text style={[styles.radioText, unit === 'mcg' && styles.radioTextSelected]}>mcg</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'units' && styles.radioButtonSelected]}
-          onPress={() => setUnit('units')}
-        >
-          <Text style={[styles.radioText, unit === 'units' && styles.radioTextSelected]}>units</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderMedicationSourceStep = () => (
-    <View style={styles.formContainer}>
-      <Text style={styles.formTitle}>Step 2: Medication Details</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Substance Name (Optional)"
-        placeholderTextColor="#9ca3af"
-        value={substanceName}
-        onChangeText={(text) => { setSubstanceName(text); setSubstanceNameHint(null); }}
-      />
-      {substanceNameHint && <Text style={styles.helperHint}>{substanceNameHint}</Text>}
-      <Text style={styles.labelText}>Select how the medication amount is specified on the vial label:</Text>
-      <View style={styles.radioContainerVertical}>
-        <TouchableOpacity
-          style={[styles.radioButtonWide, medicationInputType === 'concentration' && styles.radioButtonSelected]}
-          onPress={() => setMedicationInputType('concentration')}
-        >
-          <Text style={[styles.radioText, medicationInputType === 'concentration' && styles.radioTextSelected]}>
-            Concentration (e.g., 10 mg/ml, 100 mcg/ml, 100 units/ml)
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButtonWide, medicationInputType === 'totalAmount' && styles.radioButtonSelected]}
-          onPress={() => setMedicationInputType('totalAmount')}
-        >
-          <Text style={[styles.radioText, medicationInputType === 'totalAmount' && styles.radioTextSelected]}>
-            Total Amount in Vial (e.g., 50 mg, 500 mcg, 1000 units)
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderConcentrationInputStep = () => (
-    <View style={styles.formContainer}>
-      <Text style={styles.formTitle}>Step 2a: Enter Concentration</Text>
-      <Text style={styles.labelText}>Concentration Amount:</Text>
-      <TextInput
-        style={styles.input}
-        value={concentrationAmount}
-        onChangeText={(text) => { setConcentrationAmount(text); setConcentrationHint(null); }}
-        keyboardType="numeric"
-        placeholder="e.g., 10"
-        placeholderTextColor="#9ca3af"
-      />
-      {concentrationHint && <Text style={styles.helperHint}>{concentrationHint}</Text>}
-      <Text style={styles.labelText}>Unit:</Text>
-      <View style={styles.radioContainer}>
-        <TouchableOpacity
-          style={[styles.radioButton, concentrationUnit === 'mg/ml' && styles.radioButtonSelected]}
-          onPress={() => setConcentrationUnit('mg/ml')}
-        >
-          <Text style={[styles.radioText, concentrationUnit === 'mg/ml' && styles.radioTextSelected]}>mg/ml</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, concentrationUnit === 'mcg/ml' && styles.radioButtonSelected]}
-          onPress={() => setConcentrationUnit('mcg/ml')}
-        >
-          <Text style={[styles.radioText, concentrationUnit === 'mcg/ml' && styles.radioTextSelected]}>mcg/ml</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, concentrationUnit === 'units/ml' && styles.radioButtonSelected]}
-          onPress={() => setConcentrationUnit('units/ml')}
-        >
-          <Text style={[styles.radioText, concentrationUnit === 'units/ml' && styles.radioTextSelected]}>units/ml</Text>
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.inputHelperText}>Enter the concentration value and select the unit.</Text>
-    </View>
-  );
-
-  const renderTotalAmountInputStep = () => (
-    <View style={styles.formContainer}>
-      <Text style={styles.formTitle}>Step 2b: Enter Total Amount</Text>
-      <Text style={styles.labelText}>Total Amount in Vial ({unit === 'mcg' ? 'mg' : unit}):</Text>
-      <TextInput
-        style={styles.input}
-        value={totalAmount}
-        onChangeText={(text) => { setTotalAmount(text); setTotalAmountHint(null); }}
-        keyboardType="numeric"
-        placeholder="e.g., 50"
-        placeholderTextColor="#9ca3af"
-      />
-      {totalAmountHint && <Text style={styles.helperHint}>{totalAmountHint}</Text>}
-      <Text style={styles.inputHelperText}>
-        Enter the total amount of substance in the vial as a number. Unit is '{unit === 'mcg' ? 'mg' : unit}'.
-        {unit === 'mcg' && ' (Note: Converted to mcg for calculation.)'}
-      </Text>
-    </View>
-  );
-
-  const renderReconstitutionStep = () => (
-    <View style={styles.formContainer}>
-      <Text style={styles.formTitle}>Step 2c: Reconstitution</Text>
-      <Text style={styles.labelTextBold}>How much liquid (ml) are you adding?</Text>
-      <Text style={styles.labelText}>(e.g., sterile water, bacteriostatic water)</Text>
-      <View style={styles.presetContainer}>
-        {['1', '2', '3', '5'].map(ml => (
-          <TouchableOpacity
-            key={ml + 'ml'}
-            style={[styles.optionButtonSmall, solutionVolume === ml && styles.selectedOption]}
-            onPress={() => setSolutionVolume(ml)}
-          >
-            <Text style={[styles.buttonTextSmall, solutionVolume === ml && styles.selectedButtonText]}>{ml} ml</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <TextInput
-        style={[styles.input, { marginTop: 10 }]}
-        placeholder="Or enter custom volume (ml)"
-        placeholderTextColor="#9ca3af"
-        value={solutionVolume}
-        onChangeText={setSolutionVolume}
-        keyboardType="numeric"
-      />
-    </View>
-  );
-
-  const renderSyringeStep = () => {
-    const availableVolumes = manualSyringe.type === 'Insulin' ? insulinVolumes : standardVolumes;
-    const isValidSyringeOption = syringeOptions[manualSyringe.type]?.[manualSyringe.volume];
-
-    return (
-      <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>Step 3: Syringe Details</Text>
-        <Text style={styles.labelText}>Syringe Type:</Text>
-        <View style={styles.presetContainer}>
-          <TouchableOpacity
-            style={[styles.optionButton, manualSyringe.type === 'Insulin' && styles.selectedOption]}
-            onPress={() => { setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2] }); setSyringeHint(null); }}
-          >
-            <Text style={[styles.buttonText, manualSyringe.type === 'Insulin' && styles.selectedButtonText]}>Insulin (units)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.optionButton, manualSyringe.type === 'Standard' && styles.selectedOption]}
-            onPress={() => { setManualSyringe({ type: 'Standard', volume: standardVolumes[1] }); setSyringeHint(null); }}
-          >
-            <Text style={[styles.buttonText, manualSyringe.type === 'Standard' && styles.selectedButtonText]}>Standard (ml)</Text>
-          </TouchableOpacity>
-        </View>
-        {syringeHint && <Text style={styles.helperHint}>{syringeHint}</Text>}
-        <Text style={styles.labelText}>Syringe Volume:</Text>
-        <View style={styles.presetContainer}>
-          {availableVolumes.map(volume => (
-            <TouchableOpacity
-              key={volume}
-              style={[styles.optionButton, manualSyringe.volume === volume && styles.selectedOption]}
-              onPress={() => setManualSyringe(prev => ({ ...prev, volume }))}
-            >
-              <Text style={[styles.buttonText, manualSyringe.volume === volume && styles.selectedButtonText]}>{volume}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {isValidSyringeOption ? (
-          <Text style={styles.inferredMarkings}>Markings ({manualSyringe.type === 'Insulin' ? 'units' : 'ml'}): {syringeOptions[manualSyringe.type][manualSyringe.volume]}</Text>
-        ) : (
-          <Text style={[styles.inferredMarkings, { color: '#991B1B', fontWeight: 'bold' }]}>Markings unavailable.</Text>
-        )}
-      </View>
-    );
-  };
-
-  const renderFinalResultDisplay = () => {
-    console.log('[Render] Rendering final result, recommendedMarking:', recommendedMarking);
-    return (
-      <ScrollView contentContainerStyle={styles.formContainer}>
-        {calculationError && !recommendedMarking && (
-          <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
-            <X color="#f87171" size={24} />
-            <Text style={{ fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 }}>{calculationError}</Text>
-          </View>
-        )}
-        {recommendedMarking && (
-          <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
-            <Text style={styles.instructionTitle}>
-              {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
-            </Text>
-            <Text style={styles.instructionText}>
-              For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
-            </Text>
-            <Text style={styles.instructionTextLarge}>
-              Draw up to the {recommendedMarking} mark
-            </Text>
-            <Text style={styles.instructionNote}>
-              ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
-            </Text>
-            {calculatedVolume !== null && (
-              <Text style={styles.instructionNote}>
-                (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
-              </Text>
-            )}
-            {calculationError && (
-              <Text style={{ fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' }}>
-                {calculationError}
-              </Text>
-            )}
-            <View style={{ marginTop: 20, alignItems: 'center' }}>
-              <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
-              <SyringeIllustration
-                syringeType={manualSyringe.type}
-                syringeVolume={manualSyringe.volume}
-                recommendedMarking={recommendedMarking}
-                syringeOptions={syringeOptions}
-              />
-            </View>
-          </View>
-        )}
-        <View style={styles.disclaimerContainer}>
-          <Text style={styles.disclaimerText}>
-            **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
-          </Text>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
-            <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
-            <Text style={styles.buttonText}>New Dose</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
-            <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
-            <Text style={styles.buttonText}>Scan Again</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    );
-  };
-
   const renderManualEntry = () => {
     let currentStepComponent;
     let progress = 0;
 
     switch (manualStep) {
       case 'dose':
-        currentStepComponent = renderDoseInputStep();
+        currentStepComponent = (
+          <DoseInputStep
+            dose={dose}
+            setDose={setDose}
+            unit={unit}
+            setUnit={setUnit}
+          />
+        );
         progress = 1 / 5;
         break;
       case 'medicationSource':
-        currentStepComponent = renderMedicationSourceStep();
+        currentStepComponent = (
+          <MedicationSourceStep
+            substanceName={substanceName}
+            setSubstanceName={setSubstanceName}
+            setSubstanceNameHint={set-substanceNameHint}
+            substanceNameHint={substanceNameHint}
+            medicationInputType={medicationInputType}
+            setMedicationInputType={setMedicationInputType}
+          />
+        );
         progress = 2 / 5;
         break;
       case 'concentrationInput':
-        currentStepComponent = renderConcentrationInputStep();
+        currentStepComponent = (
+          <ConcentrationInputStep
+            concentrationAmount={concentrationAmount}
+            setConcentrationAmount={setConcentrationAmount}
+            concentrationUnit={concentrationUnit}
+            setConcentrationUnit={setConcentrationUnit}
+            setConcentrationHint={setConcentrationHint}
+            concentrationHint={concentrationHint}
+          />
+        );
         progress = 3 / 5;
         break;
       case 'totalAmountInput':
-        currentStepComponent = renderTotalAmountInputStep();
+        currentStepComponent = (
+          <TotalAmountInputStep
+            totalAmount={totalAmount}
+            setTotalAmount={setTotalAmount}
+            setTotalAmountHint={setTotalAmountHint}
+            totalAmountHint={totalAmountHint}
+            unit={unit}
+          />
+        );
         progress = 3 / 5;
         break;
       case 'reconstitution':
-        currentStepComponent = renderReconstitutionStep();
+        currentStepComponent = (
+          <ReconstitutionStep
+            solutionVolume={solutionVolume}
+            setSolutionVolume={setSolutionVolume}
+          />
+        );
         progress = 4 / 5;
         break;
       case 'syringe':
-        currentStepComponent = renderSyringeStep();
+        currentStepComponent = (
+          <SyringeStep
+            manualSyringe={manualSyringe}
+            setManualSyringe={setManualSyringe}
+            setSyringeHint={setSyringeHint}
+            syringeHint={syringeHint}
+          />
+        );
         progress = 5 / 5;
         break;
       case 'finalResult':
-        currentStepComponent = renderFinalResultDisplay();
+        currentStepComponent = (
+          <FinalResultDisplay
+            calculationError={calculationError}
+            recommendedMarking={recommendedMarking}
+            doseValue={doseValue}
+            unit={unit}
+            substanceName={substanceName}
+            manualSyringe={manualSyringe}
+            calculatedVolume={calculatedVolume}
+            handleStartOver={handleStartOver}
+            setScreenStep={setScreenStep}
+            isMobileWeb={isMobileWeb}
+          />
+        );
         progress = 1;
         break;
       default:
@@ -1261,448 +975,37 @@ export default function NewDoseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F2F2F7',
-  },
-  header: { 
-    marginTop: 80, 
-    marginBottom: 20, 
-    paddingHorizontal: 16,
-  },
-  title: { 
-    fontSize: 28, 
-    fontWeight: 'bold', 
-    color: '#000000', 
-    textAlign: 'center',
-  },
-  subtitle: { 
-    fontSize: 16, 
-    color: '#8E8E93', 
-    textAlign: 'center', 
-    marginTop: 4,
-  },
-  content: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 20, 
-    padding: 20,
-  },
-  icon: { 
-    marginBottom: 16,
-  },
-  text: { 
-    fontSize: 16, 
-    color: '#000000', 
-    textAlign: 'center', 
-    paddingHorizontal: 16,
-  },
-  labelText: { 
-    fontSize: 14, 
-    color: '#000000', 
-    marginTop: 10, 
-    marginBottom: 6,
-  },
-  labelTextBold: { 
-    fontSize: 15, 
-    fontWeight: '600', 
-    color: '#000000', 
-    marginTop: 12, 
-    marginBottom: 8, 
-    textAlign: 'center',
-  },
-  errorText: { 
-    fontSize: 14, 
-    color: '#f87171', 
-    textAlign: 'center', 
-    padding: 10, 
-    backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-    borderRadius: 8, 
-    marginTop: 10,
-  },
-  disclaimerContainer: {
-    backgroundColor: '#FFF3CD',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 10,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  disclaimerText: {
-    fontSize: 12,
-    color: '#856404',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  button: { 
-    backgroundColor: '#007AFF', 
-    paddingVertical: 14, 
-    paddingHorizontal: 28, 
-    borderRadius: 8, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 8, 
-    width: '80%', 
-    minHeight: 50,
-  },
-  buttonMobile: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    minHeight: 60,
-  },
-  tryCameraAgainButton: {
-    backgroundColor: '#FF9500',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: '80%',
-    minHeight: 50,
-  },
-  manualButton: { 
-    backgroundColor: '#6366f1',
-  },
-  backButton: {
-    backgroundColor: '#8E8E93',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '45%',
-    minHeight: 50,
-  },
-  backButtonMobile: {
-    paddingVertical: 14,
-    minHeight: 55,
-  },
-  manualEntryContainer: { 
-    flex: 1,
-  },
-  progressContainer: {
-    marginBottom: 10,
-    paddingHorizontal: 16,
-  },
-  progressBarBackground: {
-    height: 4,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  formWrapper: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  formContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 8,
-    width: '100%',
-    maxWidth: 600,
-    marginBottom: 20,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    color: '#000000',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 6,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    marginBottom: 10,
-    width: '100%',
-  },
-  inputHelperText: {
-    fontSize: 12,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 10,
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-    width: '100%',
-  },
-  radioContainerVertical: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginBottom: 10,
-    width: '100%',
-    gap: 10,
-  },
-  radioButton: {
-    backgroundColor: '#E5E5EA',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  radioButtonWide: {
-    backgroundColor: '#E5E5EA',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    alignItems: 'center',
-    width: '100%',
-  },
-  radioButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  radioText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  radioTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  nextButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    width: '45%',
-    minHeight: 50,
-  },
-  nextButtonMobile: {
-    paddingVertical: 14,
-    minHeight: 55,
-  },
-  disabledButton: {
-    backgroundColor: '#C7C7CC',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: 600,
-    marginTop: 20,
-    gap: 10,
-  },
-  instructionCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    marginBottom: 16,
-    width: '100%',
-  },
-  instructionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#065F46',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  instructionText: {
-    fontSize: 15,
-    color: '#065F46',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  instructionTextLarge: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#065F46',
-    textAlign: 'center',
-    marginVertical: 10,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 6,
-  },
-  instructionNote: {
-    fontSize: 13,
-    color: '#065F46',
-    textAlign: 'center',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  actionButton: {
-    paddingVertical: 14,
-    borderRadius: 8,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 5,
-    minHeight: 50,
-  },
-  actionButtonMobile: {
-    paddingVertical: 16,
-    minHeight: 60,
-  },
-  presetContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 4,
-    marginBottom: 8,
-    width: '100%',
-  },
-  optionButton: {
-    backgroundColor: '#E5E5EA',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    flex: 1,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
-    marginHorizontal: 5,
-  },
-  optionButtonSmall: {
-    backgroundColor: '#E5E5EA',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    minWidth: 60,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  selectedOption: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  buttonText: {
-    color: '#f8fafc',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  buttonTextSmall: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  selectedButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  inferredMarkings: {
-    fontSize: 13,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 10,
-    fontStyle: 'italic',
-  },
-  scanContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  overlayBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingBottom: 40,
-    paddingTop: 20,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  bottomButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  manualEntryButtonScan: {
-    padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 20,
-  },
-  backButtonScan: {
-    padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 20,
-  },
-  scanText: {
-    fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 15,
-    fontWeight: 'bold',
-  },
-  captureButton: {
-    backgroundColor: '#ef4444',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    marginBottom: 20,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    zIndex: 1000,
-  },
-  loadingText: {
-    color: '#fff',
-    marginTop: 15,
-    fontSize: 16,
-  },
-  helperHint: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'left',
-    marginTop: 2,
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
+  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
+  subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 20 },
+  icon: { marginBottom: 16 },
+  text: { fontSize: 16, color: '#000000', textAlign: 'center', paddingHorizontal: 16 },
+  errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
+  disclaimerContainer: { backgroundColor: '#FFF3CD', padding: 12, borderRadius: 8, marginVertical: 10, width: '90%', alignSelf: 'center' },
+  disclaimerText: { fontSize: 12, color: '#856404', textAlign: 'center', fontStyle: 'italic' },
+  button: { backgroundColor: '#007AFF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
+  buttonMobile: { paddingVertical: 16, paddingHorizontal: 32, minHeight: 60 },
+  tryCameraAgainButton: { backgroundColor: '#FF9500', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
+  manualButton: { backgroundColor: '#6366f1' },
+  backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
+  backButtonMobile: { paddingVertical: 14, minHeight: 55 },
+  manualEntryContainer: { flex: 1 },
+  formWrapper: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 20 },
+  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
+  nextButton: { backgroundColor: '#007AFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, width: '45%', minHeight: 50 },
+  nextButtonMobile: { paddingVertical: 14, minHeight: 55 },
+  disabledButton: { backgroundColor: '#C7C7CC' },
+  scanContainer: { flex: 1, backgroundColor: '#000' },
+  overlayBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 40, paddingTop: 20, alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 10 },
+  manualEntryButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
+  backButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
+  scanText: { fontSize: 18, color: '#fff', textAlign: 'center', paddingHorizontal: 20, marginBottom: 15, fontWeight: 'bold' },
+  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 255, 0.5)', marginBottom: 20 },
+  backButtonText: { color: '#fff', fontSize: 14 },
+  buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
+  loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
+  loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
 });
