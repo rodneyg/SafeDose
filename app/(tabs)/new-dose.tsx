@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, ScrollView } from 'react-native';
-import { Camera as CameraIcon, ArrowRight, Syringe, Pill } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
 import { isMobileWeb } from '../../lib/utils';
@@ -14,15 +13,15 @@ import TotalAmountInputStep from '../../components/TotalAmountInputStep';
 import ReconstitutionStep from '../../components/ReconstitutionStep';
 import SyringeStep from '../../components/SyringeStep';
 import FinalResultDisplay from '../../components/FinalResultDisplay';
+import IntroScreen from '../../components/IntroScreen';
+import ScanScreen from '../../components/ScanScreen';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
-import { captureAndProcessImage } from '../../lib/cameraUtils';
 
 export default function NewDoseScreen() {
   const {
     screenStep,
     setScreenStep,
     manualStep,
-    setManualStep,
     dose,
     setDose,
     unit,
@@ -121,191 +120,6 @@ export default function NewDoseScreen() {
     console.warn("Skipping getUserMedia check due to lack of support");
     setPermissionStatus('denied');
     setMobileWebPermissionDenied(true);
-  };
-
-  const handleCapture = () => {
-    captureAndProcessImage({
-      cameraRef,
-      permission,
-      openai,
-      isMobileWeb,
-      setIsProcessing,
-      setProcessingMessage,
-      setScanError,
-      setScreenStep,
-      setManualStep,
-      setManualSyringe,
-      setSyringeHint,
-      setSubstanceName,
-      setSubstanceNameHint,
-      setConcentrationAmount,
-      setConcentrationUnit,
-      setConcentrationHint,
-      setTotalAmount,
-      setTotalAmountHint,
-      setMedicationInputType,
-      resetFullForm,
-    });
-  };
-
-  const renderIntro = () => (
-    <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
-      <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-      <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-      <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerText}>
-          **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
-        </Text>
-      </View>
-      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={() => setScreenStep('scan')}>
-        <CameraIcon color={'#fff'} size={20} style={{ marginRight: 8 }} />
-        <Text style={styles.buttonText}>Scan Items</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button, styles.manualButton, isMobileWeb && styles.buttonMobile]} onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}>
-        <Pill color={'#fff'} size={20} style={{ marginRight: 8 }} />
-        <Text style={styles.buttonText}>Enter Details Manually</Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-
-  const renderScan = () => {
-    console.log('[Render] Rendering scan screen, isProcessing:', isProcessing);
-    if (isMobileWeb) {
-      if (permissionStatus === 'undetermined') {
-        return (
-          <View style={styles.content}>
-            <Text style={styles.text}>Camera access is needed to scan items.</Text>
-            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-              <Text style={styles.buttonText}>Grant Camera Access</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-              <Text style={styles.buttonText}>Go Back</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }
-
-      if (mobileWebPermissionDenied) {
-        return (
-          <View style={styles.content}>
-            <Text style={styles.errorText}>
-              Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
-            </Text>
-            <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={handleCapture} disabled={isProcessing}>
-              <Text style={styles.buttonText}>Take or Upload Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.tryCameraAgainButton, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-              <Text style={styles.buttonText}>Try Camera Again</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-              <Text style={styles.buttonText}>Go Back</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }
-
-      return (
-        <View style={styles.scanContainer}>
-          <View style={styles.overlayBottom}>
-            {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
-            <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
-            <TouchableOpacity
-              style={[styles.captureButton, isProcessing && styles.disabledButton]}
-              onPress={handleCapture}
-              disabled={isProcessing}
-            >
-              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
-            </TouchableOpacity>
-            <View style={styles.bottomButtons}>
-              <TouchableOpacity
-                style={styles.manualEntryButtonScan}
-                onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}
-              >
-                <Text style={styles.backButtonText}>Manual Entry</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.backButtonScan}
-                onPress={handleGoHome}
-                disabled={isProcessing}
-              >
-                <Text style={styles.backButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    if (!permission) {
-      return (
-        <View style={styles.content}>
-          <ActivityIndicator size="large" color="#000000" />
-          <Text style={styles.text}>Checking permissions...</Text>
-        </View>
-      );
-    }
-
-    if (permission.status === 'granted') {
-      return (
-        <View style={styles.scanContainer}>
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
-          <View style={styles.overlayBottom}>
-            {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
-            <Text style={styles.scanText}>Position syringe & vial clearly</Text>
-            <TouchableOpacity
-              style={[styles.captureButton, isProcessing && styles.disabledButton]}
-              onPress={handleCapture}
-              disabled={isProcessing}
-            >
-              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
-            </TouchableOpacity>
-            <View style={styles.bottomButtons}>
-              <TouchableOpacity
-                style={styles.manualEntryButtonScan}
-                onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}
-              >
-                <Text style={styles.backButtonText}>Manual Entry</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.backButtonScan}
-                onPress={handleGoHome}
-                disabled={isProcessing}
-              >
-                <Text style={styles.backButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    if (permission.status === 'denied') {
-      return (
-        <View style={styles.content}>
-          <Text style={styles.errorText}>Camera permission is required to scan items.</Text>
-          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestPermission}>
-            <Text style={styles.buttonText}>Request Permissions</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (permission.status === 'undetermined') {
-      return (
-        <View style={styles.content}>
-          <Text style={styles.text}>Camera permission is needed to scan items.</Text>
-          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestPermission}>
-            <Text style={styles.buttonText}>Grant Permission</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
   };
 
   const renderManualEntry = () => {
@@ -458,8 +272,41 @@ export default function NewDoseScreen() {
           )}
         </Text>
       </View>
-      {screenStep === 'intro' && renderIntro()}
-      {screenStep === 'scan' && renderScan()}
+      {screenStep === 'intro' && (
+        <IntroScreen
+          setScreenStep={setScreenStep}
+          resetFullForm={resetFullForm}
+        />
+      )}
+      {screenStep === 'scan' && (
+        <ScanScreen
+          permission={permission}
+          permissionStatus={permissionStatus}
+          mobileWebPermissionDenied={mobileWebPermissionDenied}
+          isProcessing={isProcessing}
+          scanError={scanError}
+          cameraRef={cameraRef}
+          openai={openai}
+          setScreenStep={setScreenStep}
+          setManualStep={setManualStep}
+          setManualSyringe={setManualSyringe}
+          setSyringeHint={setSyringeHint}
+          setSubstanceName={setSubstanceName}
+          setSubstanceNameHint={setSubstanceNameHint}
+          setConcentrationAmount={setConcentrationAmount}
+          setConcentrationUnit={setConcentrationUnit}
+          setConcentrationHint={setConcentrationHint}
+          setTotalAmount={setTotalAmount}
+          setTotalAmountHint={setTotalAmountHint}
+          setMedicationInputType={setMedicationInputType}
+          setIsProcessing={setIsProcessing}
+          setProcessingMessage={setProcessingMessage}
+          setScanError={setScanError}
+          resetFullForm={resetFullForm}
+          requestWebCameraPermission={requestWebCameraPermission}
+          handleGoHome={handleGoHome}
+        />
+      )}
       {screenStep === 'manualEntry' && renderManualEntry()}
       {isProcessing && (
         <View style={styles.loadingOverlay}>
@@ -476,32 +323,15 @@ const styles = StyleSheet.create({
   header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 20 },
-  icon: { marginBottom: 16 },
-  text: { fontSize: 16, color: '#000000', textAlign: 'center', paddingHorizontal: 16 },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
-  disclaimerContainer: { backgroundColor: '#FFF3CD', padding: 12, borderRadius: 8, marginVertical: 10, width: '90%', alignSelf: 'center' },
-  disclaimerText: { fontSize: 12, color: '#856404', textAlign: 'center', fontStyle: 'italic' },
-  button: { backgroundColor: '#007AFF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
-  buttonMobile: { paddingVertical: 16, paddingHorizontal: 32, minHeight: 60 },
-  tryCameraAgainButton: { backgroundColor: '#FF9500', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
-  manualButton: { backgroundColor: '#6366f1' },
-  backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
-  backButtonMobile: { paddingVertical: 14, minHeight: 55 },
   manualEntryContainer: { flex: 1 },
   formWrapper: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 20 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
+  backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
+  backButtonMobile: { paddingVertical: 14, minHeight: 55 },
   nextButton: { backgroundColor: '#007AFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, width: '45%', minHeight: 50 },
   nextButtonMobile: { paddingVertical: 14, minHeight: 55 },
   disabledButton: { backgroundColor: '#C7C7CC' },
-  scanContainer: { flex: 1, backgroundColor: '#000' },
-  overlayBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 40, paddingTop: 20, alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 10 },
-  manualEntryButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
-  backButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
-  scanText: { fontSize: 18, color: '#fff', textAlign: 'center', paddingHorizontal: 20, marginBottom: 15, fontWeight: 'bold' },
-  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 255, 0.5)', marginBottom: 20 },
-  backButtonText: { color: '#fff', fontSize: 14 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
   loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
