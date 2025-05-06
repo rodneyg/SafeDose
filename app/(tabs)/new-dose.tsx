@@ -15,12 +15,147 @@ import TotalAmountInputStep from '../../components/TotalAmountInputStep';
 import ReconstitutionStep from '../../components/ReconstitutionStep';
 import SyringeStep from '../../components/SyringeStep';
 import FinalResultDisplay from '../../components/FinalResultDisplay';
-
-type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
-type MedicationInputType = 'concentration' | 'totalAmount' | null;
+import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 
 export default function NewDoseScreen() {
-  const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('intro');
+  const calculateDoseVolumeAndMarking = () => {
+    console.log('[Calculate] Starting calculation');
+    setCalculatedVolume(null);
+    setRecommendedMarking(null);
+    setCalculationError(null);
+
+    if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
+      setCalculationError('Dose value is invalid or missing.');
+      console.log('[Calculate] Error: Invalid dose value');
+      return;
+    }
+
+    if (concentration === null || isNaN(concentration) || concentration <= 0) {
+      setCalculationError('Concentration is invalid or missing.');
+      console.log('[Calculate] Error: Invalid concentration');
+      return;
+    }
+
+    if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
+      setCalculationError('Syringe details are missing.');
+      console.log('[Calculate] Error: Missing syringe details');
+      return;
+    }
+
+    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
+    if (!markingsString) {
+      setCalculationError(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
+      console.log('[Calculate] Error: Invalid syringe option');
+      return;
+    }
+
+    let requiredVolume = doseValue / concentration;
+    console.log('[Calculate] Initial required volume (ml):', requiredVolume);
+
+    if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = doseValue / concentration;
+    } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = doseValue / concentration;
+    } else if (unit === 'units' && concentrationUnit === 'units/ml') {
+      requiredVolume = doseValue / concentration;
+    } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = (doseValue / 1000) / concentration;
+    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = (doseValue * 1000) / concentration;
+    } else {
+      setCalculationError('Unit mismatch between dose and concentration.');
+      console.log('[Calculate] Error: Unit mismatch');
+      return;
+    }
+
+    console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
+    setCalculatedVolume(requiredVolume);
+
+    const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
+    if (requiredVolume > maxVolume) {
+      setCalculationError(`Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`);
+      console.log('[Calculate] Error: Volume exceeds capacity');
+      return;
+    }
+
+    const markings = markingsString.split(',').map(m => parseFloat(m));
+    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
+    console.log('[Calculate] Marking scale value:', markingScaleValue);
+
+    const nearestMarking = markings.reduce((prev, curr) =>
+      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
+    );
+    console.log('[Calculate] Nearest marking:', nearestMarking);
+
+    let precisionMessage = null;
+    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+      precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
+    }
+
+    setRecommendedMarking(nearestMarking.toString());
+    console.log('[Calculate] Set recommended marking:', nearestMarking);
+
+    if (precisionMessage) {
+      setCalculationError(precisionMessage);
+      console.log('[Calculate] Precision message:', precisionMessage);
+    }
+  };
+
+  const {
+    screenStep,
+    setScreenStep,
+    manualStep,
+    dose,
+    setDose,
+    unit,
+    setUnit,
+    substanceName,
+    setSubstanceName,
+    medicationInputType,
+    setMedicationInputType,
+    concentrationAmount,
+    setConcentrationAmount,
+    concentrationUnit,
+    setConcentrationUnit,
+    totalAmount,
+    setTotalAmount,
+    solutionVolume,
+    setSolutionVolume,
+    manualSyringe,
+    setManualSyringe,
+    doseValue,
+    setDoseValue,
+    concentration,
+    setConcentration,
+    calculatedVolume,
+    setCalculatedVolume,
+    recommendedMarking,
+    setRecommendedMarking,
+    calculationError,
+    setCalculationError,
+    formError,
+    setFormError,
+    substanceNameHint,
+    setSubstanceNameHint,
+    concentrationHint,
+    setConcentrationHint,
+    totalAmountHint,
+    setTotalAmountHint,
+    syringeHint,
+    setSyringeHint,
+    resetFullForm,
+    handleNextDose,
+    handleNextMedicationSource,
+    handleNextConcentrationInput,
+    handleNextTotalAmountInput,
+    handleNextReconstitution,
+    handleCalculateFinal,
+    handleBack,
+    handleStartOver,
+    handleGoHome,
+  } = useDoseCalculator(calculateDoseVolumeAndMarking);
+
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
@@ -28,26 +163,6 @@ export default function NewDoseScreen() {
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
   const cameraRef = useRef(null);
-  const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
-  const [dose, setDose] = useState<string>('');
-  const [unit, setUnit] = useState<'mg' | 'mcg' | 'units'>('mg');
-  const [substanceName, setSubstanceName] = useState<string>('');
-  const [medicationInputType, setMedicationInputType] = useState<MedicationInputType>('concentration');
-  const [concentrationAmount, setConcentrationAmount] = useState<string>('');
-  const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
-  const [totalAmount, setTotalAmount] = useState<string>('');
-  const [solutionVolume, setSolutionVolume] = useState<string>('1');
-  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
-  const [doseValue, setDoseValue] = useState<number | null>(null);
-  const [concentration, setConcentration] = useState<number | null>(null);
-  const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
-  const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
-  const [calculationError, setCalculationError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
-  const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
-  const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
-  const [syringeHint, setSyringeHint] = useState<string | null>(null);
 
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
@@ -72,7 +187,7 @@ export default function NewDoseScreen() {
       setRecommendedMarking(null);
       setCalculationError(null);
     }
-  }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe]);
+  }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError]);
 
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
@@ -89,31 +204,6 @@ export default function NewDoseScreen() {
     console.warn("Skipping getUserMedia check due to lack of support");
     setPermissionStatus('denied');
     setMobileWebPermissionDenied(true);
-  };
-
-  const resetFullForm = (startStep: ManualEntryStep = 'dose') => {
-    setDose('');
-    setUnit('mg');
-    setSubstanceName('');
-    setMedicationInputType('concentration');
-    setConcentrationAmount('');
-    setConcentrationUnit('mg/ml');
-    setTotalAmount('');
-    setSolutionVolume('1');
-    setManualSyringe({ type: 'Standard', volume: '3 ml' });
-    setDoseValue(null);
-    setConcentration(null);
-    setCalculatedVolume(null);
-    setRecommendedMarking(null);
-    setCalculationError(null);
-    setFormError(null);
-    setScanError(null);
-    setSubstanceNameHint(null);
-    setConcentrationHint(null);
-    setTotalAmountHint(null);
-    setSyringeHint(null);
-    setManualStep(startStep);
-    console.log('[Reset] Form reset complete');
   };
 
   const captureImage = async () => {
@@ -451,204 +541,6 @@ export default function NewDoseScreen() {
         ]
       );
     }
-  };
-
-  const calculateDoseVolumeAndMarking = () => {
-    console.log('[Calculate] Starting calculation');
-    setCalculatedVolume(null);
-    setRecommendedMarking(null);
-    setCalculationError(null);
-
-    if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
-      setCalculationError('Dose value is invalid or missing.');
-      console.log('[Calculate] Error: Invalid dose value');
-      return;
-    }
-
-    if (concentration === null || isNaN(concentration) || concentration <= 0) {
-      setCalculationError('Concentration is invalid or missing.');
-      console.log('[Calculate] Error: Invalid concentration');
-      return;
-    }
-
-    if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
-      setCalculationError('Syringe details are missing.');
-      console.log('[Calculate] Error: Missing syringe details');
-      return;
-    }
-
-    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
-    if (!markingsString) {
-      setCalculationError(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
-      console.log('[Calculate] Error: Invalid syringe option');
-      return;
-    }
-
-    let requiredVolume = doseValue / concentration;
-    console.log('[Calculate] Initial required volume (ml):', requiredVolume);
-
-    if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'units' && concentrationUnit === 'units/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = (doseValue / 1000) / concentration;
-    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = (doseValue * 1000) / concentration;
-    } else {
-      setCalculationError('Unit mismatch between dose and concentration.');
-      console.log('[Calculate] Error: Unit mismatch');
-      return;
-    }
-
-    console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
-    setCalculatedVolume(requiredVolume);
-
-    const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
-    if (requiredVolume > maxVolume) {
-      setCalculationError(`Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`);
-      console.log('[Calculate] Error: Volume exceeds capacity');
-      return;
-    }
-
-    const markings = markingsString.split(',').map(m => parseFloat(m));
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
-    console.log('[Calculate] Marking scale value:', markingScaleValue);
-
-    const nearestMarking = markings.reduce((prev, curr) =>
-      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
-    );
-    console.log('[Calculate] Nearest marking:', nearestMarking);
-
-    let precisionMessage = null;
-    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
-      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-      precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
-    }
-
-    setRecommendedMarking(nearestMarking.toString());
-    console.log('[Calculate] Set recommended marking:', nearestMarking);
-
-    if (precisionMessage) {
-      setCalculationError(precisionMessage);
-      console.log('[Calculate] Precision message:', precisionMessage);
-    }
-  };
-
-  const handleNextDose = () => {
-    setFormError(null);
-    const parsedDose = parseFloat(dose);
-    if (!dose || isNaN(parsedDose) || parsedDose <= 0) {
-      setFormError('Please enter a valid, positive dose amount.');
-      return;
-    }
-    setDoseValue(parsedDose);
-    setManualStep('medicationSource');
-    console.log('[Navigation] Moving to medicationSource');
-  };
-
-  const handleNextMedicationSource = () => {
-    setFormError(null);
-    if (!medicationInputType) {
-      setFormError('Please select how the medication amount is specified.');
-      return;
-    }
-    setManualStep(medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
-    console.log('[Navigation] Moving to', medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
-  };
-
-  const handleNextConcentrationInput = () => {
-    setFormError(null);
-    const parsedConc = parseFloat(concentrationAmount);
-    if (!concentrationAmount || isNaN(parsedConc) || parsedConc <= 0) {
-      setFormError('Please enter a valid, positive concentration amount.');
-      return;
-    }
-    const expectedUnit = unit + '/ml';
-    if (concentrationUnit !== expectedUnit) {
-      setFormError(`Unit mismatch: Dose is in '${unit}', but concentration unit is '${concentrationUnit}'. Please use '${expectedUnit}'.`);
-      return;
-    }
-    setConcentration(parsedConc);
-    if (unit === 'units' || unit === 'mcg') {
-      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
-      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
-    } else {
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSyringeHint('Standard syringe selected for milligrams.');
-    }
-    setManualStep('syringe');
-    console.log('[Navigation] Moving to syringe with concentration:', parsedConc);
-  };
-
-  const handleNextTotalAmountInput = () => {
-    setFormError(null);
-    const parsedAmount = parseFloat(totalAmount);
-    if (!totalAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      setFormError('Please enter a valid, positive number for the total amount.');
-      return;
-    }
-    setManualStep('reconstitution');
-    console.log('[Navigation] Moving to reconstitution');
-  };
-
-  const handleNextReconstitution = () => {
-    setFormError(null);
-    const parsedSolutionVol = parseFloat(solutionVolume);
-    if (!solutionVolume || isNaN(parsedSolutionVol) || parsedSolutionVol <= 0) {
-      setFormError('Please enter a valid, positive volume (in ml) added for reconstitution.');
-      return;
-    }
-    let totalAmountValue = parseFloat(totalAmount);
-    if (unit === 'mcg') {
-      totalAmountValue *= 1000;
-    }
-    const calculatedConc = totalAmountValue / parsedSolutionVol;
-    setConcentration(calculatedConc);
-    if (unit === 'units' || unit === 'mcg') {
-      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
-      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
-    } else {
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSyringeHint('Standard syringe selected for milligrams.');
-    }
-    setManualStep('syringe');
-    console.log('[Navigation] Moving to syringe with calculated concentration:', calculatedConc);
-  };
-
-  const handleCalculateFinal = () => {
-    setFormError(null);
-    calculateDoseVolumeAndMarking();
-    setManualStep('finalResult');
-    console.log('[Navigation] Moving to finalResult');
-  };
-
-  const handleBack = () => {
-    setCalculationError(null);
-    setFormError(null);
-    switch (manualStep) {
-      case 'finalResult': setManualStep('syringe'); break;
-      case 'syringe': setManualStep(medicationInputType === 'concentration' ? 'concentrationInput' : 'reconstitution'); break;
-      case 'reconstitution': setManualStep('totalAmountInput'); break;
-      case 'concentrationInput':
-      case 'totalAmountInput': setManualStep('medicationSource'); break;
-      case 'medicationSource': setManualStep('dose'); break;
-      case 'dose': setScreenStep('intro'); resetFullForm(); break;
-    }
-    console.log('[Navigation] Going back to', manualStep);
-  };
-
-  const handleStartOver = () => {
-    resetFullForm('dose');
-    console.log('[Navigation] Starting over');
-  };
-
-  const handleGoHome = () => {
-    resetFullForm();
-    setScreenStep('intro');
-    console.log('[Navigation] Going home');
   };
 
   const renderIntro = () => (
