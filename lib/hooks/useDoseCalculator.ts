@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { syringeOptions } from '../../lib/utils';
+import { calculateDose } from '../../lib/doseUtils';
 
 type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
-export default function useDoseCalculator(calculateDose: () => void) {
+export default function useDoseCalculator() {
   const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('intro');
   const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
   const [dose, setDose] = useState<string>('');
@@ -134,7 +134,16 @@ export default function useDoseCalculator(calculateDose: () => void) {
 
   const handleCalculateFinal = () => {
     setFormError(null);
-    calculateDose();
+    const { calculatedVolume, recommendedMarking, calculationError } = calculateDose({
+      doseValue,
+      concentration,
+      unit,
+      concentrationUnit,
+      manualSyringe,
+    });
+    setCalculatedVolume(calculatedVolume);
+    setRecommendedMarking(recommendedMarking);
+    setCalculationError(calculationError);
     setManualStep('finalResult');
     console.log('[Navigation] Moving to finalResult');
   };

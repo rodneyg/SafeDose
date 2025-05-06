@@ -5,7 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
-import { isMobileWeb, syringeOptions } from '../../lib/utils';
+import { isMobileWeb } from '../../lib/utils';
 import CustomProgressBar from '../../components/CustomProgressBar';
 import DoseInputStep from '../../components/DoseInputStep';
 import MedicationSourceStep from '../../components/MedicationSourceStep';
@@ -18,95 +18,11 @@ import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 
 export default function NewDoseScreen() {
-  const calculateDoseVolumeAndMarking = () => {
-    console.log('[Calculate] Starting calculation');
-    setCalculatedVolume(null);
-    setRecommendedMarking(null);
-    setCalculationError(null);
-
-    if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
-      setCalculationError('Dose value is invalid or missing.');
-      console.log('[Calculate] Error: Invalid dose value');
-      return;
-    }
-
-    if (concentration === null || isNaN(concentration) || concentration <= 0) {
-      setCalculationError('Concentration is invalid or missing.');
-      console.log('[Calculate] Error: Invalid concentration');
-      return;
-    }
-
-    if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
-      setCalculationError('Syringe details are missing.');
-      console.log('[Calculate] Error: Missing syringe details');
-      return;
-    }
-
-    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
-    if (!markingsString) {
-      setCalculationError(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
-      console.log('[Calculate] Error: Invalid syringe option');
-      return;
-    }
-
-    let requiredVolume = doseValue / concentration;
-    console.log('[Calculate] Initial required volume (ml):', requiredVolume);
-
-    if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'units' && concentrationUnit === 'units/ml') {
-      requiredVolume = doseValue / concentration;
-    } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = (doseValue / 1000) / concentration;
-    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = (doseValue * 1000) / concentration;
-    } else {
-      setCalculationError('Unit mismatch between dose and concentration.');
-      console.log('[Calculate] Error: Unit mismatch');
-      return;
-    }
-
-    console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
-    setCalculatedVolume(requiredVolume);
-
-    const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
-    if (requiredVolume > maxVolume) {
-      setCalculationError(`Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`);
-      console.log('[Calculate] Error: Volume exceeds capacity');
-      return;
-    }
-
-    const markings = markingsString.split(',').map(m => parseFloat(m));
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
-    console.log('[Calculate] Marking scale value:', markingScaleValue);
-
-    const nearestMarking = markings.reduce((prev, curr) =>
-      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
-    );
-    console.log('[Calculate] Nearest marking:', nearestMarking);
-
-    let precisionMessage = null;
-    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
-      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-      precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
-    }
-
-    setRecommendedMarking(nearestMarking.toString());
-    console.log('[Calculate] Set recommended marking:', nearestMarking);
-
-    if (precisionMessage) {
-      setCalculationError(precisionMessage);
-      console.log('[Calculate] Precision message:', precisionMessage);
-    }
-  };
-
-  const doseCalculator = useDoseCalculator(calculateDoseVolumeAndMarking);
   const {
     screenStep,
     setScreenStep,
     manualStep,
+    setManualStep,
     dose,
     setDose,
     unit,
@@ -155,7 +71,7 @@ export default function NewDoseScreen() {
     handleBack,
     handleStartOver,
     handleGoHome,
-  } = doseCalculator;
+  } = useDoseCalculator();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
@@ -217,7 +133,7 @@ export default function NewDoseScreen() {
       setProcessingMessage,
       setScanError,
       setScreenStep,
-      setManualStep: doseCalculator.setManualStep,
+      setManualStep,
       setManualSyringe,
       setSyringeHint,
       setSubstanceName,
@@ -584,7 +500,7 @@ const styles = StyleSheet.create({
   manualEntryButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
   backButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
   scanText: { fontSize: 18, color: '#fff', textAlign: 'center', paddingHorizontal: 20, marginBottom: 15, fontWeight: 'bold' },
-  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 0.5)', marginBottom: 20 },
+  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 255, 0.5)', marginBottom: 20 },
   backButtonText: { color: '#fff', fontSize: 14 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },

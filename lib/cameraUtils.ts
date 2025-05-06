@@ -2,9 +2,10 @@ import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE } from '../lib/utils';
+import { CameraView } from 'expo-camera';
 
 interface CameraRef {
-  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string }>;
+  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
 }
 
 interface CaptureAndProcessImageProps {
