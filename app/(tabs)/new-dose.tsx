@@ -832,7 +832,7 @@ export default function NewDoseScreen() {
           <MedicationSourceStep
             substanceName={substanceName}
             setSubstanceName={setSubstanceName}
-            setSubstanceNameHint={set-substanceNameHint}
+            setSubstanceNameHint={setSubstanceNameHint}
             substanceNameHint={substanceNameHint}
             medicationInputType={medicationInputType}
             setMedicationInputType={setMedicationInputType}
