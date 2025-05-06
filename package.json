@@ -44,6 +44,7 @@
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "^4.0.7",
     "expo-web-browser": "^14.0.2",
+    "firebase": "^11.6.1",
     "framer-motion": "^12.7.4",
     "lucide-react": "^0.488.0",
     "lucide-react-native": "^0.475.0",
