@@ -11,24 +11,26 @@ interface CameraRef {
 interface CaptureAndProcessImageProps {
   cameraRef: React.RefObject<CameraRef>;
   permission: { status: string } | null;
-  openai: any; // OpenAI client instance
+  openai: any;
   isMobileWeb: boolean;
   setIsProcessing: (value: boolean) => void;
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
-  setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
-  setManualStep: (step: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
-  setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string }) => void;
-  setSyringeHint: (hint: string | null) => void;
-  setSubstanceName: (name: string) => void;
-  setSubstanceNameHint: (hint: string | null) => void;
-  setConcentrationAmount: (amount: string) => void;
-  setConcentrationUnit: (unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => void;
-  setConcentrationHint: (hint: string | null) => void;
-  setTotalAmount: (amount: string) => void;
-  setTotalAmountHint: (hint: string | null) => void;
-  setMedicationInputType: (type: 'concentration' | 'totalAmount' | null) => void;
-  resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
+  incrementScansUsed: () => Promise<void>;
+}
+
+interface ScanResult {
+  syringe: {
+    type: 'Insulin' | 'Standard' | 'unreadable' | null;
+    volume: string | 'unreadable' | null;
+    markings: string | 'unreadable' | null;
+  };
+  vial: {
+    substance: string | 'unreadable' | null;
+    totalAmount: string | 'unreadable' | null;
+    concentration: string | 'unreadable' | null;
+    expiration: string | 'unreadable' | null;
+  };
 }
 
 export async function captureAndProcessImage({
@@ -39,37 +41,21 @@ export async function captureAndProcessImage({
   setIsProcessing,
   setProcessingMessage,
   setScanError,
-  setScreenStep,
-  setManualStep,
-  setManualSyringe,
-  setSyringeHint,
-  setSubstanceName,
-  setSubstanceNameHint,
-  setConcentrationAmount,
-  setConcentrationUnit,
-  setConcentrationHint,
-  setTotalAmount,
-  setTotalAmountHint,
-  setMedicationInputType,
-  resetFullForm,
-}: CaptureAndProcessImageProps) {
+  incrementScansUsed,
+}: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
 
   const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
   if (!apiKey) {
     console.error('[Capture] OpenAI API key missing');
     Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
-    return;
+    setScanError('OpenAI configuration error');
+    return null;
   }
 
-  setIsProcessing(false);
+  setIsProcessing(true);
   setScanError(null);
   setProcessingMessage('Waiting for photo selection...');
-  resetFullForm();
-
-  await new Promise(resolve => setTimeout(resolve, 300));
-  setIsProcessing(true);
-  console.log('[Capture] isProcessing set to true');
 
   try {
     let base64Image: string | undefined;
@@ -111,7 +97,7 @@ export async function captureAndProcessImage({
 
         input.onerror = (error) => {
           console.error('[Capture] File input error:', error);
-          reject(new Error('File input failed: ' + (error.message || 'Unknown error')));
+          reject(new Error('File input failed'));
           if (document.body.contains(input)) {
             document.body.removeChild(input);
             console.log('[Capture] File input removed on error');
@@ -165,13 +151,11 @@ export async function captureAndProcessImage({
     } else {
       if (!cameraRef.current) {
         console.log('[Capture] Camera ref is null or undefined');
-        Alert.alert('Camera Error', 'Camera not ready.');
         throw new Error('Camera not ready');
       }
 
       if (permission?.status !== 'granted') {
         console.log('[Capture] Camera permission not granted:', permission?.status);
-        Alert.alert('Permission Error', 'Camera permission is required.');
         throw new Error('Camera permission required');
       }
 
@@ -194,7 +178,7 @@ export async function captureAndProcessImage({
 
       if (!base64Image) {
         console.error('[Capture] No base64 data available');
-        throw new Error('Failed to capture image data.');
+        throw new Error('Failed to capture image data');
       }
 
       mimeType = '';
@@ -214,7 +198,7 @@ export async function captureAndProcessImage({
         else if (base64Image.startsWith('R0lGODlh')) mimeType = 'image/gif';
         else {
           console.error('[Capture] Unknown image format:', base64Image.substring(0, 20));
-          throw new Error('Unrecognized image format.');
+          throw new Error('Unrecognized image format');
         }
         console.log('[Capture] Detected MIME type:', mimeType);
       }
@@ -258,144 +242,46 @@ export async function captureAndProcessImage({
     console.log('[Process] Raw OpenAI response content:', content);
 
     if (!content) {
-      throw new Error('OpenAI returned an empty response.');
+      throw new Error('OpenAI returned an empty response');
     }
 
     const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
     const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
     console.log('[Process] Extracted JSON content:', jsonContent);
 
-    let result;
+    let result: ScanResult;
     try {
       result = JSON.parse(jsonContent);
       console.log('[Process] Parsed JSON result:', JSON.stringify(result, null, 2));
       if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
         console.error('[Process] Invalid JSON structure:', result);
-        throw new Error('Invalid JSON structure received from analysis.');
+        throw new Error('Invalid JSON structure received from analysis');
       }
     } catch (parseError) {
-      console.error('[Process] JSON parse error:', parseError.message, parseError.stack);
-      throw new Error('Could not parse analysis result.');
+      console.error('[Process] JSON parse error:', parseError);
+      throw new Error('Could not parse analysis result');
     }
 
-    const scannedSyringe = result.syringe || {};
-    const scannedVial = result.vial || {};
+    await incrementScansUsed();
+    console.log('[Process] Incremented scans used');
 
-    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-    const scannedVolume = scannedSyringe.volume;
-    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-    let selectedVolume = defaultVolume;
-
-    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-    } else {
-      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
-    }
-    setManualSyringe({ type: scannedType, volume: selectedVolume });
-    setSyringeHint('Detected from image scan');
-
-    if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
-      setSubstanceName(String(scannedVial.substance));
-      setSubstanceNameHint('Detected from vial scan');
-      console.log('[Process] Set substance name:', scannedVial.substance);
-    }
-
-    const vialConcentration = scannedVial.concentration;
-    const vialTotalAmount = scannedVial.totalAmount;
-
-    if (vialConcentration && vialConcentration !== 'unreadable') {
-      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-      if (concMatch) {
-        setConcentrationAmount(concMatch[1]);
-        const detectedUnit = concMatch[2].toLowerCase();
-        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-      } else {
-        setConcentrationAmount(String(vialConcentration));
-        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-      }
-      setMedicationInputType('concentration');
-      setConcentrationHint('Detected from vial scan');
-      setTotalAmountHint(null);
-    } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-      if (amountMatch) {
-        setTotalAmount(amountMatch[1]);
-        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-      } else {
-        setTotalAmount(String(vialTotalAmount));
-        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-      }
-      setMedicationInputType('totalAmount');
-      setTotalAmountHint('Detected from vial scan');
-      setConcentrationHint(null);
-    } else {
-      console.log('[Process] No reliable concentration or total amount detected.');
-    }
-
-    console.log('[Process] Scan successful, transitioning to manual entry');
-    Alert.alert('Success', 'Image analyzed, proceeding to manual entry.');
-    setScreenStep('manualEntry');
-    if (typeof setManualStep === 'function') {
-      setManualStep('dose');
-    } else {
-      console.warn('[Process] setManualStep is not a function, skipping step update');
-    }
+    return result;
   } catch (error) {
-    console.error('[Process] Error processing image:', error.message, error.stack);
-    let message = 'An unexpected error occurred during scanning.';
+    console.error('[Process] Error processing image:', error);
+    let message = 'An unexpected error occurred during scanning';
     if (error instanceof Error) {
       if (error.message.includes('format is not recognized')) {
-        message = 'Image format could not be processed.';
+        message = 'Image format could not be processed';
+      } else if (error.message.includes('No file selected')) {
+        message = 'No image selected';
+      } else if (error.message.includes('File size')) {
+        message = error.message;
       } else {
-        message = `Error communicating with analysis service: ${error.message}`;
+        message = `Error: ${error.message}`;
       }
     }
-    setManualSyringe({ type: 'Standard', volume: '3 ml' });
-    setSubstanceName('');
-    setMedicationInputType('concentration');
-    setConcentrationAmount('');
-    setTotalAmount('');
-    setScreenStep('manualEntry');
-    if (typeof setManualStep === 'function') {
-      setManualStep('dose');
-    } else {
-      console.warn('[Process] setManualStep is not a function, skipping step update');
-    }
-    Alert.alert(
-      'Warning',
-      `Failed to analyze image: ${message}. Proceeding to manual entry with default values.`,
-      [
-        { text: 'OK', onPress: () => {} },
-        { text: 'Retry', onPress: () => captureAndProcessImage({
-          cameraRef,
-          permission,
-          openai,
-          isMobileWeb,
-          setIsProcessing,
-          setProcessingMessage,
-          setScanError,
-          setScreenStep,
-          setManualStep,
-          setManualSyringe,
-          setSyringeHint,
-          setSubstanceName,
-          setSubstanceNameHint,
-          setConcentrationAmount,
-          setConcentrationUnit,
-          setConcentrationHint,
-          setTotalAmount,
-          setTotalAmountHint,
-          setMedicationInputType,
-          resetFullForm,
-        }) },
-      ]
-    );
+    setScanError(message);
+    return null;
   } finally {
     setIsProcessing(false);
     console.log('[Capture] isProcessing set to false');

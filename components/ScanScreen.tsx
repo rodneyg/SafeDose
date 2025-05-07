@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { Camera as CameraIcon } from 'lucide-react-native';
 import { CameraView } from 'expo-camera';
 import { isMobileWeb } from '../lib/utils';
-import { captureAndProcessImage } from '../lib/cameraUtils';
 
 interface ScanScreenProps {
   permission: { status: string } | null;
@@ -31,6 +30,7 @@ interface ScanScreenProps {
   resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
   requestWebCameraPermission: () => Promise<void>;
   handleGoHome: () => void;
+  onCapture: () => void;
 }
 
 export default function ScanScreen({
@@ -59,42 +59,28 @@ export default function ScanScreen({
   resetFullForm,
   requestWebCameraPermission,
   handleGoHome,
+  onCapture,
 }: ScanScreenProps) {
-  const handleCapture = () => {
-    captureAndProcessImage({
-      cameraRef,
-      permission,
-      openai,
-      isMobileWeb,
-      setIsProcessing,
-      setProcessingMessage,
-      setScanError,
-      setScreenStep,
-      setManualStep,
-      setManualSyringe,
-      setSyringeHint,
-      setSubstanceName,
-      setSubstanceNameHint,
-      setConcentrationAmount,
-      setConcentrationUnit,
-      setConcentrationHint,
-      setTotalAmount,
-      setTotalAmountHint,
-      setMedicationInputType,
-      resetFullForm,
-    });
+  console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied });
+
+  const handleButtonPress = () => {
+    console.log('[ScanScreen] Capture button pressed', { isProcessing });
+    if (typeof onCapture === 'function') {
+      onCapture();
+    } else {
+      console.error('[ScanScreen] onCapture is not a function', onCapture);
+    }
   };
 
-  console.log('[Render] Rendering scan screen, isProcessing:', isProcessing);
   if (isMobileWeb) {
     if (permissionStatus === 'undetermined') {
       return (
         <View style={styles.content}>
           <Text style={styles.text}>Camera access is needed to scan items.</Text>
-          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
+          <TouchableOpacity style={[styles.button, styles.buttonMobile]} onPress={requestWebCameraPermission}>
             <Text style={styles.buttonText}>Grant Camera Access</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
+          <TouchableOpacity style={[styles.backButton, styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -102,24 +88,30 @@ export default function ScanScreen({
     }
 
     if (mobileWebPermissionDenied) {
+      console.log('[ScanScreen] Rendering mobile web denied view');
       return (
         <View style={styles.content}>
           <Text style={styles.errorText}>
             Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
           </Text>
-          <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={handleCapture} disabled={isProcessing}>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonMobile, isProcessing && styles.disabledButton]}
+            onPress={handleButtonPress}
+            disabled={isProcessing}
+          >
             <Text style={styles.buttonText}>Take or Upload Photo</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.tryCameraAgainButton, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
+          <TouchableOpacity style={[styles.tryCameraAgainButton, styles.buttonMobile]} onPress={requestWebCameraPermission}>
             <Text style={styles.buttonText}>Try Camera Again</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
+          <TouchableOpacity style={[styles.backButton, styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       );
     }
 
+    console.log('[ScanScreen] Rendering mobile web capture view');
     return (
       <View style={styles.scanContainer}>
         <View style={styles.overlayBottom}>
@@ -127,7 +119,7 @@ export default function ScanScreen({
           <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
           <TouchableOpacity
             style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={handleCapture}
+            onPress={handleButtonPress}
             disabled={isProcessing}
           >
             {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
@@ -153,6 +145,7 @@ export default function ScanScreen({
   }
 
   if (!permission) {
+    console.log('[ScanScreen] Rendering permission loading view');
     return (
       <View style={styles.content}>
         <ActivityIndicator size="large" color="#000000" />
@@ -162,6 +155,7 @@ export default function ScanScreen({
   }
 
   if (permission.status === 'granted') {
+    console.log('[ScanScreen] Rendering camera view');
     return (
       <View style={styles.scanContainer}>
         <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
@@ -170,7 +164,7 @@ export default function ScanScreen({
           <Text style={styles.scanText}>Position syringe & vial clearly</Text>
           <TouchableOpacity
             style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={handleCapture}
+            onPress={handleButtonPress}
             disabled={isProcessing}
           >
             {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
@@ -196,6 +190,7 @@ export default function ScanScreen({
   }
 
   if (permission.status === 'denied') {
+    console.log('[ScanScreen] Rendering permission denied view');
     return (
       <View style={styles.content}>
         <Text style={styles.errorText}>Camera permission is required to scan items.</Text>
@@ -210,15 +205,16 @@ export default function ScanScreen({
   }
 
   if (permission.status === 'undetermined') {
+    console.log('[ScanScreen] Rendering permission undetermined view');
     return (
       <View style={styles.content}>
         <Text style={styles.text}>Camera permission is needed to scan items.</Text>
         <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
           <Text style={styles.buttonText}>Grant Permission</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-          <Text style={styles.buttonText}>Go Back</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
       </View>
     );
   }

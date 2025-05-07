@@ -1,9 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
+import Constants from "expo-constants";
 
-// Firebase configuration (hard-coded)
-const firebaseConfig = {
+// Firebase configuration from app.config.js
+const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
   apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
   authDomain: "safedose-e320d.firebaseapp.com",
   projectId: "safedose-e320d",

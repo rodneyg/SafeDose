@@ -11,13 +11,22 @@ interface LimitModalProps {
 export default function LimitModal({ visible, isAnonymous, onClose }: LimitModalProps) {
   const router = useRouter();
 
+  console.log('[LimitModal] Rendering', { visible, isAnonymous });
+
   const handleSignIn = () => {
+    console.log('[LimitModal] Sign In button pressed');
     router.push('/login');
     onClose();
   };
 
   const handleUpgrade = () => {
+    console.log('[LimitModal] Upgrade button pressed');
     router.push('/pricing');
+    onClose();
+  };
+
+  const handleCancel = () => {
+    console.log('[LimitModal] Cancel button pressed');
     onClose();
   };
 
@@ -31,25 +40,23 @@ export default function LimitModal({ visible, isAnonymous, onClose }: LimitModal
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>
-            {isAnonymous
-              ? 'Usage Limit Reached'
-              : 'Free Plan Limit Reached'}
+            {isAnonymous ? 'Free Scan Limit Reached' : 'Plan Limit Reached'}
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You\'ve used all 5 free scans. Sign in to get 15 scans/month or upgrade for more.'
-              : 'You\'ve used all 15 free scans. Upgrade to continue.'}
+              ? 'You’ve used all 5 free scans. Sign in to get 15 scans per month or upgrade for more.'
+              : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
-              <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+              <TouchableOpacity style={[styles.button, styles.signInButton]} onPress={handleSignIn}>
                 <Text style={styles.buttonText}>Sign In</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.button} onPress={handleUpgrade}>
+            <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
               <Text style={styles.buttonText}>Upgrade</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -62,39 +69,47 @@ export default function LimitModal({ visible, isAnonymous, onClose }: LimitModal
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modal: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 20,
-    width: '80%',
+    borderRadius: 12,
+    padding: 24,
+    width: '85%',
     maxWidth: 400,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000000',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   message: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: 16,
+    color: '#333333',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   buttonContainer: {
     flexDirection: 'column',
-    gap: 10,
+    gap: 12,
+    width: '100%',
   },
   button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  signInButton: {
+    backgroundColor: '#007AFF',
+  },
+  upgradeButton: {
+    backgroundColor: '#34C759',
   },
   cancelButton: {
     backgroundColor: '#8E8E93',
@@ -102,6 +117,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

@@ -3,22 +3,26 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
-import { isMobileWeb } from '../../lib/utils';
+import { isMobileWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import LimitModal from '../../components/LimitModal';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { captureAndProcessImage } from '../../lib/cameraUtils';
 
 export default function NewDoseScreen() {
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
 
+  const doseCalculator = useDoseCalculator({ checkUsageLimit });
+  console.log('useDoseCalculator output:', Object.keys(doseCalculator));
   const {
     screenStep,
     setScreenStep,
     manualStep,
+    setManualStep,
     dose,
     setDose,
     unit,
@@ -68,7 +72,7 @@ export default function NewDoseScreen() {
     handleStartOver,
     handleGoHome,
     handleCapture,
-  } = useDoseCalculator({ checkUsageLimit });
+  } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
@@ -116,11 +120,117 @@ export default function NewDoseScreen() {
   }, [isProcessing]);
 
   const handleScanAttempt = async () => {
-    const canProceed = await handleCapture();
-    if (!canProceed) {
-      setShowLimitModal(true);
-    } else {
-      await incrementScansUsed();
+    console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
+    try {
+      const canProceed = await handleCapture();
+      console.log('handleScanAttempt: canProceed=', canProceed);
+      if (!canProceed) {
+        console.log('handleScanAttempt: Showing LimitModal');
+        setShowLimitModal(true);
+        return;
+      }
+
+      console.log('handleScanAttempt: Processing image');
+      const result = await captureAndProcessImage({
+        cameraRef,
+        permission,
+        openai,
+        isMobileWeb,
+        setIsProcessing,
+        setProcessingMessage,
+        setScanError,
+        incrementScansUsed,
+      });
+
+      if (result) {
+        console.log('handleScanAttempt: Applying scan results', result);
+        const scannedSyringe = result.syringe || {};
+        const scannedVial = result.vial || {};
+
+        const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
+        const scannedVolume = scannedSyringe.volume;
+        const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
+        const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
+        let selectedVolume = defaultVolume;
+
+        if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
+          const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
+          selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
+          console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
+        } else {
+          console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+        }
+        setManualSyringe({ type: scannedType, volume: selectedVolume });
+        setSyringeHint('Detected from image scan');
+
+        if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
+          setSubstanceName(String(scannedVial.substance));
+          setSubstanceNameHint('Detected from vial scan');
+          console.log('[Process] Set substance name:', scannedVial.substance);
+        }
+
+        const vialConcentration = scannedVial.concentration;
+        const vialTotalAmount = scannedVial.totalAmount;
+
+        if (vialConcentration && vialConcentration !== 'unreadable') {
+          const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
+          if (concMatch) {
+            setConcentrationAmount(concMatch[1]);
+            const detectedUnit = concMatch[2].toLowerCase();
+            if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
+            else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
+            else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
+            console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
+          } else {
+            setConcentrationAmount(String(vialConcentration));
+            console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
+          }
+          setMedicationInputType('concentration');
+          setConcentrationHint('Detected from vial scan');
+          setTotalAmountHint(null);
+        } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
+          const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
+          if (amountMatch) {
+            setTotalAmount(amountMatch[1]);
+            console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
+          } else {
+            setTotalAmount(String(vialTotalAmount));
+            console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
+          }
+          setMedicationInputType('totalAmount');
+          setTotalAmountHint('Detected from vial scan');
+          setConcentrationHint(null);
+        } else {
+          console.log('[Process] No reliable concentration or total amount detected');
+          setMedicationInputType(null);
+          setConcentrationHint('No concentration detected, please enter manually');
+          setTotalAmountHint('No total amount detected, please enter manually');
+        }
+
+        console.log('[Process] Scan successful, transitioning to manual entry');
+        resetFullForm('dose');
+        setScreenStep('manualEntry');
+        setManualStep('dose');
+      } else {
+        console.log('[Process] Scan failed, transitioning to manual entry with defaults');
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setSubstanceName('');
+        setMedicationInputType('concentration');
+        setConcentrationAmount('');
+        setTotalAmount('');
+        setScreenStep('manualEntry');
+        setManualStep('dose');
+      }
+    } catch (error) {
+      console.error('handleScanAttempt: Error=', error);
+      setScanError('Failed to process scan');
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setSubstanceName('');
+      setMedicationInputType('concentration');
+      setConcentrationAmount('');
+      setTotalAmount('');
+      setScreenStep('manualEntry');
+      setManualStep('dose');
     }
   };
 
@@ -130,6 +240,8 @@ export default function NewDoseScreen() {
     setPermissionStatus('denied');
     setMobileWebPermissionDenied(true);
   };
+
+  console.log('[NewDoseScreen] Rendering', { screenStep, isProcessing, onCapture: typeof handleScanAttempt });
 
   return (
     <View style={styles.container}>
@@ -168,7 +280,7 @@ export default function NewDoseScreen() {
           openai={openai}
           setScreenStep={setScreenStep}
           setManualStep={setManualStep}
-          setManualSyringe={setManualSyringe}
+          setManualSyringe={(syringe) => setManualSyringe(syringe.volume)}
           setSyringeHint={setSyringeHint}
           setSubstanceName={setSubstanceName}
           setSubstanceNameHint={setSubstanceNameHint}
@@ -184,7 +296,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           requestWebCameraPermission={requestWebCameraPermission}
           handleGoHome={handleGoHome}
-          handleCapture={handleScanAttempt}
+          onCapture={handleScanAttempt}
         />
       )}
       {screenStep === 'manualEntry' && (
@@ -234,7 +346,7 @@ export default function NewDoseScreen() {
       )}
       <LimitModal
         visible={showLimitModal}
-        isAnonymous={usageData.plan === 'free' && !usageData.scansUsed}
+        isAnonymous={true}
         onClose={() => setShowLimitModal(false)}
       />
       {isProcessing && (

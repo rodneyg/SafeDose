@@ -1,17 +1,17 @@
-// contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInAnonymously, User } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
-import { auth } from '@/lib/firebase';  // ← pull in your initialized auth
+import { auth } from '@/lib/firebase'; // Initialized auth instance
 
 interface AuthContextType {
   user: User | null;
+  auth: Auth;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]     = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, auth }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { calculateDose } from '../../lib/doseUtils';
+import { useState, useCallback } from 'react';
 
-type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
-type MedicationInputType = 'concentration' | 'totalAmount' | null;
+type ScreenStep = 'intro' | 'scan' | 'manualEntry';
+type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
+type Syringe = { volume: string };
 
 interface UseDoseCalculatorProps {
-  checkUsageLimit?: () => Promise<boolean>;
+  checkUsageLimit: () => Promise<boolean>;
 }
 
-export default function useDoseCalculator({ checkUsageLimit = async () => true }: UseDoseCalculatorProps = {}) {
-  const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('intro');
-  const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
+export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+  const [screenStep, setScreenStep] = useState<ScreenStep>('intro');
+  const [manualStep, setManualStep] = useState<ManualStep>('dose');
   const [dose, setDose] = useState<string>('');
-  const [unit, setUnit] = useState<'mg' | 'mcg' | 'units'>('mg');
+  const [unit, setUnit] = useState<string>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
-  const [medicationInputType, setMedicationInputType] = useState<MedicationInputType>('concentration');
+  const [medicationInputType, setMedicationInputType] = useState<string>('powder');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
-  const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
+  const [concentrationUnit, setConcentrationUnit] = useState<string>('mg/mL');
   const [totalAmount, setTotalAmount] = useState<string>('');
-  const [solutionVolume, setSolutionVolume] = useState<string>('1');
-  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
+  const [solutionVolume, setSolutionVolume] = useState<string>('');
+  const [manualSyringe, setManualSyringe] = useState<string>('1mL');
   const [doseValue, setDoseValue] = useState<number | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
-  const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
+  const [recommendedMarking, setRecommendedMarking] = useState<number | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
@@ -31,16 +31,16 @@ export default function useDoseCalculator({ checkUsageLimit = async () => true }
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
 
-  const resetFullForm = (startStep: ManualEntryStep = 'dose') => {
+  const resetFullForm = useCallback(() => {
     setDose('');
     setUnit('mg');
     setSubstanceName('');
-    setMedicationInputType('concentration');
+    setMedicationInputType('powder');
     setConcentrationAmount('');
-    setConcentrationUnit('mg/ml');
+    setConcentrationUnit('mg/mL');
     setTotalAmount('');
-    setSolutionVolume('1');
-    setManualSyringe({ type: 'Standard', volume: '3 ml' });
+    setSolutionVolume('');
+    setManualSyringe('1mL');
     setDoseValue(null);
     setConcentration(null);
     setCalculatedVolume(null);
@@ -51,142 +51,117 @@ export default function useDoseCalculator({ checkUsageLimit = async () => true }
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setSyringeHint(null);
-    setManualStep(startStep);
-    console.log('[Reset] Form reset complete');
-  };
+    setManualStep('dose');
+  }, []);
 
-  const handleCapture = async () => {
+  const handleNextDose = useCallback(() => {
+    if (!dose || !unit) {
+      setFormError('Please enter a dose and unit');
+      return;
+    }
+    setDoseValue(parseFloat(dose));
+    setManualStep('medicationSource');
+    setFormError(null);
+  }, [dose, unit]);
+
+  const handleNextMedicationSource = useCallback(() => {
+    if (!substanceName) {
+      setFormError('Please enter a substance name');
+      return;
+    }
+    setManualStep('concentrationInput');
+    setFormError(null);
+  }, [substanceName]);
+
+  const handleNextConcentrationInput = useCallback(() => {
+    if (!concentrationAmount || !concentrationUnit) {
+      setFormError('Please enter concentration amount and unit');
+      return;
+    }
+    setConcentration(parseFloat(concentrationAmount));
+    setManualStep('totalAmountInput');
+    setFormError(null);
+  }, [concentrationAmount, concentrationUnit]);
+
+  const handleNextTotalAmountInput = useCallback(() => {
+    if (!totalAmount) {
+      setFormError('Please enter total amount');
+      return;
+    }
+    setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
+    setFormError(null);
+  }, [totalAmount, medicationInputType]);
+
+  const handleNextReconstitution = useCallback(() => {
+    if (!solutionVolume) {
+      setFormError('Please enter solution volume');
+      return;
+    }
+    setManualStep('syringe');
+    setFormError(null);
+  }, [solutionVolume]);
+
+  const handleCalculateFinal = useCallback(() => {
+    if (!doseValue || !concentration || !manualSyringe) {
+      setCalculationError('Missing required fields for calculation');
+      return;
+    }
+    try {
+      const volume = doseValue / concentration;
+      const syringeCapacity = parseFloat(manualSyringe);
+      if (volume > syringeCapacity) {
+        setCalculationError(`Calculated volume (${volume.toFixed(2)} mL) exceeds syringe capacity (${syringeCapacity} mL)`);
+        return;
+      }
+      setCalculatedVolume(volume);
+      setRecommendedMarking(volume);
+      setManualStep('finalResult');
+      setCalculationError(null);
+    } catch (error) {
+      setCalculationError('Error calculating dose');
+    }
+  }, [doseValue, concentration, manualSyringe]);
+
+  const handleBack = useCallback(() => {
+    if (manualStep === 'dose') {
+      setScreenStep('intro');
+    } else if (manualStep === 'medicationSource') {
+      setManualStep('dose');
+    } else if (manualStep === 'concentrationInput') {
+      setManualStep('medicationSource');
+    } else if (manualStep === 'totalAmountInput') {
+      setManualStep('concentrationInput');
+    } else if (manualStep === 'reconstitution') {
+      setManualStep('totalAmountInput');
+    } else if (manualStep === 'syringe') {
+      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
+    } else if (manualStep === 'finalResult') {
+      setManualStep('syringe');
+    }
+    setFormError(null);
+  }, [manualStep, medicationInputType]);
+
+  const handleStartOver = useCallback(() => {
+    resetFullForm();
+    setScreenStep('intro');
+  }, [resetFullForm]);
+
+  const handleGoHome = useCallback(() => {
+    setScreenStep('intro');
+    resetFullForm();
+  }, [resetFullForm]);
+
+  const handleCapture = useCallback(async () => {
     const canProceed = await checkUsageLimit();
     if (!canProceed) {
       return false;
     }
+    // Simulate scan processing (actual logic in ScanScreen)
+    setManualStep('dose');
     return true;
-  };
+  }, [checkUsageLimit]);
 
-  const handleNextDose = () => {
-    setFormError(null);
-    const parsedDose = parseFloat(dose);
-    if (!dose || isNaN(parsedDose) || parsedDose <= 0) {
-      setFormError('Please enter a valid, positive dose amount.');
-      return;
-    }
-    setDoseValue(parsedDose);
-    setManualStep('medicationSource');
-    console.log('[Navigation] Moving to medicationSource');
-  };
-
-  const handleNextMedicationSource = () => {
-    setFormError(null);
-    if (!medicationInputType) {
-      setFormError('Please select how the medication amount is specified.');
-      return;
-    }
-    setManualStep(medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
-    console.log('[Navigation] Moving to', medicationInputType === 'concentration' ? 'concentrationInput' : 'totalAmountInput');
-  };
-
-  const handleNextConcentrationInput = () => {
-    setFormError(null);
-    const parsedConc = parseFloat(concentrationAmount);
-    if (!concentrationAmount || isNaN(parsedConc) || parsedConc <= 0) {
-      setFormError('Please enter a valid, positive concentration amount.');
-      return;
-    }
-    const expectedUnit = unit + '/ml';
-    if (concentrationUnit !== expectedUnit) {
-      setFormError(`Unit mismatch: Dose is in '${unit}', but concentration unit is '${concentrationUnit}'. Please use '${expectedUnit}'.`);
-      return;
-    }
-    setConcentration(parsedConc);
-    if (unit === 'units' || unit === 'mcg') {
-      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
-      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
-    } else {
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSyringeHint('Standard syringe selected for milligrams.');
-    }
-    setManualStep('syringe');
-    console.log('[Navigation] Moving to syringe with concentration:', parsedConc);
-  };
-
-  const handleNextTotalAmountInput = () => {
-    setFormError(null);
-    const parsedAmount = parseFloat(totalAmount);
-    if (!totalAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      setFormError('Please enter a valid, positive number for the total amount.');
-      return;
-    }
-    setManualStep('reconstitution');
-    console.log('[Navigation] Moving to reconstitution');
-  };
-
-  const handleNextReconstitution = () => {
-    setFormError(null);
-    const parsedSolutionVol = parseFloat(solutionVolume);
-    if (!solutionVolume || isNaN(parsedSolutionVol) || parsedSolutionVol <= 0) {
-      setFormError('Please enter a valid, positive volume (in ml) added for reconstitution.');
-      return;
-    }
-    let totalAmountValue = parseFloat(totalAmount);
-    if (unit === 'mcg') {
-      totalAmountValue *= 1000;
-    }
-    const calculatedConc = totalAmountValue / parsedSolutionVol;
-    setConcentration(calculatedConc);
-    if (unit === 'units' || unit === 'mcg') {
-      setManualSyringe({ type: 'Insulin', volume: '1 ml' });
-      setSyringeHint(unit === 'units' ? 'Insulin syringe suggested due to units.' : 'Insulin syringe suggested due to micrograms.');
-    } else {
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSyringeHint('Standard syringe selected for milligrams.');
-    }
-    setManualStep('syringe');
-    console.log('[Navigation] Moving to syringe with calculated concentration:', calculatedConc);
-  };
-
-  const handleCalculateFinal = () => {
-    setFormError(null);
-    const { calculatedVolume, recommendedMarking, calculationError } = calculateDose({
-      doseValue,
-      concentration,
-      unit,
-      concentrationUnit,
-      manualSyringe,
-    });
-    setCalculatedVolume(calculatedVolume);
-    setRecommendedMarking(recommendedMarking);
-    setCalculationError(calculationError);
-    setManualStep('finalResult');
-    console.log('[Navigation] Moving to finalResult');
-  };
-
-  const handleBack = () => {
-    setCalculationError(null);
-    setFormError(null);
-    switch (manualStep) {
-      case 'finalResult': setManualStep('syringe'); break;
-      case 'syringe': setManualStep(medicationInputType === 'concentration' ? 'concentrationInput' : 'reconstitution'); break;
-      case 'reconstitution': setManualStep('totalAmountInput'); break;
-      case 'concentrationInput':
-      case 'totalAmountInput': setManualStep('medicationSource'); break;
-      case 'medicationSource': setManualStep('dose'); break;
-      case 'dose': setScreenStep('intro'); resetFullForm(); break;
-    }
-    console.log('[Navigation] Going back to', manualStep);
-  };
-
-  const handleStartOver = () => {
-    resetFullForm('dose');
-    console.log('[Navigation] Starting over');
-  };
-
-  const handleGoHome = () => {
-    resetFullForm();
-    setScreenStep('intro');
-    console.log('[Navigation] Going home');
-  };
-
-  return {
+  const result = {
     screenStep,
     setScreenStep,
     manualStep,
@@ -208,7 +183,10 @@ export default function useDoseCalculator({ checkUsageLimit = async () => true }
     solutionVolume,
     setSolutionVolume,
     manualSyringe,
-    setManualSyringe,
+    setManualSyringe: (syringe: Syringe | string) => {
+      const volume = typeof syringe === 'string' ? syringe : syringe.volume;
+      setManualSyringe(volume);
+    },
     doseValue,
     setDoseValue,
     concentration,
@@ -230,7 +208,6 @@ export default function useDoseCalculator({ checkUsageLimit = async () => true }
     syringeHint,
     setSyringeHint,
     resetFullForm,
-    handleCapture,
     handleNextDose,
     handleNextMedicationSource,
     handleNextConcentrationInput,
@@ -240,5 +217,9 @@ export default function useDoseCalculator({ checkUsageLimit = async () => true }
     handleBack,
     handleStartOver,
     handleGoHome,
+    handleCapture,
   };
+
+  console.log('useDoseCalculator return:', Object.keys(result));
+  return result;
 }
