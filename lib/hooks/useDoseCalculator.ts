@@ -4,7 +4,11 @@ import { calculateDose } from '../../lib/doseUtils';
 type ManualEntryStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
 type MedicationInputType = 'concentration' | 'totalAmount' | null;
 
-export default function useDoseCalculator() {
+interface UseDoseCalculatorProps {
+  checkUsageLimit?: () => Promise<boolean>;
+}
+
+export default function useDoseCalculator({ checkUsageLimit = async () => true }: UseDoseCalculatorProps = {}) {
   const [screenStep, setScreenStep] = useState<'intro' | 'scan' | 'manualEntry'>('intro');
   const [manualStep, setManualStep] = useState<ManualEntryStep>('dose');
   const [dose, setDose] = useState<string>('');
@@ -49,6 +53,14 @@ export default function useDoseCalculator() {
     setSyringeHint(null);
     setManualStep(startStep);
     console.log('[Reset] Form reset complete');
+  };
+
+  const handleCapture = async () => {
+    const canProceed = await checkUsageLimit();
+    if (!canProceed) {
+      return false;
+    }
+    return true;
   };
 
   const handleNextDose = () => {
@@ -218,6 +230,7 @@ export default function useDoseCalculator() {
     syringeHint,
     setSyringeHint,
     resetFullForm,
+    handleCapture,
     handleNextDose,
     handleNextMedicationSource,
     handleNextConcentrationInput,
