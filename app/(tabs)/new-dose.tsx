@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -7,6 +7,7 @@ import { isMobileWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
+import LimitModal from '../../components/LimitModal';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 
@@ -72,6 +73,7 @@ export default function NewDoseScreen() {
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
@@ -138,6 +140,12 @@ export default function NewDoseScreen() {
           )}
         </Text>
       </View>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => setShowLimitModal(true)}
+      >
+        <Text style={styles.testButtonText}>Show Limit Modal</Text>
+      </TouchableOpacity>
       {screenStep === 'intro' && (
         <IntroScreen
           setScreenStep={setScreenStep}
@@ -218,6 +226,11 @@ export default function NewDoseScreen() {
           setScreenStep={setScreenStep}
         />
       )}
+      <LimitModal
+        visible={showLimitModal}
+        isAnonymous={usageData.plan === 'free' && !usageData.scansUsed}
+        onClose={() => setShowLimitModal(false)}
+      />
       {isProcessing && (
         <View style={styles.loadingOverlay}>
           <Text style={styles.loadingText}>{processingMessage}</Text>
@@ -234,4 +247,16 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
   loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
+  testButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    margin: 10,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
