@@ -8,6 +8,7 @@ import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
+import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 
 export default function NewDoseScreen() {
   const {
@@ -76,6 +77,9 @@ export default function NewDoseScreen() {
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
     dangerouslyAllowBrowser: true,
   });
+
+  const { usageData } = useUsageTracking();
+  console.log('Usage Data:', usageData);
 
   useEffect(() => {
     if (screenStep !== 'scan') {
