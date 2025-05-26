@@ -126,19 +126,6 @@ export default function ManualEntryScreen({
       );
       progress = (2 / 3) - 0.15;
       break;
-    case 'concentrationInput':
-      currentStepComponent = (
-        <ConcentrationInputStep
-          concentrationAmount={concentrationAmount}
-          setConcentrationAmount={setConcentrationAmount}
-          concentrationUnit={concentrationUnit}
-          setConcentrationUnit={setConcentrationUnit}
-          setConcentrationHint={setConcentrationHint}
-          concentrationHint={concentrationHint}
-        />
-      );
-      progress = (2 / 3) - 0.10;
-      break;
     case 'totalAmountInput':
       currentStepComponent = (
         <TotalAmountInputStep
@@ -150,6 +137,19 @@ export default function ManualEntryScreen({
         />
       );
       progress = (2 / 3) - 0.05;
+      break;
+    case 'concentrationInput':
+      currentStepComponent = (
+        <ConcentrationInputStep
+          concentrationAmount={concentrationAmount}
+          setConcentrationAmount={setConcentrationAmount}
+          concentrationUnit={concentrationUnit}
+          setConcentrationUnit={setConcentrationUnit}
+          setConcentrationHint={setConcentrationHint}
+          concentrationHint={concentrationHint}
+        />
+      );
+      progress = 4 / 5;
       break;
     case 'reconstitution':
       currentStepComponent = (
@@ -208,8 +208,8 @@ export default function ManualEntryScreen({
               onPress={() => {
                 if (manualStep === 'dose') handleNextDose();
                 else if (manualStep === 'medicationSource') handleNextMedicationSource();
-                else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
                 else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
+                else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
                 else if (manualStep === 'reconstitution') handleNextReconstitution();
                 else if (manualStep === 'syringe') handleCalculateFinal();
               }}
