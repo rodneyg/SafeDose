@@ -124,8 +124,17 @@ export default function ScanScreen({
             style={[styles.button, styles.buttonMobile, isProcessing && styles.disabledButton]}
             onPress={handleButtonPress}
             disabled={isProcessing}
+            activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Take or Upload Photo</Text>
+            {isProcessing ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.buttonText}>Processing...</Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Take or Upload Photo</Text>
+            )}
+          </TouchableOpacity>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tryCameraAgainButton, styles.buttonMobile]} onPress={requestWebCameraPermission}>
             <Text style={styles.buttonText}>Try Camera Again</Text>
@@ -252,6 +261,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   button: { backgroundColor: '#007AFF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
   buttonMobile: { paddingVertical: 16, paddingHorizontal: 32, minHeight: 60 },
+  buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   tryCameraAgainButton: { backgroundColor: '#FF9500', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },

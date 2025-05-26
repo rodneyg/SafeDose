@@ -115,8 +115,18 @@ export default function NewDoseScreen() {
     }
   }, [screenStep]);
 
+  // Add enhanced logging for isProcessing state changes
   useEffect(() => {
     console.log("isProcessing changed to:", isProcessing);
+    
+    // Log any suspiciously long processing times
+    if (isProcessing) {
+      const timerId = setTimeout(() => {
+        console.warn("Processing taking longer than expected, isProcessing still true after 10 seconds");
+      }, 10000);
+      
+      return () => clearTimeout(timerId);
+    }
   }, [isProcessing]);
 
   const handleScanAttempt = async () => {

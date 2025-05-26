@@ -243,7 +243,8 @@ export async function captureAndProcessImage({
     console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
     console.log('[Process] Sending request to OpenAI');
 
-    const response = await openai.chat.completions.create({
+    // Add timeout protection for the OpenAI API call
+    let responsePromise = openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
@@ -262,7 +263,25 @@ export async function captureAndProcessImage({
       ],
     });
 
-    console.log('[Process] Received response from OpenAI:', JSON.stringify(response, null, 2));
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
+    });
+
+    // Race the API promise against the timeout
+    const response = await Promise.race([responsePromise, timeoutPromise])
+                      .catch(error => {
+                        console.error('[Process] API call failed:', error);
+                        throw new Error(`API error: ${error.message || 'Network issue'}`);
+                      }) as any;
+
+    console.log('[Process] Received response from OpenAI:', JSON.stringify(response || {}, null, 2));
+
+    // Validate the response
+    if (!response || !response.choices || !response.choices[0] || !response.choices[0].message) {
+      console.error('[Process] Invalid or empty response from OpenAI');
+      throw new Error('Invalid response from image analysis');
+    }
 
     const content = response.choices[0].message.content;
     console.log('[Process] Raw OpenAI response content:', content);
