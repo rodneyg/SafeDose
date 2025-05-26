@@ -248,6 +248,10 @@ export default function ManualEntryScreen({
           setManualSyringe={setManualSyringe}
           setSyringeHint={setSyringeHint}
           syringeHint={syringeHint}
+          doseValue={doseValue}
+          concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
+          unit={unit}
+          concentrationUnit={concentrationUnit}
         />
       );
       progress = 3 / 3;
