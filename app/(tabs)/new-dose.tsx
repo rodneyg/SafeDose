@@ -87,6 +87,14 @@ export default function NewDoseScreen() {
     dangerouslyAllowBrowser: true,
   });
 
+  // Sync permission status with the actual permission object
+  useEffect(() => {
+    if (permission) {
+      console.log('[NewDoseScreen] Permission changed:', permission.status);
+      setPermissionStatus(permission.status as 'undetermined' | 'granted' | 'denied');
+    }
+  }, [permission]);
+
   console.log('Usage Data:', usageData);
 
   useEffect(() => {
@@ -110,7 +118,8 @@ export default function NewDoseScreen() {
   }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError]);
 
   useEffect(() => {
-    if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
+    if (screenStep === 'scan') {
+      console.log('[NewDoseScreen] Entered scan screen, checking permissions');
       requestWebCameraPermission();
     }
   }, [screenStep]);
@@ -235,10 +244,35 @@ export default function NewDoseScreen() {
   };
 
   const requestWebCameraPermission = async () => {
-    if (!isMobileWeb) return;
-    console.warn("Skipping getUserMedia check due to lack of support");
-    setPermissionStatus('denied');
-    setMobileWebPermissionDenied(true);
+    if (!isMobileWeb) {
+      try {
+        console.log('[NewDoseScreen] Requesting camera permission (native)');
+        const result = await requestPermission();
+        console.log('[NewDoseScreen] Permission request result:', result);
+      } catch (error) {
+        console.error('[NewDoseScreen] Error requesting camera permission:', error);
+        setPermissionStatus('denied');
+      }
+      return;
+    }
+
+    try {
+      console.log('[NewDoseScreen] Requesting camera permission (web)');
+      // For web, attempt to access the camera
+      const stream = await navigator.mediaDevices?.getUserMedia({ video: true });
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setPermissionStatus('granted');
+        setMobileWebPermissionDenied(false);
+      } else {
+        setPermissionStatus('denied');
+        setMobileWebPermissionDenied(true);
+      }
+    } catch (error) {
+      console.warn('[NewDoseScreen] Media device error:', error);
+      setPermissionStatus('denied');
+      setMobileWebPermissionDenied(true);
+    }
   };
 
   console.log('[NewDoseScreen] Rendering', { screenStep, isProcessing, onCapture: typeof handleScanAttempt });

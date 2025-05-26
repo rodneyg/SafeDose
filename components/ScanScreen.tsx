@@ -150,6 +150,9 @@ export default function ScanScreen({
       <View style={styles.content}>
         <ActivityIndicator size="large" color="#000000" />
         <Text style={styles.text}>Checking permissions...</Text>
+        <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -218,6 +221,20 @@ export default function ScanScreen({
       </View>
     );
   }
+  
+  // Fallback for any unhandled permission state
+  console.log('[ScanScreen] Rendering fallback view for unhandled state:', permission.status);
+  return (
+    <View style={styles.content}>
+      <Text style={styles.text}>Camera access is required for scanning.</Text>
+      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
+        <Text style={styles.buttonText}>Request Camera Access</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
+        <Text style={styles.buttonText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

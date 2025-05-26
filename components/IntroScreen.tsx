@@ -19,7 +19,12 @@ export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScree
           **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
         </Text>
       </View>
-      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={() => setScreenStep('scan')}>
+      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={() => {
+        console.log('[IntroScreen] Scan Items button pressed');
+        // Reset any previous scan errors or states before navigating to scan screen
+        resetFullForm();
+        setScreenStep('scan');
+      }}>
         <CameraIcon color={'#fff'} size={20} style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Scan Items</Text>
       </TouchableOpacity>
