@@ -147,6 +147,7 @@ export default function ManualEntryScreen({
           setTotalAmountHint={setTotalAmountHint}
           totalAmountHint={totalAmountHint}
           unit={unit}
+          dose={dose}
         />
       );
       progress = 3 / 5;
