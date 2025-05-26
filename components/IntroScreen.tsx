@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Camera as CameraIcon, Pill, Syringe } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -6,10 +6,21 @@ import { isMobileWeb } from '../lib/utils';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
-  resetFullForm: (startStep?: 'dose') => void;
+  resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
 }
 
 export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScreenProps) {
+  // Use memoized handlers to ensure stable references across renders
+  const handleScanPress = useCallback(() => {
+    setScreenStep('scan');
+  }, [setScreenStep]);
+  
+  const handleManualEntryPress = useCallback(() => {
+    // Ensure we reset form state before changing screens
+    resetFullForm('dose');
+    setScreenStep('manualEntry');
+  }, [resetFullForm, setScreenStep]);
+  
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
       <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
@@ -19,16 +30,15 @@ export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScree
           **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
         </Text>
       </View>
-      <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={() => setScreenStep('scan')}>
+      <TouchableOpacity 
+        style={[styles.button, isMobileWeb && styles.buttonMobile]} 
+        onPress={handleScanPress}>
         <CameraIcon color={'#fff'} size={20} style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Scan Items</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.manualButton, isMobileWeb && styles.buttonMobile]}
-        onPress={() => {
-          resetFullForm('dose');
-          setScreenStep('manualEntry');
-        }}
+        onPress={handleManualEntryPress}
       >
         <Pill color={'#fff'} size={20} style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Enter Details Manually</Text>

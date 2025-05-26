@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
+import { useNavigation, useFocusEffect } from 'expo-router';
 import { isMobileWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
@@ -15,9 +16,37 @@ import { captureAndProcessImage } from '../../lib/cameraUtils';
 export default function NewDoseScreen() {
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
+  const [isScreenActive, setIsScreenActive] = useState(true);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   console.log('useDoseCalculator output:', Object.keys(doseCalculator));
+  
+  // Handle screen focus events to ensure state is properly initialized after navigation
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[NewDoseScreen] Screen focused');
+      setIsScreenActive(true);
+      
+      // Only reset state on subsequent focuses (not first render)
+      if (hasInitializedAfterNavigation) {
+        // If returning to this screen, ensure we're in a good state
+        if (doseCalculator.screenStep !== 'intro' || doseCalculator.stateHealth === 'recovering') {
+          console.log('[NewDoseScreen] Resetting to intro state after navigation');
+          doseCalculator.resetFullForm();
+          doseCalculator.setScreenStep('intro');
+        }
+      } else {
+        setHasInitializedAfterNavigation(true);
+      }
+      
+      return () => {
+        // Cleanup when screen is unfocused
+        console.log('[NewDoseScreen] Screen unfocused');
+        setIsScreenActive(false);
+      };
+    }, [hasInitializedAfterNavigation, doseCalculator])
+  );
   const {
     screenStep,
     setScreenStep,
@@ -115,12 +144,29 @@ export default function NewDoseScreen() {
     }
   }, [screenStep]);
 
+  // Add enhanced logging for isProcessing state changes
   useEffect(() => {
     console.log("isProcessing changed to:", isProcessing);
+    
+    // Log any suspiciously long processing times
+    if (isProcessing) {
+      const timerId = setTimeout(() => {
+        console.warn("Processing taking longer than expected, isProcessing still true after 10 seconds");
+      }, 10000);
+      
+      return () => clearTimeout(timerId);
+    }
   }, [isProcessing]);
 
   const handleScanAttempt = async () => {
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
+    
+    // Don't proceed if already processing
+    if (isProcessing) {
+      console.log('handleScanAttempt: Already processing, ignoring request');
+      return;
+    }
+    
     try {
       const canProceed = await handleCapture();
       console.log('handleScanAttempt: canProceed=', canProceed);
@@ -223,7 +269,17 @@ export default function NewDoseScreen() {
       }
     } catch (error) {
       console.error('handleScanAttempt: Error=', error);
-      setScanError('Failed to process scan');
+      // Ensure isProcessing is reset in case of errors
+      setIsProcessing(false);
+      
+      // Set an informative error message
+      let errorMessage = 'Failed to process scan';
+      if (error instanceof Error) {
+        errorMessage = `Scan error: ${error.message}`;
+      }
+      setScanError(errorMessage);
+      
+      // Still provide a graceful fallback to manual entry
       setManualSyringe({ type: 'Standard', volume: '3 ml' });
       setSubstanceName('');
       setMedicationInputType('concentration');
@@ -262,6 +318,19 @@ export default function NewDoseScreen() {
             }`
           )}
         </Text>
+        
+        {/* Recovery button that only shows if state health is recovering */}
+        {doseCalculator.stateHealth === 'recovering' && (
+          <TouchableOpacity 
+            onPress={() => {
+              doseCalculator.resetFullForm();
+              doseCalculator.setScreenStep('intro');
+            }}
+            style={styles.recoveryButton}
+          >
+            <Text style={styles.recoveryButtonText}>Reset App</Text>
+          </TouchableOpacity>
+        )}
       </View>
       {screenStep === 'intro' && (
         <IntroScreen
@@ -365,4 +434,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
   loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
+  recoveryButton: { backgroundColor: '#ff3b30', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, marginTop: 8, alignSelf: 'center' },
+  recoveryButtonText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
 });

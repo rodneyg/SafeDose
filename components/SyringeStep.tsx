@@ -13,28 +13,61 @@ export default function SyringeStep({ manualSyringe, setManualSyringe, setSyring
   const availableVolumes = manualSyringe.type === 'Insulin' ? insulinVolumes : standardVolumes;
   const isValidSyringeOption = syringeOptions[manualSyringe.type]?.[manualSyringe.volume];
 
+  // Helper function to check if a syringe type has any valid markings for any volume
+  const hasValidOptions = (type: 'Insulin' | 'Standard') => {
+    const volumes = type === 'Insulin' ? insulinVolumes : standardVolumes;
+    return volumes.some(volume => syringeOptions[type]?.[volume]);
+  };
+  
+  const hasValidInsulinOptions = hasValidOptions('Insulin');
+  const hasValidStandardOptions = hasValidOptions('Standard');
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Step 3: Syringe Details</Text>
       <Text style={styles.label}>Syringe Type:</Text>
       <View style={styles.presetContainer}>
         <TouchableOpacity
-          style={[styles.optionButton, manualSyringe.type === 'Insulin' && styles.selectedOption]}
+          style={[
+            styles.optionButton, 
+            manualSyringe.type === 'Insulin' && styles.selectedOption,
+            !hasValidInsulinOptions && styles.disabledOption
+          ]}
           onPress={() => {
+            if (!hasValidInsulinOptions) {
+              setSyringeHint("No compatible insulin syringes for this dose.");
+              return;
+            }
             setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2] });
             setSyringeHint(null);
           }}
         >
-          <Text style={[styles.buttonText, manualSyringe.type === 'Insulin' && styles.selectedButtonText]}>Insulin (units)</Text>
+          <Text style={[
+            styles.buttonText, 
+            manualSyringe.type === 'Insulin' && styles.selectedButtonText,
+            !hasValidInsulinOptions && styles.disabledButtonText
+          ]}>Insulin (units)</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.optionButton, manualSyringe.type === 'Standard' && styles.selectedOption]}
+          style={[
+            styles.optionButton, 
+            manualSyringe.type === 'Standard' && styles.selectedOption,
+            !hasValidStandardOptions && styles.disabledOption
+          ]}
           onPress={() => {
+            if (!hasValidStandardOptions) {
+              setSyringeHint("No compatible standard syringes for this dose.");
+              return;
+            }
             setManualSyringe({ type: 'Standard', volume: standardVolumes[1] });
             setSyringeHint(null);
           }}
         >
-          <Text style={[styles.buttonText, manualSyringe.type === 'Standard' && styles.selectedButtonText]}>Standard (ml)</Text>
+          <Text style={[
+            styles.buttonText, 
+            manualSyringe.type === 'Standard' && styles.selectedButtonText,
+            !hasValidStandardOptions && styles.disabledButtonText
+          ]}>Standard (ml)</Text>
         </TouchableOpacity>
       </View>
       {syringeHint && <Text style={styles.helperHint}>{syringeHint}</Text>}
@@ -68,8 +101,10 @@ const styles = StyleSheet.create({
   presetContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 4, marginBottom: 8, width: '100%' },
   optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5 },
   selectedOption: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+  disabledOption: { backgroundColor: '#D1D1D6', borderColor: 'transparent', opacity: 0.6 },
   buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
   selectedButtonText: { color: '#ffffff', fontWeight: 'bold' },
+  disabledButtonText: { color: '#6B6B6B' },
   helperHint: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, marginBottom: 8, fontStyle: 'italic' },
   inferredMarkings: { fontSize: 13, color: '#8E8E93', textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
 });
