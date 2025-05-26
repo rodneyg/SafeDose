@@ -65,13 +65,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [dose, unit]);
 
   const handleNextMedicationSource = useCallback(() => {
-    if (!substanceName) {
-      setFormError('Please enter a substance name');
-      return;
-    }
+    // Substance name is optional, so we don't need to validate it
     setManualStep('concentrationInput');
     setFormError(null);
-  }, [substanceName]);
+  }, []);
 
   const handleNextConcentrationInput = useCallback(() => {
     if (!concentrationAmount || !concentrationUnit) {
