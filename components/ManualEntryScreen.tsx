@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
@@ -10,6 +10,7 @@ import TotalAmountInputStep from '../components/TotalAmountInputStep';
 import ReconstitutionStep from '../components/ReconstitutionStep';
 import SyringeStep from '../components/SyringeStep';
 import FinalResultDisplay from '../components/FinalResultDisplay';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -98,6 +99,85 @@ export default function ManualEntryScreen({
   handleStartOver,
   setScreenStep,
 }: ManualEntryScreenProps) {
+  // Add state for confirmation modal
+  const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
+  const [nextAction, setNextAction] = useState<() => void>(() => {});
+  const [modalTitle, setModalTitle] = useState<string>("");
+  const [modalMessage, setModalMessage] = useState<string>("");
+
+  // Validation functions for each step
+  const isDoseStepValid = (): boolean => {
+    return Boolean(dose && !isNaN(parseFloat(dose)));
+  };
+
+  const isMedicationSourceStepValid = (): boolean => {
+    return Boolean(medicationInputType === 'concentration' || medicationInputType === 'totalAmount');
+  };
+
+  const isConcentrationInputStepValid = (): boolean => {
+    return Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+  };
+
+  const isTotalAmountInputStepValid = (): boolean => {
+    const isValid = Boolean(totalAmount && !isNaN(parseFloat(totalAmount)));
+    console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
+    return isValid;
+  };
+
+  const isReconstitutionStepValid = (): boolean => {
+    return Boolean(solutionVolume && !isNaN(parseFloat(solutionVolume)));
+  };
+
+  const isSyringeStepValid = (): boolean => {
+    return Boolean(manualSyringe && manualSyringe.volume);
+  };
+
+  // Function to check if current step is valid
+  const isCurrentStepValid = (): boolean => {
+    let result = false;
+    switch (manualStep) {
+      case 'dose': result = isDoseStepValid(); break;
+      case 'medicationSource': result = isMedicationSourceStepValid(); break;
+      case 'concentrationInput': result = isConcentrationInputStepValid(); break;
+      case 'totalAmountInput': result = isTotalAmountInputStepValid(); break;
+      case 'reconstitution': result = isReconstitutionStepValid(); break;
+      case 'syringe': result = isSyringeStepValid(); break;
+      default: result = false;
+    }
+    console.log(`[ValidationCheck] step=${manualStep}, isValid=${result}`);
+    return result;
+  };
+
+  // Function to get confirmation modal content based on step
+  const getConfirmationContent = () => {
+    let title = "Confirm Information";
+    let message = "";
+
+    switch (manualStep) {
+      case 'dose':
+        message = `Are you sure you want to proceed with a dose of ${dose} ${unit}?`;
+        break;
+      case 'medicationSource':
+        message = `Selected label format: ${medicationInputType === 'concentration' ? 'Concentration' : 'Total Amount in Vial'}`;
+        if (substanceName) message += `\nSubstance name: ${substanceName}`;
+        break;
+      case 'concentrationInput':
+        message = `Confirm concentration: ${concentrationAmount} ${concentrationUnit}`;
+        break;
+      case 'totalAmountInput':
+        message = `Confirm total amount: ${totalAmount} ${unit === 'mcg' ? 'mg' : unit}`;
+        break;
+      case 'reconstitution':
+        message = `Confirm solution volume: ${solutionVolume} ml`;
+        break;
+      case 'syringe':
+        message = 'Are you ready to calculate the final dose?';
+        break;
+    }
+
+    return { title, message };
+  };
+
   let currentStepComponent;
   let progress = 0;
 
@@ -194,60 +274,94 @@ export default function ManualEntryScreen({
   }
 
   return (
-    <ScrollView style={styles.manualEntryContainer}>
-      <CustomProgressBar progress={progress} />
-      <View style={styles.formWrapper}>
-        {currentStepComponent}
-        {formError && <Text style={styles.errorText}>{formError}</Text>}
-        {manualStep !== 'finalResult' && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
-              onPress={handleBack}
-              accessibilityRole="button"
-              accessibilityLabel="Go back to previous step">
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-style={[
-  styles.nextButton,
-  (manualStep === 'dose' && !dose) && styles.disabledButton,
-  isMobileWeb && styles.nextButtonMobile
-]}
-onPress={useCallback(() => {
-  try {
-    console.log('[ManualEntry] Next button pressed for step:', manualStep);
-    if (manualStep === 'dose') handleNextDose();
-    else if (manualStep === 'medicationSource') handleNextMedicationSource();
-    else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
-    else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
-    else if (manualStep === 'reconstitution') handleNextReconstitution();
-    else if (manualStep === 'syringe') handleCalculateFinal();
-  } catch (error) {
-    console.error('Error in next button handler:', error);
-  }
-}, [
-  manualStep,
-  handleNextDose,
-  handleNextMedicationSource,
-  handleNextConcentrationInput,
-  handleNextTotalAmountInput,
-  handleNextReconstitution,
-  handleCalculateFinal
-])}
-              disabled={manualStep === 'dose' && !dose}
-              accessibilityRole="button"
-              accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}
-            >
-              <Text style={styles.buttonText}>
-                {manualStep === 'syringe' ? 'Calculate' : 'Next'}
-              </Text>
-              {manualStep !== 'syringe' && <ArrowRight color="#fff" size={18} />}
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+    <>
+      <ScrollView style={styles.manualEntryContainer}>
+        <CustomProgressBar progress={progress} />
+        <View style={styles.formWrapper}>
+          {currentStepComponent}
+          {formError && <Text style={styles.errorText}>{formError}</Text>}
+          {manualStep !== 'finalResult' && (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
+                onPress={handleBack}
+                accessibilityRole="button"
+                accessibilityLabel="Go back to previous step">
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  !isCurrentStepValid() && styles.disabledButton,
+                  isMobileWeb && styles.nextButtonMobile
+                ]}
+                onPress={useCallback(() => {
+                  try {
+                    console.log('[ManualEntry] Next button pressed for step:', manualStep);
+                    
+                    // If the current step is not valid, do nothing
+                    if (!isCurrentStepValid()) return;
+
+                    // Set up confirmation modal content
+                    const { title, message } = getConfirmationContent();
+                    setModalTitle(title);
+                    setModalMessage(message);
+
+                    // Set the appropriate next action
+                    if (manualStep === 'dose') {
+                      setNextAction(() => handleNextDose);
+                    } else if (manualStep === 'medicationSource') {
+                      setNextAction(() => handleNextMedicationSource);
+                    } else if (manualStep === 'concentrationInput') {
+                      setNextAction(() => handleNextConcentrationInput);
+                    } else if (manualStep === 'totalAmountInput') {
+                      setNextAction(() => handleNextTotalAmountInput);
+                    } else if (manualStep === 'reconstitution') {
+                      setNextAction(() => handleNextReconstitution);
+                    } else if (manualStep === 'syringe') {
+                      setNextAction(() => handleCalculateFinal);
+                    }
+
+                    // Show the confirmation modal
+                    setShowConfirmationModal(true);
+                  } catch (error) {
+                    console.error('Error in next button handler:', error);
+                  }
+                }, [
+                  manualStep,
+                  isCurrentStepValid,
+                  handleNextDose,
+                  handleNextMedicationSource,
+                  handleNextConcentrationInput,
+                  handleNextTotalAmountInput,
+                  handleNextReconstitution,
+                  handleCalculateFinal,
+                  getConfirmationContent
+                ])}
+                disabled={!isCurrentStepValid()}
+                accessibilityRole="button"
+                accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}
+              >
+                <Text style={styles.buttonText}>
+                  {manualStep === 'syringe' ? 'Calculate' : 'Next'}
+                </Text>
+                {manualStep !== 'syringe' && <ArrowRight color="#fff" size={18} />}
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      <ConfirmationModal
+        visible={showConfirmationModal}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          setShowConfirmationModal(false);
+          nextAction();
+        }}
+        onCancel={() => setShowConfirmationModal(false)}
+      />
+    </>
   );
 }
 

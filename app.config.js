@@ -30,9 +30,7 @@ module.exports = {
   },
   plugins: ['expo-router'],
   experiments: {
-    staticRendering: true,
-    typedRoutes: true,
-    sitemap: true
+    typedRoutes: true
   },
   extra: {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
 type Props = {
@@ -18,6 +18,12 @@ export default function MedicationSourceStep({
   medicationInputType,
   setMedicationInputType,
 }: Props) {
+  // Default to 'concentration' when component mounts if no selection has been made
+  useEffect(() => {
+    if (medicationInputType === null) {
+      setMedicationInputType('concentration');
+    }
+  }, [medicationInputType, setMedicationInputType]);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Step 2: Medication Details</Text>
