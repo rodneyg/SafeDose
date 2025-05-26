@@ -14,6 +14,10 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   // Log component mount to help debug visibility issues
   useEffect(() => {
     console.log('[IntroScreen] Component mounted');
+    
+    // Force log to make sure this component actually renders
+    console.log('[IntroScreen] Currently visible, screenStep should be "intro"');
+    
     return () => {
       console.log('[IntroScreen] Component unmounted');
     };
@@ -24,9 +28,11 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     console.log('[IntroScreen] Scan button pressed');
     // Mark that we're navigating from intro screen
     if (setNavigatingFromIntro) {
+      console.log('[IntroScreen] Setting navigatingFromIntro to true');
       setNavigatingFromIntro(true);
     }
     // Navigate directly to scan without resetting the form
+    console.log('[IntroScreen] Calling setScreenStep("scan")');
     setScreenStep('scan');
   }, [setScreenStep, setNavigatingFromIntro]);
   
@@ -34,10 +40,13 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     console.log('[IntroScreen] Manual entry button pressed');
     // Mark that we're navigating from intro screen
     if (setNavigatingFromIntro) {
+      console.log('[IntroScreen] Setting navigatingFromIntro to true');
       setNavigatingFromIntro(true);
     }
     // Ensure we have clean form state before starting manual entry
+    console.log('[IntroScreen] Calling resetFullForm("dose")');
     resetFullForm('dose');
+    console.log('[IntroScreen] Calling setScreenStep("manualEntry")');
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
   

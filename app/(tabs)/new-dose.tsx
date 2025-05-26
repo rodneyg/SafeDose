@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
@@ -26,9 +26,7 @@ export default function NewDoseScreen() {
   useEffect(() => {
     console.log('[NewDoseScreen] Initial setup, ensuring intro screen is shown');
     // Force screenStep to 'intro' on first render
-    if (doseCalculator.screenStep !== 'intro') {
-      doseCalculator.setScreenStep('intro');
-    }
+    doseCalculator.setScreenStep('intro');
   }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked
@@ -49,21 +47,22 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
       setIsScreenActive(true);
       
-      // Only consider resetting state during external navigation (not first render and not during internal transitions)
-      if (hasInitializedAfterNavigation) {
-        // Only reset if we're in a recovering state or NOT navigating from intro
+      // Don't reset state during initial render or when navigating from intro
+      if (hasInitializedAfterNavigation && !navigatingFromIntro) {
         if (doseCalculator.stateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
           doseCalculator.setScreenStep('intro');
         }
-        
-        // Reset the navigation tracking flag
-        if (navigatingFromIntro) {
-          setNavigatingFromIntro(false);
-        }
       } else {
         setHasInitializedAfterNavigation(true);
+      }
+      
+      // Reset the navigation tracking flag after processing
+      if (navigatingFromIntro) {
+        setTimeout(() => {
+          setNavigatingFromIntro(false);
+        }, 500); // Short delay to ensure navigation completes
       }
       
       return () => {
@@ -374,7 +373,7 @@ export default function NewDoseScreen() {
           scanError={scanError}
           cameraRef={cameraRef}
           openai={openai}
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
           setManualStep={setManualStep}
           setManualSyringe={(syringe) => setManualSyringe(syringe.volume)}
           setSyringeHint={setSyringeHint}
@@ -437,7 +436,7 @@ export default function NewDoseScreen() {
           handleCalculateFinal={handleCalculateFinal}
           handleBack={handleBack}
           handleStartOver={handleStartOver}
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
         />
       )}
       <LimitModal

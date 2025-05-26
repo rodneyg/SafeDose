@@ -91,6 +91,11 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Actually update the screen step
       setScreenStep(step);
       
+      // Ensure we properly track when the intro screen gets set
+      if (step === 'intro') {
+        console.log('[useDoseCalculator] Intro screen set explicitly');
+      }
+      
       // Log potentially problematic navigation transitions for debugging
       if (prevStep === step && step !== 'intro') {
         console.warn(`[useDoseCalculator] Redundant navigation to ${step}, could indicate an issue`);
@@ -113,6 +118,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     if (!isInitialized.current) {
       console.log('[useDoseCalculator] Initial setup');
       resetFullForm('dose');
+      
+      // Ensure we start on intro screen
+      setScreenStep('intro');
+      console.log('[useDoseCalculator] Initialization complete - screen set to intro');
     }
   }, [resetFullForm]);
 
