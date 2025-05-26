@@ -111,7 +111,7 @@ export default function ManualEntryScreen({
           setUnit={setUnit}
         />
       );
-      progress = 1 / 5;
+      progress = 1 / 3;
       break;
     case 'medicationSource':
       currentStepComponent = (
@@ -124,7 +124,7 @@ export default function ManualEntryScreen({
           setMedicationInputType={setMedicationInputType}
         />
       );
-      progress = 2 / 5;
+      progress = (2 / 3) - 0.15;
       break;
     case 'concentrationInput':
       currentStepComponent = (
@@ -137,7 +137,7 @@ export default function ManualEntryScreen({
           concentrationHint={concentrationHint}
         />
       );
-      progress = 3 / 5;
+      progress = (2 / 3) - 0.10;
       break;
     case 'totalAmountInput':
       currentStepComponent = (
@@ -149,7 +149,7 @@ export default function ManualEntryScreen({
           unit={unit}
         />
       );
-      progress = 3 / 5;
+      progress = (2 / 3) - 0.05;
       break;
     case 'reconstitution':
       currentStepComponent = (
@@ -158,7 +158,7 @@ export default function ManualEntryScreen({
           setSolutionVolume={setSolutionVolume}
         />
       );
-      progress = 4 / 5;
+      progress = 2 / 3;
       break;
     case 'syringe':
       currentStepComponent = (
@@ -169,7 +169,7 @@ export default function ManualEntryScreen({
           syringeHint={syringeHint}
         />
       );
-      progress = 5 / 5;
+      progress = 3 / 3;
       break;
     case 'finalResult':
       currentStepComponent = (
