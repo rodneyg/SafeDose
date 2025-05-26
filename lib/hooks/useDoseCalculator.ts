@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
-type Syringe = { volume: string };
+type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
@@ -29,7 +29,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [concentrationUnit, setConcentrationUnit] = useState<string>('mg/mL');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
-  const [manualSyringe, setManualSyringe] = useState<string>('1mL');
+  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
   const [doseValue, setDoseValue] = useState<number | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
@@ -54,7 +54,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setConcentrationUnit('mg/mL');
     setTotalAmount('');
     setSolutionVolume('');
-    setManualSyringe('1mL');
+    setManualSyringe({ type: 'Standard', volume: '3 ml' });
     setDoseValue(null);
     setConcentration(null);
     setCalculatedVolume(null);
@@ -203,10 +203,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         totalAmountValue *= 1000;
       }
 
-      const syringeObj = {
-        type: manualSyringe.includes('Insulin') ? 'Insulin' : 'Standard',
-        volume: manualSyringe.replace('Insulin ', '')
-      };
+      // Use the manualSyringe object directly, as it's already in the correct format
+      const syringeObj = manualSyringe;
 
       const { calculateDose } = require('../doseUtils');
       const result = calculateDose({
@@ -327,14 +325,23 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     solutionVolume,
     setSolutionVolume,
     manualSyringe,
-    setManualSyringe: (syringe: Syringe | string) => {
+    setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string } | string) => {
       try {
-        const volume = typeof syringe === 'string' ? syringe : syringe.volume;
-        setManualSyringe(volume);
+        if (typeof syringe === 'string') {
+          // Parse string format (for backward compatibility)
+          if (syringe.includes('Insulin')) {
+            setManualSyringe({ type: 'Insulin', volume: syringe.replace('Insulin ', '') });
+          } else {
+            setManualSyringe({ type: 'Standard', volume: syringe });
+          }
+        } else {
+          // Object format
+          setManualSyringe(syringe);
+        }
         lastActionTimestamp.current = Date.now();
       } catch (error) {
         console.error('[useDoseCalculator] Error in setManualSyringe:', error);
-        setManualSyringe('1mL');
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
       }
     },
     doseValue,

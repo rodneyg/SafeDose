@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { insulinVolumes, standardVolumes, syringeOptions } from '../lib/utils';
 
@@ -21,6 +21,47 @@ export default function SyringeStep({ manualSyringe, setManualSyringe, setSyring
   
   const hasValidInsulinOptions = hasValidOptions('Insulin');
   const hasValidStandardOptions = hasValidOptions('Standard');
+
+  // Function to find a valid syringe based on the current selection
+  const findValidSyringe = () => {
+    // First, check if the current selection is valid
+    if (isValidSyringeOption) {
+      return manualSyringe;
+    }
+
+    // Try to keep the same type but find a valid volume
+    const currentType = manualSyringe.type;
+    const volumes = currentType === 'Insulin' ? insulinVolumes : standardVolumes;
+    
+    // Find the first valid volume for the current type
+    for (const volume of volumes) {
+      if (syringeOptions[currentType]?.[volume]) {
+        return { type: currentType, volume };
+      }
+    }
+
+    // If no valid options for the current type, try the other type
+    const alternateType = currentType === 'Insulin' ? 'Standard' : 'Insulin';
+    const alternateVolumes = alternateType === 'Insulin' ? insulinVolumes : standardVolumes;
+    
+    for (const volume of alternateVolumes) {
+      if (syringeOptions[alternateType]?.[volume]) {
+        return { type: alternateType, volume };
+      }
+    }
+
+    // Default to Standard 3ml if nothing else works
+    return { type: 'Standard', volume: '3 ml' };
+  };
+
+  // Set valid defaults when component mounts or if current syringe is invalid
+  useEffect(() => {
+    if (!isValidSyringeOption) {
+      const validSyringe = findValidSyringe();
+      setManualSyringe(validSyringe);
+      setSyringeHint('Auto-selected best matching syringe');
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
