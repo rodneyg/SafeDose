@@ -75,7 +75,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, []);
 
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
-    console.log('[useDoseCalculator] Setting screen step to:', step, 'isInitialized:', isInitialized.current);
+    console.log('[useDoseCalculator] Setting screen step to:', step);
     try {
       lastActionTimestamp.current = Date.now();
       
