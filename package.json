@@ -30,6 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "dotenv": "^16.4.7",
     "expo": "^52.0.42",
+    "expo-auth-session": "~6.0.3",
     "expo-blur": "^14.0.3",
     "expo-camera": "~16.0.18",
     "expo-constants": "~17.0.8",
@@ -38,6 +39,7 @@
     "expo-haptics": "^14.0.1",
     "expo-linear-gradient": "^14.0.2",
     "expo-linking": "^7.0.5",
+    "expo-network": "~7.0.5",
     "expo-router": "^4.0.19",
     "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "^2.0.1",
@@ -67,13 +69,12 @@
     "react-native-web": "^0.19.13",
     "react-native-webview": "13.12.5",
     "stripe": "^18.0.0",
-    "tailwindcss": "^3.4.17",
-    "expo-network": "~7.0.5",
-    "expo-auth-session": "~6.0.3"
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
+    "expo-cli": "^6.3.12",
     "rimraf": "^6.0.1",
     "typescript": "^5.3.3",
     "vercel": "^28.4.8"
