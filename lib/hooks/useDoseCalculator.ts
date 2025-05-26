@@ -78,10 +78,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     console.log('[useDoseCalculator] Setting screen step to:', step, 'isInitialized:', isInitialized.current);
     try {
       lastActionTimestamp.current = Date.now();
-      if (step === 'manualEntry' && !isInitialized.current) {
-        console.log('[useDoseCalculator] First-time transition to manualEntry, initializing state');
-        resetFullForm('dose');
+      
+      // If we're navigating to a new screen, ensure we're properly initialized
+      if ((step === 'scan' || step === 'manualEntry') && !isInitialized.current) {
+        console.log('[useDoseCalculator] Initializing state during navigation to:', step);
+        isInitialized.current = true;
       }
+      
       setScreenStep(step);
     } catch (error) {
       console.error('[useDoseCalculator] Error in safeSetScreenStep:', error);
@@ -257,13 +260,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     return () => clearInterval(intervalId);
   }, [resetFullForm]);
 
-  useEffect(() => {
-    console.log('[useDoseCalculator] screenStep/manualStep changed:', { screenStep, manualStep });
-    if (screenStep === 'intro' && manualStep !== 'dose') {
-      console.log('[useDoseCalculator] Resetting form due to intro screen with non-dose manual step');
-      resetFullForm();
-    }
-  }, [screenStep, manualStep, resetFullForm]);
+  // The useEffect below was causing a navigation loop and has been removed
+  // When users clicked "Scan" or "Enter Manually" from the intro screen,
+  // it was incorrectly resetting the form and sending users back to intro
+  // useEffect(() => {
+  //   console.log('[useDoseCalculator] screenStep/manualStep changed:', { screenStep, manualStep });
+  //   if (screenStep === 'intro' && manualStep !== 'dose') {
+  //     console.log('[useDoseCalculator] Resetting form due to intro screen with non-dose manual step');
+  //     resetFullForm();
+  //   }
+  // }, [screenStep, manualStep, resetFullForm]);
 
   return {
     screenStep,
