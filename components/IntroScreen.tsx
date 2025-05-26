@@ -12,11 +12,12 @@ interface IntroScreenProps {
 export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScreenProps) {
   // Use memoized handlers to ensure stable references across renders
   const handleScanPress = useCallback(() => {
+    // Navigate directly to scan without resetting the form
     setScreenStep('scan');
   }, [setScreenStep]);
   
   const handleManualEntryPress = useCallback(() => {
-    // Ensure we reset form state before changing screens
+    // Ensure we have clean form state before starting manual entry
     resetFullForm('dose');
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep]);

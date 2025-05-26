@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -28,11 +28,11 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] Screen focused');
       setIsScreenActive(true);
       
-      // Only reset state on subsequent focuses (not first render)
+      // Only consider resetting state during external navigation (not first render and not during internal transitions)
       if (hasInitializedAfterNavigation) {
-        // If returning to this screen, ensure we're in a good state
-        if (doseCalculator.screenStep !== 'intro' || doseCalculator.stateHealth === 'recovering') {
-          console.log('[NewDoseScreen] Resetting to intro state after navigation');
+        // Only reset if we're in a recovering state - otherwise preserve the current navigation flow
+        if (doseCalculator.stateHealth === 'recovering') {
+          console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
           doseCalculator.setScreenStep('intro');
         }

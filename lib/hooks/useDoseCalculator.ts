@@ -85,14 +85,22 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         isInitialized.current = true;
       }
       
+      // Store previous step to prevent loop detection
+      const prevStep = screenStep;
       setScreenStep(step);
+      
+      // Add loop detection - if we're constantly toggling between screens
+      if (prevStep !== 'intro' && step === 'intro' && lastActionTimestamp.current - Date.now() < 300) {
+        console.warn('[useDoseCalculator] Detected potential navigation loop, stabilizing');
+        // Don't do any resets here, just keep the new step
+      }
     } catch (error) {
       console.error('[useDoseCalculator] Error in safeSetScreenStep:', error);
       resetFullForm();
       setScreenStep('intro');
       setStateHealth('recovering');
     }
-  }, [resetFullForm]);
+  }, [resetFullForm, screenStep]);
 
   useEffect(() => {
     if (!isInitialized.current) {
