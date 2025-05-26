@@ -10,7 +10,6 @@ import TotalAmountInputStep from '../components/TotalAmountInputStep';
 import ReconstitutionStep from '../components/ReconstitutionStep';
 import SyringeStep from '../components/SyringeStep';
 import FinalResultDisplay from '../components/FinalResultDisplay';
-import ConfirmationModal from '../components/ConfirmationModal';
 
 interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -99,12 +98,6 @@ export default function ManualEntryScreen({
   handleStartOver,
   setScreenStep,
 }: ManualEntryScreenProps) {
-  // Add state for confirmation modal
-  const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
-  const [nextAction, setNextAction] = useState<() => void>(() => {});
-  const [modalTitle, setModalTitle] = useState<string>("");
-  const [modalMessage, setModalMessage] = useState<string>("");
-
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));
@@ -146,36 +139,6 @@ export default function ManualEntryScreen({
     }
     console.log(`[ValidationCheck] step=${manualStep}, isValid=${result}`);
     return result;
-  };
-
-  // Function to get confirmation modal content based on step
-  const getConfirmationContent = () => {
-    let title = "Confirm Information";
-    let message = "";
-
-    switch (manualStep) {
-      case 'dose':
-        message = `Are you sure you want to proceed with a dose of ${dose} ${unit}?`;
-        break;
-      case 'medicationSource':
-        message = `Selected label format: ${medicationInputType === 'concentration' ? 'Concentration' : 'Total Amount in Vial'}`;
-        if (substanceName) message += `\nSubstance name: ${substanceName}`;
-        break;
-      case 'concentrationInput':
-        message = `Confirm concentration: ${concentrationAmount} ${concentrationUnit}`;
-        break;
-      case 'totalAmountInput':
-        message = `Confirm total amount: ${totalAmount} ${unit === 'mcg' ? 'mg' : unit}`;
-        break;
-      case 'reconstitution':
-        message = `Confirm solution volume: ${solutionVolume} ml`;
-        break;
-      case 'syringe':
-        message = 'Are you ready to calculate the final dose?';
-        break;
-    }
-
-    return { title, message };
   };
 
   let currentStepComponent;
@@ -302,28 +265,20 @@ export default function ManualEntryScreen({
                     // If the current step is not valid, do nothing
                     if (!isCurrentStepValid()) return;
 
-                    // Set up confirmation modal content
-                    const { title, message } = getConfirmationContent();
-                    setModalTitle(title);
-                    setModalMessage(message);
-
-                    // Set the appropriate next action
+                    // Navigate directly to the next step without confirmation
                     if (manualStep === 'dose') {
-                      setNextAction(() => handleNextDose);
+                      handleNextDose();
                     } else if (manualStep === 'medicationSource') {
-                      setNextAction(() => handleNextMedicationSource);
+                      handleNextMedicationSource();
                     } else if (manualStep === 'concentrationInput') {
-                      setNextAction(() => handleNextConcentrationInput);
+                      handleNextConcentrationInput();
                     } else if (manualStep === 'totalAmountInput') {
-                      setNextAction(() => handleNextTotalAmountInput);
+                      handleNextTotalAmountInput();
                     } else if (manualStep === 'reconstitution') {
-                      setNextAction(() => handleNextReconstitution);
+                      handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
-                      setNextAction(() => handleCalculateFinal);
+                      handleCalculateFinal();
                     }
-
-                    // Show the confirmation modal
-                    setShowConfirmationModal(true);
                   } catch (error) {
                     console.error('Error in next button handler:', error);
                   }
@@ -335,8 +290,7 @@ export default function ManualEntryScreen({
                   handleNextConcentrationInput,
                   handleNextTotalAmountInput,
                   handleNextReconstitution,
-                  handleCalculateFinal,
-                  getConfirmationContent
+                  handleCalculateFinal
                 ])}
                 disabled={!isCurrentStepValid()}
                 accessibilityRole="button"
@@ -351,16 +305,6 @@ export default function ManualEntryScreen({
           )}
         </View>
       </ScrollView>
-      <ConfirmationModal
-        visible={showConfirmationModal}
-        title={modalTitle}
-        message={modalMessage}
-        onConfirm={() => {
-          setShowConfirmationModal(false);
-          nextAction();
-        }}
-        onCancel={() => setShowConfirmationModal(false)}
-      />
     </>
   );
 }
