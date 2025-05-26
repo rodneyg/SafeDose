@@ -149,7 +149,20 @@ export default function ManualEntryScreen({
           concentrationHint={concentrationHint}
         />
       );
-      progress = 4 / 5;
+      progress = 3 / 5;
+      break;
+    case 'totalAmountInput':
+      currentStepComponent = (
+        <TotalAmountInputStep
+          totalAmount={totalAmount}
+          setTotalAmount={setTotalAmount}
+          setTotalAmountHint={setTotalAmountHint}
+          totalAmountHint={totalAmountHint}
+          unit={unit}
+          dose={dose}
+        />
+      );
+      progress = 3 / 5;
       break;
     case 'reconstitution':
       currentStepComponent = (

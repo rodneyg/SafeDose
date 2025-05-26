@@ -34,7 +34,16 @@ export default function FinalResultDisplay({
       {calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'row', alignItems: 'center' }]}>
           <X color="#f87171" size={24} />
+          <Text style={styles.errorTitle}>Calculation Error</Text>
           <Text style={styles.errorText}>{calculationError}</Text>
+          <Text style={styles.errorHelpText}>
+            {calculationError.includes('exceeds total amount') && 
+              'Try reducing the dose amount or selecting a medication with a higher total amount.'}
+            {calculationError.includes('exceeds what can be made') && 
+              'Try selecting a medication with a higher concentration or total amount.'}
+            {calculationError.includes('exceeds syringe capacity') && 
+              'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
+          </Text>
         </View>
       )}
       {recommendedMarking && (
@@ -104,5 +113,7 @@ const styles = StyleSheet.create({
   actionButton: { paddingVertical: 14, borderRadius: 8, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginHorizontal: 5, minHeight: 50 },
   actionButtonMobile: { paddingVertical: 16, minHeight: 60 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
+  errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
   errorText: { fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 },
+  errorHelpText: { fontSize: 13, color: '#991B1B', textAlign: 'center', marginTop: 12, paddingVertical: 8, backgroundColor: 'rgba(248, 113, 113, 0.1)', paddingHorizontal: 12, borderRadius: 6, width: '90%', alignSelf: 'center' },
 });

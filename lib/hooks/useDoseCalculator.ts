@@ -76,7 +76,6 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
     console.log('[useDoseCalculator] Setting screen step to:', step);
-
     try {
       lastActionTimestamp.current = Date.now();
       if (step === 'manualEntry' && !isInitialized.current) {
@@ -168,27 +167,38 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleCalculateFinal = useCallback(() => {
     try {
-      if (!doseValue || !concentration || !manualSyringe) {
-        setCalculationError('Missing required fields for calculation');
-        return;
+      let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
+      if (unit === 'mcg' && totalAmountValue) {
+        totalAmountValue *= 1000;
       }
 
-      const volume = doseValue / concentration;
-      const syringeCapacity = parseFloat(manualSyringe);
-      if (volume > syringeCapacity) {
-        setCalculationError(`Calculated volume (${volume.toFixed(2)} mL) exceeds syringe capacity (${syringeCapacity} mL)`);
-        return;
+      const syringeObj = {
+        type: manualSyringe.includes('Insulin') ? 'Insulin' : 'Standard',
+        volume: manualSyringe.replace('Insulin ', '')
+      };
+
+      const { calculateDose } = require('../doseUtils');
+      const result = calculateDose({
+        doseValue,
+        concentration,
+        unit,
+        concentrationUnit,
+        totalAmount: totalAmountValue,
+        manualSyringe: syringeObj,
+      });
+
+      setCalculatedVolume(result.calculatedVolume);
+      setRecommendedMarking(result.recommendedMarking);
+      setCalculationError(result.calculationError);
+
+      if (!result.calculationError || result.recommendedMarking) {
+        setManualStep('finalResult');
       }
-      setCalculatedVolume(volume);
-      setRecommendedMarking(volume);
-      setManualStep('finalResult');
-      setCalculationError(null);
-      lastActionTimestamp.current = Date.now();
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
     }
-  }, [doseValue, concentration, manualSyringe]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit]);
 
   const handleBack = useCallback(() => {
     try {
@@ -224,7 +234,6 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     try {
       const canProceed = await checkUsageLimit();
       if (!canProceed) return false;
-
       setManualStep('dose');
       lastActionTimestamp.current = Date.now();
       return true;
@@ -244,13 +253,11 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         setStateHealth('recovering');
       }
     };
-
-    const intervalId = setInterval(checkStateHealth, 60 * 1000);
+    const intervalId = setInterval(checkStateHealth, 60000);
     return () => clearInterval(intervalId);
   }, [resetFullForm]);
 
   useEffect(() => {
-    console.log('[useDoseCalculator] Screen step changed:', screenStep);
     if (screenStep === 'intro' && manualStep !== 'dose') {
       resetFullForm();
     }
