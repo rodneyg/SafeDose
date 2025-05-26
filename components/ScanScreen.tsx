@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Camera as CameraIcon } from 'lucide-react-native';
 import { CameraView } from 'expo-camera';
@@ -63,12 +63,38 @@ export default function ScanScreen({
 }: ScanScreenProps) {
   console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied });
 
+  // Safeguard: Reset isProcessing state after 20 seconds if it gets stuck
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isProcessing) {
+      console.log('[ScanScreen] Setting safeguard timeout for isProcessing');
+      timeoutId = setTimeout(() => {
+        console.log('[ScanScreen] Safeguard timeout triggered - resetting isProcessing');
+        setIsProcessing(false);
+        setScanError('Operation timed out. Please try again.');
+      }, 20000); // 20 seconds timeout
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isProcessing, setIsProcessing, setScanError]);
+
   const handleButtonPress = () => {
     console.log('[ScanScreen] Capture button pressed', { isProcessing });
+    if (isProcessing) {
+      console.log('[ScanScreen] Ignoring button press while processing');
+      return;
+    }
+    
     if (typeof onCapture === 'function') {
       onCapture();
     } else {
       console.error('[ScanScreen] onCapture is not a function', onCapture);
+      setScanError('Camera functionality unavailable');
     }
   };
 

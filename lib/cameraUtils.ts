@@ -50,9 +50,12 @@ export async function captureAndProcessImage({
     console.error('[Capture] OpenAI API key missing');
     Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
     setScanError('OpenAI configuration error');
+    setIsProcessing(false); // Ensure isProcessing is reset on this error path
     return null;
   }
 
+  // Set the processing state at the beginning
+  console.log('[Capture] Setting isProcessing to true');
   setIsProcessing(true);
   setScanError(null);
   setProcessingMessage('Waiting for photo selection...');
@@ -64,27 +67,45 @@ export async function captureAndProcessImage({
     if (isMobileWeb) {
       console.log('[Capture] Mobile web detected, using file input');
 
-      const filePromise = new Promise<{ file: File }>((resolve, reject) => {
-        const existingInputs = document.querySelectorAll('input[type="file"]');
-        existingInputs.forEach(input => input.remove());
-        console.log('[Capture] Cleared existing file inputs');
+      // Clean up any existing file inputs first
+      const existingInputs = document.querySelectorAll('input[type="file"]');
+      existingInputs.forEach(input => {
+        if (document.body.contains(input)) {
+          document.body.removeChild(input);
+        }
+      });
+      console.log('[Capture] Cleared existing file inputs');
 
+      const filePromise = new Promise<{ file: File }>((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
         input.capture = 'environment';
+        let fileInputTimeoutId: any = null;
 
         input.onchange = (event) => {
           console.log('[Capture] File input change event');
+          // Clear timeout since we got a response
+          if (fileInputTimeoutId) {
+            clearTimeout(fileInputTimeoutId);
+            fileInputTimeoutId = null;
+          }
+          
           const target = event.target as HTMLInputElement;
           const file = target.files?.[0];
           if (!file) {
             console.log('[Capture] No file selected');
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+            }
             reject(new Error('No file selected or user cancelled'));
             return;
           }
           console.log('[Capture] File selected:', file.name, 'Size:', file.size);
           if (file.size > MAX_FILE_SIZE) {
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+            }
             reject(new Error(`File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds 5 MB limit`));
             return;
           }
@@ -97,24 +118,29 @@ export async function captureAndProcessImage({
 
         input.onerror = (error) => {
           console.error('[Capture] File input error:', error);
-          reject(new Error('File input failed'));
+          if (fileInputTimeoutId) {
+            clearTimeout(fileInputTimeoutId);
+            fileInputTimeoutId = null;
+          }
           if (document.body.contains(input)) {
             document.body.removeChild(input);
             console.log('[Capture] File input removed on error');
           }
+          reject(new Error('File input failed'));
         };
 
         document.body.appendChild(input);
         console.log('[Capture] Triggering file input click');
         input.click();
 
-        setTimeout(() => {
-          if (document.body.contains(input) && !input.files?.length) {
+        // Set a timeout to clean up if the user doesn't select a file
+        fileInputTimeoutId = setTimeout(() => {
+          if (document.body.contains(input)) {
             document.body.removeChild(input);
-            reject(new Error('File selection cancelled after 15 seconds'));
-            console.log('[Capture] File input cancelled');
+            console.log('[Capture] File input cancelled due to timeout');
+            reject(new Error('File selection cancelled after timeout'));
           }
-        }, 15000);
+        }, 30000); // 30 seconds timeout
       });
 
       const { file } = await filePromise;
@@ -276,6 +302,8 @@ export async function captureAndProcessImage({
         message = 'No image selected';
       } else if (error.message.includes('File size')) {
         message = error.message;
+      } else if (error.message.includes('cancelled')) {
+        message = 'Image selection cancelled';
       } else {
         message = `Error: ${error.message}`;
       }
@@ -283,6 +311,7 @@ export async function captureAndProcessImage({
     setScanError(message);
     return null;
   } finally {
+    // Always ensure isProcessing is reset to prevent stuck states
     setIsProcessing(false);
     console.log('[Capture] isProcessing set to false');
   }

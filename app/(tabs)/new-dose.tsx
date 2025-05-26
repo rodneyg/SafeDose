@@ -121,6 +121,13 @@ export default function NewDoseScreen() {
 
   const handleScanAttempt = async () => {
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
+    
+    // Don't proceed if already processing
+    if (isProcessing) {
+      console.log('handleScanAttempt: Already processing, ignoring request');
+      return;
+    }
+    
     try {
       const canProceed = await handleCapture();
       console.log('handleScanAttempt: canProceed=', canProceed);
@@ -223,7 +230,17 @@ export default function NewDoseScreen() {
       }
     } catch (error) {
       console.error('handleScanAttempt: Error=', error);
-      setScanError('Failed to process scan');
+      // Ensure isProcessing is reset in case of errors
+      setIsProcessing(false);
+      
+      // Set an informative error message
+      let errorMessage = 'Failed to process scan';
+      if (error instanceof Error) {
+        errorMessage = `Scan error: ${error.message}`;
+      }
+      setScanError(errorMessage);
+      
+      // Still provide a graceful fallback to manual entry
       setManualSyringe({ type: 'Standard', volume: '3 ml' });
       setSubstanceName('');
       setMedicationInputType('concentration');
