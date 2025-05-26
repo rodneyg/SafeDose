@@ -164,8 +164,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {
-      if (!totalAmount) {
-        setFormError('Please enter total amount');
+      if (!totalAmount || isNaN(parseFloat(totalAmount))) {
+        setFormError('Please enter a valid total amount');
         return;
       }
       setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');

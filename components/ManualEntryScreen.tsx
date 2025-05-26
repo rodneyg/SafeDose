@@ -119,7 +119,9 @@ export default function ManualEntryScreen({
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
-    return Boolean(totalAmount && !isNaN(parseFloat(totalAmount)));
+    const isValid = Boolean(totalAmount && !isNaN(parseFloat(totalAmount)));
+    console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
+    return isValid;
   };
 
   const isReconstitutionStepValid = (): boolean => {
@@ -132,15 +134,18 @@ export default function ManualEntryScreen({
 
   // Function to check if current step is valid
   const isCurrentStepValid = (): boolean => {
+    let result = false;
     switch (manualStep) {
-      case 'dose': return isDoseStepValid();
-      case 'medicationSource': return isMedicationSourceStepValid();
-      case 'concentrationInput': return isConcentrationInputStepValid();
-      case 'totalAmountInput': return isTotalAmountInputStepValid();
-      case 'reconstitution': return isReconstitutionStepValid();
-      case 'syringe': return isSyringeStepValid();
-      default: return false;
+      case 'dose': result = isDoseStepValid(); break;
+      case 'medicationSource': result = isMedicationSourceStepValid(); break;
+      case 'concentrationInput': result = isConcentrationInputStepValid(); break;
+      case 'totalAmountInput': result = isTotalAmountInputStepValid(); break;
+      case 'reconstitution': result = isReconstitutionStepValid(); break;
+      case 'syringe': result = isSyringeStepValid(); break;
+      default: result = false;
     }
+    console.log(`[ValidationCheck] step=${manualStep}, isValid=${result}`);
+    return result;
   };
 
   // Function to get confirmation modal content based on step
