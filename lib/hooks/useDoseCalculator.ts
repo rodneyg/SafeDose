@@ -198,6 +198,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleCalculateFinal = useCallback(() => {
     try {
+      console.log('[useDoseCalculator] handleCalculateFinal called');
       let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
       if (unit === 'mcg' && totalAmountValue) {
         totalAmountValue *= 1000;
@@ -216,16 +217,26 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         manualSyringe: syringeObj,
       });
 
+      console.log('[useDoseCalculator] Calculation result:', { 
+        calculatedVolume: result.calculatedVolume,
+        recommendedMarking: result.recommendedMarking,
+        calculationError: result.calculationError 
+      });
+
       setCalculatedVolume(result.calculatedVolume);
       setRecommendedMarking(result.recommendedMarking);
       setCalculationError(result.calculationError);
 
-      if (!result.calculationError || result.recommendedMarking) {
-        setManualStep('finalResult');
-      }
+      // Always navigate to finalResult screen regardless of calculation errors
+      // Previously only navigated if there was no error or a recommendedMarking was available
+      setManualStep('finalResult');
+      console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
+      // Ensure we still navigate to the results screen even if there's an error
+      setManualStep('finalResult');
+      console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit]);
 

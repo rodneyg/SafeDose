@@ -144,6 +144,9 @@ export default function ManualEntryScreen({
   let currentStepComponent;
   let progress = 0;
 
+  // Add logging for step changes
+  console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`);
+
   switch (manualStep) {
     case 'dose':
       currentStepComponent = (

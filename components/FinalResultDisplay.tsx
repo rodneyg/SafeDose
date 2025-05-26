@@ -29,11 +29,20 @@ export default function FinalResultDisplay({
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  console.log('[FinalResultDisplay] Rendering with:', { 
+    calculationError, 
+    recommendedMarking,
+    doseValue,
+    unit,
+    substanceName,
+    manualSyringe,
+    calculatedVolume
+  });
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {calculationError && !recommendedMarking && (
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'row', alignItems: 'center' }]}>
-          <X color="#f87171" size={24} />
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
+          <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
           <Text style={styles.errorText}>{calculationError}</Text>
           <Text style={styles.errorHelpText}>
