@@ -111,7 +111,7 @@ export default function ManualEntryScreen({
           setUnit={setUnit}
         />
       );
-      progress = 1 / 5;
+      progress = 1 / 3;
       break;
     case 'medicationSource':
       currentStepComponent = (
@@ -124,7 +124,19 @@ export default function ManualEntryScreen({
           setMedicationInputType={setMedicationInputType}
         />
       );
-      progress = 2 / 5;
+      progress = (2 / 3) - 0.15;
+      break;
+    case 'totalAmountInput':
+      currentStepComponent = (
+        <TotalAmountInputStep
+          totalAmount={totalAmount}
+          setTotalAmount={setTotalAmount}
+          setTotalAmountHint={setTotalAmountHint}
+          totalAmountHint={totalAmountHint}
+          unit={unit}
+        />
+      );
+      progress = (2 / 3) - 0.05;
       break;
     case 'concentrationInput':
       currentStepComponent = (
@@ -137,19 +149,7 @@ export default function ManualEntryScreen({
           concentrationHint={concentrationHint}
         />
       );
-      progress = 3 / 5;
-      break;
-    case 'totalAmountInput':
-      currentStepComponent = (
-        <TotalAmountInputStep
-          totalAmount={totalAmount}
-          setTotalAmount={setTotalAmount}
-          setTotalAmountHint={setTotalAmountHint}
-          totalAmountHint={totalAmountHint}
-          unit={unit}
-        />
-      );
-      progress = 3 / 5;
+      progress = 4 / 5;
       break;
     case 'reconstitution':
       currentStepComponent = (
@@ -158,7 +158,7 @@ export default function ManualEntryScreen({
           setSolutionVolume={setSolutionVolume}
         />
       );
-      progress = 4 / 5;
+      progress = 2 / 3;
       break;
     case 'syringe':
       currentStepComponent = (
@@ -169,7 +169,7 @@ export default function ManualEntryScreen({
           syringeHint={syringeHint}
         />
       );
-      progress = 5 / 5;
+      progress = 3 / 3;
       break;
     case 'finalResult':
       currentStepComponent = (
@@ -208,32 +208,32 @@ export default function ManualEntryScreen({
               <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.nextButton, 
-                (manualStep === 'dose' && !dose) && styles.disabledButton, 
-                isMobileWeb && styles.nextButtonMobile
-              ]}
-              onPress={useCallback(() => {
-                try {
-                  console.log('[ManualEntry] Next button pressed for step:', manualStep);
-                  if (manualStep === 'dose') handleNextDose();
-                  else if (manualStep === 'medicationSource') handleNextMedicationSource();
-                  else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
-                  else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
-                  else if (manualStep === 'reconstitution') handleNextReconstitution();
-                  else if (manualStep === 'syringe') handleCalculateFinal();
-                } catch (error) {
-                  console.error('Error in next button handler:', error);
-                }
-              }, [
-                manualStep, 
-                handleNextDose, 
-                handleNextMedicationSource, 
-                handleNextConcentrationInput,
-                handleNextTotalAmountInput,
-                handleNextReconstitution,
-                handleCalculateFinal
-              ])}
+style={[
+  styles.nextButton,
+  (manualStep === 'dose' && !dose) && styles.disabledButton,
+  isMobileWeb && styles.nextButtonMobile
+]}
+onPress={useCallback(() => {
+  try {
+    console.log('[ManualEntry] Next button pressed for step:', manualStep);
+    if (manualStep === 'dose') handleNextDose();
+    else if (manualStep === 'medicationSource') handleNextMedicationSource();
+    else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
+    else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
+    else if (manualStep === 'reconstitution') handleNextReconstitution();
+    else if (manualStep === 'syringe') handleCalculateFinal();
+  } catch (error) {
+    console.error('Error in next button handler:', error);
+  }
+}, [
+  manualStep,
+  handleNextDose,
+  handleNextMedicationSource,
+  handleNextConcentrationInput,
+  handleNextTotalAmountInput,
+  handleNextReconstitution,
+  handleCalculateFinal
+])}
               disabled={manualStep === 'dose' && !dose}
               accessibilityRole="button"
               accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}

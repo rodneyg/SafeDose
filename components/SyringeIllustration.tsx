@@ -10,7 +10,20 @@ type Props = {
 
 export default function SyringeIllustration({ syringeType, syringeVolume, recommendedMarking, syringeOptions }: Props) {
   const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
-  const markingsString = syringeOptions[syringeType][syringeVolume];
+  const markingsString = syringeOptions[syringeType]?.[syringeVolume];
+  
+  // Check if markings are available before proceeding
+  if (!markingsString) {
+    // Return a simple placeholder view when markings are unavailable
+    return (
+      <View style={styles.container}>
+        <View style={styles.syringeBody} />
+        <View style={styles.syringeLine} />
+        <Text style={styles.noMarkingsText}>No markings available for this syringe</Text>
+      </View>
+    );
+  }
+  
   const markings = [0, ...markingsString.split(',').map(m => parseFloat(m))];
   const maxMarking = Math.max(...markings);
   const syringeWidth = 300;
@@ -52,4 +65,5 @@ const styles = StyleSheet.create({
   unitLabel: { position: 'absolute', left: 270, top: 65, fontSize: 12, color: '#000', fontWeight: 'bold' },
   recommendedMark: { position: 'absolute', top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 },
   recommendedText: { position: 'absolute', top: 85, fontSize: 12, color: '#FF0000', fontWeight: 'bold' },
+  noMarkingsText: { position: 'absolute', top: 65, width: '100%', textAlign: 'center', fontSize: 12, color: '#991B1B', fontWeight: 'bold' },
 });

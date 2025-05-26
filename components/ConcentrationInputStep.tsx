@@ -20,7 +20,7 @@ export default function ConcentrationInputStep({
 }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Step 2a: Enter Concentration</Text>
+      <Text style={styles.title}>Step 4: Enter Concentration</Text>
       <Text style={styles.label}>Concentration Amount:</Text>
       <TextInput
         style={styles.input}

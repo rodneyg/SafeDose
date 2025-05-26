@@ -6,7 +6,7 @@ import { isMobileWeb } from '../lib/utils';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
-  resetFullForm: (startStep?: 'dose') => void;
+  resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
 }
 
 export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScreenProps) {
