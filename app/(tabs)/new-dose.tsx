@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
+import { useNavigation, useFocusEffect } from 'expo-router';
 import { isMobileWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
@@ -15,9 +16,34 @@ import { captureAndProcessImage } from '../../lib/cameraUtils';
 export default function NewDoseScreen() {
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   console.log('useDoseCalculator output:', Object.keys(doseCalculator));
+  
+  // Handle screen focus events to ensure state is properly initialized after navigation
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[NewDoseScreen] Screen focused');
+      
+      // Only reset state on subsequent focuses (not first render)
+      if (hasInitializedAfterNavigation) {
+        // If returning to this screen, ensure we're in a good state
+        if (doseCalculator.screenStep !== 'intro') {
+          console.log('[NewDoseScreen] Resetting to intro state after navigation');
+          doseCalculator.resetFullForm();
+          doseCalculator.setScreenStep('intro');
+        }
+      } else {
+        setHasInitializedAfterNavigation(true);
+      }
+      
+      return () => {
+        // Cleanup when screen is unfocused
+        console.log('[NewDoseScreen] Screen unfocused');
+      };
+    }, [hasInitializedAfterNavigation, doseCalculator])
+  );
   const {
     screenStep,
     setScreenStep,

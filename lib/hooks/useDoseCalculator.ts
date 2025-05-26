@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -9,6 +9,9 @@ interface UseDoseCalculatorProps {
 }
 
 export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+  // Use a ref to track if this is the first render or a re-render after navigation
+  const isInitialized = useRef(false);
+  
   const [screenStep, setScreenStep] = useState<ScreenStep>('intro');
   const [manualStep, setManualStep] = useState<ManualStep>('dose');
   const [dose, setDose] = useState<string>('');
@@ -30,8 +33,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
-
-  const resetFullForm = useCallback(() => {
+  
+  // Make sure resetFullForm is stable and properly typed
+  const resetFullForm = useCallback((startStep?: 'dose') => {
+    console.log('[useDoseCalculator] Resetting form state', { startStep });
     setDose('');
     setUnit('mg');
     setSubstanceName('');
@@ -51,8 +56,21 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setSyringeHint(null);
-    setManualStep('dose');
+    setManualStep(startStep || 'dose');
+    
+    // Mark as initialized after first reset
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+    }
   }, []);
+  
+  // Initialize the hook the first time it's mounted
+  useEffect(() => {
+    if (!isInitialized.current) {
+      console.log('[useDoseCalculator] Initial setup');
+      resetFullForm('dose');
+    }
+  }, [resetFullForm]);
 
   const handleNextDose = useCallback(() => {
     if (!dose || !unit) {
@@ -160,6 +178,18 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setManualStep('dose');
     return true;
   }, [checkUsageLimit]);
+
+  // Make sure screen step changes reset related state appropriately
+  useEffect(() => {
+    console.log('[useDoseCalculator] Screen step changed:', screenStep);
+    if (screenStep === 'intro') {
+      // When returning to intro, make sure form state is clean
+      // But don't reset if we're already at intro step (prevents loops)
+      if (manualStep !== 'dose') {
+        resetFullForm();
+      }
+    }
+  }, [screenStep, manualStep, resetFullForm]);
 
   const result = {
     screenStep,
