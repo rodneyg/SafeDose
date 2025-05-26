@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
@@ -200,20 +200,43 @@ export default function ManualEntryScreen({
         {formError && <Text style={styles.errorText}>{formError}</Text>}
         {manualStep !== 'finalResult' && (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={handleBack}>
+            <TouchableOpacity 
+              style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
+              onPress={handleBack}
+              accessibilityRole="button"
+              accessibilityLabel="Go back to previous step">
               <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.nextButton, (manualStep === 'dose' && !dose) && styles.disabledButton, isMobileWeb && styles.nextButtonMobile]}
-              onPress={() => {
-                if (manualStep === 'dose') handleNextDose();
-                else if (manualStep === 'medicationSource') handleNextMedicationSource();
-                else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
-                else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
-                else if (manualStep === 'reconstitution') handleNextReconstitution();
-                else if (manualStep === 'syringe') handleCalculateFinal();
-              }}
+style={[
+  styles.nextButton,
+  (manualStep === 'dose' && !dose) && styles.disabledButton,
+  isMobileWeb && styles.nextButtonMobile
+]}
+onPress={useCallback(() => {
+  try {
+    console.log('[ManualEntry] Next button pressed for step:', manualStep);
+    if (manualStep === 'dose') handleNextDose();
+    else if (manualStep === 'medicationSource') handleNextMedicationSource();
+    else if (manualStep === 'concentrationInput') handleNextConcentrationInput();
+    else if (manualStep === 'totalAmountInput') handleNextTotalAmountInput();
+    else if (manualStep === 'reconstitution') handleNextReconstitution();
+    else if (manualStep === 'syringe') handleCalculateFinal();
+  } catch (error) {
+    console.error('Error in next button handler:', error);
+  }
+}, [
+  manualStep,
+  handleNextDose,
+  handleNextMedicationSource,
+  handleNextConcentrationInput,
+  handleNextTotalAmountInput,
+  handleNextReconstitution,
+  handleCalculateFinal
+])}
               disabled={manualStep === 'dose' && !dose}
+              accessibilityRole="button"
+              accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}
             >
               <Text style={styles.buttonText}>
                 {manualStep === 'syringe' ? 'Calculate' : 'Next'}

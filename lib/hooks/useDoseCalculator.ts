@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -9,7 +9,16 @@ interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
 }
 
+const isValidValue = (value: any): boolean => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string' && value.trim() === '') return false;
+  return true;
+};
+
 export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+  const isInitialized = useRef(false);
+  const lastActionTimestamp = useRef(Date.now());
+
   const [screenStep, setScreenStep] = useState<ScreenStep>('intro');
   const [manualStep, setManualStep] = useState<ManualStep>('dose');
   const [dose, setDose] = useState<string>('');
@@ -31,8 +40,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
+  const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
 
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
+    console.log('[useDoseCalculator] Resetting form state', { startStep });
+    lastActionTimestamp.current = Date.now();
+
     setDose('');
     setUnit('mg');
     setSubstanceName('');
@@ -53,58 +66,113 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setTotalAmountHint(null);
     setSyringeHint(null);
     setManualStep(startStep);
+    setStateHealth('healthy');
+
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      console.log('[useDoseCalculator] Marked as initialized');
+    }
   }, []);
 
-  const handleNextDose = useCallback(() => {
-    if (!dose || !unit) {
-      setFormError('Please enter a dose and unit');
-      return;
+  const safeSetScreenStep = useCallback((step: ScreenStep) => {
+    console.log('[useDoseCalculator] Setting screen step to:', step);
+
+    try {
+      lastActionTimestamp.current = Date.now();
+      if (step === 'manualEntry' && !isInitialized.current) {
+        console.log('[useDoseCalculator] First-time transition to manualEntry, initializing state');
+        resetFullForm('dose');
+      }
+      setScreenStep(step);
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in safeSetScreenStep:', error);
+      resetFullForm();
+      setScreenStep('intro');
+      setStateHealth('recovering');
     }
-    setDoseValue(parseFloat(dose));
-    setManualStep('medicationSource');
-    setFormError(null);
+  }, [resetFullForm]);
+
+  useEffect(() => {
+    if (!isInitialized.current) {
+      console.log('[useDoseCalculator] Initial setup');
+      resetFullForm('dose');
+    }
+  }, [resetFullForm]);
+
+  const handleNextDose = useCallback(() => {
+    try {
+      if (!dose || !unit) {
+        setFormError('Please enter a dose and unit');
+        return;
+      }
+      setDoseValue(parseFloat(dose));
+      setManualStep('medicationSource');
+      setFormError(null);
+      lastActionTimestamp.current = Date.now();
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleNextDose:', error);
+      setFormError('An unexpected error occurred. Please try again.');
+    }
   }, [dose, unit]);
 
   const handleNextMedicationSource = useCallback(() => {
-    // Substance name is optional, so we don't need to validate it
     setManualStep('concentrationInput');
     setFormError(null);
   }, []);
 
-  const handleNextTotalAmountInput = useCallback(() => {
-    if (!totalAmount) {
-      setFormError('Please enter total amount');
-      return;
-    }
-    setManualStep('concentrationInput');
-    setFormError(null);
-  }, [totalAmount]);
-
   const handleNextConcentrationInput = useCallback(() => {
-    if (!concentrationAmount || !concentrationUnit) {
-      setFormError('Please enter concentration amount and unit');
-      return;
+    try {
+      if (!concentrationAmount || !concentrationUnit) {
+        setFormError('Please enter concentration amount and unit');
+        return;
+      }
+      setConcentration(parseFloat(concentrationAmount));
+      setManualStep('totalAmountInput');
+      setFormError(null);
+      lastActionTimestamp.current = Date.now();
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleNextConcentrationInput:', error);
+      setFormError('An unexpected error occurred. Please try again.');
     }
-    setConcentration(parseFloat(concentrationAmount));
-    setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
-    setFormError(null);
-  }, [concentrationAmount, concentrationUnit, medicationInputType]);
+  }, [concentrationAmount, concentrationUnit]);
+
+  const handleNextTotalAmountInput = useCallback(() => {
+    try {
+      if (!totalAmount) {
+        setFormError('Please enter total amount');
+        return;
+      }
+      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
+      setFormError(null);
+      lastActionTimestamp.current = Date.now();
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleNextTotalAmountInput:', error);
+      setFormError('An unexpected error occurred. Please try again.');
+    }
+  }, [totalAmount, medicationInputType]);
 
   const handleNextReconstitution = useCallback(() => {
-    if (!solutionVolume) {
-      setFormError('Please enter solution volume');
-      return;
+    try {
+      if (!solutionVolume) {
+        setFormError('Please enter solution volume');
+        return;
+      }
+      setManualStep('syringe');
+      setFormError(null);
+      lastActionTimestamp.current = Date.now();
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleNextReconstitution:', error);
+      setFormError('An unexpected error occurred. Please try again.');
     }
-    setManualStep('syringe');
-    setFormError(null);
   }, [solutionVolume]);
 
   const handleCalculateFinal = useCallback(() => {
-    if (!doseValue || !concentration || !manualSyringe) {
-      setCalculationError('Missing required fields for calculation');
-      return;
-    }
     try {
+      if (!doseValue || !concentration || !manualSyringe) {
+        setCalculationError('Missing required fields for calculation');
+        return;
+      }
+
       const volume = doseValue / concentration;
       const syringeCapacity = parseFloat(manualSyringe);
       if (volume > syringeCapacity) {
@@ -115,33 +183,36 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setRecommendedMarking(volume);
       setManualStep('finalResult');
       setCalculationError(null);
+      lastActionTimestamp.current = Date.now();
     } catch (error) {
-      setCalculationError('Error calculating dose');
+      console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
+      setCalculationError('Error calculating dose. Please check your inputs and try again.');
     }
   }, [doseValue, concentration, manualSyringe]);
 
   const handleBack = useCallback(() => {
-    if (manualStep === 'dose') {
+    try {
+      if (manualStep === 'dose') setScreenStep('intro');
+      else if (manualStep === 'medicationSource') setManualStep('dose');
+      else if (manualStep === 'concentrationInput') setManualStep('medicationSource');
+      else if (manualStep === 'totalAmountInput') setManualStep('concentrationInput');
+      else if (manualStep === 'reconstitution') setManualStep('totalAmountInput');
+      else if (manualStep === 'syringe') setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
+      else if (manualStep === 'finalResult') setManualStep('syringe');
+
+      setFormError(null);
+      lastActionTimestamp.current = Date.now();
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleBack:', error);
+      resetFullForm();
       setScreenStep('intro');
-    } else if (manualStep === 'medicationSource') {
-      setManualStep('dose');
-    } else if (manualStep === 'totalAmountInput') {
-      setManualStep('medicationSource');
-    } else if (manualStep === 'concentrationInput') {
-      setManualStep('totalAmountInput');
-    } else if (manualStep === 'reconstitution') {
-      setManualStep('concentrationInput');
-    } else if (manualStep === 'syringe') {
-      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'concentrationInput');
-    } else if (manualStep === 'finalResult') {
-      setManualStep('syringe');
     }
-    setFormError(null);
-  }, [manualStep, medicationInputType]);
+  }, [manualStep, medicationInputType, resetFullForm]);
 
   const handleStartOver = useCallback(() => {
     resetFullForm('dose');
     setScreenStep('intro');
+    lastActionTimestamp.current = Date.now();
   }, [resetFullForm]);
 
   const handleGoHome = useCallback(() => {
@@ -150,18 +221,44 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [resetFullForm]);
 
   const handleCapture = useCallback(async () => {
-    const canProceed = await checkUsageLimit();
-    if (!canProceed) {
+    try {
+      const canProceed = await checkUsageLimit();
+      if (!canProceed) return false;
+
+      setManualStep('dose');
+      lastActionTimestamp.current = Date.now();
+      return true;
+    } catch (error) {
+      console.error('[useDoseCalculator] Error in handleCapture:', error);
       return false;
     }
-    // Simulate scan processing (actual logic in ScanScreen)
-    setManualStep('dose');
-    return true;
   }, [checkUsageLimit]);
 
-  const result = {
+  useEffect(() => {
+    const checkStateHealth = () => {
+      const now = Date.now();
+      if (now - lastActionTimestamp.current > 10 * 60 * 1000) {
+        console.log('[useDoseCalculator] Detected stale state, resetting');
+        resetFullForm();
+        setScreenStep('intro');
+        setStateHealth('recovering');
+      }
+    };
+
+    const intervalId = setInterval(checkStateHealth, 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [resetFullForm]);
+
+  useEffect(() => {
+    console.log('[useDoseCalculator] Screen step changed:', screenStep);
+    if (screenStep === 'intro' && manualStep !== 'dose') {
+      resetFullForm();
+    }
+  }, [screenStep, manualStep, resetFullForm]);
+
+  return {
     screenStep,
-    setScreenStep,
+    setScreenStep: safeSetScreenStep,
     manualStep,
     setManualStep,
     dose,
@@ -182,8 +279,14 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setSolutionVolume,
     manualSyringe,
     setManualSyringe: (syringe: Syringe | string) => {
-      const volume = typeof syringe === 'string' ? syringe : syringe.volume;
-      setManualSyringe(volume);
+      try {
+        const volume = typeof syringe === 'string' ? syringe : syringe.volume;
+        setManualSyringe(volume);
+        lastActionTimestamp.current = Date.now();
+      } catch (error) {
+        console.error('[useDoseCalculator] Error in setManualSyringe:', error);
+        setManualSyringe('1mL');
+      }
     },
     doseValue,
     setDoseValue,
@@ -216,8 +319,6 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     handleStartOver,
     handleGoHome,
     handleCapture,
+    stateHealth,
   };
-
-  console.log('useDoseCalculator return:', Object.keys(result));
-  return result;
 }
