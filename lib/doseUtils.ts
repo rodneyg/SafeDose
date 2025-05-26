@@ -5,6 +5,7 @@ interface CalculateDoseParams {
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units';
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
+  totalAmount?: number | null;  // Total amount in vial
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string } | null;
 }
 
@@ -19,6 +20,7 @@ export function calculateDose({
   concentration,
   unit,
   concentrationUnit,
+  totalAmount,
   manualSyringe,
 }: CalculateDoseParams): CalculateDoseResult {
   console.log('[Calculate] Starting calculation');
@@ -72,6 +74,36 @@ export function calculateDose({
   }
 
   console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
+  
+  // Validate that the total amount is sufficient for the required dose
+  if (totalAmount !== undefined && totalAmount !== null) {
+    // Convert units if necessary to make a valid comparison
+    let doseInSameUnitAsTotal = doseValue;
+    
+    if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+      // If dose is in mcg but total is in mg, convert dose to mg for comparison
+      doseInSameUnitAsTotal = doseValue / 1000;
+    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+      // If dose is in mg but total is in mcg, convert dose to mcg for comparison
+      doseInSameUnitAsTotal = doseValue * 1000;
+    }
+    
+    // Now compare if the dose exceeds the total amount
+    if (doseInSameUnitAsTotal > totalAmount) {
+      calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${unit === 'mcg' ? 'mg' : unit}).`;
+      console.log('[Calculate] Error: Dose exceeds total available');
+      return { calculatedVolume, recommendedMarking, calculationError };
+    }
+    
+    // Check if the required volume exceeds what can be made from the total amount
+    const maxPossibleVolume = totalAmount / concentration;
+    if (requiredVolume > maxPossibleVolume) {
+      calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.toFixed(2)} ml).`;
+      console.log('[Calculate] Error: Required volume exceeds possible volume from total');
+      return { calculatedVolume, recommendedMarking, calculationError };
+    }
+  }
+
   calculatedVolume = requiredVolume;
 
   const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));

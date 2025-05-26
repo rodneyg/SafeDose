@@ -107,20 +107,43 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       return;
     }
     try {
-      const volume = doseValue / concentration;
-      const syringeCapacity = parseFloat(manualSyringe);
-      if (volume > syringeCapacity) {
-        setCalculationError(`Calculated volume (${volume.toFixed(2)} mL) exceeds syringe capacity (${syringeCapacity} mL)`);
-        return;
+      // Convert totalAmount to number if it exists
+      let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
+      
+      // If dose is in mcg and we're showing total amount in mg in the UI (as per TotalAmountInputStep.tsx),
+      // we need to adjust the total amount unit for proper comparison
+      if (unit === 'mcg' && totalAmountValue) {
+        // Convert from mg to mcg as that's what the user entered (the UI shows mg but we need mcg for calculation)
+        totalAmountValue = totalAmountValue * 1000;
       }
-      setCalculatedVolume(volume);
-      setRecommendedMarking(volume);
-      setManualStep('finalResult');
-      setCalculationError(null);
+
+      const syringeObj = {
+        type: manualSyringe.includes('Insulin') ? 'Insulin' : 'Standard',
+        volume: manualSyringe.replace('Insulin ', '')
+      };
+      
+      // Import and use the calculateDose function from doseUtils.ts
+      const { calculateDose } = require('../doseUtils');
+      const result = calculateDose({
+        doseValue,
+        concentration,
+        unit,
+        concentrationUnit,
+        totalAmount: totalAmountValue,
+        manualSyringe: syringeObj,
+      });
+      
+      setCalculatedVolume(result.calculatedVolume);
+      setRecommendedMarking(result.recommendedMarking);
+      setCalculationError(result.calculationError);
+      
+      if (!result.calculationError || (result.calculationError && result.recommendedMarking)) {
+        setManualStep('finalResult');
+      }
     } catch (error) {
       setCalculationError('Error calculating dose');
     }
-  }, [doseValue, concentration, manualSyringe]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit]);
 
   const handleBack = useCallback(() => {
     if (manualStep === 'dose') {
