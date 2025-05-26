@@ -69,9 +69,18 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setFormError('Please enter a substance name');
       return;
     }
-    setManualStep('concentrationInput');
+    setManualStep('totalAmountInput');
     setFormError(null);
   }, [substanceName]);
+
+  const handleNextTotalAmountInput = useCallback(() => {
+    if (!totalAmount) {
+      setFormError('Please enter total amount');
+      return;
+    }
+    setManualStep('concentrationInput');
+    setFormError(null);
+  }, [totalAmount]);
 
   const handleNextConcentrationInput = useCallback(() => {
     if (!concentrationAmount || !concentrationUnit) {
@@ -79,18 +88,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       return;
     }
     setConcentration(parseFloat(concentrationAmount));
-    setManualStep('totalAmountInput');
-    setFormError(null);
-  }, [concentrationAmount, concentrationUnit]);
-
-  const handleNextTotalAmountInput = useCallback(() => {
-    if (!totalAmount) {
-      setFormError('Please enter total amount');
-      return;
-    }
     setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
     setFormError(null);
-  }, [totalAmount, medicationInputType]);
+  }, [concentrationAmount, concentrationUnit, medicationInputType]);
 
   const handleNextReconstitution = useCallback(() => {
     if (!solutionVolume) {
@@ -127,14 +127,14 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setScreenStep('intro');
     } else if (manualStep === 'medicationSource') {
       setManualStep('dose');
-    } else if (manualStep === 'concentrationInput') {
-      setManualStep('medicationSource');
     } else if (manualStep === 'totalAmountInput') {
-      setManualStep('concentrationInput');
-    } else if (manualStep === 'reconstitution') {
+      setManualStep('medicationSource');
+    } else if (manualStep === 'concentrationInput') {
       setManualStep('totalAmountInput');
+    } else if (manualStep === 'reconstitution') {
+      setManualStep('concentrationInput');
     } else if (manualStep === 'syringe') {
-      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
+      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'concentrationInput');
     } else if (manualStep === 'finalResult') {
       setManualStep('syringe');
     }

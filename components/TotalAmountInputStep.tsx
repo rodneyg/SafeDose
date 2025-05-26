@@ -18,7 +18,7 @@ export default function TotalAmountInputStep({
 }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Step 2b: Enter Total Amount</Text>
+      <Text style={styles.title}>Step 3: Enter Total Amount</Text>
       <Text style={styles.label}>Total Amount in Vial ({unit === 'mcg' ? 'mg' : unit}):</Text>
       <TextInput
         style={styles.input}
