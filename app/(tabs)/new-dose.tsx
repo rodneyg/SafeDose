@@ -22,6 +22,17 @@ export default function NewDoseScreen() {
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   console.log('useDoseCalculator output:', Object.keys(doseCalculator));
+  // Special override for setScreenStep to ensure navigation state is tracked
+  const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
+    console.log('[NewDoseScreen] Setting screen step to:', step);
+    
+    // Track navigation from intro to other screens
+    if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
+      setNavigatingFromIntro(true);
+    }
+    
+    doseCalculator.setScreenStep(step);
+  }, [doseCalculator, setNavigatingFromIntro]);
   
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
@@ -340,7 +351,7 @@ export default function NewDoseScreen() {
       </View>
       {screenStep === 'intro' && (
         <IntroScreen
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
         />
