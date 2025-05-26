@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Camera as CameraIcon, Pill, Syringe } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -11,8 +11,17 @@ interface IntroScreenProps {
 }
 
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
+  // Log component mount to help debug visibility issues
+  useEffect(() => {
+    console.log('[IntroScreen] Component mounted');
+    return () => {
+      console.log('[IntroScreen] Component unmounted');
+    };
+  }, []);
+
   // Use memoized handlers to ensure stable references across renders
   const handleScanPress = useCallback(() => {
+    console.log('[IntroScreen] Scan button pressed');
     // Mark that we're navigating from intro screen
     if (setNavigatingFromIntro) {
       setNavigatingFromIntro(true);
@@ -22,6 +31,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [setScreenStep, setNavigatingFromIntro]);
   
   const handleManualEntryPress = useCallback(() => {
+    console.log('[IntroScreen] Manual entry button pressed');
     // Mark that we're navigating from intro screen
     if (setNavigatingFromIntro) {
       setNavigatingFromIntro(true);

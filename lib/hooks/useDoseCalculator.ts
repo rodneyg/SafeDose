@@ -85,9 +85,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         isInitialized.current = true;
       }
       
-      // Store previous step to prevent loop detection
+      // Store previous step to detect potential navigation loops
       const prevStep = screenStep;
+      
+      // Actually update the screen step
       setScreenStep(step);
+      
+      // Log potentially problematic navigation transitions for debugging
+      if (prevStep === step && step !== 'intro') {
+        console.warn(`[useDoseCalculator] Redundant navigation to ${step}, could indicate an issue`);
+      }
       
       // Add loop detection - if we're constantly toggling between screens
       if (prevStep !== 'intro' && step === 'intro' && lastActionTimestamp.current - Date.now() < 300) {
