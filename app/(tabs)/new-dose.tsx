@@ -18,6 +18,7 @@ export default function NewDoseScreen() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
+  const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   console.log('useDoseCalculator output:', Object.keys(doseCalculator));
@@ -25,16 +26,21 @@ export default function NewDoseScreen() {
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused');
+      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
       setIsScreenActive(true);
       
       // Only consider resetting state during external navigation (not first render and not during internal transitions)
       if (hasInitializedAfterNavigation) {
-        // Only reset if we're in a recovering state - otherwise preserve the current navigation flow
+        // Only reset if we're in a recovering state or NOT navigating from intro
         if (doseCalculator.stateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
           doseCalculator.setScreenStep('intro');
+        }
+        
+        // Reset the navigation tracking flag
+        if (navigatingFromIntro) {
+          setNavigatingFromIntro(false);
         }
       } else {
         setHasInitializedAfterNavigation(true);
@@ -45,7 +51,7 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Screen unfocused');
         setIsScreenActive(false);
       };
-    }, [hasInitializedAfterNavigation, doseCalculator])
+    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
   );
   const {
     screenStep,
@@ -336,6 +342,7 @@ export default function NewDoseScreen() {
         <IntroScreen
           setScreenStep={setScreenStep}
           resetFullForm={resetFullForm}
+          setNavigatingFromIntro={setNavigatingFromIntro}
         />
       )}
       {screenStep === 'scan' && (

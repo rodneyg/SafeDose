@@ -7,20 +7,29 @@ import { isMobileWeb } from '../lib/utils';
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
+  setNavigatingFromIntro?: (value: boolean) => void;
 }
 
-export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScreenProps) {
+export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   // Use memoized handlers to ensure stable references across renders
   const handleScanPress = useCallback(() => {
+    // Mark that we're navigating from intro screen
+    if (setNavigatingFromIntro) {
+      setNavigatingFromIntro(true);
+    }
     // Navigate directly to scan without resetting the form
     setScreenStep('scan');
-  }, [setScreenStep]);
+  }, [setScreenStep, setNavigatingFromIntro]);
   
   const handleManualEntryPress = useCallback(() => {
+    // Mark that we're navigating from intro screen
+    if (setNavigatingFromIntro) {
+      setNavigatingFromIntro(true);
+    }
     // Ensure we have clean form state before starting manual entry
     resetFullForm('dose');
     setScreenStep('manualEntry');
-  }, [resetFullForm, setScreenStep]);
+  }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
   
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
