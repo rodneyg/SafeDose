@@ -201,18 +201,6 @@ export default function ManualEntryScreen({
       );
       progress = (2 / 3) - 0.15;
       break;
-    case 'totalAmountInput':
-      currentStepComponent = (
-        <TotalAmountInputStep
-          totalAmount={totalAmount}
-          setTotalAmount={setTotalAmount}
-          setTotalAmountHint={setTotalAmountHint}
-          totalAmountHint={totalAmountHint}
-          unit={unit}
-        />
-      );
-      progress = (2 / 3) - 0.05;
-      break;
     case 'concentrationInput':
       currentStepComponent = (
         <ConcentrationInputStep
