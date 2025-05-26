@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
 type Syringe = { volume: string };
+type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
@@ -31,7 +32,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
 
-  const resetFullForm = useCallback(() => {
+  const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
     setDose('');
     setUnit('mg');
     setSubstanceName('');
@@ -51,7 +52,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setConcentrationHint(null);
     setTotalAmountHint(null);
     setSyringeHint(null);
-    setManualStep('dose');
+    setManualStep(startStep);
   }, []);
 
   const handleNextDose = useCallback(() => {
@@ -142,13 +143,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [manualStep, medicationInputType]);
 
   const handleStartOver = useCallback(() => {
-    resetFullForm();
+    resetFullForm('dose');
     setScreenStep('intro');
   }, [resetFullForm]);
 
   const handleGoHome = useCallback(() => {
     setScreenStep('intro');
-    resetFullForm();
+    resetFullForm('dose');
   }, [resetFullForm]);
 
   const handleCapture = useCallback(async () => {
