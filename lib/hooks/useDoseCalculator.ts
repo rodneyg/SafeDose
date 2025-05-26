@@ -142,9 +142,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [dose, unit]);
 
   const handleNextMedicationSource = useCallback(() => {
-    setManualStep('concentrationInput');
+    if (medicationInputType === 'totalAmount') {
+      setManualStep('totalAmountInput');
+    } else {
+      setManualStep('concentrationInput');
+    }
     setFormError(null);
-  }, []);
+  }, [medicationInputType]);
 
   const handleNextConcentrationInput = useCallback(() => {
     try {
