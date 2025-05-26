@@ -290,54 +290,54 @@ export default function ManualEntryScreen({
                 <Text style={styles.buttonText}>Back</Text>
               </TouchableOpacity>
               <TouchableOpacity
-  style={[
-    styles.nextButton,
-    !isCurrentStepValid() && styles.disabledButton,
-    isMobileWeb && styles.nextButtonMobile
-  ]}
-  onPress={useCallback(() => {
-    try {
-      console.log('[ManualEntry] Next button pressed for step:', manualStep);
-      
-      // If the current step is not valid, do nothing
-      if (!isCurrentStepValid()) return;
+                style={[
+                  styles.nextButton,
+                  !isCurrentStepValid() && styles.disabledButton,
+                  isMobileWeb && styles.nextButtonMobile
+                ]}
+                onPress={useCallback(() => {
+                  try {
+                    console.log('[ManualEntry] Next button pressed for step:', manualStep);
+                    
+                    // If the current step is not valid, do nothing
+                    if (!isCurrentStepValid()) return;
 
-      // Set up confirmation modal content
-      const { title, message } = getConfirmationContent();
-      setModalTitle(title);
-      setModalMessage(message);
+                    // Set up confirmation modal content
+                    const { title, message } = getConfirmationContent();
+                    setModalTitle(title);
+                    setModalMessage(message);
 
-      // Set the appropriate next action
-      if (manualStep === 'dose') {
-        setNextAction(() => handleNextDose);
-      } else if (manualStep === 'medicationSource') {
-        setNextAction(() => handleNextMedicationSource);
-      } else if (manualStep === 'concentrationInput') {
-        setNextAction(() => handleNextConcentrationInput);
-      } else if (manualStep === 'totalAmountInput') {
-        setNextAction(() => handleNextTotalAmountInput);
-      } else if (manualStep === 'reconstitution') {
-        setNextAction(() => handleNextReconstitution);
-      } else if (manualStep === 'syringe') {
-        setNextAction(() => handleCalculateFinal);
-      }
+                    // Set the appropriate next action
+                    if (manualStep === 'dose') {
+                      setNextAction(() => handleNextDose);
+                    } else if (manualStep === 'medicationSource') {
+                      setNextAction(() => handleNextMedicationSource);
+                    } else if (manualStep === 'concentrationInput') {
+                      setNextAction(() => handleNextConcentrationInput);
+                    } else if (manualStep === 'totalAmountInput') {
+                      setNextAction(() => handleNextTotalAmountInput);
+                    } else if (manualStep === 'reconstitution') {
+                      setNextAction(() => handleNextReconstitution);
+                    } else if (manualStep === 'syringe') {
+                      setNextAction(() => handleCalculateFinal);
+                    }
 
-      // Show the confirmation modal
-      setShowConfirmationModal(true);
-    } catch (error) {
-      console.error('Error in next button handler:', error);
-    }
-  }, [
-    manualStep,
-    isCurrentStepValid,
-    handleNextDose,
-    handleNextMedicationSource,
-    handleNextConcentrationInput,
-    handleNextTotalAmountInput,
-    handleNextReconstitution,
-    handleCalculateFinal,
-    getConfirmationContent
-  ])}
+                    // Show the confirmation modal
+                    setShowConfirmationModal(true);
+                  } catch (error) {
+                    console.error('Error in next button handler:', error);
+                  }
+                }, [
+                  manualStep,
+                  isCurrentStepValid,
+                  handleNextDose,
+                  handleNextMedicationSource,
+                  handleNextConcentrationInput,
+                  handleNextTotalAmountInput,
+                  handleNextReconstitution,
+                  handleCalculateFinal,
+                  getConfirmationContent
+                ])}
                 disabled={!isCurrentStepValid()}
                 accessibilityRole="button"
                 accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}
