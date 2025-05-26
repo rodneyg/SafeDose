@@ -135,7 +135,6 @@ export default function ScanScreen({
               <Text style={styles.buttonText}>Take or Upload Photo</Text>
             )}
           </TouchableOpacity>
-          </TouchableOpacity>
           <TouchableOpacity style={[styles.tryCameraAgainButton, styles.buttonMobile]} onPress={requestWebCameraPermission}>
             <Text style={styles.buttonText}>Try Camera Again</Text>
           </TouchableOpacity>
