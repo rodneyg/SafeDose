@@ -236,7 +236,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       if (manualStep === 'dose') setScreenStep('intro');
       else if (manualStep === 'medicationSource') setManualStep('dose');
       else if (manualStep === 'concentrationInput') setManualStep('medicationSource');
-      else if (manualStep === 'totalAmountInput') setManualStep('concentrationInput');
+      else if (manualStep === 'totalAmountInput') {
+        if (medicationInputType === 'totalAmount') {
+          setManualStep('medicationSource');
+        } else {
+          setManualStep('concentrationInput');
+        }
+      }
       else if (manualStep === 'reconstitution') setManualStep('totalAmountInput');
       else if (manualStep === 'syringe') setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
       else if (manualStep === 'finalResult') setManualStep('syringe');
