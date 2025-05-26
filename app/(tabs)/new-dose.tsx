@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -18,21 +18,39 @@ export default function NewDoseScreen() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
+  const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
-  console.log('useDoseCalculator output:', Object.keys(doseCalculator));
+  
+  // Ensure intro screen is shown on initial load
+  useEffect(() => {
+    console.log('[NewDoseScreen] Initial setup, ensuring intro screen is shown');
+    // Force screenStep to 'intro' on first render
+    doseCalculator.setScreenStep('intro');
+  }, []);
+  
+  // Special override for setScreenStep to ensure navigation state is tracked
+  const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
+    console.log('[NewDoseScreen] Setting screen step to:', step);
+    
+    // Track navigation from intro to other screens
+    if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
+      setNavigatingFromIntro(true);
+    }
+    
+    doseCalculator.setScreenStep(step);
+  }, [doseCalculator, setNavigatingFromIntro]);
   
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused');
+      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
       setIsScreenActive(true);
       
-      // Only reset state on subsequent focuses (not first render)
-      if (hasInitializedAfterNavigation) {
-        // If returning to this screen, ensure we're in a good state
-        if (doseCalculator.screenStep !== 'intro' || doseCalculator.stateHealth === 'recovering') {
-          console.log('[NewDoseScreen] Resetting to intro state after navigation');
+      // Don't reset state during initial render or when navigating from intro
+      if (hasInitializedAfterNavigation && !navigatingFromIntro) {
+        if (doseCalculator.stateHealth === 'recovering') {
+          console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
           doseCalculator.setScreenStep('intro');
         }
@@ -40,12 +58,19 @@ export default function NewDoseScreen() {
         setHasInitializedAfterNavigation(true);
       }
       
+      // Reset the navigation tracking flag after processing
+      if (navigatingFromIntro) {
+        setTimeout(() => {
+          setNavigatingFromIntro(false);
+        }, 500); // Short delay to ensure navigation completes
+      }
+      
       return () => {
         // Cleanup when screen is unfocused
         console.log('[NewDoseScreen] Screen unfocused');
         setIsScreenActive(false);
       };
-    }, [hasInitializedAfterNavigation, doseCalculator])
+    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
   );
   const {
     screenStep,
@@ -297,7 +322,7 @@ export default function NewDoseScreen() {
     setMobileWebPermissionDenied(true);
   };
 
-  console.log('[NewDoseScreen] Rendering', { screenStep, isProcessing, onCapture: typeof handleScanAttempt });
+  console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
     <View style={styles.container}>
@@ -334,8 +359,9 @@ export default function NewDoseScreen() {
       </View>
       {screenStep === 'intro' && (
         <IntroScreen
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
+          setNavigatingFromIntro={setNavigatingFromIntro}
         />
       )}
       {screenStep === 'scan' && (
@@ -347,7 +373,7 @@ export default function NewDoseScreen() {
           scanError={scanError}
           cameraRef={cameraRef}
           openai={openai}
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
           setManualStep={setManualStep}
           setManualSyringe={(syringe) => setManualSyringe(syringe.volume)}
           setSyringeHint={setSyringeHint}
@@ -410,7 +436,7 @@ export default function NewDoseScreen() {
           handleCalculateFinal={handleCalculateFinal}
           handleBack={handleBack}
           handleStartOver={handleStartOver}
-          setScreenStep={setScreenStep}
+          setScreenStep={handleSetScreenStep}
         />
       )}
       <LimitModal

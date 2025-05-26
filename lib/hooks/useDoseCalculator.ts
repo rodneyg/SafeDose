@@ -78,23 +78,50 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     console.log('[useDoseCalculator] Setting screen step to:', step);
     try {
       lastActionTimestamp.current = Date.now();
-      if (step === 'manualEntry' && !isInitialized.current) {
-        console.log('[useDoseCalculator] First-time transition to manualEntry, initializing state');
-        resetFullForm('dose');
+      
+      // If we're navigating to a new screen, ensure we're properly initialized
+      if ((step === 'scan' || step === 'manualEntry') && !isInitialized.current) {
+        console.log('[useDoseCalculator] Initializing state during navigation to:', step);
+        isInitialized.current = true;
       }
+      
+      // Store previous step to detect potential navigation loops
+      const prevStep = screenStep;
+      
+      // Actually update the screen step
       setScreenStep(step);
+      
+      // Ensure we properly track when the intro screen gets set
+      if (step === 'intro') {
+        console.log('[useDoseCalculator] Intro screen set explicitly');
+      }
+      
+      // Log potentially problematic navigation transitions for debugging
+      if (prevStep === step && step !== 'intro') {
+        console.warn(`[useDoseCalculator] Redundant navigation to ${step}, could indicate an issue`);
+      }
+      
+      // Add loop detection - if we're constantly toggling between screens
+      if (prevStep !== 'intro' && step === 'intro' && lastActionTimestamp.current - Date.now() < 300) {
+        console.warn('[useDoseCalculator] Detected potential navigation loop, stabilizing');
+        // Don't do any resets here, just keep the new step
+      }
     } catch (error) {
       console.error('[useDoseCalculator] Error in safeSetScreenStep:', error);
       resetFullForm();
       setScreenStep('intro');
       setStateHealth('recovering');
     }
-  }, [resetFullForm]);
+  }, [resetFullForm, screenStep]);
 
   useEffect(() => {
     if (!isInitialized.current) {
       console.log('[useDoseCalculator] Initial setup');
       resetFullForm('dose');
+      
+      // Ensure we start on intro screen
+      setScreenStep('intro');
+      console.log('[useDoseCalculator] Initialization complete - screen set to intro');
     }
   }, [resetFullForm]);
 
@@ -257,11 +284,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     return () => clearInterval(intervalId);
   }, [resetFullForm]);
 
-  useEffect(() => {
-    if (screenStep === 'intro' && manualStep !== 'dose') {
-      resetFullForm();
-    }
-  }, [screenStep, manualStep, resetFullForm]);
+  // The useEffect below was causing a navigation loop and has been removed
+  // When users clicked "Scan" or "Enter Manually" from the intro screen,
+  // it was incorrectly resetting the form and sending users back to intro
+  // useEffect(() => {
+  //   console.log('[useDoseCalculator] screenStep/manualStep changed:', { screenStep, manualStep });
+  //   if (screenStep === 'intro' && manualStep !== 'dose') {
+  //     console.log('[useDoseCalculator] Resetting form due to intro screen with non-dose manual step');
+  //     resetFullForm();
+  //   }
+  // }, [screenStep, manualStep, resetFullForm]);
 
   return {
     screenStep,

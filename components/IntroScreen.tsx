@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Camera as CameraIcon, Pill, Syringe } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -7,19 +7,48 @@ import { isMobileWeb } from '../lib/utils';
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
+  setNavigatingFromIntro?: (value: boolean) => void;
 }
 
-export default function IntroScreen({ setScreenStep, resetFullForm }: IntroScreenProps) {
+export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
+  // Log component mount to help debug visibility issues
+  useEffect(() => {
+    console.log('[IntroScreen] Component mounted');
+    
+    // Force log to make sure this component actually renders
+    console.log('[IntroScreen] Currently visible, screenStep should be "intro"');
+    
+    return () => {
+      console.log('[IntroScreen] Component unmounted');
+    };
+  }, []);
+
   // Use memoized handlers to ensure stable references across renders
   const handleScanPress = useCallback(() => {
+    console.log('[IntroScreen] Scan button pressed');
+    // Mark that we're navigating from intro screen
+    if (setNavigatingFromIntro) {
+      console.log('[IntroScreen] Setting navigatingFromIntro to true');
+      setNavigatingFromIntro(true);
+    }
+    // Navigate directly to scan without resetting the form
+    console.log('[IntroScreen] Calling setScreenStep("scan")');
     setScreenStep('scan');
-  }, [setScreenStep]);
+  }, [setScreenStep, setNavigatingFromIntro]);
   
   const handleManualEntryPress = useCallback(() => {
-    // Ensure we reset form state before changing screens
+    console.log('[IntroScreen] Manual entry button pressed');
+    // Mark that we're navigating from intro screen
+    if (setNavigatingFromIntro) {
+      console.log('[IntroScreen] Setting navigatingFromIntro to true');
+      setNavigatingFromIntro(true);
+    }
+    // Ensure we have clean form state before starting manual entry
+    console.log('[IntroScreen] Calling resetFullForm("dose")');
     resetFullForm('dose');
+    console.log('[IntroScreen] Calling setScreenStep("manualEntry")');
     setScreenStep('manualEntry');
-  }, [resetFullForm, setScreenStep]);
+  }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
   
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>

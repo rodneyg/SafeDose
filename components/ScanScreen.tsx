@@ -82,6 +82,11 @@ export default function ScanScreen({
       }
     };
   }, [isProcessing, setIsProcessing, setScanError]);
+  const handleNavigateToIntro = () => {
+    // Ensure we're using the safest navigation path back to intro
+    console.log('[ScanScreen] Navigating back to intro screen');
+    setScreenStep('intro');
+  };
 
   const handleButtonPress = () => {
     console.log('[ScanScreen] Capture button pressed', { isProcessing });
