@@ -75,7 +75,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, []);
 
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
-    console.log('[useDoseCalculator] Setting screen step to:', step);
+    console.log('[useDoseCalculator] Setting screen step to:', step, 'isInitialized:', isInitialized.current);
     try {
       lastActionTimestamp.current = Date.now();
       if (step === 'manualEntry' && !isInitialized.current) {
@@ -258,7 +258,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [resetFullForm]);
 
   useEffect(() => {
+    console.log('[useDoseCalculator] screenStep/manualStep changed:', { screenStep, manualStep });
     if (screenStep === 'intro' && manualStep !== 'dose') {
+      console.log('[useDoseCalculator] Resetting form due to intro screen with non-dose manual step');
       resetFullForm();
     }
   }, [screenStep, manualStep, resetFullForm]);
