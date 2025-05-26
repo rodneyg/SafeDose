@@ -21,7 +21,6 @@ export default function NewDoseScreen() {
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
-  console.log('useDoseCalculator output:', Object.keys(doseCalculator));
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
     console.log('[NewDoseScreen] Setting screen step to:', step);
@@ -314,7 +313,7 @@ export default function NewDoseScreen() {
     setMobileWebPermissionDenied(true);
   };
 
-  console.log('[NewDoseScreen] Rendering', { screenStep, isProcessing, onCapture: typeof handleScanAttempt });
+  console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
     <View style={styles.container}>
