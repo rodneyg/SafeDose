@@ -32,7 +32,7 @@ export default function FinalResultDisplay({
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {calculationError && !recommendedMarking && (
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'row', alignItems: 'center' }]}>
           <X color="#f87171" size={24} />
           <Text style={styles.errorText}>{calculationError}</Text>
         </View>
