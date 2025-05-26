@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { insulinVolumes, standardVolumes, syringeOptions } from '../lib/utils';
 
@@ -7,9 +7,23 @@ type Props = {
   setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string }) => void;
   setSyringeHint: (hint: string | null) => void;
   syringeHint: string | null;
+  // Optional context for smarter defaults
+  doseValue?: number | null;
+  concentration?: number | null;
+  unit?: string;
+  concentrationUnit?: string;
 };
 
-export default function SyringeStep({ manualSyringe, setManualSyringe, setSyringeHint, syringeHint }: Props) {
+export default function SyringeStep({ 
+  manualSyringe, 
+  setManualSyringe, 
+  setSyringeHint, 
+  syringeHint,
+  doseValue,
+  concentration,
+  unit,
+  concentrationUnit
+}: Props) {
   const availableVolumes = manualSyringe.type === 'Insulin' ? insulinVolumes : standardVolumes;
   const isValidSyringeOption = syringeOptions[manualSyringe.type]?.[manualSyringe.volume];
 
@@ -21,6 +35,89 @@ export default function SyringeStep({ manualSyringe, setManualSyringe, setSyring
   
   const hasValidInsulinOptions = hasValidOptions('Insulin');
   const hasValidStandardOptions = hasValidOptions('Standard');
+
+  // Function to find a valid syringe based on the current selection and context
+  const findValidSyringe = () => {
+    // First, check if the current selection is valid
+    if (isValidSyringeOption) {
+      return manualSyringe;
+    }
+
+    // Determine smart defaults based on available context
+    let suggestedType: 'Insulin' | 'Standard' = 'Standard';
+    let suggestedVolume = '3 ml'; // Default to standard 3ml
+
+    // Use dose and concentration if available
+    if (doseValue !== undefined && doseValue !== null && 
+        concentration !== undefined && concentration !== null &&
+        unit && concentrationUnit) {
+      
+      // Check if this is insulin
+      const isInsulin = unit === 'units' || concentrationUnit?.includes('units');
+      
+      // If insulin units, prefer insulin syringe
+      if (isInsulin && hasValidInsulinOptions) {
+        suggestedType = 'Insulin';
+        suggestedVolume = '1 ml'; // Default to 1ml insulin syringe
+      } 
+      // For small doses, prefer smaller syringes
+      else if ((unit === 'mg' && doseValue <= 5) || 
+               (unit === 'mcg' && doseValue <= 5000)) {
+        suggestedType = 'Standard';
+        suggestedVolume = '1 ml'; // Small dose = small syringe
+      }
+      // For medium doses, use medium syringes
+      else if ((unit === 'mg' && doseValue <= 15) || 
+               (unit === 'mcg' && doseValue <= 15000)) {
+        suggestedType = 'Standard';
+        suggestedVolume = '3 ml';
+      }
+      // For larger doses, use larger syringes
+      else {
+        suggestedType = 'Standard';
+        suggestedVolume = '5 ml';
+      }
+    }
+
+    // Verify the suggested syringe has valid markings
+    if (syringeOptions[suggestedType]?.[suggestedVolume]) {
+      return { type: suggestedType, volume: suggestedVolume };
+    }
+
+    // If the smart suggestion doesn't work, fall back to simpler logic
+    // Try to keep the same type but find a valid volume
+    const currentType = manualSyringe.type;
+    const volumes = currentType === 'Insulin' ? insulinVolumes : standardVolumes;
+    
+    // Find the first valid volume for the current type
+    for (const volume of volumes) {
+      if (syringeOptions[currentType]?.[volume]) {
+        return { type: currentType, volume };
+      }
+    }
+
+    // If no valid options for the current type, try the other type
+    const alternateType = currentType === 'Insulin' ? 'Standard' : 'Insulin';
+    const alternateVolumes = alternateType === 'Insulin' ? insulinVolumes : standardVolumes;
+    
+    for (const volume of alternateVolumes) {
+      if (syringeOptions[alternateType]?.[volume]) {
+        return { type: alternateType, volume };
+      }
+    }
+
+    // Default to Standard 3ml if nothing else works
+    return { type: 'Standard', volume: '3 ml' };
+  };
+
+  // Set valid defaults when component mounts or if current syringe is invalid
+  useEffect(() => {
+    if (!isValidSyringeOption) {
+      const validSyringe = findValidSyringe();
+      setManualSyringe(validSyringe);
+      setSyringeHint('Auto-selected best matching syringe');
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
