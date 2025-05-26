@@ -55,6 +55,23 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       )}
+      {!calculationError && !recommendedMarking && (
+        <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
+          <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
+            Dose Calculation
+          </Text>
+          <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
+            {doseValue ? `For ${doseValue} ${unit} dose` : 'For the requested dose'} 
+            {substanceName ? ` of ${substanceName}` : ''}:
+          </Text>
+          <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
+            No specific recommendation available
+          </Text>
+          <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
+            Please check your inputs and try again, or consult a healthcare professional.
+          </Text>
+        </View>
+      )}
       {recommendedMarking && (
         <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>

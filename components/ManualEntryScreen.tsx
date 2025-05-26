@@ -285,6 +285,11 @@ export default function ManualEntryScreen({
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
                       handleCalculateFinal();
+                      // Ensure we always proceed to finalResult step even if calculation fails
+                      if (manualStep !== 'finalResult') {
+                        console.log('[ManualEntry] Manually ensuring transition to finalResult step');
+                        setManualStep('finalResult');
+                      }
                     }
                   } catch (error) {
                     console.error('Error in next button handler:', error);
