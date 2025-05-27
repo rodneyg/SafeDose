@@ -15,6 +15,15 @@ export function validateUnitCompatibility(
 ): { isCompatible: boolean; message: string | null } {
   console.log(`[validateUnitCompatibility] Checking ${doseUnit} dose with ${concentrationUnit} concentration`);
   
+  // Safety check for undefined or null values
+  if (!doseUnit || !concentrationUnit) {
+    console.error(`[validateUnitCompatibility] Invalid inputs: doseUnit=${doseUnit}, concentrationUnit=${concentrationUnit}`);
+    return { 
+      isCompatible: false, 
+      message: `Invalid units provided: dose (${doseUnit || 'undefined'}) and concentration (${concentrationUnit || 'undefined'}).`
+    };
+  }
+  
   // Volume-based doses (ml) are compatible with any concentration units
   if (doseUnit === 'ml') {
     console.log('[validateUnitCompatibility] Volume-based dose is compatible with any concentration');
@@ -27,8 +36,7 @@ export function validateUnitCompatibility(
     return { isCompatible: true, message: null };
   }
   
-  // Special case: mg and mcg are compatible through conversion
-  // The mcg/mg and mg/mcg compatibility is crucial - fixing it to always return true
+  // Direct matches
   if (doseUnit === 'mg' && concentrationUnit === 'mg/ml') {
     console.log('[validateUnitCompatibility] mg dose with mg/ml concentration - direct match');
     return { isCompatible: true, message: null };
@@ -39,6 +47,7 @@ export function validateUnitCompatibility(
     return { isCompatible: true, message: null };
   }
   
+  // Conversion matches (explicitly handled)
   if (doseUnit === 'mg' && concentrationUnit === 'mcg/ml') {
     console.log('[validateUnitCompatibility] mg dose with mcg/ml concentration - compatible with conversion');
     return { isCompatible: true, message: null };
@@ -49,10 +58,10 @@ export function validateUnitCompatibility(
     return { isCompatible: true, message: null };
   }
 
-  console.log('[validateUnitCompatibility] Units are not compatible');
+  console.log(`[validateUnitCompatibility] Units are not compatible: ${doseUnit} with ${concentrationUnit}`);
   return {
     isCompatible: false,
-    message: `Unit mismatch between dose (${doseUnit}) and concentration (${concentrationUnit}).`
+    message: `Unit mismatch between dose (${doseUnit}) and concentration (${concentrationUnit}). Please select compatible units.`
   };
 }
 
@@ -84,172 +93,206 @@ export function calculateDose({
   manualSyringe,
   solutionVolume,
 }: CalculateDoseParams): CalculateDoseResult {
-  console.log('[Calculate] Starting calculation');
-  console.log('[Calculate] Input params:', { doseValue, concentration, unit, concentrationUnit, totalAmount, solutionVolume });
+  try {
+    console.log('[Calculate] Starting calculation with params:', { 
+      doseValue, 
+      concentration, 
+      unit, 
+      concentrationUnit, 
+      totalAmount, 
+      solutionVolume,
+      manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null
+    });
 
-  let calculatedVolume: number | null = null;
-  let recommendedMarking: string | null = null;
-  let calculationError: string | null = null;
-  let calculatedConcentration: number | null = null;
-  let calculatedMass: number | null = null;
+    let calculatedVolume: number | null = null;
+    let recommendedMarking: string | null = null;
+    let calculationError: string | null = null;
+    let calculatedConcentration: number | null = null;
+    let calculatedMass: number | null = null;
+    let precisionNote: string | null = null;
 
-  if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
-    calculationError = 'Dose value is invalid or missing.';
-    console.log('[Calculate] Error: Invalid dose value');
-    return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
-  }
-
-  // If concentration is missing but totalAmount and solutionVolume are available, calculate concentration
-  if ((concentration === null || isNaN(concentration) || concentration <= 0) && 
-      totalAmount !== null && totalAmount !== undefined && totalAmount > 0 && 
-      solutionVolume !== null && solutionVolume !== undefined && solutionVolume !== '') {
-    
-    const solVolume = parseFloat(solutionVolume);
-    if (!isNaN(solVolume) && solVolume > 0) {
-      calculatedConcentration = totalAmount / solVolume;
-      concentration = calculatedConcentration;
-      console.log(`[Calculate] Calculated concentration from totalAmount ${totalAmount} and solutionVolume ${solVolume}: ${concentration}`);
+    // Validate the dose value
+    if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
+      calculationError = 'Dose value is invalid or missing.';
+      console.log('[Calculate] Error: Invalid dose value');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
     }
-  }
-  
-  if (concentration === null || isNaN(concentration) || concentration <= 0) {
-    calculationError = 'Concentration is invalid or missing.';
-    console.log('[Calculate] Error: Invalid concentration');
-    return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
-  }
 
-  if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
-    calculationError = 'Syringe details are missing.';
-    console.log('[Calculate] Error: Missing syringe details');
-    return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass };
-  }
+    // Basic check for unit compatibility
+    if (unit && concentrationUnit) {
+      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      if (!compatibility.isCompatible) {
+        calculationError = compatibility.message;
+        console.log(`[Calculate] Unit incompatibility detected: ${calculationError}`);
+        return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+      }
+    } else {
+      calculationError = 'Missing dose unit or concentration unit.';
+      console.log('[Calculate] Error: Missing units');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
 
-  const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
-  if (!markingsString) {
-    calculationError = `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`;
-    console.log('[Calculate] Error: Invalid syringe option');
-    return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass };
-  }
+    // If concentration is missing but totalAmount and solutionVolume are available, calculate concentration
+    if ((concentration === null || isNaN(concentration) || concentration <= 0) && 
+        totalAmount !== null && totalAmount !== undefined && totalAmount > 0 && 
+        solutionVolume !== null && solutionVolume !== undefined && solutionVolume !== '') {
+      
+      const solVolume = parseFloat(solutionVolume);
+      if (!isNaN(solVolume) && solVolume > 0) {
+        calculatedConcentration = totalAmount / solVolume;
+        concentration = calculatedConcentration;
+        console.log(`[Calculate] Calculated concentration from totalAmount ${totalAmount} and solutionVolume ${solVolume}: ${concentration}`);
+      }
+    }
+    
+    // Check if concentration is valid after potential calculation
+    if (concentration === null || isNaN(concentration) || concentration <= 0) {
+      calculationError = 'Concentration is invalid or missing.';
+      console.log('[Calculate] Error: Invalid concentration');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
 
-  let requiredVolume = doseValue / concentration;
-  console.log('[Calculate] Initial required volume (ml):', requiredVolume);
+    // Validate syringe
+    if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
+      calculationError = 'Syringe details are missing.';
+      console.log('[Calculate] Error: Missing syringe details');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
 
-  // If the dose unit is ml, we need to calculate the mass instead of the volume
-  if (unit === 'ml') {
-    if (concentrationUnit.startsWith('mg/') || concentrationUnit.startsWith('mcg/') || concentrationUnit.startsWith('units/')) {
+    // Get syringe markings
+    const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
+    if (!markingsString) {
+      calculationError = `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`;
+      console.log('[Calculate] Error: Invalid syringe option');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
+
+    let requiredVolume: number;
+
+    // Handle volume-based dose (ml) - calculate mass instead of volume
+    if (unit === 'ml') {
+      console.log(`[Calculate] Handling ml-based dose: ${doseValue} ml`);
+      
       calculatedMass = doseValue * concentration;
-      console.log('[Calculate] Calculated mass:', calculatedMass, concentrationUnit.split('/')[0]);
+      console.log(`[Calculate] Calculated mass: ${calculatedMass} ${concentrationUnit.split('/')[0]}`);
       
       // For ml dose, use the dose value directly as volume
       requiredVolume = doseValue;
-    } else {
-      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-      calculationError = compatibility.message || 'Unit mismatch between dose and concentration.';
-      console.log('[Calculate] Error: Unit mismatch (ml dose with incompatible concentration)');
-      return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration, calculatedMass };
+    } 
+    // Handle mg dose with mg/ml concentration
+    else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = doseValue / concentration;
+      console.log(`[Calculate] mg dose with mg/ml concentration: ${requiredVolume} ml`);
+    } 
+    // Handle mcg dose with mcg/ml concentration
+    else if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = doseValue / concentration;
+      console.log(`[Calculate] mcg dose with mcg/ml concentration: ${requiredVolume} ml`);
+    } 
+    // Handle units dose with units/ml concentration
+    else if (unit === 'units' && concentrationUnit === 'units/ml') {
+      requiredVolume = doseValue / concentration;
+      console.log(`[Calculate] units dose with units/ml concentration: ${requiredVolume} ml`);
+    } 
+    // Handle mcg dose with mg/ml concentration (convert mcg to mg)
+    else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+      requiredVolume = (doseValue / 1000) / concentration;
+      console.log(`[Calculate] mcg dose with mg/ml concentration (converted mcg to mg): ${requiredVolume} ml`);
+    } 
+    // Handle mg dose with mcg/ml concentration (convert mg to mcg)
+    else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+      requiredVolume = (doseValue * 1000) / concentration;
+      console.log(`[Calculate] mg dose with mcg/ml concentration (converted mg to mcg): ${requiredVolume} ml`);
+    } 
+    // Handle any other case (should not get here due to earlier validation)
+    else {
+      calculationError = `Unable to calculate dose for ${unit} with ${concentrationUnit}. Please select compatible units.`;
+      console.log('[Calculate] Error: Unsupported unit combination');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
     }
-  } else if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
-    requiredVolume = doseValue / concentration;
-    console.log('[Calculate] mcg dose with mcg/ml concentration:', requiredVolume);
-  } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
-    requiredVolume = doseValue / concentration;
-    console.log('[Calculate] mg dose with mg/ml concentration:', requiredVolume);
-  } else if (unit === 'units' && concentrationUnit === 'units/ml') {
-    requiredVolume = doseValue / concentration;
-    console.log('[Calculate] units dose with units/ml concentration:', requiredVolume);
-  } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-    // Convert mcg to mg for correct calculation
-    requiredVolume = (doseValue / 1000) / concentration;
-    console.log('[Calculate] mcg dose with mg/ml concentration (converted mcg to mg):', requiredVolume);
-  } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-    // Convert mg to mcg for correct calculation
-    requiredVolume = (doseValue * 1000) / concentration;
-    console.log('[Calculate] mg dose with mcg/ml concentration (converted mg to mcg):', requiredVolume);
-  } else {
-    // Any other combination is explicitly checked for compatibility first
-    const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-    if (!compatibility.isCompatible) {
-      calculationError = compatibility.message || 'Unit mismatch between dose and concentration.';
-      console.log('[Calculate] Error: Unit mismatch');
+
+    console.log(`[Calculate] Calculated required volume: ${requiredVolume} ml`);
+    
+    // Validate the required volume is positive
+    if (requiredVolume <= 0 || isNaN(requiredVolume)) {
+      calculationError = `Invalid volume calculation: ${requiredVolume} ml. Please check your inputs.`;
+      console.log('[Calculate] Error: Invalid volume calculation');
       return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
     }
     
-    // If we reach here, the units are technically compatible but we don't have a specific calculation rule
-    calculationError = `Unable to calculate dose for ${unit} with ${concentrationUnit}. Please select compatible units.`;
-    console.log('[Calculate] Error: Missing calculation rule for unit combination');
-    return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
-  }
-
-  console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
-  
-  // Validate that the total amount is sufficient for the required dose
-  if (totalAmount !== undefined && totalAmount !== null) {
-    // Convert units if necessary to make a valid comparison
-    let doseInSameUnitAsTotal = doseValue;
-    
-    if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      // If dose is in mcg but total is in mg, convert dose to mg for comparison
-      doseInSameUnitAsTotal = doseValue / 1000;
-      console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInSameUnitAsTotal} mg for comparison with total amount`);
-    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      // If dose is in mg but total is in mcg, convert dose to mcg for comparison
-      doseInSameUnitAsTotal = doseValue * 1000;
-      console.log(`[Calculate] Converting ${doseValue} mg to ${doseInSameUnitAsTotal} mcg for comparison with total amount`);
+    // Validate that the total amount is sufficient for the required dose
+    if (totalAmount !== undefined && totalAmount !== null) {
+      // Convert units if necessary to make a valid comparison
+      let doseInSameUnitAsTotal = doseValue;
+      
+      if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+        // If dose is in mcg but total is in mg, convert dose to mg for comparison
+        doseInSameUnitAsTotal = doseValue / 1000;
+        console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInSameUnitAsTotal} mg for comparison with total amount`);
+      } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+        // If dose is in mg but total is in mcg, convert dose to mcg for comparison
+        doseInSameUnitAsTotal = doseValue * 1000;
+        console.log(`[Calculate] Converting ${doseValue} mg to ${doseInSameUnitAsTotal} mcg for comparison with total amount`);
+      }
+      
+      // Now compare if the dose exceeds the total amount
+      if (doseInSameUnitAsTotal > totalAmount) {
+        calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
+        console.log('[Calculate] Error: Dose exceeds total available');
+        return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+      }
+      
+      // Check if the required volume exceeds what can be made from the total amount
+      const maxPossibleVolume = totalAmount / concentration;
+      if (requiredVolume > maxPossibleVolume) {
+        calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.toFixed(2)} ml).`;
+        console.log('[Calculate] Error: Required volume exceeds possible volume from total');
+        return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+      }
     }
-    
-    // Now compare if the dose exceeds the total amount
-    if (doseInSameUnitAsTotal > totalAmount) {
-      calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
-      console.log('[Calculate] Error: Dose exceeds total available');
-      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+
+    // Set calculated volume
+    calculatedVolume = requiredVolume;
+
+    // Validate against syringe capacity
+    const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
+    if (requiredVolume > maxVolume) {
+      calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`;
+      console.log('[Calculate] Error: Volume exceeds capacity');
+      return { calculatedVolume, recommendedMarking: null, calculationError, calculatedConcentration, calculatedMass };
     }
-    
-    // Check if the required volume exceeds what can be made from the total amount
-    const maxPossibleVolume = totalAmount / concentration;
-    if (requiredVolume > maxPossibleVolume) {
-      calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.toFixed(2)} ml).`;
-      console.log('[Calculate] Error: Required volume exceeds possible volume from total');
-      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+
+    // Find nearest marking on syringe
+    const markings = markingsString.split(',').map(m => parseFloat(m));
+    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
+    console.log('[Calculate] Marking scale value:', markingScaleValue);
+
+    const nearestMarking = markings.reduce((prev, curr) =>
+      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
+    );
+    console.log('[Calculate] Nearest marking:', nearestMarking);
+
+    // Check for precision issues
+    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+      precisionNote = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
+      console.log('[Calculate] Precision note:', precisionNote);
     }
+
+    recommendedMarking = nearestMarking.toString();
+    console.log('[Calculate] Set recommended marking:', recommendedMarking);
+
+    // Return successful calculation - note calculationError is null here
+    return { calculatedVolume, recommendedMarking, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error('[Calculate] Unexpected error:', error);
+    return { 
+      calculatedVolume: null, 
+      recommendedMarking: null, 
+      calculationError: error instanceof Error ? error.message : 'An unexpected calculation error occurred.', 
+      calculatedConcentration: null, 
+      calculatedMass: null 
+    };
   }
-
-  calculatedVolume = requiredVolume;
-
-  const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
-  if (requiredVolume > maxVolume) {
-    calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`;
-    console.log('[Calculate] Error: Volume exceeds capacity');
-    return { calculatedVolume, recommendedMarking: null, calculationError, calculatedConcentration, calculatedMass };
-  }
-
-  const markings = markingsString.split(',').map(m => parseFloat(m));
-  const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
-  console.log('[Calculate] Marking scale value:', markingScaleValue);
-
-  const nearestMarking = markings.reduce((prev, curr) =>
-    Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
-  );
-  console.log('[Calculate] Nearest marking:', nearestMarking);
-
-  let precisionMessage = null;
-  if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
-    const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-    precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
-  }
-
-  recommendedMarking = nearestMarking.toString();
-  console.log('[Calculate] Set recommended marking:', recommendedMarking);
-
-  // Even if we have a precision message, don't set it as an error
-  // Instead, return both the calculated result AND the message
-  let precisionNote = null;
-  if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
-    const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-    precisionNote = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
-    console.log('[Calculate] Precision note:', precisionNote);
-  }
-
-  // Important fix: Return null for calculationError instead of the precision message
-  // This allows the calculation to succeed while still showing the precision note
-  return { calculatedVolume, recommendedMarking, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
 }

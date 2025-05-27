@@ -51,6 +51,19 @@ export default function FinalResultDisplay({
   // IMPORTANT FIX: Changed display logic to prioritize validating calculatedVolume, not just recommendedMarking
   // This ensures we show results for calculations even when a precise marking couldn't be determined
   
+  // Log all props for debugging
+  console.log('[FinalResultDisplay] Detailed props check:', { 
+    calculationError, 
+    recommendedMarking,
+    doseValue,
+    unit,
+    concentrationUnit,
+    substanceName, 
+    calculatedVolume,
+    calculatedConcentration,
+    precisionNote
+  });
+
   // First handle a successful calculation case - if we have a calculatedVolume without errors,
   // we should show the recommendation
   const hasValidCalculation = calculatedVolume !== null && calculatedVolume > 0;
@@ -62,7 +75,8 @@ export default function FinalResultDisplay({
   // Show error section when there's an explicit error
   const showError = calculationError !== null;
   
-  // Show the "no recommendation" section only if we have neither an error nor a valid calculation
+  // Show the "no recommendation" section if we have neither an error nor a valid calculation
+  // IMPORTANT: This ensures we always display something, even in edge cases
   const showNoRecommendation = !showError && !showRecommendation;
   
   console.log('[FinalResultDisplay] Display logic:', {

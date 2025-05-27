@@ -210,6 +210,23 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const handleCalculateFinal = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleCalculateFinal called');
+      
+      // Ensure we have all required data before calculation
+      if (!doseValue) {
+        console.warn('[useDoseCalculator] No doseValue for calculation');
+        setCalculationError('Missing dose value. Please check your inputs and try again.');
+        setManualStep('finalResult');
+        return;
+      }
+      
+      // Safety check for unit and concentrationUnit
+      if (!unit || !concentrationUnit) {
+        console.warn(`[useDoseCalculator] Missing unit (${unit}) or concentrationUnit (${concentrationUnit})`);
+        setCalculationError('Missing unit information. Please check your inputs and try again.');
+        setManualStep('finalResult');
+        return;
+      }
+      
       let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
       if (unit === 'mcg' && totalAmountValue) {
         totalAmountValue *= 1000;
@@ -219,6 +236,17 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       const syringeObj = manualSyringe;
 
       const { calculateDose } = require('../doseUtils');
+      
+      console.log('[useDoseCalculator] Performing calculation with:', {
+        doseValue,
+        concentration,
+        unit,
+        concentrationUnit,
+        totalAmount: totalAmountValue,
+        manualSyringe: JSON.stringify(syringeObj),
+        solutionVolume
+      });
+      
       const result = calculateDose({
         doseValue,
         concentration,
@@ -237,15 +265,14 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         precisionNote: result.precisionNote
       });
 
-      // Always set calculated values first
+      // Always set ALL calculated values first - ensure we never have partial updates
       setCalculatedVolume(result.calculatedVolume);
       setRecommendedMarking(result.recommendedMarking);
       setCalculationError(result.calculationError);
       setPrecisionNote(result.precisionNote);
       setCalculatedConcentration(result.calculatedConcentration || null);
-
-      // Always navigate to finalResult screen regardless of calculation errors
-      // This ensures we display either the result or a helpful error message
+      
+      // Always navigate to finalResult screen after setting all values
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
@@ -255,6 +282,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setRecommendedMarking(null);
       setPrecisionNote(null);
       setCalculatedVolume(null);
+      setCalculatedConcentration(null);
       
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');

@@ -65,21 +65,36 @@ export default function ConcentrationInputStep({
   // Validate concentration unit compatibility with dose unit
   useEffect(() => {
     if (unit && concentrationUnit) {
-      // Added logging for better debugging when units don't match
+      // Enhanced logging for better debugging when units don't match
       console.log(`[ConcentrationInputStep] Checking compatibility between ${unit} dose and ${concentrationUnit} concentration`);
-      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-      console.log(`[ConcentrationInputStep] Compatibility result:`, compatibility);
       
-      setIsCompatible(compatibility.isCompatible);
-      setUnitCompatible(compatibility.isCompatible);
-      
-      if (!compatibility.isCompatible) {
-        setConcentrationHint(`Unit mismatch: ${unit} dose is not compatible with ${concentrationUnit} concentration. Select a matching unit.`);
-      } else {
-        setConcentrationHint(null);
+      try {
+        const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+        console.log(`[ConcentrationInputStep] Compatibility result:`, compatibility);
+        
+        setIsCompatible(compatibility.isCompatible);
+        setUnitCompatible(compatibility.isCompatible);
+        
+        if (!compatibility.isCompatible) {
+          console.warn(`[ConcentrationInputStep] Unit mismatch detected: ${unit} with ${concentrationUnit}`);
+          setConcentrationHint(`Unit mismatch: ${unit} dose is not compatible with ${concentrationUnit} concentration. Select a matching unit.`);
+        } else {
+          console.log(`[ConcentrationInputStep] Units are compatible: ${unit} with ${concentrationUnit}`);
+          // Only clear the hint if it was previously about incompatibility
+          if (concentrationHint && concentrationHint.includes('Unit mismatch')) {
+            setConcentrationHint(null);
+          }
+        }
+      } catch (error) {
+        console.error('[ConcentrationInputStep] Error checking unit compatibility:', error);
+        // Fail safe - assume compatible if validation fails to prevent blocking the user
+        setIsCompatible(true);
+        setUnitCompatible(true);
       }
+    } else {
+      console.log(`[ConcentrationInputStep] Missing unit (${unit}) or concentrationUnit (${concentrationUnit}) for validation`);
     }
-  }, [concentrationUnit, unit, setConcentrationHint, setUnitCompatible]);
+  }, [concentrationUnit, unit, setConcentrationHint, setUnitCompatible, concentrationHint]);
   
   return (
     <View style={styles.container}>

@@ -29,6 +29,9 @@ export default function NewDoseScreen() {
     doseCalculator.setScreenStep('intro');
     // Reset the manual step to ensure consistent state
     doseCalculator.setManualStep('dose');
+    
+    // Add explicit confirmation log that initialization happened
+    console.log('[NewDoseScreen] Initialization complete: screenStep=intro, manualStep=dose');
   }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked
@@ -38,6 +41,13 @@ export default function NewDoseScreen() {
     // Track navigation from intro to other screens
     if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
       setNavigatingFromIntro(true);
+      console.log('[NewDoseScreen] Navigation from intro detected');
+    }
+    
+    // Ensure manualStep is properly set when going to manualEntry
+    if (step === 'manualEntry' && doseCalculator.manualStep !== 'dose') {
+      console.log('[NewDoseScreen] Resetting manualStep to dose on manualEntry navigation');
+      doseCalculator.setManualStep('dose');
     }
     
     doseCalculator.setScreenStep(step);

@@ -108,6 +108,26 @@ export default function ManualEntryScreen({
   // Track unit compatibility state
   const [isUnitCompatible, setIsUnitCompatible] = useState(true);
 
+  // Add detailed initialization logging
+  useEffect(() => {
+    console.log('[ManualEntryScreen] Component initialized with step:', manualStep, {
+      calculatedVolume,
+      recommendedMarking,
+      calculationError,
+      precisionNote,
+      unit,
+      concentrationUnit
+    });
+    
+    // Validate unit compatibility when dose unit or concentration unit changes
+    if (unit && concentrationUnit && manualStep === 'concentrationInput') {
+      const { validateUnitCompatibility } = require('../lib/doseUtils');
+      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      setIsUnitCompatible(compatibility.isCompatible);
+      console.log(`[ManualEntryScreen] Unit compatibility checked: ${compatibility.isCompatible}`);
+    }
+  }, [manualStep, calculatedVolume, recommendedMarking, calculationError, precisionNote, unit, concentrationUnit]);
+
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));
@@ -170,108 +190,127 @@ export default function ManualEntryScreen({
                          manualStep === 'concentrationInput' ? 'ConcentrationInputStep' : 
                          manualStep
   });
-
-  switch (manualStep) {
-    case 'dose':
-      currentStepComponent = (
-        <DoseInputStep
-          dose={dose}
-          setDose={setDose}
-          unit={unit}
-          setUnit={setUnit}
-        />
-      );
-      progress = 1 / 3;
-      break;
-    case 'medicationSource':
-      currentStepComponent = (
-        <MedicationSourceStep
-          substanceName={substanceName}
-          setSubstanceName={setSubstanceName}
-          setSubstanceNameHint={setSubstanceNameHint}
-          substanceNameHint={substanceNameHint}
-          medicationInputType={medicationInputType}
-          setMedicationInputType={setMedicationInputType}
-          dose={dose}
-          unit={unit}
-        />
-      );
-      progress = (2 / 3) - 0.15;
-      break;
-    case 'concentrationInput':
-      currentStepComponent = (
-        <ConcentrationInputStep
-          concentrationAmount={concentrationAmount}
-          setConcentrationAmount={setConcentrationAmount}
-          concentrationUnit={concentrationUnit}
-          setConcentrationUnit={setConcentrationUnit}
-          setConcentrationHint={setConcentrationHint}
-          concentrationHint={concentrationHint}
-          unit={unit}
-          setUnitCompatible={setIsUnitCompatible}
-        />
-      );
-      progress = 3 / 5;
-      break;
-    case 'totalAmountInput':
-      currentStepComponent = (
-        <TotalAmountInputStep
-          totalAmount={totalAmount}
-          setTotalAmount={setTotalAmount}
-          setTotalAmountHint={setTotalAmountHint}
-          totalAmountHint={totalAmountHint}
-          unit={unit}
-          dose={dose}
-        />
-      );
-      progress = 3 / 5;
-      break;
-    case 'reconstitution':
-      currentStepComponent = (
-        <ReconstitutionStep
-          solutionVolume={solutionVolume}
-          setSolutionVolume={setSolutionVolume}
-        />
-      );
-      progress = 2 / 3;
-      break;
-    case 'syringe':
-      currentStepComponent = (
-        <SyringeStep
-          manualSyringe={manualSyringe}
-          setManualSyringe={setManualSyringe}
-          setSyringeHint={setSyringeHint}
-          syringeHint={syringeHint}
-          doseValue={doseValue}
-          concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
-          unit={unit}
-          concentrationUnit={concentrationUnit}
-        />
-      );
-      progress = 3 / 3;
-      break;
-    case 'finalResult':
-      currentStepComponent = (
-        <FinalResultDisplay
-          calculationError={calculationError}
-          recommendedMarking={recommendedMarking}
-          doseValue={doseValue}
-          unit={unit}
-          concentrationUnit={concentrationUnit}
-          substanceName={substanceName}
-          manualSyringe={manualSyringe}
-          calculatedVolume={calculatedVolume}
-          calculatedConcentration={calculatedConcentration}
-          precisionNote={precisionNote}
-          handleStartOver={handleStartOver}
-          setScreenStep={setScreenStep}
-          isMobileWeb={isMobileWeb}
-        />
-      );
-      progress = 1;
-      break;
-    default:
-      currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
+  
+  try {
+    // Wrap the entire step selection in try/catch to prevent rendering failures
+    switch (manualStep) {
+      case 'dose':
+        currentStepComponent = (
+          <DoseInputStep
+            dose={dose}
+            setDose={setDose}
+            unit={unit}
+            setUnit={setUnit}
+          />
+        );
+        progress = 1 / 3;
+        break;
+      case 'medicationSource':
+        currentStepComponent = (
+          <MedicationSourceStep
+            substanceName={substanceName}
+            setSubstanceName={setSubstanceName}
+            setSubstanceNameHint={setSubstanceNameHint}
+            substanceNameHint={substanceNameHint}
+            medicationInputType={medicationInputType}
+            setMedicationInputType={setMedicationInputType}
+            dose={dose}
+            unit={unit}
+          />
+        );
+        progress = (2 / 3) - 0.15;
+        break;
+      case 'concentrationInput':
+        currentStepComponent = (
+          <ConcentrationInputStep
+            concentrationAmount={concentrationAmount}
+            setConcentrationAmount={setConcentrationAmount}
+            concentrationUnit={concentrationUnit}
+            setConcentrationUnit={setConcentrationUnit}
+            setConcentrationHint={setConcentrationHint}
+            concentrationHint={concentrationHint}
+            unit={unit}
+            setUnitCompatible={setIsUnitCompatible}
+          />
+        );
+        progress = 3 / 5;
+        break;
+      case 'totalAmountInput':
+        currentStepComponent = (
+          <TotalAmountInputStep
+            totalAmount={totalAmount}
+            setTotalAmount={setTotalAmount}
+            setTotalAmountHint={setTotalAmountHint}
+            totalAmountHint={totalAmountHint}
+            unit={unit}
+            dose={dose}
+          />
+        );
+        progress = 3 / 5;
+        break;
+      case 'reconstitution':
+        currentStepComponent = (
+          <ReconstitutionStep
+            solutionVolume={solutionVolume}
+            setSolutionVolume={setSolutionVolume}
+          />
+        );
+        progress = 2 / 3;
+        break;
+      case 'syringe':
+        currentStepComponent = (
+          <SyringeStep
+            manualSyringe={manualSyringe}
+            setManualSyringe={setManualSyringe}
+            setSyringeHint={setSyringeHint}
+            syringeHint={syringeHint}
+            doseValue={doseValue}
+            concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
+            unit={unit}
+            concentrationUnit={concentrationUnit}
+          />
+        );
+        progress = 3 / 3;
+        break;
+      case 'finalResult':
+        // IMPORTANT: Always render the FinalResultDisplay even if we're missing some props
+        // This prevents blank screens by ensuring something always renders
+        currentStepComponent = (
+          <FinalResultDisplay
+            calculationError={calculationError}
+            recommendedMarking={recommendedMarking}
+            doseValue={doseValue}
+            unit={unit}
+            concentrationUnit={concentrationUnit}
+            substanceName={substanceName}
+            manualSyringe={manualSyringe}
+            calculatedVolume={calculatedVolume}
+            calculatedConcentration={calculatedConcentration}
+            precisionNote={precisionNote}
+            handleStartOver={handleStartOver}
+            setScreenStep={setScreenStep}
+            isMobileWeb={isMobileWeb}
+          />
+        );
+        progress = 1;
+        break;
+      default:
+        console.error(`[ManualEntryScreen] Invalid step encountered: ${manualStep}`);
+        currentStepComponent = <Text style={styles.errorText}>Invalid step. Please try again.</Text>;
+    }
+  } catch (error) {
+    console.error('[ManualEntryScreen] Error during step rendering:', error);
+    currentStepComponent = (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Rendering Error</Text>
+        <Text style={styles.errorText}>
+          An unexpected error occurred. Please try again or go back to the previous step.
+        </Text>
+        <TouchableOpacity style={styles.errorButton} onPress={handleBack}>
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
@@ -353,6 +392,9 @@ const styles = StyleSheet.create({
   manualEntryContainer: { flex: 1 },
   formWrapper: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 20 },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
+  errorContainer: { width: '100%', padding: 20, alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginVertical: 10 },
+  errorTitle: { fontSize: 16, fontWeight: '600', color: '#991B1B', marginBottom: 10 },
+  errorButton: { backgroundColor: '#ef4444', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, marginTop: 15 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },
