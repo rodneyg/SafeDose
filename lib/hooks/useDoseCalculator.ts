@@ -238,9 +238,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setCalculatedVolume(result.calculatedVolume);
       
       // Keep the recommended marking even if there's a precision note
+      // This is an important fix - we don't nullify recommendedMarking when there are precision issues
+      // This ensures the result always displays when calculation is successful
       setRecommendedMarking(result.recommendedMarking);
       
       // Only set calculation error if it's a true error, not a precision note
+      // The precisionNote is displayed separately in the UI
       setCalculationError(result.calculationError);
       setCalculatedConcentration(result.calculatedConcentration || null);
 

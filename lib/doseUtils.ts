@@ -2,6 +2,12 @@ import { syringeOptions } from '../lib/utils';
 
 /**
  * Validates if the dose unit is compatible with the concentration unit
+ * 
+ * This function determines whether a given dose unit can be used with a specific concentration unit.
+ * It handles special cases like:
+ * 1. Volume-based doses (ml) which are compatible with any concentration units
+ * 2. Direct unit matches (e.g., units with units/ml)
+ * 3. Mass unit conversions (mg can work with mcg/ml and vice versa with proper conversion)
  */
 export function validateUnitCompatibility(
   doseUnit: 'mg' | 'mcg' | 'units' | 'ml',
@@ -22,6 +28,7 @@ export function validateUnitCompatibility(
   }
   
   // Special case: mg and mcg are compatible through conversion
+  // This is a key part of the fix - ensuring mcg doses work with mg/ml concentrations and vice versa
   if ((doseUnit === 'mg' && concentrationUnit === 'mcg/ml') || 
       (doseUnit === 'mcg' && concentrationUnit === 'mg/ml')) {
     console.log('[validateUnitCompatibility] Mass units with different scales are compatible through conversion');
@@ -224,5 +231,7 @@ export function calculateDose({
     console.log('[Calculate] Precision note:', precisionNote);
   }
 
+  // Important fix: Return null for calculationError instead of the precision message
+  // This allows the calculation to succeed while still showing the precision note
   return { calculatedVolume, recommendedMarking, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
 }

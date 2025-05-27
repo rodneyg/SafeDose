@@ -47,6 +47,9 @@ export default function FinalResultDisplay({
     calculatedConcentration
   });
   
+  // IMPORTANT FIX: Changed display logic to prioritize validating calculatedVolume, not just recommendedMarking
+  // This ensures we show results for calculations even when a precise marking couldn't be determined
+  
   // First handle a successful calculation case - if we have a calculatedVolume without errors,
   // we should show the recommendation
   const hasValidCalculation = calculatedVolume !== null && calculatedVolume > 0;
@@ -130,6 +133,7 @@ export default function FinalResultDisplay({
               (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
+          {/* Added support for displaying precision notes that aren't blocking errors */}
           {precisionNote && (
             <Text style={styles.warningText}>{precisionNote}</Text>
           )}
