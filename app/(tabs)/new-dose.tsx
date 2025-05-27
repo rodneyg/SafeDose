@@ -286,7 +286,7 @@ export default function NewDoseScreen() {
         console.log('[Process] Scan failed, transitioning to manual entry with defaults');
         setManualSyringe({ type: 'Standard', volume: '3 ml' });
         setSubstanceName('');
-        setMedicationInputType('concentration');
+        setMedicationInputType('totalAmount');
         setConcentrationAmount('');
         setTotalAmount('');
         setScreenStep('manualEntry');
@@ -307,7 +307,7 @@ export default function NewDoseScreen() {
       // Still provide a graceful fallback to manual entry
       setManualSyringe({ type: 'Standard', volume: '3 ml' });
       setSubstanceName('');
-      setMedicationInputType('concentration');
+      setMedicationInputType('totalAmount');
       setConcentrationAmount('');
       setTotalAmount('');
       setScreenStep('manualEntry');
