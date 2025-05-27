@@ -24,7 +24,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [dose, setDose] = useState<string>('');
   const [unit, setUnit] = useState<string>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
-  const [medicationInputType, setMedicationInputType] = useState<string>('powder');
+  const [medicationInputType, setMedicationInputType] = useState<string>('totalAmount');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<string>('mg/mL');
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -50,7 +50,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setDose('');
     setUnit('mg');
     setSubstanceName('');
-    setMedicationInputType('powder');
+    setMedicationInputType('totalAmount');
     setConcentrationAmount('');
     setConcentrationUnit('mg/mL');
     setTotalAmount('');
@@ -134,6 +134,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         return;
       }
       setDoseValue(parseFloat(dose));
+      setMedicationInputType(null); // Set to null to trigger intelligent guessing
       setManualStep('medicationSource');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -141,7 +142,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextDose:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [dose, unit]);
+  }, [dose, unit, setMedicationInputType]);
 
   const handleNextMedicationSource = useCallback(() => {
     if (medicationInputType === 'totalAmount') {
