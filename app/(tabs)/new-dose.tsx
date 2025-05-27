@@ -105,6 +105,8 @@ export default function NewDoseScreen() {
     setRecommendedMarking,
     calculationError,
     setCalculationError,
+    precisionNote,
+    setPrecisionNote,
     formError,
     setFormError,
     substanceNameHint,
@@ -160,8 +162,9 @@ export default function NewDoseScreen() {
       setCalculatedVolume(null);
       setRecommendedMarking(null);
       setCalculationError(null);
+      setPrecisionNote(null);
     }
-  }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError]);
+  }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError, setPrecisionNote]);
 
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
@@ -417,6 +420,8 @@ export default function NewDoseScreen() {
           setManualSyringe={setManualSyringe}
           doseValue={doseValue}
           calculatedVolume={calculatedVolume}
+          calculatedConcentration={calculatedConcentration}
+          precisionNote={precisionNote}
           recommendedMarking={recommendedMarking}
           calculationError={calculationError}
           formError={formError}

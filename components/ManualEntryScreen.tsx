@@ -35,6 +35,7 @@ interface ManualEntryScreenProps {
   doseValue: number | null;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration
+  precisionNote?: string | null; // Add precision note
   recommendedMarking: string | null;
   calculationError: string | null;
   formError: string | null;
@@ -80,6 +81,7 @@ export default function ManualEntryScreen({
   doseValue,
   calculatedVolume,
   calculatedConcentration,
+  precisionNote,
   recommendedMarking,
   calculationError,
   formError,
@@ -249,7 +251,7 @@ export default function ManualEntryScreen({
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
-          precisionNote={null} // We'll add this later when we extend the API
+          precisionNote={precisionNote}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           isMobileWeb={isMobileWeb}
@@ -303,11 +305,10 @@ export default function ManualEntryScreen({
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
                       handleCalculateFinal();
-                      // Ensure we always proceed to finalResult step even if calculation fails
-                      if (manualStep !== 'finalResult') {
-                        console.log('[ManualEntry] Manually ensuring transition to finalResult step');
-                        setManualStep('finalResult');
-                      }
+                      // We need to ensure that we always navigate to the finalResult step
+                      // regardless of whether the calculation succeeds or fails
+                      console.log('[ManualEntry] Manually ensuring transition to finalResult step');
+                      setManualStep('finalResult');
                     }
                   } catch (error) {
                     console.error('Error in next button handler:', error);

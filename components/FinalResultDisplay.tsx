@@ -44,7 +44,8 @@ export default function FinalResultDisplay({
     substanceName,
     manualSyringe,
     calculatedVolume,
-    calculatedConcentration
+    calculatedConcentration,
+    precisionNote
   });
   
   // IMPORTANT FIX: Changed display logic to prioritize validating calculatedVolume, not just recommendedMarking
@@ -70,7 +71,9 @@ export default function FinalResultDisplay({
     showRecommendation,
     showNoRecommendation,
     calculationError,
-    calculatedVolume
+    calculatedVolume,
+    recommendedMarking,
+    precisionNote
   });
   
   return (

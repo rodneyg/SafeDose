@@ -35,9 +35,10 @@ export function validateUnitCompatibility(
     return { isCompatible: true, message: null };
   }
   
-  // For non-volume doses, get the unit base
-  const doseUnitBase = doseUnit.replace('mcg', 'mg').replace('mg', 'mg');
-  const concUnitBase = concentrationUnit.split('/')[0].replace('mcg', 'mg').replace('mg', 'mg');
+  // For non-volume doses, get the unit base - but this is just for display purposes
+  // The actual compatibility is determined by more specific rules above
+  const doseUnitBase = doseUnit.replace('mcg', 'mg');
+  const concUnitBase = concentrationUnit.split('/')[0].replace('mcg', 'mg');
   console.log(`[validateUnitCompatibility] Comparing unit bases: ${doseUnitBase} vs ${concUnitBase}`);
 
   // The bases must match (mg with mg, mcg with mcg, units with units)

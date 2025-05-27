@@ -36,6 +36,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [calculatedConcentration, setCalculatedConcentration] = useState<number | null>(null);
   const [recommendedMarking, setRecommendedMarking] = useState<number | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [precisionNote, setPrecisionNote] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
@@ -62,6 +63,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setCalculatedConcentration(null);
     setRecommendedMarking(null);
     setCalculationError(null);
+    setPrecisionNote(null);
     setFormError(null);
     setSubstanceNameHint(null);
     setConcentrationHint(null);
@@ -245,6 +247,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Only set calculation error if it's a true error, not a precision note
       // The precisionNote is displayed separately in the UI
       setCalculationError(result.calculationError);
+      setPrecisionNote(result.precisionNote);
       setCalculatedConcentration(result.calculatedConcentration || null);
 
       // Always navigate to finalResult screen regardless of calculation errors
@@ -387,6 +390,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setRecommendedMarking,
     calculationError,
     setCalculationError,
+    precisionNote,
+    setPrecisionNote,
     formError,
     setFormError,
     substanceNameHint,
