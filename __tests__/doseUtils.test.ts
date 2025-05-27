@@ -1,4 +1,4 @@
-import { calculateDose } from '../lib/doseUtils';
+import { calculateDose, validateUnitCompatibility } from '../lib/doseUtils';
 
 // Mock the syringeOptions import
 jest.mock('../lib/utils', () => ({
@@ -16,6 +16,52 @@ jest.mock('../lib/utils', () => ({
     },
   },
 }));
+
+describe('validateUnitCompatibility', () => {
+  test('correctly validates compatible units', () => {
+    // Test case: mg dose with mg/ml concentration (direct match)
+    expect(validateUnitCompatibility('mg', 'mg/ml').isCompatible).toBe(true);
+    
+    // Test case: mcg dose with mcg/ml concentration (direct match)
+    expect(validateUnitCompatibility('mcg', 'mcg/ml').isCompatible).toBe(true);
+    
+    // Test case: units dose with units/ml concentration (direct match)
+    expect(validateUnitCompatibility('units', 'units/ml').isCompatible).toBe(true);
+    
+    // Test case: ml dose with any concentration (all compatible)
+    expect(validateUnitCompatibility('ml', 'mg/ml').isCompatible).toBe(true);
+    expect(validateUnitCompatibility('ml', 'mcg/ml').isCompatible).toBe(true);
+    expect(validateUnitCompatibility('ml', 'units/ml').isCompatible).toBe(true);
+    
+    // Test case: mg dose with mcg/ml concentration (compatible with conversion)
+    expect(validateUnitCompatibility('mg', 'mcg/ml').isCompatible).toBe(true);
+    
+    // Test case: mcg dose with mg/ml concentration (compatible with conversion)
+    expect(validateUnitCompatibility('mcg', 'mg/ml').isCompatible).toBe(true);
+  });
+  
+  test('correctly identifies incompatible units', () => {
+    // Test case: mg dose with units/ml concentration (incompatible)
+    const mgUnits = validateUnitCompatibility('mg', 'units/ml');
+    expect(mgUnits.isCompatible).toBe(false);
+    expect(mgUnits.message).toContain('Unit mismatch');
+    
+    // Test case: mcg dose with units/ml concentration (incompatible)
+    const mcgUnits = validateUnitCompatibility('mcg', 'units/ml');
+    expect(mcgUnits.isCompatible).toBe(false);
+    expect(mcgUnits.message).toContain('Unit mismatch');
+    
+    // Test case: units dose with mg/ml concentration (incompatible)
+    const unitsMg = validateUnitCompatibility('units', 'mg/ml');
+    expect(unitsMg.isCompatible).toBe(false);
+    expect(unitsMg.message).toContain('Unit mismatch');
+    
+    // Test case: units dose with mcg/ml concentration (incompatible)
+    const unitsMcg = validateUnitCompatibility('units', 'mcg/ml');
+    expect(unitsMcg.isCompatible).toBe(false);
+    expect(unitsMcg.message).toContain('Unit mismatch');
+  });
+});
 
 describe('calculateDose', () => {
   // Standard mock syringe used for all tests

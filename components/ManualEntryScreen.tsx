@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
+import { validateUnitCompatibility } from '../lib/doseUtils';
 import CustomProgressBar from '../components/CustomProgressBar';
 import DoseInputStep from '../components/DoseInputStep';
 import MedicationSourceStep from '../components/MedicationSourceStep';
@@ -15,8 +16,8 @@ interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
   dose: string;
   setDose: (value: string) => void;
-  unit: 'mg' | 'mcg' | 'units';
-  setUnit: (value: 'mg' | 'mcg' | 'units') => void;
+  unit: 'mg' | 'mcg' | 'units' | 'ml';
+  setUnit: (value: 'mg' | 'mcg' | 'units' | 'ml') => void;
   substanceName: string;
   setSubstanceName: (value: string) => void;
   medicationInputType: 'concentration' | 'totalAmount' | null;
@@ -100,6 +101,9 @@ export default function ManualEntryScreen({
   handleStartOver,
   setScreenStep,
 }: ManualEntryScreenProps) {
+  // Track unit compatibility state
+  const [isUnitCompatible, setIsUnitCompatible] = useState(true);
+
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));
@@ -110,7 +114,12 @@ export default function ManualEntryScreen({
   };
 
   const isConcentrationInputStepValid = (): boolean => {
-    return Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+    // Check both the value and unit compatibility
+    return Boolean(
+      concentrationAmount && 
+      !isNaN(parseFloat(concentrationAmount)) && 
+      isUnitCompatible
+    );
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
@@ -186,6 +195,7 @@ export default function ManualEntryScreen({
           setConcentrationHint={setConcentrationHint}
           concentrationHint={concentrationHint}
           unit={unit}
+          setUnitCompatible={setIsUnitCompatible}
         />
       );
       progress = 3 / 5;
