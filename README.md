@@ -78,6 +78,8 @@ rodneyg-safedose/
 ├── assets/              # Icons and images
 ├── android/             # Android project files
 ├── ios/                 # iOS project files
+├── docs/                # Documentation
+│   └── auth-config.md   # Authentication configuration info
 ├── types/               # Global type definitions
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration

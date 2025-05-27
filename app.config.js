@@ -43,6 +43,13 @@ module.exports = {
       messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "704055775889",
       appId: process.env.FIREBASE_APP_ID || "1:704055775889:web:6ff0d3de5fea40b5b56530",
       measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-WRY88Q57KK"
+    },
+    auth: {
+      // Google Sign-In redirect URIs
+      redirectUris: {
+        local: "http://localhost:8081/__/auth/handler",
+        production: "https://app.safedoseai.com/__/auth/handler"
+      }
     }
   },
 };
