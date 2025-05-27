@@ -2,9 +2,8 @@ import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
 import Constants from "expo-constants";
-import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
-import PriceToggle from "@/components/pricing/PriceToggle";
-import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { router } from "expo-router";
 
 // Read your publishable key from Expo constants
 const stripePublishableKey =
@@ -19,81 +18,41 @@ const stripePromise = stripePublishableKey
 // Base URL for your API
 const API_BASE_URL = "https://www.safedoseai.com";
 
-const pricingPlans: PricingPlan[] = [
-  {
-    name: "Free",
-    price: { monthly: 0, annual: 0 },
-    description: "Manual calculations only, ideal for light or trial use",
-    features: [
-      { name: "30 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans & no mid-session limits", available: false },
-      { name: "Priority scan queue", available: false },
-    ],
-    cta: "Start Free",
-    priceId: { monthly: null, annual: null },
-  },
-  {
-    name: "Plus",
-    price: { monthly: 20, annual: 240 },
-    description: "For consistent at-home dosing",
-    features: [
-      { name: "150 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans", available: true },
-      { name: "No mid-session limits", available: true },
-      { name: "Priority scan queue", available: false },
-    ],
-    cta: "Upgrade to Plus",
-    badge: "popular",
-    priceId: { monthly: "price_1REyzMPE5x6FmwJPyJVJIEXe", annual: "price_1REyzMPE5x6FmwJPyJVJIEXe" },
-  },
-  {
-    name: "Pro",
-    price: { monthly: 50, annual: 600 },
-    description: "Clinical-grade volume and control",
-    features: [
-      { name: "500 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans", available: true },
-      { name: "No mid-session limits", available: true },
-      { name: "Priority scan queue", available: true },
-      { name: "Dedicated support line", available: true },
-    ],
-    cta: "Go Pro",
-    badge: "best-value",
-    priceId: { monthly: "price_1REyzMPE5x6FmwJPyJVJIEXe", annual: "price_1REyzMPE5x6FmwJPyJVJIEXe" },
-  },
-];
+// Premium plan details
+const premiumPlan = {
+  name: "Premium Plan",
+  price: 10, // $10/month
+  description: "150 Scans per Month",
+  features: [
+    { name: "150 AI scans/month", available: true },
+    { name: "Unlimited manual calculations", available: true },
+    { name: "Faster scans", available: true },
+    { name: "No mid-session limits", available: true },
+  ],
+  priceId: "price_1REyzMPE5x6FmwJPyJVJIEXe", // Using the existing price ID
+};
 
 export default function PricingPage() {
   const { toast } = useToast();
-  const [isAnnual, setIsAnnual] = useState(false);
-  const [selectedPaymentProvider, setSelectedPaymentProvider] =
-    useState<PaymentProvider>("stripe");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const initiateStripeCheckout = async (plan: PricingPlan) => {
-    console.log("initiateStripeCheckout called with plan:", plan);
+  const initiateStripeCheckout = async () => {
+    console.log("initiateStripeCheckout called for Premium plan");
+    setIsLoading(true);
+    setErrorMessage("");
+    
     try {
       const stripe = await stripePromise;
       console.log("Stripe instance:", stripe);
       if (!stripe) {
         console.error("Stripe is not initialized");
-        toast({
-          title: "Error",
-          description: "Stripe is not initialized. Please try again later.",
-          variant: "destructive",
-        });
+        setErrorMessage("Stripe is not initialized. Please try again later.");
         return;
       }
 
-      const priceId = isAnnual ? plan.priceId.annual : plan.priceId.monthly;
+      const priceId = premiumPlan.priceId;
       console.log("Using priceId:", priceId);
-      if (!priceId) {
-        console.log("Free plan selected, no checkout needed");
-        toast({ title: "Free Plan Selected", description: "No checkout needed for Free plan." });
-        return;
-      }
 
       // Debug: show payload
       console.log(`Calling ${API_BASE_URL}/api/create-checkout-session with:`, {
@@ -128,11 +87,7 @@ export default function PricingPage() {
 
       if (!res.ok) {
         console.error("Error response from API:", data);
-        toast({
-          title: "Checkout Error",
-          description: data.error || "Failed to create checkout session",
-          variant: "destructive",
-        });
+        setErrorMessage(data.error || "Failed to create checkout session");
         return;
       }
 
@@ -144,62 +99,141 @@ export default function PricingPage() {
       console.log("redirectToCheckout result:", result);
       if (result?.error) {
         console.error("Stripe redirectToCheckout error:", result.error);
-        toast({
-          title: "Stripe Redirect Error",
-          description: result.error.message,
-          variant: "destructive",
-        });
+        setErrorMessage(result.error.message);
       }
     } catch (error: any) {
       console.error("Checkout error caught:", error);
-      toast({
-        title: "Checkout Error",
-        description: error.message || "Unable to initiate checkout. Please try again.",
-        variant: "destructive",
-      });
+      setErrorMessage(error.message || "Unable to initiate checkout. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCheckout = (plan: PricingPlan) => {
-    switch (selectedPaymentProvider) {
-      case "stripe":
-        initiateStripeCheckout(plan);
-        break;
-      case "lemonsqueezy":
-        console.log("LemonSqueezy checkout:", plan.name);
-        break;
-      case "revenuecat":
-        console.log("RevenueCat checkout:", plan.name);
-        break;
-      case "paddle":
-        console.log("Paddle checkout:", plan.name);
-        break;
-      default:
-        console.error("Unknown payment provider");
-    }
+  const handleCancel = () => {
+    router.back();
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold text-center mb-8">SafeDose Pricing</h2>
-      <div className="mb-8">
-        <PaymentProviders
-          availableProviders={[
-            "stripe",
-            "lemonsqueezy",
-            "revenuecat",
-            "paddle",
-          ]}
-          selectedProvider={selectedPaymentProvider}
-          onSelectProvider={setSelectedPaymentProvider}
-        />
-      </div>
-      <PriceToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
-        {pricingPlans.map((plan, idx) => (
-          <PricingCard key={idx} plan={plan} isAnnual={isAnnual} onSelectPlan={handleCheckout} />
-        ))}
-      </div>
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>Upgrade to Premium</Text>
+      
+      <View style={styles.planCard}>
+        <Text style={styles.planTitle}>{premiumPlan.name}</Text>
+        <Text style={styles.planPrice}>${premiumPlan.price}/month</Text>
+        <Text style={styles.planDescription}>{premiumPlan.description}</Text>
+        
+        <View style={styles.featureList}>
+          {premiumPlan.features.map((feature, idx) => (
+            <View key={idx} style={styles.featureItem}>
+              <Text style={styles.featureText}>• {feature.name}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.upgradeButton} 
+          onPress={initiateStripeCheckout}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Processing..." : "Upgrade with Stripe"}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F2F2F7',
+    padding: 24,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  planCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  planTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  planPrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  planDescription: {
+    fontSize: 16,
+    color: '#333333',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  featureList: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  featureText: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 400,
+    gap: 12,
+  },
+  upgradeButton: {
+    backgroundColor: '#34C759',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cancelButton: {
+    backgroundColor: '#8E8E93',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
