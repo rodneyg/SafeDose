@@ -113,6 +113,8 @@ export default function NewDoseScreen() {
     setConcentration,
     calculatedVolume,
     setCalculatedVolume,
+    calculatedConcentration,
+    setCalculatedConcentration,
     recommendedMarking,
     setRecommendedMarking,
     calculationError,
