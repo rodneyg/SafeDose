@@ -174,7 +174,14 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         setFormError('Please enter a valid total amount');
         return;
       }
-      setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
+      // Always go to reconstitution step when using totalAmount input mode 
+      // to ensure we get solutionVolume for calculating concentration
+      if (medicationInputType === 'totalAmount') {
+        setManualStep('reconstitution');
+        console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+      } else {
+        setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
+      }
       setFormError(null);
       lastActionTimestamp.current = Date.now();
     } catch (error) {
