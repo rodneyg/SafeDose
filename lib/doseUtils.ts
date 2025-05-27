@@ -7,31 +7,39 @@ export function validateUnitCompatibility(
   doseUnit: 'mg' | 'mcg' | 'units' | 'ml',
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'
 ): { isCompatible: boolean; message: string | null } {
+  console.log(`[validateUnitCompatibility] Checking ${doseUnit} dose with ${concentrationUnit} concentration`);
+  
   // Volume-based doses (ml) are compatible with any concentration units
   if (doseUnit === 'ml') {
+    console.log('[validateUnitCompatibility] Volume-based dose is compatible with any concentration');
     return { isCompatible: true, message: null };
   }
 
   // Handle units directly (for clarity)
   if (doseUnit === 'units' && concentrationUnit === 'units/ml') {
+    console.log('[validateUnitCompatibility] Units dose with units/ml concentration is compatible');
     return { isCompatible: true, message: null };
   }
   
   // Special case: mg and mcg are compatible through conversion
   if ((doseUnit === 'mg' && concentrationUnit === 'mcg/ml') || 
       (doseUnit === 'mcg' && concentrationUnit === 'mg/ml')) {
+    console.log('[validateUnitCompatibility] Mass units with different scales are compatible through conversion');
     return { isCompatible: true, message: null };
   }
   
   // For non-volume doses, get the unit base
   const doseUnitBase = doseUnit.replace('mcg', 'mg').replace('mg', 'mg');
   const concUnitBase = concentrationUnit.split('/')[0].replace('mcg', 'mg').replace('mg', 'mg');
+  console.log(`[validateUnitCompatibility] Comparing unit bases: ${doseUnitBase} vs ${concUnitBase}`);
 
   // The bases must match (mg with mg, mcg with mcg, units with units)
   if (doseUnitBase === concUnitBase) {
+    console.log('[validateUnitCompatibility] Unit bases match, compatible');
     return { isCompatible: true, message: null };
   }
 
+  console.log('[validateUnitCompatibility] Units are not compatible');
   return {
     isCompatible: false,
     message: `Unit mismatch between dose (${doseUnit}) and concentration (${concentrationUnit}).`
@@ -54,6 +62,7 @@ interface CalculateDoseResult {
   calculationError: string | null;
   calculatedConcentration?: number | null; // Add calculated concentration for reference
   calculatedMass?: number | null; // Add calculated mass for ml-based doses
+  precisionNote?: string | null; // Added for precision warnings that aren't errors
 }
 
 export function calculateDose({
@@ -156,14 +165,16 @@ export function calculateDose({
     if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
       // If dose is in mcg but total is in mg, convert dose to mg for comparison
       doseInSameUnitAsTotal = doseValue / 1000;
+      console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInSameUnitAsTotal} mg for comparison with total amount`);
     } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
       // If dose is in mg but total is in mcg, convert dose to mcg for comparison
       doseInSameUnitAsTotal = doseValue * 1000;
+      console.log(`[Calculate] Converting ${doseValue} mg to ${doseInSameUnitAsTotal} mcg for comparison with total amount`);
     }
     
     // Now compare if the dose exceeds the total amount
     if (doseInSameUnitAsTotal > totalAmount) {
-      calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${unit === 'mcg' ? 'mg' : unit}).`;
+      calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
       console.log('[Calculate] Error: Dose exceeds total available');
       return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
     }
@@ -202,12 +213,16 @@ export function calculateDose({
   }
 
   recommendedMarking = nearestMarking.toString();
-  console.log('[Calculate] Set recommended marking:', nearestMarking);
+  console.log('[Calculate] Set recommended marking:', recommendedMarking);
 
-  if (precisionMessage) {
-    calculationError = precisionMessage;
-    console.log('[Calculate] Precision message:', precisionMessage);
+  // Even if we have a precision message, don't set it as an error
+  // Instead, return both the calculated result AND the message
+  let precisionNote = null;
+  if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+    const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+    precisionNote = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
+    console.log('[Calculate] Precision note:', precisionNote);
   }
 
-  return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration, calculatedMass };
+  return { calculatedVolume, recommendedMarking, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
 }

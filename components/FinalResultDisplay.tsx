@@ -14,6 +14,7 @@ type Props = {
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration prop
+  precisionNote?: string | null; // Add precision note prop
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   isMobileWeb: boolean;
@@ -29,6 +30,7 @@ export default function FinalResultDisplay({
   manualSyringe,
   calculatedVolume,
   calculatedConcentration,
+  precisionNote,
   handleStartOver,
   setScreenStep,
   isMobileWeb,
@@ -38,16 +40,35 @@ export default function FinalResultDisplay({
     recommendedMarking,
     doseValue,
     unit,
+    concentrationUnit,
     substanceName,
     manualSyringe,
     calculatedVolume,
     calculatedConcentration
   });
   
-  // Force error display when there's a calculation error
-  const showError = calculationError !== null;
-  const showRecommendation = !showError && recommendedMarking !== null;
+  // First handle a successful calculation case - if we have a calculatedVolume without errors,
+  // we should show the recommendation
+  const hasValidCalculation = calculatedVolume !== null && calculatedVolume > 0;
+  
+  // Show recommendation section if we have a valid calculation, regardless of recommendedMarking
+  // This ensures we always show a result when the calculation succeeds
+  const showRecommendation = hasValidCalculation && calculationError === null;
+  
+  // Show error section only if there's an explicit error AND we don't have a valid calculation
+  const showError = calculationError !== null && !hasValidCalculation;
+  
+  // Show the "no recommendation" section only if we have neither an error nor a valid calculation
   const showNoRecommendation = !showError && !showRecommendation;
+  
+  console.log('[FinalResultDisplay] Display logic:', {
+    hasValidCalculation,
+    showError,
+    showRecommendation,
+    showNoRecommendation,
+    calculationError,
+    calculatedVolume
+  });
   
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -94,7 +115,7 @@ export default function FinalResultDisplay({
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
-            Draw up to the {recommendedMarking} mark
+            {recommendedMarking ? `Draw up to the ${recommendedMarking} mark` : `Draw up ${calculatedVolume?.toFixed(2)} ml`}
           </Text>
           <Text style={styles.instructionNote}>
             ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
@@ -108,6 +129,9 @@ export default function FinalResultDisplay({
             <Text style={styles.instructionNote}>
               (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
+          )}
+          {precisionNote && (
+            <Text style={styles.warningText}>{precisionNote}</Text>
           )}
           <View style={styles.illustrationContainer}>
             <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>

@@ -231,18 +231,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         calculatedVolume: result.calculatedVolume,
         recommendedMarking: result.recommendedMarking,
         calculatedConcentration: result.calculatedConcentration,
-        calculationError: result.calculationError 
+        calculationError: result.calculationError,
+        precisionNote: result.precisionNote
       });
 
       setCalculatedVolume(result.calculatedVolume);
       
-      // Ensure that recommendedMarking is set to null when there's an error
-      if (result.calculationError) {
-        setRecommendedMarking(null);
-      } else {
-        setRecommendedMarking(result.recommendedMarking);
-      }
+      // Keep the recommended marking even if there's a precision note
+      setRecommendedMarking(result.recommendedMarking);
       
+      // Only set calculation error if it's a true error, not a precision note
       setCalculationError(result.calculationError);
       setCalculatedConcentration(result.calculatedConcentration || null);
 

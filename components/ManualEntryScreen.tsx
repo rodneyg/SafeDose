@@ -249,6 +249,7 @@ export default function ManualEntryScreen({
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          precisionNote={null} // We'll add this later when we extend the API
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           isMobileWeb={isMobileWeb}

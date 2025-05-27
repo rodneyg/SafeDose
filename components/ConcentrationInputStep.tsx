@@ -65,7 +65,10 @@ export default function ConcentrationInputStep({
   // Validate concentration unit compatibility with dose unit
   useEffect(() => {
     if (unit && concentrationUnit) {
+      console.log(`[ConcentrationInputStep] Checking compatibility between ${unit} dose and ${concentrationUnit} concentration`);
       const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      console.log(`[ConcentrationInputStep] Compatibility result:`, compatibility);
+      
       setIsCompatible(compatibility.isCompatible);
       setUnitCompatible(compatibility.isCompatible);
       
