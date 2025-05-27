@@ -12,7 +12,8 @@
     "build": "npx expo export --platform web --non-interactive",
     "lint": "expo lint",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "test": "jest"
   },
   "vercel": {
     "projectRoot": "."
@@ -75,6 +76,9 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "expo-cli": "^6.3.12",
+    "jest": "^30.0.0-beta.3",
+    "jest-expo": "^53.0.5",
+    "react-test-renderer": "^18.2.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.3.3",
     "vercel": "^28.4.8"
