@@ -132,7 +132,6 @@ export function calculateDose({
   }
 
   let requiredVolume = doseValue / concentration;
-  let calculatedMass: number | null = null;
   console.log('[Calculate] Initial required volume (ml):', requiredVolume);
 
   // If the dose unit is ml, we need to calculate the mass instead of the volume
