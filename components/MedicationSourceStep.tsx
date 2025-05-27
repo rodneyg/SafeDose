@@ -8,6 +8,8 @@ type Props = {
   substanceNameHint: string | null;
   medicationInputType: 'concentration' | 'totalAmount' | null;
   setMedicationInputType: (type: 'concentration' | 'totalAmount' | null) => void;
+  dose?: string;
+  unit?: string;
 };
 
 export default function MedicationSourceStep({
@@ -17,13 +19,41 @@ export default function MedicationSourceStep({
   substanceNameHint,
   medicationInputType,
   setMedicationInputType,
+  dose,
+  unit
 }: Props) {
-  // Default to 'concentration' when component mounts if no selection has been made
+  // Infer the best default medication input type based on the dose and unit
   useEffect(() => {
     if (medicationInputType === null) {
-      setMedicationInputType('concentration');
+      // Default to 'totalAmount' unless inference logic suggests otherwise
+      let inferred = 'totalAmount';
+      
+      // If we have dose and unit values, attempt to infer the best type
+      if (dose && unit) {
+        const doseValue = parseFloat(dose);
+        
+        // Only apply inference if we have a valid number
+        if (!isNaN(doseValue)) {
+          // For mcg, typically smaller values are concentrations, larger are total amounts
+          if (unit === 'mcg' && doseValue < 100) {
+            inferred = 'concentration';
+          }
+          // For mg, typically larger values indicate total amount
+          else if (unit === 'mg' && doseValue > 5) {
+            inferred = 'totalAmount';
+          }
+          // For units (like insulin), typically larger values are total amounts
+          else if (unit === 'units' && doseValue > 10) {
+            inferred = 'totalAmount';
+          }
+        }
+      }
+      
+      console.log(`[MedicationSourceStep] Inferred medication type: ${inferred} based on dose=${dose}, unit=${unit}`);
+      setMedicationInputType(inferred);
     }
-  }, [medicationInputType, setMedicationInputType]);
+  }, [medicationInputType, setMedicationInputType, dose, unit]);
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Step 2: Medication Details</Text>
