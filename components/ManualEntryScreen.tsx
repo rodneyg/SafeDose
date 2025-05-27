@@ -121,10 +121,15 @@ export default function ManualEntryScreen({
     
     // Validate unit compatibility when dose unit or concentration unit changes
     if (unit && concentrationUnit && manualStep === 'concentrationInput') {
-      const { validateUnitCompatibility } = require('../lib/doseUtils');
-      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-      setIsUnitCompatible(compatibility.isCompatible);
-      console.log(`[ManualEntryScreen] Unit compatibility checked: ${compatibility.isCompatible}`);
+      try {
+        const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+        setIsUnitCompatible(compatibility.isCompatible);
+        console.log(`[ManualEntryScreen] Unit compatibility checked: ${compatibility.isCompatible}`);
+      } catch (error) {
+        console.error('[ManualEntryScreen] Error checking unit compatibility:', error);
+        // Set to true as a fallback to prevent blocking the UI
+        setIsUnitCompatible(true);
+      }
     }
   }, [manualStep, calculatedVolume, recommendedMarking, calculationError, precisionNote, unit, concentrationUnit]);
 
@@ -277,13 +282,13 @@ export default function ManualEntryScreen({
         // This prevents blank screens by ensuring something always renders
         currentStepComponent = (
           <FinalResultDisplay
-            calculationError={calculationError}
+            calculationError={calculationError || 'An error occurred during calculation'}
             recommendedMarking={recommendedMarking}
-            doseValue={doseValue}
-            unit={unit}
-            concentrationUnit={concentrationUnit}
-            substanceName={substanceName}
-            manualSyringe={manualSyringe}
+            doseValue={doseValue || 0}
+            unit={unit || 'mg'}
+            concentrationUnit={concentrationUnit || 'mg/ml'}
+            substanceName={substanceName || 'medication'}
+            manualSyringe={manualSyringe || { type: 'Standard', volume: '3 ml' }}
             calculatedVolume={calculatedVolume}
             calculatedConcentration={calculatedConcentration}
             precisionNote={precisionNote}

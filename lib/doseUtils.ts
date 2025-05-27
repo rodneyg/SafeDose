@@ -24,36 +24,40 @@ export function validateUnitCompatibility(
     };
   }
   
+  // Normalize units to lowercase for consistent comparison
+  const normalizedDoseUnit = doseUnit.toLowerCase();
+  const normalizedConcentrationUnit = concentrationUnit.toLowerCase();
+  
   // Volume-based doses (ml) are compatible with any concentration units
-  if (doseUnit === 'ml') {
+  if (normalizedDoseUnit === 'ml') {
     console.log('[validateUnitCompatibility] Volume-based dose is compatible with any concentration');
     return { isCompatible: true, message: null };
   }
 
   // Handle units directly (for clarity)
-  if (doseUnit === 'units' && concentrationUnit === 'units/ml') {
+  if (normalizedDoseUnit === 'units' && normalizedConcentrationUnit === 'units/ml') {
     console.log('[validateUnitCompatibility] Units dose with units/ml concentration is compatible');
     return { isCompatible: true, message: null };
   }
   
   // Direct matches
-  if (doseUnit === 'mg' && concentrationUnit === 'mg/ml') {
+  if (normalizedDoseUnit === 'mg' && normalizedConcentrationUnit === 'mg/ml') {
     console.log('[validateUnitCompatibility] mg dose with mg/ml concentration - direct match');
     return { isCompatible: true, message: null };
   }
   
-  if (doseUnit === 'mcg' && concentrationUnit === 'mcg/ml') {
+  if (normalizedDoseUnit === 'mcg' && normalizedConcentrationUnit === 'mcg/ml') {
     console.log('[validateUnitCompatibility] mcg dose with mcg/ml concentration - direct match');
     return { isCompatible: true, message: null };
   }
   
   // Conversion matches (explicitly handled)
-  if (doseUnit === 'mg' && concentrationUnit === 'mcg/ml') {
+  if (normalizedDoseUnit === 'mg' && normalizedConcentrationUnit === 'mcg/ml') {
     console.log('[validateUnitCompatibility] mg dose with mcg/ml concentration - compatible with conversion');
     return { isCompatible: true, message: null };
   }
   
-  if (doseUnit === 'mcg' && concentrationUnit === 'mg/ml') {
+  if (normalizedDoseUnit === 'mcg' && normalizedConcentrationUnit === 'mg/ml') {
     console.log('[validateUnitCompatibility] mcg dose with mg/ml concentration - compatible with conversion');
     return { isCompatible: true, message: null };
   }
@@ -120,7 +124,11 @@ export function calculateDose({
 
     // Basic check for unit compatibility
     if (unit && concentrationUnit) {
+      // Log the unit compatibility check for debugging
+      console.log(`[Calculate] Checking compatibility between ${unit} dose and ${concentrationUnit} concentration`);
       const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      console.log(`[Calculate] Unit compatibility result: ${JSON.stringify(compatibility)}`);
+      
       if (!compatibility.isCompatible) {
         calculationError = compatibility.message;
         console.log(`[Calculate] Unit incompatibility detected: ${calculationError}`);

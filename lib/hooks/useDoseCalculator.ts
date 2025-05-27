@@ -237,6 +237,25 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
       const { calculateDose } = require('../doseUtils');
       
+      // Add extra logging to help diagnose unit compatibility issues
+      console.log('[useDoseCalculator] Checking unit compatibility:', {
+        unit,
+        concentrationUnit
+      });
+      
+      // Verify unit compatibility before calculation
+      try {
+        const { validateUnitCompatibility } = require('../doseUtils');
+        const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+        console.log(`[useDoseCalculator] Unit compatibility check: ${JSON.stringify(compatibility)}`);
+        
+        if (!compatibility.isCompatible) {
+          console.warn('[useDoseCalculator] Incompatible units detected before calculation');
+        }
+      } catch (error) {
+        console.error('[useDoseCalculator] Error checking unit compatibility:', error);
+      }
+      
       console.log('[useDoseCalculator] Performing calculation with:', {
         doseValue,
         concentration,

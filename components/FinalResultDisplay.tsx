@@ -35,14 +35,22 @@ export default function FinalResultDisplay({
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  // Safety check - ensure we have default values for all critical props to prevent rendering errors
+  const safeCalculationError = calculationError || null;
+  const safeDoseValue = doseValue || 0;
+  const safeUnit = unit || 'mg';
+  const safeConcentrationUnit = concentrationUnit || 'mg/ml';
+  const safeSubstanceName = substanceName || 'medication';
+  const safeManualSyringe = manualSyringe || { type: 'Standard' as const, volume: '3 ml' };
+
   console.log('[FinalResultDisplay] Rendering with:', { 
-    calculationError, 
+    calculationError: safeCalculationError, 
     recommendedMarking,
-    doseValue,
-    unit,
-    concentrationUnit,
-    substanceName,
-    manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null,
+    doseValue: safeDoseValue,
+    unit: safeUnit,
+    concentrationUnit: safeConcentrationUnit,
+    substanceName: safeSubstanceName,
+    manualSyringe: safeManualSyringe ? JSON.stringify(safeManualSyringe) : null,
     calculatedVolume,
     calculatedConcentration,
     precisionNote
@@ -53,12 +61,12 @@ export default function FinalResultDisplay({
   
   // Log all props for debugging
   console.log('[FinalResultDisplay] Detailed props check:', { 
-    calculationError, 
+    calculationError: safeCalculationError, 
     recommendedMarking,
-    doseValue,
-    unit,
-    concentrationUnit,
-    substanceName, 
+    doseValue: safeDoseValue,
+    unit: safeUnit,
+    concentrationUnit: safeConcentrationUnit,
+    substanceName: safeSubstanceName, 
     calculatedVolume,
     calculatedConcentration,
     precisionNote
@@ -70,10 +78,10 @@ export default function FinalResultDisplay({
   
   // Show recommendation section if we have a valid calculation, regardless of recommendedMarking
   // This ensures we always show a result when the calculation succeeds
-  const showRecommendation = hasValidCalculation && calculationError === null;
+  const showRecommendation = hasValidCalculation && safeCalculationError === null;
   
   // Show error section when there's an explicit error
-  const showError = calculationError !== null;
+  const showError = safeCalculationError !== null;
   
   // Show the "no recommendation" section if we have neither an error nor a valid calculation
   // IMPORTANT: This ensures we always display something, even in edge cases
@@ -84,7 +92,7 @@ export default function FinalResultDisplay({
     showError,
     showRecommendation,
     showNoRecommendation,
-    calculationError,
+    calculationError: safeCalculationError,
     calculatedVolume,
     recommendedMarking,
     precisionNote
@@ -96,16 +104,16 @@ export default function FinalResultDisplay({
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
-          <Text style={styles.errorText}>{calculationError}</Text>
+          <Text style={styles.errorText}>{safeCalculationError}</Text>
           <Text style={styles.errorHelpText}>
-            {calculationError && calculationError.includes('exceeds total amount') && 
+            {safeCalculationError && safeCalculationError.includes('exceeds total amount') && 
               'Try reducing the dose amount or selecting a medication with a higher total amount.'}
-            {calculationError && calculationError.includes('exceeds what can be made') && 
+            {safeCalculationError && safeCalculationError.includes('exceeds what can be made') && 
               'Try selecting a medication with a higher concentration or total amount.'}
-            {calculationError && calculationError.includes('exceeds syringe capacity') && 
+            {safeCalculationError && safeCalculationError.includes('exceeds syringe capacity') && 
               'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
-            {calculationError && calculationError.includes('Unit mismatch') && 
-              'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration).'}
+            {safeCalculationError && safeCalculationError.includes('Unit mismatch') && 
+              'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration). Note that mcg and mg are convertible with the right concentration units.'}
           </Text>
         </View>
       )}
@@ -115,8 +123,8 @@ export default function FinalResultDisplay({
             Dose Calculation
           </Text>
           <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
-            {doseValue ? `For ${doseValue} ${unit} dose` : 'For the requested dose'} 
-            {substanceName ? ` of ${substanceName}` : ''}:
+            {safeDoseValue ? `For ${safeDoseValue} ${safeUnit} dose` : 'For the requested dose'} 
+            {safeSubstanceName ? ` of ${safeSubstanceName}` : ''}:
           </Text>
           <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
             No specific recommendation available
@@ -132,13 +140,13 @@ export default function FinalResultDisplay({
             ✅ Dose Calculation Result
           </Text>
           <Text style={styles.instructionText}>
-            For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
+            For a {safeDoseValue} {safeUnit} dose of {safeSubstanceName || 'this medication'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
             {recommendedMarking ? `Draw up to the ${recommendedMarking} mark` : `Draw up ${calculatedVolume?.toFixed(2)} ml`}
           </Text>
           <Text style={styles.instructionNote}>
-            ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
+            ({safeManualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && (
             <Text style={styles.instructionNote}>
@@ -147,7 +155,7 @@ export default function FinalResultDisplay({
           )}
           {calculatedConcentration !== null && (
             <Text style={styles.instructionNote}>
-              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
+              (Calculated concentration: {calculatedConcentration.toFixed(2)} {safeConcentrationUnit || 'mg/mL'})
             </Text>
           )}
           {/* Added support for displaying precision notes that aren't blocking errors */}
@@ -157,8 +165,8 @@ export default function FinalResultDisplay({
           <View style={styles.illustrationContainer}>
             <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
             <SyringeIllustration
-              syringeType={manualSyringe.type}
-              syringeVolume={manualSyringe.volume}
+              syringeType={safeManualSyringe.type}
+              syringeVolume={safeManualSyringe.volume}
               recommendedMarking={recommendedMarking}
               syringeOptions={syringeOptions}
             />
