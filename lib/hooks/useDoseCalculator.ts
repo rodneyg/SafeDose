@@ -235,17 +235,24 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       });
 
       setCalculatedVolume(result.calculatedVolume);
-      setRecommendedMarking(result.recommendedMarking);
+      
+      // Ensure that recommendedMarking is set to null when there's an error
+      if (result.calculationError) {
+        setRecommendedMarking(null);
+      } else {
+        setRecommendedMarking(result.recommendedMarking);
+      }
+      
       setCalculationError(result.calculationError);
       setCalculatedConcentration(result.calculatedConcentration || null);
 
       // Always navigate to finalResult screen regardless of calculation errors
-      // Previously only navigated if there was no error or a recommendedMarking was available
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
+      setRecommendedMarking(null);  // Explicitly set recommendedMarking to null on error
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');

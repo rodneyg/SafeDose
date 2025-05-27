@@ -8,7 +8,7 @@ type Props = {
   calculationError: string | null;
   recommendedMarking: string | null;
   doseValue: number | null;
-  unit: 'mg' | 'mcg' | 'units';
+  unit: 'mg' | 'mcg' | 'units' | 'ml';  // Added 'ml' as a valid unit type
   concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Add concentrationUnit prop
   substanceName: string;
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
@@ -43,26 +43,32 @@ export default function FinalResultDisplay({
     calculatedVolume,
     calculatedConcentration
   });
+  
+  // Force error display when there's a calculation error
+  const showError = calculationError !== null;
+  const showRecommendation = !showError && recommendedMarking !== null;
+  const showNoRecommendation = !showError && !showRecommendation;
+  
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {calculationError && !recommendedMarking && (
+      {showError && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
           <Text style={styles.errorText}>{calculationError}</Text>
           <Text style={styles.errorHelpText}>
-            {calculationError.includes('exceeds total amount') && 
+            {calculationError && calculationError.includes('exceeds total amount') && 
               'Try reducing the dose amount or selecting a medication with a higher total amount.'}
-            {calculationError.includes('exceeds what can be made') && 
+            {calculationError && calculationError.includes('exceeds what can be made') && 
               'Try selecting a medication with a higher concentration or total amount.'}
-            {calculationError.includes('exceeds syringe capacity') && 
+            {calculationError && calculationError.includes('exceeds syringe capacity') && 
               'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
-            {calculationError.includes('Unit mismatch') && 
+            {calculationError && calculationError.includes('Unit mismatch') && 
               'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration).'}
           </Text>
         </View>
       )}
-      {!calculationError && !recommendedMarking && (
+      {showNoRecommendation && (
         <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
           <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
             Dose Calculation
@@ -79,10 +85,10 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       )}
-      {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+      {showRecommendation && (
+        <View style={[styles.instructionCard, { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
+            ✅ Dose Calculation Result
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
@@ -102,9 +108,6 @@ export default function FinalResultDisplay({
             <Text style={styles.instructionNote}>
               (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
-          )}
-          {calculationError && (
-            <Text style={styles.warningText}>{calculationError}</Text>
           )}
           <View style={styles.illustrationContainer}>
             <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
