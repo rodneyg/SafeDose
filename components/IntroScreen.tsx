@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Camera as CameraIcon, Pill, Syringe, LogIn } from 'lucide-react-native';
+import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
@@ -16,7 +16,7 @@ interface IntroScreenProps {
 }
 
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
-  const { user, auth } = useAuth();
+  const { user, auth, logout } = useAuth();
   const router = useRouter();
 
   // Log component mount to help debug visibility issues
@@ -32,8 +32,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, []);
 
   // Use memoized handlers to ensure stable references across renders
-  const handleLoginPress = useCallback(() => {
-    console.log('[IntroScreen] Login button pressed');
+  const handleSignInPress = useCallback(() => {
+    console.log('[IntroScreen] Sign In button pressed');
     const provider = new GoogleAuthProvider();
     
     // Use Firebase popup sign-in method for authentication
@@ -54,6 +54,22 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       });
   }, [auth, user, router]);
 
+  const handleUpgradePress = useCallback(() => {
+    console.log('[IntroScreen] Upgrade button pressed');
+    // Navigate to pricing page for upgrade options
+    router.push('/pricing');
+  }, [router]);
+
+  const handleLogoutPress = useCallback(async () => {
+    console.log('[IntroScreen] Logout button pressed');
+    try {
+      await logout();
+      console.log('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }, [logout]);
+
   // Check if the auto-login flag is enabled
   useEffect(() => {
     // Read TEST_LOGIN environment variable from app.config.js
@@ -61,9 +77,9 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     if (testLogin && user?.isAnonymous) {
       console.log('[IntroScreen] Auto-login triggered by REACT_APP_TEST_LOGIN flag');
       // Automatically trigger login for testing purposes when flag is set
-      handleLoginPress();
+      handleSignInPress();
     }
-  }, [user, handleLoginPress]);
+  }, [user, handleSignInPress]);
 
   const handleScanPress = useCallback(() => {
     console.log('[IntroScreen] Scan button pressed');
@@ -100,13 +116,30 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
         </Text>
       </View>
-      {/* Sign In / Upgrade button - only visible for anonymous users */}
-      {user?.isAnonymous && (
+      {/* Authentication buttons - different UI for anonymous vs authenticated users */}
+      {user?.isAnonymous ? (
+        // Anonymous users see separate Sign In and Upgrade buttons
+        <>
+          <TouchableOpacity 
+            style={[styles.button, styles.signInButton, isMobileWeb && styles.buttonMobile]} 
+            onPress={handleSignInPress}>
+            <LogIn color={'#fff'} size={20} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>Sign In</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.button, styles.upgradeButton, isMobileWeb && styles.buttonMobile]} 
+            onPress={handleUpgradePress}>
+            <CreditCard color={'#fff'} size={20} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>Upgrade Plan</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        // Authenticated users see a logout option
         <TouchableOpacity 
-          style={[styles.button, styles.loginButton, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleLoginPress}>
-          <LogIn color={'#fff'} size={20} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Sign In / Upgrade</Text>
+          style={[styles.button, styles.logoutButton, isMobileWeb && styles.buttonMobile]} 
+          onPress={handleLogoutPress}>
+          <LogOut color={'#fff'} size={20} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>Sign Out</Text>
         </TouchableOpacity>
       )}
       <TouchableOpacity 
@@ -135,6 +168,8 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#007AFF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
   buttonMobile: { paddingVertical: 16, paddingHorizontal: 32, minHeight: 60 },
   manualButton: { backgroundColor: '#6366f1' },
-  loginButton: { backgroundColor: '#10b981' }, // Distinctive green color for the login button
+  signInButton: { backgroundColor: '#10b981' }, // Green color for sign in
+  upgradeButton: { backgroundColor: '#f59e0b' }, // Amber color for upgrade
+  logoutButton: { backgroundColor: '#ef4444' }, // Red color for logout
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
 });
