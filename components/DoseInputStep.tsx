@@ -4,8 +4,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 type Props = {
   dose: string;
   setDose: (dose: string) => void;
-  unit: 'mg' | 'mcg' | 'units';
-  setUnit: (unit: 'mg' | 'mcg' | 'units') => void;
+  unit: 'mg' | 'mcg' | 'units' | 'ml';
+  setUnit: (unit: 'mg' | 'mcg' | 'units' | 'ml') => void;
 };
 
 export default function DoseInputStep({ dose, setDose, unit, setUnit }: Props) {
@@ -40,6 +40,12 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit }: Props) {
           onPress={() => setUnit('units')}
         >
           <Text style={[styles.radioText, unit === 'units' && styles.radioTextSelected]}>units</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.radioButton, unit === 'ml' && styles.radioButtonSelected]}
+          onPress={() => setUnit('ml')}
+        >
+          <Text style={[styles.radioText, unit === 'ml' && styles.radioTextSelected]}>mL</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
 type Props = {
@@ -8,6 +8,7 @@ type Props = {
   setConcentrationUnit: (unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => void;
   setConcentrationHint: (hint: string | null) => void;
   concentrationHint: string | null;
+  unit?: 'mg' | 'mcg' | 'units' | 'ml'; // Optional dose unit for validation
 };
 
 export default function ConcentrationInputStep({
@@ -17,7 +18,29 @@ export default function ConcentrationInputStep({
   setConcentrationUnit,
   setConcentrationHint,
   concentrationHint,
+  unit,
 }: Props) {
+  // Validate concentration unit compatibility with dose unit
+  useEffect(() => {
+    if (unit && concentrationUnit) {
+      // Check compatibility for non-volume dose units
+      if (unit !== 'ml') {
+        const doseUnitBase = unit === 'units' ? 'units' : (unit === 'mg' || unit === 'mcg') ? unit.replace('cg', '') : null;
+        const concUnitBase = concentrationUnit.split('/')[0].replace('cg', '');
+        
+        if (doseUnitBase !== 'units' && concUnitBase === 'units') {
+          setConcentrationHint(`Warning: The dose unit (${unit}) may not be compatible with the concentration unit (${concentrationUnit}). This could result in calculation errors.`);
+        } else if (doseUnitBase === 'units' && concUnitBase !== 'units') {
+          setConcentrationHint(`Warning: The dose unit (${unit}) may not be compatible with the concentration unit (${concentrationUnit}). This could result in calculation errors.`);
+        } else {
+          setConcentrationHint(null);
+        }
+      } else {
+        // For volume-based doses, any concentration unit is acceptable
+        setConcentrationHint(null);
+      }
+    }
+  }, [concentrationUnit, unit, setConcentrationHint]);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Step 4: Enter Concentration</Text>

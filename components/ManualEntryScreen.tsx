@@ -185,6 +185,7 @@ export default function ManualEntryScreen({
           setConcentrationUnit={setConcentrationUnit}
           setConcentrationHint={setConcentrationHint}
           concentrationHint={concentrationHint}
+          unit={unit}
         />
       );
       progress = 3 / 5;

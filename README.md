@@ -39,22 +39,32 @@ To run the open-source version locally:
 git clone https://github.com/your-org/rodneyg-safedose.git
 cd rodneyg-safedose
 
-2. Install dependencies
-
+### 2. Install dependencies
+```bash
 npm install
+```
 
-3. iOS (Xcode required)
+### 3. Testing
+```bash
+npm test
+```
+This runs the Jest test suite to verify dose calculations work correctly.
 
+### 4. iOS (Xcode required)
+```bash
 npx pod-install
 npx expo run:ios
+```
 
-4. Android (Android Studio required)
-
+### 5. Android (Android Studio required)
+```bash
 npx expo run:android
+```
 
-5. Web (experimental)
-
+### 6. Web (experimental)
+```bash
 npx expo start --web
+```
 
 Note: To use the AI-powered scan feature, you’ll need your own OpenAI API Key.
 
