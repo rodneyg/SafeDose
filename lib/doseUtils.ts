@@ -7,12 +7,14 @@ interface CalculateDoseParams {
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   totalAmount?: number | null;  // Total amount in vial
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string } | null;
+  solutionVolume?: string | null; // Added solution volume for concentration calculation
 }
 
 interface CalculateDoseResult {
   calculatedVolume: number | null;
   recommendedMarking: string | null;
   calculationError: string | null;
+  calculatedConcentration?: number | null; // Add calculated concentration for reference
 }
 
 export function calculateDose({
@@ -22,36 +24,52 @@ export function calculateDose({
   concentrationUnit,
   totalAmount,
   manualSyringe,
+  solutionVolume,
 }: CalculateDoseParams): CalculateDoseResult {
   console.log('[Calculate] Starting calculation');
+  console.log('[Calculate] Input params:', { doseValue, concentration, unit, concentrationUnit, totalAmount, solutionVolume });
 
   let calculatedVolume: number | null = null;
   let recommendedMarking: string | null = null;
   let calculationError: string | null = null;
+  let calculatedConcentration: number | null = null;
 
   if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
     calculationError = 'Dose value is invalid or missing.';
     console.log('[Calculate] Error: Invalid dose value');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
+  // If concentration is missing but totalAmount and solutionVolume are available, calculate concentration
+  if ((concentration === null || isNaN(concentration) || concentration <= 0) && 
+      totalAmount !== null && totalAmount !== undefined && totalAmount > 0 && 
+      solutionVolume !== null && solutionVolume !== undefined && solutionVolume !== '') {
+    
+    const solVolume = parseFloat(solutionVolume);
+    if (!isNaN(solVolume) && solVolume > 0) {
+      calculatedConcentration = totalAmount / solVolume;
+      concentration = calculatedConcentration;
+      console.log(`[Calculate] Calculated concentration from totalAmount ${totalAmount} and solutionVolume ${solVolume}: ${concentration}`);
+    }
+  }
+  
   if (concentration === null || isNaN(concentration) || concentration <= 0) {
     calculationError = 'Concentration is invalid or missing.';
     console.log('[Calculate] Error: Invalid concentration');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
     calculationError = 'Syringe details are missing.';
     console.log('[Calculate] Error: Missing syringe details');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
   if (!markingsString) {
     calculationError = `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`;
     console.log('[Calculate] Error: Invalid syringe option');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   let requiredVolume = doseValue / concentration;
@@ -70,7 +88,7 @@ export function calculateDose({
   } else {
     calculationError = 'Unit mismatch between dose and concentration.';
     console.log('[Calculate] Error: Unit mismatch');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
@@ -92,7 +110,7 @@ export function calculateDose({
     if (doseInSameUnitAsTotal > totalAmount) {
       calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${unit === 'mcg' ? 'mg' : unit}).`;
       console.log('[Calculate] Error: Dose exceeds total available');
-      return { calculatedVolume, recommendedMarking, calculationError };
+      return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
     }
     
     // Check if the required volume exceeds what can be made from the total amount
@@ -100,7 +118,7 @@ export function calculateDose({
     if (requiredVolume > maxPossibleVolume) {
       calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.toFixed(2)} ml).`;
       console.log('[Calculate] Error: Required volume exceeds possible volume from total');
-      return { calculatedVolume, recommendedMarking, calculationError };
+      return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
     }
   }
 
@@ -110,7 +128,7 @@ export function calculateDose({
   if (requiredVolume > maxVolume) {
     calculationError = `Required volume (${requiredVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`;
     console.log('[Calculate] Error: Volume exceeds capacity');
-    return { calculatedVolume, recommendedMarking, calculationError };
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   const markings = markingsString.split(',').map(m => parseFloat(m));
@@ -136,5 +154,5 @@ export function calculateDose({
     console.log('[Calculate] Precision message:', precisionMessage);
   }
 
-  return { calculatedVolume, recommendedMarking, calculationError };
+  return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
 }

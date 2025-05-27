@@ -9,9 +9,11 @@ type Props = {
   recommendedMarking: string | null;
   doseValue: number | null;
   unit: 'mg' | 'mcg' | 'units';
+  concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Add concentrationUnit prop
   substanceName: string;
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
   calculatedVolume: number | null;
+  calculatedConcentration?: number | null; // Add calculated concentration prop
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   isMobileWeb: boolean;
@@ -22,9 +24,11 @@ export default function FinalResultDisplay({
   recommendedMarking,
   doseValue,
   unit,
+  concentrationUnit,
   substanceName,
   manualSyringe,
   calculatedVolume,
+  calculatedConcentration,
   handleStartOver,
   setScreenStep,
   isMobileWeb,
@@ -36,7 +40,8 @@ export default function FinalResultDisplay({
     unit,
     substanceName,
     manualSyringe,
-    calculatedVolume
+    calculatedVolume,
+    calculatedConcentration
   });
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -89,6 +94,11 @@ export default function FinalResultDisplay({
           {calculatedVolume !== null && (
             <Text style={styles.instructionNote}>
               (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
+            </Text>
+          )}
+          {calculatedConcentration !== null && (
+            <Text style={styles.instructionNote}>
+              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
           {calculationError && (

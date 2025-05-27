@@ -33,6 +33,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [doseValue, setDoseValue] = useState<number | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
+  const [calculatedConcentration, setCalculatedConcentration] = useState<number | null>(null);
   const [recommendedMarking, setRecommendedMarking] = useState<number | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setDoseValue(null);
     setConcentration(null);
     setCalculatedVolume(null);
+    setCalculatedConcentration(null);
     setRecommendedMarking(null);
     setCalculationError(null);
     setFormError(null);
@@ -215,17 +217,20 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         concentrationUnit,
         totalAmount: totalAmountValue,
         manualSyringe: syringeObj,
+        solutionVolume, // Add solutionVolume for concentration calculation
       });
 
       console.log('[useDoseCalculator] Calculation result:', { 
         calculatedVolume: result.calculatedVolume,
         recommendedMarking: result.recommendedMarking,
+        calculatedConcentration: result.calculatedConcentration,
         calculationError: result.calculationError 
       });
 
       setCalculatedVolume(result.calculatedVolume);
       setRecommendedMarking(result.recommendedMarking);
       setCalculationError(result.calculationError);
+      setCalculatedConcentration(result.calculatedConcentration || null);
 
       // Always navigate to finalResult screen regardless of calculation errors
       // Previously only navigated if there was no error or a recommendedMarking was available
@@ -238,7 +243,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume]);
 
   const handleBack = useCallback(() => {
     try {
@@ -361,6 +366,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setConcentration,
     calculatedVolume,
     setCalculatedVolume,
+    calculatedConcentration,
+    setCalculatedConcentration,
     recommendedMarking,
     setRecommendedMarking,
     calculationError,

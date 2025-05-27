@@ -33,6 +33,7 @@ interface ManualEntryScreenProps {
   setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string }) => void;
   doseValue: number | null;
   calculatedVolume: number | null;
+  calculatedConcentration?: number | null; // Add calculated concentration
   recommendedMarking: string | null;
   calculationError: string | null;
   formError: string | null;
@@ -77,6 +78,7 @@ export default function ManualEntryScreen({
   setManualSyringe,
   doseValue,
   calculatedVolume,
+  calculatedConcentration,
   recommendedMarking,
   calculationError,
   formError,
@@ -229,9 +231,11 @@ export default function ManualEntryScreen({
           recommendedMarking={recommendedMarking}
           doseValue={doseValue}
           unit={unit}
+          concentrationUnit={concentrationUnit}
           substanceName={substanceName}
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
+          calculatedConcentration={calculatedConcentration}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           isMobileWeb={isMobileWeb}
