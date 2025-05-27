@@ -442,6 +442,7 @@ export default function NewDoseScreen() {
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
+          setManualStep={setManualStep}
         />
       )}
       <LimitModal

@@ -257,6 +257,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
       setRecommendedMarking(null);  // Explicitly set recommendedMarking to null on error
+      setPrecisionNote(null);  // Explicitly set precisionNote to null on error
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');

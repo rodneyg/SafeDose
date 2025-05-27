@@ -56,6 +56,7 @@ interface ManualEntryScreenProps {
   handleBack: () => void;
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  setManualStep: (step: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void; // Add this prop
 }
 
 export default function ManualEntryScreen({
@@ -102,6 +103,7 @@ export default function ManualEntryScreen({
   handleBack,
   handleStartOver,
   setScreenStep,
+  setManualStep, // Add this prop
 }: ManualEntryScreenProps) {
   // Track unit compatibility state
   const [isUnitCompatible, setIsUnitCompatible] = useState(true);
@@ -158,7 +160,12 @@ export default function ManualEntryScreen({
   let progress = 0;
 
   // Add logging for step changes
-  console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`);
+  console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`, { 
+    calculatedVolume,
+    recommendedMarking,
+    calculationError,
+    precisionNote 
+  });
 
   switch (manualStep) {
     case 'dose':
@@ -305,10 +312,9 @@ export default function ManualEntryScreen({
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
                       handleCalculateFinal();
-                      // We need to ensure that we always navigate to the finalResult step
-                      // regardless of whether the calculation succeeds or fails
-                      console.log('[ManualEntry] Manually ensuring transition to finalResult step');
-                      setManualStep('finalResult');
+                      // We don't need to manually call setManualStep here anymore
+                      // handleCalculateFinal takes care of navigation to finalResult step
+                      console.log('[ManualEntry] Calculate button pressed, letting handleCalculateFinal handle navigation');
                     }
                   } catch (error) {
                     console.error('Error in next button handler:', error);
