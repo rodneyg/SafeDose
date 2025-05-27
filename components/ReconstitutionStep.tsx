@@ -9,9 +9,9 @@ type Props = {
 export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Step 2c: Reconstitution</Text>
-      <Text style={styles.labelBold}>How much liquid (ml) are you adding?</Text>
-      <Text style={styles.label}>(e.g., sterile water, bacteriostatic water)</Text>
+      <Text style={styles.title}>Step 2c: Solution Volume</Text>
+      <Text style={styles.labelBold}>How much liquid (ml) does the medication contain?</Text>
+      <Text style={styles.label}>(e.g., total solution volume in the vial)</Text>
       <View style={styles.presetContainer}>
         {['1', '2', '3', '5'].map((ml) => (
           <TouchableOpacity
@@ -31,6 +31,9 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         onChangeText={setSolutionVolume}
         keyboardType="numeric"
       />
+      <Text style={styles.helperText}>
+        This volume is needed to calculate the concentration of the medication.
+      </Text>
     </View>
   );
 }
@@ -46,4 +49,5 @@ const styles = StyleSheet.create({
   buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
   selectedButtonText: { color: '#ffffff', fontWeight: 'bold' },
   input: { backgroundColor: '#FFFFFF', color: '#000000', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 6, fontSize: 15, borderWidth: 1, borderColor: '#E5E5EA', marginBottom: 10, width: '100%' },
+  helperText: { fontSize: 12, color: '#8E8E93', textAlign: 'center', marginTop: 4, marginBottom: 10 },
 });

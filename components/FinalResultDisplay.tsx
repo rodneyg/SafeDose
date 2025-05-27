@@ -9,9 +9,11 @@ type Props = {
   recommendedMarking: string | null;
   doseValue: number | null;
   unit: 'mg' | 'mcg' | 'units';
+  concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Add concentrationUnit prop
   substanceName: string;
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
   calculatedVolume: number | null;
+  calculatedConcentration?: number | null; // Add calculated concentration prop
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   isMobileWeb: boolean;
@@ -22,18 +24,30 @@ export default function FinalResultDisplay({
   recommendedMarking,
   doseValue,
   unit,
+  concentrationUnit,
   substanceName,
   manualSyringe,
   calculatedVolume,
+  calculatedConcentration,
   handleStartOver,
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  console.log('[FinalResultDisplay] Rendering with:', { 
+    calculationError, 
+    recommendedMarking,
+    doseValue,
+    unit,
+    substanceName,
+    manualSyringe,
+    calculatedVolume,
+    calculatedConcentration
+  });
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {calculationError && !recommendedMarking && (
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'row', alignItems: 'center' }]}>
-          <X color="#f87171" size={24} />
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
+          <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
           <Text style={styles.errorText}>{calculationError}</Text>
           <Text style={styles.errorHelpText}>
@@ -43,6 +57,23 @@ export default function FinalResultDisplay({
               'Try selecting a medication with a higher concentration or total amount.'}
             {calculationError.includes('exceeds syringe capacity') && 
               'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
+          </Text>
+        </View>
+      )}
+      {!calculationError && !recommendedMarking && (
+        <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
+          <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
+            Dose Calculation
+          </Text>
+          <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
+            {doseValue ? `For ${doseValue} ${unit} dose` : 'For the requested dose'} 
+            {substanceName ? ` of ${substanceName}` : ''}:
+          </Text>
+          <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
+            No specific recommendation available
+          </Text>
+          <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
+            Please check your inputs and try again, or consult a healthcare professional.
           </Text>
         </View>
       )}
@@ -63,6 +94,11 @@ export default function FinalResultDisplay({
           {calculatedVolume !== null && (
             <Text style={styles.instructionNote}>
               (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
+            </Text>
+          )}
+          {calculatedConcentration !== null && (
+            <Text style={styles.instructionNote}>
+              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
           {calculationError && (
