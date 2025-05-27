@@ -57,6 +57,8 @@ export default function FinalResultDisplay({
               'Try selecting a medication with a higher concentration or total amount.'}
             {calculationError.includes('exceeds syringe capacity') && 
               'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
+            {calculationError.includes('Unit mismatch') && 
+              'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration).'}
           </Text>
         </View>
       )}
