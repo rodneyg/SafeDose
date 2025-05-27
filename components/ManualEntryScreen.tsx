@@ -165,6 +165,8 @@ export default function ManualEntryScreen({
           substanceNameHint={substanceNameHint}
           medicationInputType={medicationInputType}
           setMedicationInputType={setMedicationInputType}
+          dose={dose}
+          unit={unit}
         />
       );
       progress = (2 / 3) - 0.15;
