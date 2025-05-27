@@ -27,6 +27,8 @@ export default function NewDoseScreen() {
     console.log('[NewDoseScreen] Initial setup, ensuring intro screen is shown');
     // Force screenStep to 'intro' on first render
     doseCalculator.setScreenStep('intro');
+    // Reset the manual step to ensure consistent state
+    doseCalculator.setManualStep('dose');
   }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked

@@ -237,27 +237,25 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         precisionNote: result.precisionNote
       });
 
+      // Always set calculated values first
       setCalculatedVolume(result.calculatedVolume);
-      
-      // Keep the recommended marking even if there's a precision note
-      // This is an important fix - we don't nullify recommendedMarking when there are precision issues
-      // This ensures the result always displays when calculation is successful
       setRecommendedMarking(result.recommendedMarking);
-      
-      // Only set calculation error if it's a true error, not a precision note
-      // The precisionNote is displayed separately in the UI
       setCalculationError(result.calculationError);
       setPrecisionNote(result.precisionNote);
       setCalculatedConcentration(result.calculatedConcentration || null);
 
       // Always navigate to finalResult screen regardless of calculation errors
+      // This ensures we display either the result or a helpful error message
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
+      // Make sure all result values are set, even on error
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
-      setRecommendedMarking(null);  // Explicitly set recommendedMarking to null on error
-      setPrecisionNote(null);  // Explicitly set precisionNote to null on error
+      setRecommendedMarking(null);
+      setPrecisionNote(null);
+      setCalculatedVolume(null);
+      
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');

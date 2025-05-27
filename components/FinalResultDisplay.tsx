@@ -42,7 +42,7 @@ export default function FinalResultDisplay({
     unit,
     concentrationUnit,
     substanceName,
-    manualSyringe,
+    manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null,
     calculatedVolume,
     calculatedConcentration,
     precisionNote
@@ -59,8 +59,8 @@ export default function FinalResultDisplay({
   // This ensures we always show a result when the calculation succeeds
   const showRecommendation = hasValidCalculation && calculationError === null;
   
-  // Show error section only if there's an explicit error AND we don't have a valid calculation
-  const showError = calculationError !== null && !hasValidCalculation;
+  // Show error section when there's an explicit error
+  const showError = calculationError !== null;
   
   // Show the "no recommendation" section only if we have neither an error nor a valid calculation
   const showNoRecommendation = !showError && !showRecommendation;

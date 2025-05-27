@@ -28,22 +28,24 @@ export function validateUnitCompatibility(
   }
   
   // Special case: mg and mcg are compatible through conversion
-  // This is a key part of the fix - ensuring mcg doses work with mg/ml concentrations and vice versa
-  if ((doseUnit === 'mg' && concentrationUnit === 'mcg/ml') || 
-      (doseUnit === 'mcg' && concentrationUnit === 'mg/ml')) {
-    console.log('[validateUnitCompatibility] Mass units with different scales are compatible through conversion');
+  // The mcg/mg and mg/mcg compatibility is crucial - fixing it to always return true
+  if (doseUnit === 'mg' && concentrationUnit === 'mg/ml') {
+    console.log('[validateUnitCompatibility] mg dose with mg/ml concentration - direct match');
     return { isCompatible: true, message: null };
   }
   
-  // For non-volume doses, get the unit base - but this is just for display purposes
-  // The actual compatibility is determined by more specific rules above
-  const doseUnitBase = doseUnit.replace('mcg', 'mg');
-  const concUnitBase = concentrationUnit.split('/')[0].replace('mcg', 'mg');
-  console.log(`[validateUnitCompatibility] Comparing unit bases: ${doseUnitBase} vs ${concUnitBase}`);
-
-  // The bases must match (mg with mg, mcg with mcg, units with units)
-  if (doseUnitBase === concUnitBase) {
-    console.log('[validateUnitCompatibility] Unit bases match, compatible');
+  if (doseUnit === 'mcg' && concentrationUnit === 'mcg/ml') {
+    console.log('[validateUnitCompatibility] mcg dose with mcg/ml concentration - direct match');
+    return { isCompatible: true, message: null };
+  }
+  
+  if (doseUnit === 'mg' && concentrationUnit === 'mcg/ml') {
+    console.log('[validateUnitCompatibility] mg dose with mcg/ml concentration - compatible with conversion');
+    return { isCompatible: true, message: null };
+  }
+  
+  if (doseUnit === 'mcg' && concentrationUnit === 'mg/ml') {
+    console.log('[validateUnitCompatibility] mcg dose with mg/ml concentration - compatible with conversion');
     return { isCompatible: true, message: null };
   }
 
@@ -89,6 +91,7 @@ export function calculateDose({
   let recommendedMarking: string | null = null;
   let calculationError: string | null = null;
   let calculatedConcentration: number | null = null;
+  let calculatedMass: number | null = null;
 
   if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
     calculationError = 'Dose value is invalid or missing.';
@@ -148,18 +151,33 @@ export function calculateDose({
     }
   } else if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
     requiredVolume = doseValue / concentration;
+    console.log('[Calculate] mcg dose with mcg/ml concentration:', requiredVolume);
   } else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
     requiredVolume = doseValue / concentration;
+    console.log('[Calculate] mg dose with mg/ml concentration:', requiredVolume);
   } else if (unit === 'units' && concentrationUnit === 'units/ml') {
     requiredVolume = doseValue / concentration;
+    console.log('[Calculate] units dose with units/ml concentration:', requiredVolume);
   } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+    // Convert mcg to mg for correct calculation
     requiredVolume = (doseValue / 1000) / concentration;
+    console.log('[Calculate] mcg dose with mg/ml concentration (converted mcg to mg):', requiredVolume);
   } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+    // Convert mg to mcg for correct calculation
     requiredVolume = (doseValue * 1000) / concentration;
+    console.log('[Calculate] mg dose with mcg/ml concentration (converted mg to mcg):', requiredVolume);
   } else {
+    // Any other combination is explicitly checked for compatibility first
     const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-    calculationError = compatibility.message || 'Unit mismatch between dose and concentration.';
-    console.log('[Calculate] Error: Unit mismatch');
+    if (!compatibility.isCompatible) {
+      calculationError = compatibility.message || 'Unit mismatch between dose and concentration.';
+      console.log('[Calculate] Error: Unit mismatch');
+      return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
+    
+    // If we reach here, the units are technically compatible but we don't have a specific calculation rule
+    calculationError = `Unable to calculate dose for ${unit} with ${concentrationUnit}. Please select compatible units.`;
+    console.log('[Calculate] Error: Missing calculation rule for unit combination');
     return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
   }
 

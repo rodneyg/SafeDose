@@ -159,12 +159,16 @@ export default function ManualEntryScreen({
   let currentStepComponent;
   let progress = 0;
 
-  // Add logging for step changes
+  // Add detailed rendering logs
   console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`, { 
     calculatedVolume,
     recommendedMarking,
     calculationError,
-    precisionNote 
+    precisionNote,
+    currentStepComponent: manualStep === 'finalResult' ? 'FinalResultDisplay' : 
+                         manualStep === 'dose' ? 'DoseInputStep' : 
+                         manualStep === 'concentrationInput' ? 'ConcentrationInputStep' : 
+                         manualStep
   });
 
   switch (manualStep) {
@@ -311,10 +315,9 @@ export default function ManualEntryScreen({
                     } else if (manualStep === 'reconstitution') {
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
+                      console.log('[ManualEntry] Calculate button pressed, calling handleCalculateFinal');
+                      // The handleCalculateFinal function will call setManualStep('finalResult')
                       handleCalculateFinal();
-                      // We don't need to manually call setManualStep here anymore
-                      // handleCalculateFinal takes care of navigation to finalResult step
-                      console.log('[ManualEntry] Calculate button pressed, letting handleCalculateFinal handle navigation');
                     }
                   } catch (error) {
                     console.error('Error in next button handler:', error);
