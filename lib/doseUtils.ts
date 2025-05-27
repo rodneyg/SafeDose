@@ -12,18 +12,23 @@ export function validateUnitCompatibility(
     return { isCompatible: true, message: null };
   }
 
-  // For non-volume doses, the unit bases must match
-  const doseUnitBase = doseUnit === 'units' ? 'units' : doseUnit.replace('cg', '');
-  const concUnitBase = concentrationUnit.split('/')[0].replace('cg', '');
-
-  // The bases must match (mg with mg, mcg with mcg, units with units)
-  if (doseUnitBase === concUnitBase) {
+  // Handle units directly (for clarity)
+  if (doseUnit === 'units' && concentrationUnit === 'units/ml') {
     return { isCompatible: true, message: null };
   }
   
   // Special case: mg and mcg are compatible through conversion
-  if ((doseUnitBase === 'm' && concUnitBase === 'mc') || 
-      (doseUnitBase === 'mc' && concUnitBase === 'm')) {
+  if ((doseUnit === 'mg' && concentrationUnit === 'mcg/ml') || 
+      (doseUnit === 'mcg' && concentrationUnit === 'mg/ml')) {
+    return { isCompatible: true, message: null };
+  }
+  
+  // For non-volume doses, get the unit base
+  const doseUnitBase = doseUnit.replace('mcg', 'mg').replace('mg', 'mg');
+  const concUnitBase = concentrationUnit.split('/')[0].replace('mcg', 'mg').replace('mg', 'mg');
+
+  // The bases must match (mg with mg, mcg with mcg, units with units)
+  if (doseUnitBase === concUnitBase) {
     return { isCompatible: true, message: null };
   }
 
