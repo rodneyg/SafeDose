@@ -35,6 +35,7 @@ module.exports = {
   extra: {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    TEST_LOGIN: process.env.REACT_APP_TEST_LOGIN === 'true',
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
       authDomain: process.env.FIREBASE_AUTH_DOMAIN || "safedose-e320d.firebaseapp.com",
