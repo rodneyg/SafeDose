@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInAnonymously, User, Auth } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
 import { auth } from '@/lib/firebase'; // Initialized auth instance
 
 interface AuthContextType {
   user: User | null;
   auth: Auth;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -13,6 +14,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      console.log('Signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     // Subscribe to auth state changes on the single `auth` instance
@@ -36,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, auth }}>
+    <AuthContext.Provider value={{ user, auth, logout }}>
       {children}
     </AuthContext.Provider>
   );
