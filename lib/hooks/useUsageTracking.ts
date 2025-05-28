@@ -7,10 +7,18 @@ import { getNetworkStateAsync } from 'expo-network';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
+// Helper function to get scan limit based on plan and user type
+const getLimitForPlan = (plan: string, isAnonymous: boolean) => {
+  if (isAnonymous) return 3; // Anonymous users
+  if (plan === 'plus') return 50; // Plus plan
+  if (plan === 'pro') return 500; // Pro plan
+  return 10; // Signed-in free users
+};
+
 export function useUsageTracking() {
   const { user } = useAuth();
   const db = getFirestore();
-  const [usageData, setUsageData] = useState({ scansUsed: 0, plan: 'free', limit: 5 });
+  const [usageData, setUsageData] = useState({ scansUsed: 0, plan: 'free', limit: 3, lastReset: null });
   const [isOnline, setIsOnline] = useState(true);
 
   // Load cached usage data from AsyncStorage
@@ -28,7 +36,7 @@ export function useUsageTracking() {
   };
 
   // Save usage data to AsyncStorage
-  const saveCachedUsage = async (data: { scansUsed: number; plan: string; limit: number }) => {
+  const saveCachedUsage = async (data: { scansUsed: number; plan: string; limit: number; lastReset?: string | null }) => {
     try {
       await AsyncStorage.setItem(`usage_${user?.uid || 'anonymous'}`, JSON.stringify(data));
     } catch (error) {
@@ -80,14 +88,36 @@ export function useUsageTracking() {
           let data;
           if (!userDoc.exists()) {
             // Create new user document if it doesn't exist
-            data = { scansUsed: 0, plan: 'free' };
+            const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
             await setDoc(userDocRef, data);
             console.log('Created new user document:', data);
           } else {
             data = userDoc.data();
+            
+            // Ensure lastReset exists - add it if missing
+            if (!data.lastReset) {
+              const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+              data.lastReset = currentMonthStart;
+              data.scansUsed = 0; // Reset scansUsed when adding lastReset
+              await setDoc(userDocRef, data, { merge: true });
+              console.log('Added lastReset to user document:', data);
+            } else {
+              // Monthly reset logic
+              const now = new Date();
+              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+              const lastReset = new Date(data.lastReset).toISOString();
+
+              if (new Date(lastReset) < new Date(currentMonthStart)) {
+                data.scansUsed = 0;
+                data.lastReset = currentMonthStart;
+                await setDoc(userDocRef, data, { merge: true });
+                console.log('Reset scansUsed to 0 for new month:', data);
+              }
+            }
           }
-          const limit = data.plan === 'free' ? (user.isAnonymous ? 5 : 15) : data.plan === 'plus' ? 150 : 500;
-          const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit };
+          const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
+          const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
           setUsageData(newUsageData);
           await saveCachedUsage(newUsageData);
           console.log('Fetched usage data:', newUsageData);
@@ -118,14 +148,36 @@ export function useUsageTracking() {
         let data;
         if (!userDoc.exists()) {
           // Create new user document if it doesn't exist
-          data = { scansUsed: 0, plan: 'free' };
+          const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+          data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
           await setDoc(userDocRef, data);
           console.log('Created new user document:', data);
         } else {
           data = userDoc.data();
+          
+          // Ensure lastReset exists - add it if missing
+          if (!data.lastReset) {
+            const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            data.lastReset = currentMonthStart;
+            data.scansUsed = 0; // Reset scansUsed when adding lastReset
+            await setDoc(userDocRef, data, { merge: true });
+            console.log('Added lastReset to user document:', data);
+          } else {
+            // Monthly reset logic
+            const now = new Date();
+            const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const lastReset = new Date(data.lastReset).toISOString();
+
+            if (new Date(lastReset) < new Date(currentMonthStart)) {
+              data.scansUsed = 0;
+              data.lastReset = currentMonthStart;
+              await setDoc(userDocRef, data, { merge: true });
+              console.log('Reset scansUsed to 0 for new month:', data);
+            }
+          }
         }
-        const limit = data.plan === 'free' ? (user.isAnonymous ? 5 : 15) : data.plan === 'plus' ? 150 : 500;
-        const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit };
+        const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
+        const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
         setUsageData(newUsageData);
         await saveCachedUsage(newUsageData);
         return newUsageData.scansUsed < newUsageData.limit;
@@ -149,8 +201,9 @@ export function useUsageTracking() {
         // Ensure document exists before incrementing
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
-          await setDoc(userDocRef, { scansUsed: 0, plan: 'free' });
-          console.log('Created new user document for increment:', { scansUsed: 0, plan: 'free' });
+          const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+          await setDoc(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
+          console.log('Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
         }
         await updateDoc(userDocRef, { scansUsed: increment(1) });
         setUsageData((prev) => {

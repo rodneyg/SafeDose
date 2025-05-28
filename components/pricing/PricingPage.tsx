@@ -19,7 +19,7 @@ const pricingPlans: PricingPlan[] = [
     price: { monthly: 0, annual: 0 },
     description: "Manual calculations only, ideal for light or trial use",
     features: [
-      { name: "30 AI scans/month", available: true },
+      { name: "3 AI scans/month", available: true },
       { name: "Unlimited manual calculations", available: true },
       { name: "Faster scans & no mid-session limits", available: false },
       { name: "Priority scan queue", available: false },
@@ -32,7 +32,7 @@ const pricingPlans: PricingPlan[] = [
     price: { monthly: 20, annual: 240 },
     description: "For consistent at-home dosing",
     features: [
-      { name: "150 AI scans/month", available: true },
+      { name: "50 AI scans/month", available: true },
       { name: "Unlimited manual calculations", available: true },
       { name: "Faster scans", available: true },
       { name: "No mid-session limits", available: true },
