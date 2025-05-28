@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
 import Constants from "expo-constants";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 
 // Read your publishable key from Expo constants
 const stripePublishableKey =
@@ -37,8 +38,15 @@ export default function PricingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Log view_pricing_page event when component mounts
+  useEffect(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.VIEW_PRICING_PAGE);
+  }, []);
+
   const initiateStripeCheckout = async () => {
     console.log("initiateStripeCheckout called for Premium plan");
+    logAnalyticsEvent(ANALYTICS_EVENTS.INITIATE_UPGRADE, { plan: 'plus' });
+    
     setIsLoading(true);
     setErrorMessage("");
     
@@ -48,6 +56,10 @@ export default function PricingPage() {
       if (!stripe) {
         console.error("Stripe is not initialized");
         setErrorMessage("Stripe is not initialized. Please try again later.");
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+          plan: 'plus', 
+          error: 'Stripe not initialized' 
+        });
         return;
       }
 
@@ -88,6 +100,10 @@ export default function PricingPage() {
       if (!res.ok) {
         console.error("Error response from API:", data);
         setErrorMessage(data.error || "Failed to create checkout session");
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+          plan: 'plus', 
+          error: data.error || 'Failed to create checkout session' 
+        });
         return;
       }
 
@@ -100,10 +116,18 @@ export default function PricingPage() {
       if (result?.error) {
         console.error("Stripe redirectToCheckout error:", result.error);
         setErrorMessage(result.error.message);
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+          plan: 'plus', 
+          error: result.error.message 
+        });
       }
     } catch (error: any) {
       console.error("Checkout error caught:", error);
       setErrorMessage(error.message || "Unable to initiate checkout. Please try again.");
+      logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+        plan: 'plus', 
+        error: error.message || 'Unable to initiate checkout' 
+      });
     } finally {
       setIsLoading(false);
     }
