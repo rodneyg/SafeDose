@@ -319,9 +319,40 @@ export default function NewDoseScreen() {
 
   const requestWebCameraPermission = async () => {
     if (!isMobileWeb) return;
-    console.warn("Skipping getUserMedia check due to lack of support");
-    setPermissionStatus('denied');
-    setMobileWebPermissionDenied(true);
+    
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("getUserMedia not supported in this browser");
+        setPermissionStatus('denied');
+        setMobileWebPermissionDenied(true);
+        return;
+      }
+      
+      console.log("[WebCamera] Requesting camera permission");
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      // Permission granted - we got a stream
+      console.log("[WebCamera] Camera permission granted");
+      setPermissionStatus('granted');
+      setMobileWebPermissionDenied(false);
+      
+      // Stop all tracks to release the camera
+      stream.getTracks().forEach(track => track.stop());
+    } catch (error) {
+      console.error("[WebCamera] Error requesting camera permission:", error);
+      
+      // Handle specific error types
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        console.warn("[WebCamera] Camera permission denied by user");
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        console.warn("[WebCamera] No camera device found");
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        console.warn("[WebCamera] Camera is in use by another application");
+      }
+      
+      setPermissionStatus('denied');
+      setMobileWebPermissionDenied(true);
+    }
   };
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
