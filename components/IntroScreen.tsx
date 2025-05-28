@@ -133,10 +133,13 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         <TouchableOpacity 
           style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
           onPress={toggleProfileMenu}>
-          <User color={user?.isAnonymous ? '#10b981' : '#3b82f6'} size={18} />
+          {user?.isAnonymous 
+            ? <LogIn color="#10b981" size={18} />
+            : <User color="#3b82f6" size={18} />
+          }
           <Text style={styles.profileText}>
             {user?.isAnonymous 
-              ? 'Profile' 
+              ? 'Sign In' 
               : user.email ? user.email.split('@')[0] : 'Profile'}
           </Text>
         </TouchableOpacity>
@@ -213,7 +216,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         <View style={styles.disclaimerIconContainer}>
           <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
           <Text style={styles.disclaimerText}>
-            **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
+            Medical information provided by this app is for guidance only. Always consult a healthcare provider before making medication decisions. Incorrect dosing may cause health risks.
           </Text>
         </View>
       </View>
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
     position: 'absolute',
-    top: 16,
+    top: 8,
     right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
@@ -396,11 +399,13 @@ const styles = StyleSheet.create({
   // Disclaimer styles
   disclaimerContainer: { 
     backgroundColor: '#FFF3CD', 
-    padding: 12,
+    padding: 10,
     borderRadius: 8, 
     marginBottom: 16,
     width: '90%', 
     maxWidth: 500,
+    borderLeftWidth: 3,
+    borderLeftColor: '#856404',
   },
   disclaimerIconContainer: {
     flexDirection: 'row',
