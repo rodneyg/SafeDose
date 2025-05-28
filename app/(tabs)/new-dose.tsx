@@ -444,6 +444,7 @@ export default function NewDoseScreen() {
       <LimitModal
         visible={showLimitModal}
         isAnonymous={user?.isAnonymous ?? true}
+        isPremium={usageData.plan !== 'free'}
         onClose={() => setShowLimitModal(false)}
       />
       {isProcessing && (
