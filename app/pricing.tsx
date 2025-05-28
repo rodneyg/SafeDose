@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { useToast } from "@/hooks/use-toast";
 import Constants from "expo-constants";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
@@ -34,7 +33,6 @@ const premiumPlan = {
 };
 
 export default function PricingPage() {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
