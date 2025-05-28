@@ -39,15 +39,15 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
       JSON.stringify(syringeOptions, null, 2));
     
     // Try to find the markings with more flexible matching
-    let typeMappings = syringeOptions[syringeType];
+    let typeMappings = syringeOptions?.[syringeType] || null;
     let markingsString = null;
     
     if (!typeMappings) {
       console.error(`[SyringeIllustration] No options found for syringe type: ${syringeType}. Available types:`, 
-        Object.keys(syringeOptions));
+        Object.keys(syringeOptions || {}));
       
       // Try case-insensitive match as fallback
-      const caseInsensitiveMatch = Object.keys(syringeOptions).find(
+      const caseInsensitiveMatch = Object.keys(syringeOptions || {}).find(
         key => key.toLowerCase() === syringeType.toLowerCase()
       );
       
@@ -84,7 +84,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
         ];
         
         for (const volumeVar of volumeVariations) {
-          if (typeMappings[volumeVar]) {
+          if (typeMappings?.[volumeVar]) {
             markingsString = typeMappings[volumeVar];
             console.log(`[SyringeIllustration] Found markings with alternative format: ${volumeVar}`);
             break;
@@ -104,7 +104,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
             return !isNaN(keyNumber) && Math.abs(keyNumber - numericVolume) < 0.01;
           });
           
-          if (volumeKey) {
+          if (volumeKey && typeMappings?.[volumeKey]) {
             markingsString = typeMappings[volumeKey];
             console.log(`[SyringeIllustration] Found numeric match: ${volumeKey}`);
           }

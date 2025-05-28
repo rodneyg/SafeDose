@@ -35,6 +35,43 @@ export default function FinalResultDisplay({
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  // Log all incoming props to assist with debugging
+  console.log('[FinalResultDisplay] Received props:', { 
+    calculationError, 
+    recommendedMarking,
+    doseValue,
+    unit,
+    concentrationUnit,
+    substanceName,
+    manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null,
+    calculatedVolume,
+    calculatedConcentration,
+    precisionNote
+  });
+  
+  // Top-level guard clause to prevent rendering with invalid data
+  if (!manualSyringe || !syringeOptions) {
+    console.error('[FinalResultDisplay] Missing critical data:', {
+      hasSyringe: !!manualSyringe,
+      hasSyringeOptions: !!syringeOptions
+    });
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+          <Text style={styles.errorTitle}>Missing Data</Text>
+          <Text style={styles.errorText}>
+            Error: Missing data for syringe display
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
   // Safety check - ensure we have default values for all critical props to prevent rendering errors
   const safeCalculationError = calculationError || null;
   const safeDoseValue = doseValue || 0;
@@ -65,7 +102,7 @@ export default function FinalResultDisplay({
     !isNaN(calculatedConcentration) &&
     isFinite(calculatedConcentration)) ? calculatedConcentration : null;
 
-  console.log('[FinalResultDisplay] Rendering with:', { 
+  console.log('[FinalResultDisplay] Using sanitized values:', { 
     calculationError: safeCalculationError, 
     recommendedMarking: safeRecommendedMarking,
     doseValue: safeDoseValue,
@@ -209,14 +246,40 @@ export default function FinalResultDisplay({
               <React.Fragment>
                 {(() => {
                   try {
+                    // Get the correct syringeKey with fallbacks
+                    const syringeKey = safeManualSyringe.type || 'Standard';
+                    
                     // Double-check we have valid syringe options before attempting to render
                     const hasSyringeOptions = !!(syringeOptions && 
                       safeManualSyringe && 
                       safeManualSyringe.type && 
-                      safeManualSyringe.volume &&
-                      syringeOptions[safeManualSyringe.type] &&
-                      syringeOptions[safeManualSyringe.type][safeManualSyringe.volume]);
+                      safeManualSyringe.volume);
                       
+                    // Safely check if the specific syringe type and volume exist
+                    const markings = syringeOptions?.[syringeKey]?.[safeManualSyringe.volume]?.split(',') || [];
+                    
+                    console.log('[FinalResultDisplay] Syringe validation:', {
+                      hasSyringeOptions,
+                      syringeKey,
+                      volume: safeManualSyringe.volume,
+                      availableMarkings: markings,
+                      recommendedMarking: safeRecommendedMarking
+                    });
+                    
+                    // Check if recommended marking is valid
+                    if (safeRecommendedMarking && markings.length > 0) {
+                      const isMarkingValid = markings.some(mark => 
+                        mark.trim() === safeRecommendedMarking.trim()
+                      );
+                      
+                      if (!isMarkingValid) {
+                        console.warn("[FinalResultDisplay] Marking not found in available options", { 
+                          markings, 
+                          recommendedMarking: safeRecommendedMarking 
+                        });
+                      }
+                    }
+                    
                     if (!hasSyringeOptions) {
                       console.warn('[FinalResultDisplay] Missing syringe details:', {
                         hasSyringeOptions: !!syringeOptions,
