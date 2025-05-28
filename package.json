@@ -28,7 +28,7 @@
     "@types/next": "^8.0.7",
     "@types/stripe": "^8.0.416",
     "class-variance-authority": "^0.7.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "expo": "^52.0.42",
     "expo-auth-session": "~6.0.3",
     "expo-blur": "^14.0.3",
