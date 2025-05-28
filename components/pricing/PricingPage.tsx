@@ -92,7 +92,7 @@ export default function PricingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           priceId,
-          successUrl: `${window.location.origin}/success`,
+          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/pricing`,
         }),
       });

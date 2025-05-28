@@ -34,6 +34,7 @@ export default function SuccessScreen() {
         });
 
         const data = await response.json();
+        console.log('[SuccessScreen] Session validation response:', data);
         
         // Check if the response indicates a valid payment
         if (!response.ok || !data.isValid) {
