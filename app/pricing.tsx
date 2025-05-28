@@ -57,7 +57,7 @@ export default function PricingPage() {
       // Debug: show payload
       console.log(`Calling ${API_BASE_URL}/api/create-checkout-session with:`, {
         priceId,
-        successUrl: `${API_BASE_URL}/success`,
+        successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${API_BASE_URL}/pricing`,
       });
 
@@ -68,7 +68,7 @@ export default function PricingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             priceId,
-            successUrl: `${API_BASE_URL}/success`,
+            successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${API_BASE_URL}/pricing`,
           }),
         }
