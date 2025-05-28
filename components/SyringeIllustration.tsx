@@ -18,6 +18,27 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
   });
 
   try {
+    // Apply the exact patch requested by @rodneyg
+    const syringeKey = syringeType;
+    if (!syringeType || !syringeOptions[syringeKey]) {
+      console.warn("Missing or invalid syringe data", { syringe: syringeType, syringeKey });
+      return (
+        <View style={styles.container}>
+          <Text style={styles.noMarkingsText}>Cannot render syringe — configuration not found.</Text>
+        </View>
+      );
+    }
+
+    const markings = syringeOptions[syringeKey][syringeVolume]?.split(',') || [];
+    if (recommendedMarking && !markings.includes(recommendedMarking)) {
+      console.warn("Marking not in syringe markings", { recommendedMarking, markings });
+      return (
+        <View style={styles.container}>
+          <Text style={styles.noMarkingsText}>Cannot render — invalid marking for selected syringe.</Text>
+        </View>
+      );
+    }
+
     // Safety check for props
     if (!syringeType || !syringeVolume || !syringeOptions) {
       console.error('[SyringeIllustration] Missing required props:', {
