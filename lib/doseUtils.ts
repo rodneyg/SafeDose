@@ -177,33 +177,39 @@ export function calculateDose({
 
     let requiredVolume: number;
 
+    // Normalize units to lowercase for consistent comparison
+    const normalizedUnit = unit.toLowerCase();
+    const normalizedConcentrationUnit = concentrationUnit.toLowerCase();
+    
+    console.log(`[Calculate] Normalized units: ${normalizedUnit} dose with ${normalizedConcentrationUnit} concentration`);
+
     // Handle volume-based dose (ml) - calculate mass instead of volume
-    if (unit === 'ml') {
+    if (normalizedUnit === 'ml') {
       console.log(`[Calculate] Handling ml-based dose: ${doseValue} ml`);
       
       calculatedMass = doseValue * concentration;
-      console.log(`[Calculate] Calculated mass: ${calculatedMass} ${concentrationUnit.split('/')[0]}`);
+      console.log(`[Calculate] Calculated mass: ${calculatedMass} ${normalizedConcentrationUnit.split('/')[0]}`);
       
       // For ml dose, use the dose value directly as volume
       requiredVolume = doseValue;
     } 
     // Handle mg dose with mg/ml concentration
-    else if (unit === 'mg' && concentrationUnit === 'mg/ml') {
+    else if (normalizedUnit === 'mg' && normalizedConcentrationUnit === 'mg/ml') {
       requiredVolume = doseValue / concentration;
       console.log(`[Calculate] mg dose with mg/ml concentration: ${requiredVolume} ml`);
     } 
     // Handle mcg dose with mcg/ml concentration
-    else if (unit === 'mcg' && concentrationUnit === 'mcg/ml') {
+    else if (normalizedUnit === 'mcg' && normalizedConcentrationUnit === 'mcg/ml') {
       requiredVolume = doseValue / concentration;
       console.log(`[Calculate] mcg dose with mcg/ml concentration: ${requiredVolume} ml`);
     } 
     // Handle units dose with units/ml concentration
-    else if (unit === 'units' && concentrationUnit === 'units/ml') {
+    else if (normalizedUnit === 'units' && normalizedConcentrationUnit === 'units/ml') {
       requiredVolume = doseValue / concentration;
       console.log(`[Calculate] units dose with units/ml concentration: ${requiredVolume} ml`);
     } 
     // Handle mcg dose with mg/ml concentration (convert mcg to mg)
-    else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+    else if (normalizedUnit === 'mcg' && normalizedConcentrationUnit === 'mg/ml') {
       // Convert mcg to mg by dividing by 1000, then divide by concentration
       const doseInMg = doseValue / 1000;
       console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInMg} mg for calculation`);
@@ -218,14 +224,14 @@ export function calculateDose({
       }
     } 
     // Handle mg dose with mcg/ml concentration (convert mg to mcg)
-    else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+    else if (normalizedUnit === 'mg' && normalizedConcentrationUnit === 'mcg/ml') {
       requiredVolume = (doseValue * 1000) / concentration;
       console.log(`[Calculate] mg dose with mcg/ml concentration (converted mg to mcg): ${requiredVolume} ml`);
     } 
     // Handle any other case (should not get here due to earlier validation)
     else {
       calculationError = `Unable to calculate dose for ${unit} with ${concentrationUnit}. Please select compatible units.`;
-      console.log('[Calculate] Error: Unsupported unit combination');
+      console.log(`[Calculate] Error: Unsupported unit combination - normalized: ${normalizedUnit} with ${normalizedConcentrationUnit}`);
       return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
     }
 
