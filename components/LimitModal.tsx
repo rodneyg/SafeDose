@@ -5,13 +5,14 @@ import { useRouter } from 'expo-router';
 interface LimitModalProps {
   visible: boolean;
   isAnonymous: boolean;
+  isPremium?: boolean;
   onClose: () => void;
 }
 
-export default function LimitModal({ visible, isAnonymous, onClose }: LimitModalProps) {
+export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose }: LimitModalProps) {
   const router = useRouter();
 
-  console.log('[LimitModal] Rendering', { visible, isAnonymous });
+  console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
 
   const handleSignIn = () => {
     console.log('[LimitModal] Sign In button pressed');
@@ -53,9 +54,11 @@ export default function LimitModal({ visible, isAnonymous, onClose }: LimitModal
                 <Text style={styles.buttonText}>Sign In</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-              <Text style={styles.buttonText}>Upgrade</Text>
-            </TouchableOpacity>
+            {!isPremium && (
+              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
+                <Text style={styles.buttonText}>Upgrade</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
