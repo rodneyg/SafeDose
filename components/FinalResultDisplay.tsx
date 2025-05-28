@@ -50,48 +50,14 @@ export default function FinalResultDisplay({
     isMobileWeb
   }, null, 2));
 
+  const { syringeType, volume } = manualSyringe || {};
+  
   // Check 1: Basic Existence
-  if (!manualSyringe || !syringeOptions) {
+  if (!manualSyringe || !syringeType || !volume || !syringeOptions) {
     console.error('[FinalResultDisplay] Missing critical data:', {
       hasSyringe: !!manualSyringe,
-      hasSyringeOptions: !!syringeOptions
-    });
-    return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
-          <Text style={styles.errorTitle}>Missing Data</Text>
-          <Text style={styles.errorText}>
-            Error: Missing data for syringe display
-          </Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
-              <Text style={styles.buttonText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    );
-  }
-  // --- END OF REQUIRED FIX ---
-  
-  // Log all incoming props to assist with debugging
-  console.log('[FinalResultDisplay] Received props:', { 
-    calculationError, 
-    recommendedMarking,
-    doseValue,
-    unit,
-    concentrationUnit,
-    substanceName,
-    manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null,
-    calculatedVolume,
-    calculatedConcentration,
-    precisionNote
-  });
-  
-  // Top-level guard clause to prevent rendering with invalid data
-  if (!manualSyringe || !syringeOptions) {
-    console.error('[FinalResultDisplay] Missing critical data:', {
-      hasSyringe: !!manualSyringe,
+      hasSyringeType: !!syringeType,
+      hasVolume: !!volume,
       hasSyringeOptions: !!syringeOptions
     });
     return (
@@ -111,6 +77,58 @@ export default function FinalResultDisplay({
     );
   }
 
+  // Check 2: Validate syringeOptions structure
+  const syringeKey = syringeType;
+  if (!syringeOptions[syringeKey] || !syringeOptions[syringeKey][volume]) {
+    console.error('[FinalResultDisplay] Invalid syringe configuration:', {
+      syringeType,
+      volume,
+      availableTypes: Object.keys(syringeOptions || {}),
+      availableVolumes: syringeOptions[syringeKey] ? Object.keys(syringeOptions[syringeKey]) : []
+    });
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+          <Text style={styles.errorTitle}>Configuration Error</Text>
+          <Text style={styles.errorText}>
+            Error: Syringe configuration not found
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+  
+  // Check 3: Validate markings
+  const markings = syringeOptions[syringeKey][volume].split(',') || [];
+  if (recommendedMarking && !markings.includes(recommendedMarking.toString())) {
+    console.warn('[FinalResultDisplay] Marking not found in available options', { 
+      markings, 
+      recommendedMarking,
+      syringeType,
+      volume
+    });
+  }
+  // --- END OF REQUIRED FIX ---
+  
+  // Log all incoming props to assist with debugging
+  console.log('[FinalResultDisplay] Received props:', { 
+    calculationError, 
+    recommendedMarking,
+    doseValue,
+    unit,
+    concentrationUnit,
+    substanceName,
+    manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : null,
+    calculatedVolume,
+    calculatedConcentration,
+    precisionNote
+  });
+  
   // Safety check - ensure we have default values for all critical props to prevent rendering errors
   const safeCalculationError = calculationError || null;
   const safeDoseValue = doseValue || 0;
@@ -119,9 +137,12 @@ export default function FinalResultDisplay({
   const safeSubstanceName = substanceName || 'medication';
   const safeManualSyringe = manualSyringe || { type: 'Standard' as const, volume: '3 ml' };
   
-  // Check if markings are available for selected syringe
-  const syringeKey = safeManualSyringe.type;
-  const markings = syringeOptions[syringeKey]?.[safeManualSyringe.volume]?.split(',') || [];
+  // Use destructuring to get syringeType and volume safely
+  const { type: safeType, volume: safeVolume } = safeManualSyringe;
+  
+  // Get markings from syringeOptions with proper validation
+  const syringeKey = safeType || 'Standard';
+  const markings = syringeOptions[syringeKey]?.[safeVolume]?.split(',') || [];
   
   if (recommendedMarking && !markings.includes(recommendedMarking.toString())) {
     console.warn("Marking not found in available options", { 

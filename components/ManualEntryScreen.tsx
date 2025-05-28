@@ -285,11 +285,12 @@ export default function ManualEntryScreen({
           unit,
           concentrationUnit,
           substanceName,
-          manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : 'null',
+          manualSyringe,
           calculatedVolume,
           calculatedConcentration,
           precisionNote,
           isMobileWeb,
+          // Add all props being passed
           syringeOptions
         }, null, 2));
 
