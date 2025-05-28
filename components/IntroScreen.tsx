@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
 import { useAuth } from '../contexts/AuthContext';
+import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
@@ -17,6 +18,7 @@ interface IntroScreenProps {
 
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   const { user, auth, logout } = useAuth();
+  const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -222,7 +224,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       </View>
       
       {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
-      {user?.isAnonymous && (
+      {(usageData.plan === 'free') && (
         <View style={styles.upgradeContainer}>
           <TouchableOpacity 
             style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
