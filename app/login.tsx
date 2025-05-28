@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { signInWithEmailAndPassword, GoogleAuthProvider, linkWithCredential, EmailAuthProvider, signInWithPopup } from 'firebase/auth';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 export default function LoginScreen() {
   const { user, auth } = useAuth();
@@ -17,19 +18,27 @@ export default function LoginScreen() {
       return;
     }
 
+    logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'email' });
+
     try {
       if (user?.isAnonymous) {
         // Link anonymous account to email
         const credential = EmailAuthProvider.credential(email, password);
         await linkWithCredential(user, credential);
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'email' });
         console.log('Linked anonymous account with email');
       } else {
         // Sign in with email
         await signInWithEmailAndPassword(auth, email, password);
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'email' });
         console.log('Signed in with email');
       }
       router.replace('/(tabs)/new-dose');
     } catch (err: any) {
+      logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
+        method: 'email', 
+        error: err.message 
+      });
       setError(err.message || 'Failed to sign in with email');
       console.error('Email sign-in error:', err);
     }
@@ -38,18 +47,26 @@ export default function LoginScreen() {
   const handleGoogleSignIn = () => {
     const provider = new GoogleAuthProvider();
     
+    logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
+    
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log('Google Sign-In successful', result.user);
         if (user?.isAnonymous) {
           // The anonymous account will be automatically linked to the signed-in account
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
           console.log('Linked anonymous account with Google');
         } else {
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
           console.log('Signed in with Google');
         }
         router.replace('/(tabs)/new-dose');
       })
       .catch((error) => {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
+          method: 'google', 
+          error: error.message 
+        });
         setError(error.message || 'Failed to sign in with Google');
         console.error('Google sign-in error:', error);
       });

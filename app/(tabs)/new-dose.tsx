@@ -13,6 +13,7 @@ import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -202,11 +203,15 @@ export default function NewDoseScreen() {
       return;
     }
     
+    // Log scan attempt
+    logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
+    
     try {
       const canProceed = await handleCapture();
       console.log('handleScanAttempt: canProceed=', canProceed);
       if (!canProceed) {
         console.log('handleScanAttempt: Showing LimitModal');
+        logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
         setShowLimitModal(true);
         return;
       }
@@ -226,6 +231,7 @@ export default function NewDoseScreen() {
 
       if (result) {
         console.log('handleScanAttempt: Applying scan results', result);
+        logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
         const scannedSyringe = result.syringe || {};
         const scannedVial = result.vial || {};
 
@@ -295,6 +301,7 @@ export default function NewDoseScreen() {
         setManualStep('dose');
       } else {
         console.log('[Process] Scan failed, transitioning to manual entry with defaults');
+        logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
         setManualSyringe({ type: 'Standard', volume: '3 ml' });
         setSubstanceName('');
         setMedicationInputType('totalAmount');
@@ -305,6 +312,18 @@ export default function NewDoseScreen() {
       }
     } catch (error) {
       console.error('handleScanAttempt: Error=', error);
+      
+      // Log scan failure with error details
+      logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { 
+        reason: error instanceof Error ? error.message : 'Unknown error' 
+      });
+      
+      // Log error event
+      logAnalyticsEvent(ANALYTICS_EVENTS.ERROR_OCCURRED, { 
+        error_type: 'scan_error',
+        error_message: error instanceof Error ? error.message : 'Unknown scan error'
+      });
+      
       // Ensure isProcessing is reset in case of errors
       setIsProcessing(false);
       

@@ -1,0 +1,130 @@
+# Firebase Analytics Implementation
+
+This document describes the Firebase Analytics implementation for SafeDose to track user behavior and increase revenue.
+
+## Overview
+
+Firebase Analytics has been integrated to track key user interactions and behaviors that impact revenue generation. The implementation includes event tracking, user properties, and error monitoring.
+
+## Analytics Events
+
+The following custom events are tracked:
+
+### Authentication Events
+- **sign_in_attempt**: Logged when user attempts to sign in (email or Google)
+- **sign_in_success**: Logged on successful sign-in
+- **sign_in_failure**: Logged on failed sign-in with error details
+- **sign_up_success**: Logged when anonymous user links to authenticated account
+- **logout**: Logged when user signs out
+
+### Pricing & Upgrade Events
+- **view_pricing_page**: Logged when pricing page is viewed
+- **initiate_upgrade**: Logged when user starts upgrade process
+- **upgrade_success**: Logged on successful plan upgrade
+- **upgrade_failure**: Logged on upgrade failure with error details
+
+### Scan Usage Events
+- **scan_attempt**: Logged when user attempts a scan
+- **scan_success**: Logged on successful scan completion
+- **scan_failure**: Logged on scan failure with reason
+- **reach_scan_limit**: Logged when user hits scan limit
+
+### User Interaction Events
+- **limit_modal_action**: Logged for limit modal interactions (sign_in, upgrade, cancel)
+- **error_occurred**: Logged for critical errors with type and message
+
+## User Properties
+
+The following user properties are set and maintained:
+
+- **plan_type**: "free", "plus", or "pro" (updated on auth change and after upgrades)
+- **is_anonymous**: true/false (updated on auth state changes)
+
+## Implementation Details
+
+### Core Files
+
+1. **lib/analytics.ts**: Central analytics utility with constants and helper functions
+2. **app/_layout.tsx**: Analytics initialization
+3. **contexts/AuthContext.tsx**: User properties and logout events
+4. **app/login.tsx**: Authentication events
+5. **app/pricing.tsx**: Pricing and upgrade initiation events
+6. **app/success.tsx**: Upgrade completion events
+7. **app/(tabs)/new-dose.tsx**: Scan events and error tracking
+8. **components/LimitModal.tsx**: Limit modal interaction events
+9. **lib/hooks/useUsageTracking.ts**: Plan type user property updates
+
+### Event Parameters
+
+Events include relevant parameters for analysis:
+- Method (email, google) for authentication events
+- Plan type (plus) for upgrade events
+- Error messages for failure events
+- Action type (sign_in, upgrade, cancel) for modal events
+
+### Error Handling
+
+All analytics calls are wrapped in try-catch blocks and gracefully handle:
+- Missing analytics instance (non-web platforms)
+- Network connectivity issues
+- Firebase configuration problems
+
+## Usage Examples
+
+```typescript
+// Log a simple event
+logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
+
+// Log event with parameters
+logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
+  method: 'google', 
+  error: error.message 
+});
+
+// Set user properties
+setAnalyticsUserProperties({
+  [USER_PROPERTIES.PLAN_TYPE]: 'plus',
+  [USER_PROPERTIES.IS_ANONYMOUS]: false,
+});
+```
+
+## Key Metrics to Monitor
+
+Using the implemented events, you can track:
+
+1. **Conversion Rates**:
+   - reach_scan_limit → upgrade_success
+   - view_pricing_page → initiate_upgrade
+   - initiate_upgrade → upgrade_success
+
+2. **User Engagement**:
+   - Scan success/failure rates
+   - Anonymous vs authenticated user behavior
+   - Plan usage patterns
+
+3. **Drop-off Points**:
+   - Authentication funnel (attempt → success/failure)
+   - Upgrade funnel (view → initiate → success)
+
+4. **Error Monitoring**:
+   - Scan failure reasons
+   - Upgrade failure causes
+   - Critical application errors
+
+## Testing
+
+To verify the implementation:
+
+1. Simulate user actions (sign-in, scan, upgrade)
+2. Check Firebase Analytics console for events (may take up to 24 hours)
+3. Verify user properties reflect current user state
+4. Test error scenarios to ensure error events are logged
+
+## Platform Support
+
+The implementation works across:
+- Web (Firebase Analytics fully supported)
+- iOS (Firebase Analytics SDK)
+- Android (Firebase Analytics SDK)
+
+Analytics will only be active on web platforms where `window` is available. On mobile platforms, events will be logged to console for debugging but won't be sent to Firebase unless the platform-specific Firebase Analytics SDK is properly configured.

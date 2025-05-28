@@ -5,6 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import Constants from 'expo-constants';
+import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
 
 // Base URL for API
 const API_BASE_URL = "https://app.safedoseai.com";
@@ -50,6 +51,10 @@ export default function SuccessScreen() {
         // Check if the response indicates a valid payment
         if (!response.ok || !data.isValid) {
           console.log('[SuccessScreen] Invalid session or payment not completed, setting redirect flag');
+          logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+            plan: 'plus', 
+            error: 'Invalid session or payment not completed' 
+          });
           setShouldRedirect(true);
           return;
         }
@@ -57,18 +62,32 @@ export default function SuccessScreen() {
         // Payment is valid, mark as valid
         setIsValid(true);
         
+        // Log successful upgrade
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_SUCCESS, { plan: 'plus' });
+        
         // Update user plan in Firestore since payment is confirmed
         const auth = getAuth();
         const user = auth.currentUser;
         if (user) {
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, { plan: 'plus', limit: 150, scansUsed: 0 }, { merge: true });
+          
+          // Set user properties for analytics
+          setAnalyticsUserProperties({
+            [USER_PROPERTIES.PLAN_TYPE]: 'plus',
+            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
+          });
+          
           console.log('[SuccessScreen] User plan updated to premium');
         } else {
           throw new Error('No authenticated user found');
         }
       } catch (err) {
         console.error('[SuccessScreen] Error validating payment or updating user:', err);
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+          plan: 'plus', 
+          error: err instanceof Error ? err.message : 'Unknown error' 
+        });
         setError('Failed to process your upgrade. Please try again.');
         setShouldRedirect(true);
       }

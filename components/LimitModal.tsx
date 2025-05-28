@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface LimitModalProps {
   visible: boolean;
@@ -16,18 +17,21 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
 
   const handleSignIn = () => {
     console.log('[LimitModal] Sign In button pressed');
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'sign_in' });
     router.push('/login');
     onClose();
   };
 
   const handleUpgrade = () => {
     console.log('[LimitModal] Upgrade button pressed');
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade' });
     router.push('/pricing');
     onClose();
   };
 
   const handleCancel = () => {
     console.log('[LimitModal] Cancel button pressed');
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'cancel' });
     onClose();
   };
 
