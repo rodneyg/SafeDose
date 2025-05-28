@@ -278,7 +278,7 @@ export default function ManualEntryScreen({
         progress = 3 / 3;
         break;
       case 'finalResult':
-        console.log('[ManualEntryScreen] finalResult payload:', {
+        console.log("---> [ManualEntryScreen] Attempting FinalResult. PROPS:", JSON.stringify({
           calculationError,
           recommendedMarking,
           doseValue,
@@ -289,8 +289,9 @@ export default function ManualEntryScreen({
           calculatedVolume,
           calculatedConcentration,
           precisionNote,
-          isMobileWeb
-        });
+          isMobileWeb,
+          syringeOptions
+        }, null, 2));
 
         // Wrap FinalResultDisplay in a try-catch to prevent rendering crashes
         try {

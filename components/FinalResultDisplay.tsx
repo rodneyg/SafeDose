@@ -35,6 +35,45 @@ export default function FinalResultDisplay({
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  // --- START OF REQUIRED FIX ---
+  console.log("---> [FinalResultDisplay] STARTING RENDER. PROPS:", JSON.stringify({
+    calculationError,
+    recommendedMarking,
+    doseValue,
+    unit,
+    concentrationUnit,
+    substanceName,
+    manualSyringe,
+    calculatedVolume,
+    calculatedConcentration,
+    precisionNote,
+    isMobileWeb
+  }, null, 2));
+
+  // Check 1: Basic Existence
+  if (!manualSyringe || !syringeOptions) {
+    console.error('[FinalResultDisplay] Missing critical data:', {
+      hasSyringe: !!manualSyringe,
+      hasSyringeOptions: !!syringeOptions
+    });
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+          <Text style={styles.errorTitle}>Missing Data</Text>
+          <Text style={styles.errorText}>
+            Error: Missing data for syringe display
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+  // --- END OF REQUIRED FIX ---
+  
   // Log all incoming props to assist with debugging
   console.log('[FinalResultDisplay] Received props:', { 
     calculationError, 
@@ -79,6 +118,17 @@ export default function FinalResultDisplay({
   const safeConcentrationUnit = concentrationUnit || 'mg/ml';
   const safeSubstanceName = substanceName || 'medication';
   const safeManualSyringe = manualSyringe || { type: 'Standard' as const, volume: '3 ml' };
+  
+  // Check if markings are available for selected syringe
+  const syringeKey = safeManualSyringe.type;
+  const markings = syringeOptions[syringeKey]?.[safeManualSyringe.volume]?.split(',') || [];
+  
+  if (recommendedMarking && !markings.includes(recommendedMarking.toString())) {
+    console.warn("Marking not found in available options", { 
+      markings, 
+      recommendedMarking 
+    });
+  }
   
   // Ensure recommendedMarking is safely handled - it can be string or number in different parts of the app
   let safeRecommendedMarking: string | null = null;
