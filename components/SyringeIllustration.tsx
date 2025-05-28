@@ -183,10 +183,10 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     
     // Filter out invalid values and ensure we have at least one valid marking
     // Always include 0 as a baseline marking
-    const markings = [0, ...markingsArray.filter(m => !isNaN(m) && isFinite(m))];
+    const filteredMarkings = [0, ...markingsArray.filter(m => !isNaN(m) && isFinite(m))];
     
     // Check for empty markings array after filtering
-    if (markings.length <= 1) { // only has the 0 we added
+    if (filteredMarkings.length <= 1) { // only has the 0 we added
       console.error('[SyringeIllustration] No valid markings found after filtering');
       
       // Generate simple fallback markings if none are valid
@@ -194,9 +194,9 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
       if (!isNaN(numericVolume) && numericVolume > 0) {
         // Generate equal divisions from 0 to max volume
         for (let i = 1; i <= 5; i++) {
-          markings.push((i * numericVolume / 5));
+          filteredMarkings.push((i * numericVolume / 5));
         }
-        console.log(`[SyringeIllustration] Created fallback markings: ${JSON.stringify(markings)}`);
+        console.log(`[SyringeIllustration] Created fallback markings: ${JSON.stringify(filteredMarkings)}`);
       } else {
         return (
           <View style={styles.container}>
@@ -211,7 +211,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     // Safely find maximum marking with explicit error handling
     let maxMarking = 0;
     try {
-      maxMarking = Math.max(...markings);
+      maxMarking = Math.max(...filteredMarkings);
       if (maxMarking <= 0 || !isFinite(maxMarking)) {
         throw new Error(`Invalid max marking: ${maxMarking}`);
       }
@@ -236,7 +236,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     
     // Calculate positions for markings - with safety checks
     const syringeWidth = 300;
-    const markingPositions = markings.map(m => {
+    const markingPositions = filteredMarkings.map(m => {
       // Ensure position is valid, defaulting to 0 if calculation fails
       try {
         const position = (m / maxMarking) * syringeWidth;
@@ -280,8 +280,8 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
         <View style={styles.syringeLine} />
         
         {/* Only render markings if positions array has valid values */}
-        {markings.length > 0 && markingPositions.length === markings.length && 
-          markings.map((m, index) => (
+        {filteredMarkings.length > 0 && markingPositions.length === filteredMarkings.length && 
+          filteredMarkings.map((m, index) => (
             <View 
               key={`mark-${m}-${index}`} 
               style={[styles.marking, { left: markingPositions[index] }]} 
@@ -290,8 +290,8 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
         }
         
         {/* Only render labels if positions array has valid values */}
-        {markings.length > 0 && markingPositions.length === markings.length && 
-          markings.map((m, index) => (
+        {filteredMarkings.length > 0 && markingPositions.length === filteredMarkings.length && 
+          filteredMarkings.map((m, index) => (
             <Text 
               key={`label-${m}-${index}`} 
               style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}
