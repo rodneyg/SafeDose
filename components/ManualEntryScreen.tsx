@@ -282,7 +282,7 @@ export default function ManualEntryScreen({
         // This prevents blank screens by ensuring something always renders
         currentStepComponent = (
           <FinalResultDisplay
-            calculationError={calculationError || 'An error occurred during calculation'}
+            calculationError={calculationError || null}
             recommendedMarking={recommendedMarking}
             doseValue={doseValue || 0}
             unit={unit || 'mg'}

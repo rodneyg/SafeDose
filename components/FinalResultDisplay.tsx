@@ -114,7 +114,17 @@ export default function FinalResultDisplay({
               'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
             {safeCalculationError && safeCalculationError.includes('Unit mismatch') && 
               'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration). Note that mcg and mg are convertible with the right concentration units.'}
+            {safeCalculationError && safeCalculationError.includes('too small to measure') && 
+              'The calculated volume is too small for accurate measurement with standard syringes. Try using a lower concentration or higher dose amount.'}
           </Text>
+          {/* Display calculated values even when there's an error if they're available */}
+          {calculationError && calculatedVolume !== null && calculatedVolume < 0.01 && (
+            <View style={styles.smallVolumeInfo}>
+              <Text style={styles.smallVolumeText}>
+                Technical details: {safeDoseValue} {safeUnit} with {safeConcentrationUnit} concentration would require {calculatedVolume.toFixed(6)} mL
+              </Text>
+            </View>
+          )}
         </View>
       )}
       {showNoRecommendation && (
@@ -210,4 +220,6 @@ const styles = StyleSheet.create({
   errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
   errorText: { fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 },
   errorHelpText: { fontSize: 13, color: '#991B1B', textAlign: 'center', marginTop: 12, paddingVertical: 8, backgroundColor: 'rgba(248, 113, 113, 0.1)', paddingHorizontal: 12, borderRadius: 6, width: '90%', alignSelf: 'center' },
+  smallVolumeInfo: { marginTop: 12, padding: 8, backgroundColor: 'rgba(248, 113, 113, 0.05)', borderRadius: 6, width: '90%', alignSelf: 'center' },
+  smallVolumeText: { fontSize: 12, color: '#991B1B', textAlign: 'center', fontStyle: 'italic' },
 });

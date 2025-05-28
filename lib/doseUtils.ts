@@ -204,8 +204,18 @@ export function calculateDose({
     } 
     // Handle mcg dose with mg/ml concentration (convert mcg to mg)
     else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = (doseValue / 1000) / concentration;
-      console.log(`[Calculate] mcg dose with mg/ml concentration (converted mcg to mg): ${requiredVolume} ml`);
+      // Convert mcg to mg by dividing by 1000, then divide by concentration
+      const doseInMg = doseValue / 1000;
+      console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInMg} mg for calculation`);
+      requiredVolume = doseInMg / concentration;
+      
+      // Log the detailed calculation to help with debugging
+      console.log(`[Calculate] mcg dose with mg/ml concentration: ${doseValue} mcg = ${doseInMg} mg, divided by ${concentration} mg/ml = ${requiredVolume} ml`);
+      
+      // Check if the volume is impractically small
+      if (requiredVolume < 0.01) {
+        console.log(`[Calculate] Warning: Calculated volume (${requiredVolume} ml) is extremely small`);
+      }
     } 
     // Handle mg dose with mcg/ml concentration (convert mg to mcg)
     else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
@@ -226,6 +236,18 @@ export function calculateDose({
       calculationError = `Invalid volume calculation: ${requiredVolume} ml. Please check your inputs.`;
       console.log('[Calculate] Error: Invalid volume calculation');
       return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
+    }
+    
+    // Add practical minimum volume check (0.01 ml is typically the smallest measurable amount on most syringes)
+    if (requiredVolume < 0.01) {
+      const doseUnitDisplay = unit.toLowerCase();
+      const concUnitDisplay = concentrationUnit.toLowerCase();
+      calculationError = `The calculated volume (${requiredVolume.toFixed(5)} ml) is too small to measure accurately. Consider using a lower concentration or higher dose.`;
+      console.log(`[Calculate] Error: Volume too small to measure: ${requiredVolume} ml`);
+      
+      // Store the calculated values even though we're returning an error
+      // This allows the UI to potentially display more information about the calculation
+      return { calculatedVolume: requiredVolume, recommendedMarking: null, calculationError, calculatedConcentration, calculatedMass };
     }
     
     // Validate that the total amount is sufficient for the required dose

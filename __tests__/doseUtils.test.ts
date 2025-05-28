@@ -163,4 +163,19 @@ describe('calculateDose', () => {
     expect(result.calculatedVolume).toBeCloseTo(1.0, 1);
     expect(result.calculationError).toBeNull();
   });
+  
+  // Test for extreme concentration case (very small volume)
+  test('handles extremely small volumes with appropriate error message', () => {
+    const result = calculateDose({
+      doseValue: 500, // 500 mcg
+      concentration: 3000, // 3000 mg/ml (very concentrated)
+      unit: 'mcg',
+      concentrationUnit: 'mg/ml',
+      manualSyringe: mockSyringe,
+    });
+    
+    // Expect the volume to be calculated but flagged as too small
+    expect(result.calculatedVolume).toBeLessThan(0.01);
+    expect(result.calculationError).toContain('too small to measure');
+  });
 });
