@@ -13,13 +13,24 @@ export default function SuccessScreen() {
   const { session_id } = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isValid, setIsValid] = useState<boolean>(false);
+  const [shouldRedirect, setShouldRedirect] = useState<boolean>(false);
+
+  // Handle redirection separately from validation logic
+  useEffect(() => {
+    if (shouldRedirect) {
+      // Use setTimeout to ensure navigation happens after component is fully mounted
+      setTimeout(() => {
+        router.replace('/(tabs)/new-dose');
+      }, 100);
+    }
+  }, [shouldRedirect]);
 
   useEffect(() => {
     const validatePaymentAndUpdatePlan = async () => {
-      // Redirect if no session_id is provided
+      // Set redirect flag if no session_id is provided
       if (!session_id) {
-        console.log('[SuccessScreen] No session_id provided, redirecting to home');
-        router.replace('/(tabs)/new-dose');
+        console.log('[SuccessScreen] No session_id provided, setting redirect flag');
+        setShouldRedirect(true);
         return;
       }
 
@@ -38,8 +49,8 @@ export default function SuccessScreen() {
         
         // Check if the response indicates a valid payment
         if (!response.ok || !data.isValid) {
-          console.log('[SuccessScreen] Invalid session or payment not completed, redirecting to home');
-          router.replace('/(tabs)/new-dose');
+          console.log('[SuccessScreen] Invalid session or payment not completed, setting redirect flag');
+          setShouldRedirect(true);
           return;
         }
         
@@ -59,7 +70,7 @@ export default function SuccessScreen() {
       } catch (err) {
         console.error('[SuccessScreen] Error validating payment or updating user:', err);
         setError('Failed to process your upgrade. Please try again.');
-        router.replace('/(tabs)/new-dose');
+        setShouldRedirect(true);
       }
     };
     
