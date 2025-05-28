@@ -73,33 +73,12 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [logout]);
   
   const toggleProfileMenu = useCallback(() => {
-    if (user?.isAnonymous) {
-      // If user is anonymous, directly trigger sign in
-      handleSignInPress();
-    } else {
-      // If user is logged in, toggle profile menu
-      setIsProfileMenuOpen(prevState => !prevState);
-    }
-  }, [user, handleSignInPress]);
+    // Always toggle the profile menu, regardless of authentication status
+    setIsProfileMenuOpen(prevState => !prevState);
+  }, []);
 
-  // Use effect to add a tap outside handler to close the profile menu
-  useEffect(() => {
-    if (isProfileMenuOpen) {
-      const handleTapOutside = () => {
-        setIsProfileMenuOpen(false);
-      };
-      
-      // Add a setTimeout to ensure this executes after the current event cycle
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('click', handleTapOutside);
-      }, 0);
-      
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener('click', handleTapOutside);
-      };
-    }
-  }, [isProfileMenuOpen]);
+  // For React Native, we'll close the menu manually in button handlers
+  // instead of using web-specific tap outside detection
 
   // Check if the auto-login flag is enabled
   useEffect(() => {
@@ -140,15 +119,20 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
+      {/* Invisible overlay to close menu when tapping outside */}
+      {isProfileMenuOpen && (
+        <TouchableOpacity 
+          style={styles.menuOverlay} 
+          onPress={() => setIsProfileMenuOpen(false)}
+          activeOpacity={1}
+        />
+      )}
+      
       {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
       <View style={styles.profileButtonContainer}>
         <TouchableOpacity 
           style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-          onPress={toggleProfileMenu}
-          onClick={(e) => {
-            // Prevent click from propagating to document
-            e.stopPropagation();
-          }}>
+          onPress={toggleProfileMenu}>
           <User color={user?.isAnonymous ? '#10b981' : '#3b82f6'} size={18} />
           <Text style={styles.profileText}>
             {user?.isAnonymous 
@@ -158,25 +142,36 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         </TouchableOpacity>
         
         {/* Profile dropdown menu */}
-        {isProfileMenuOpen && !user?.isAnonymous && (
-          <View 
-            style={styles.profileMenu} 
-            onClick={(e) => {
-              // Prevent click from propagating to document
-              e.stopPropagation();
-            }}>
-            {user.email && (
-              <View style={styles.profileMenuItem}>
-                <Mail color="#64748b" size={16} />
-                <Text style={styles.profileMenuEmail}>{user.email}</Text>
-              </View>
+        {isProfileMenuOpen && (
+          <View style={styles.profileMenu}>
+            {user?.isAnonymous ? (
+              // Menu for anonymous users
+              <TouchableOpacity 
+                style={styles.signInButton}
+                onPress={() => {
+                  setIsProfileMenuOpen(false);
+                  handleSignInPress();
+                }}>
+                <LogIn color="#10b981" size={16} />
+                <Text style={styles.signInText}>Sign In</Text>
+              </TouchableOpacity>
+            ) : (
+              // Menu for logged-in users
+              <>
+                {user?.email && (
+                  <View style={styles.profileMenuItem}>
+                    <Mail color="#64748b" size={16} />
+                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                  </View>
+                )}
+                <TouchableOpacity 
+                  style={styles.logoutButton}
+                  onPress={handleLogoutPress}>
+                  <LogOut color="#ef4444" size={16} />
+                  <Text style={styles.logoutText}>Sign Out</Text>
+                </TouchableOpacity>
+              </>
             )}
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={handleLogoutPress}>
-              <LogOut color="#ef4444" size={16} />
-              <Text style={styles.logoutText}>Sign Out</Text>
-            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -245,6 +240,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     padding: 16,
     position: 'relative', // To support absolute positioning of profile button
+  },
+  // Invisible overlay to capture taps outside the menu
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5, // Below profile menu but above everything else
   },
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
@@ -323,6 +327,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  signInText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
   },
   // Welcome section
   welcomeContainer: {
