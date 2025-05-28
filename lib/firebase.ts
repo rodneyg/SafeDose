@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
 // Firebase configuration from app.config.js
@@ -17,8 +18,9 @@ const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
 // Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// Export Firebase auth and analytics
+// Export Firebase auth, analytics, and firestore
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const analytics = typeof window !== "undefined"
   ? getAnalytics(app)
   : undefined;

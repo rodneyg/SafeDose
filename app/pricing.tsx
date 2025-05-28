@@ -16,7 +16,7 @@ const stripePromise = stripePublishableKey
   : Promise.reject(new Error("Stripe publishable key is missing"));
 
 // Base URL for your API
-const API_BASE_URL = "https://www.safedoseai.com";
+const API_BASE_URL = "https://app.safedoseai.com";
 
 // Premium plan details
 const premiumPlan = {
