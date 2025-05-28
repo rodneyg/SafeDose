@@ -118,9 +118,8 @@ export default function PricingPage() {
       <Text style={styles.title}>Upgrade to Premium</Text>
       
       <View style={styles.planCard}>
-        <Text style={styles.planTitle}>{premiumPlan.name}</Text>
+        <Text style={styles.planTitle}>{premiumPlan.description}</Text>
         <Text style={styles.planPrice}>${premiumPlan.price}/month</Text>
-        <Text style={styles.planDescription}>{premiumPlan.description}</Text>
         
         <View style={styles.featureList}>
           {premiumPlan.features.map((feature, idx) => (
@@ -147,7 +146,7 @@ export default function PricingPage() {
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text style={styles.buttonText}>Cancel</Text>
+          <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -162,38 +161,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20, // text-xl equivalent (~20px)
+    fontWeight: '600', // font-semibold
     color: '#000000',
     marginBottom: 24,
     textAlign: 'center',
   },
   planCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 24,
+    borderRadius: 24, // 2xl rounded corners
+    padding: 32, // Increased vertical padding
     width: '100%',
     maxWidth: 400,
     marginBottom: 24,
     alignItems: 'center',
+    // Add soft shadow
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4, // For Android
   },
   planTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18, // text-base equivalent (~18px) 
+    fontWeight: '500', // font-medium
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 16, // Increased spacing
+    textAlign: 'center',
   },
   planPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 30, // text-3xl equivalent (~30px)
+    fontWeight: 'bold', // font-bold
     color: '#000000',
-    marginBottom: 4,
-  },
-  planDescription: {
-    fontSize: 16,
-    color: '#333333',
-    marginBottom: 16,
-    textAlign: 'center',
+    marginBottom: 20, // Increased spacing
   },
   featureList: {
     width: '100%',
@@ -205,7 +208,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   featureText: {
-    fontSize: 16,
+    fontSize: 16, // text-base
+    fontWeight: '500', // font-medium
     color: '#333333',
   },
   errorText: {
@@ -219,20 +223,36 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   upgradeButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: '#8B5CF6', // brand color from tailwind config
+    paddingVertical: 16, // Increased padding
+    borderRadius: 16, // More rounded for modern look
     alignItems: 'center',
     marginBottom: 12,
+    // Add subtle elevation/shadow for hover effect
+    shadowColor: '#8B5CF6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   cancelButton: {
-    backgroundColor: '#8E8E93',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: 'transparent', // Outline style
+    borderWidth: 1,
+    borderColor: '#8E8E93',
+    paddingVertical: 16,
+    borderRadius: 16, // Match primary button
     alignItems: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButtonText: {
+    color: '#8E8E93', // Lighter text for outline button
     fontSize: 16,
     fontWeight: '600',
   },
