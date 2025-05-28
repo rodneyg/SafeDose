@@ -329,6 +329,22 @@ export default function NewDoseScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        {/* Scan Credits Display */}
+        <View style={styles.usageInfoContainer}>
+          <View style={styles.scanCreditsContainer}>
+            <Text style={styles.scanCreditsText}>
+              🎟️ Scans: {usageData.scansUsed}/{usageData.limit}
+            </Text>
+          </View>
+          
+          {/* Premium Badge (only for plus users) */}
+          {usageData.plan === 'plus' && (
+            <View style={styles.premiumBadgeContainer}>
+              <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
+            </View>
+          )}
+        </View>
+        
         <Text style={styles.title}>SafeDose</Text>
         <Text style={styles.subtitle}>
           {screenStep === 'intro' && 'Welcome'}
@@ -461,6 +477,22 @@ const styles = StyleSheet.create({
   header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
+  usageInfoContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  scanCreditsContainer: { backgroundColor: '#FFFFFF', borderRadius: 8, padding: 8 },
+  scanCreditsText: { color: '#333333', fontSize: 14, fontWeight: '500' },
+  premiumBadgeContainer: { 
+    backgroundColor: '#FFD700', 
+    borderRadius: 8, 
+    padding: 4, 
+    marginLeft: 8,
+    // Simulated gradient effect since React Native doesn't have built-in gradients
+    shadowColor: '#FFC107',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  premiumBadgeText: { color: '#333333', fontSize: 14, fontWeight: 'bold' },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
   loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
   recoveryButton: { backgroundColor: '#ff3b30', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, marginTop: 8, alignSelf: 'center' },
