@@ -4,11 +4,31 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 type Props = {
   dose: string;
   setDose: (dose: string) => void;
-  unit: 'mg' | 'mcg' | 'units';
-  setUnit: (unit: 'mg' | 'mcg' | 'units') => void;
+  unit: 'mg' | 'mcg' | 'units' | 'mL';
+  setUnit: (unit: 'mg' | 'mcg' | 'units' | 'mL') => void;
+  formError: string | null;
+  validateInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
 };
 
-export default function DoseInputStep({ dose, setDose, unit, setUnit }: Props) {
+export default function DoseInputStep({ dose, setDose, unit, setUnit, formError, validateInput }: Props) {
+  // Validate dose input on change
+  const handleDoseChange = (value: string) => {
+    setDose(value);
+    // If a validation function is provided, use it
+    if (validateInput) {
+      validateInput(value, unit);
+    }
+  };
+
+  // Validate when unit changes
+  const handleUnitChange = (newUnit: 'mg' | 'mcg' | 'units' | 'mL') => {
+    setUnit(newUnit);
+    // If a validation function is provided, use it
+    if (validateInput && dose) {
+      validateInput(dose, newUnit);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Step 1: Prescribed Dose</Text>
@@ -16,7 +36,7 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit }: Props) {
       <TextInput
         style={styles.input}
         value={dose}
-        onChangeText={setDose}
+        onChangeText={handleDoseChange}
         keyboardType="numeric"
         placeholder="e.g., 100"
         placeholderTextColor="#9ca3af"
@@ -25,23 +45,31 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit }: Props) {
       <View style={styles.radioContainer}>
         <TouchableOpacity
           style={[styles.radioButton, unit === 'mg' && styles.radioButtonSelected]}
-          onPress={() => setUnit('mg')}
+          onPress={() => handleUnitChange('mg')}
         >
           <Text style={[styles.radioText, unit === 'mg' && styles.radioTextSelected]}>mg</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.radioButton, unit === 'mcg' && styles.radioButtonSelected]}
-          onPress={() => setUnit('mcg')}
+          onPress={() => handleUnitChange('mcg')}
         >
           <Text style={[styles.radioText, unit === 'mcg' && styles.radioTextSelected]}>mcg</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.radioButton, unit === 'units' && styles.radioButtonSelected]}
-          onPress={() => setUnit('units')}
+          onPress={() => handleUnitChange('units')}
         >
           <Text style={[styles.radioText, unit === 'units' && styles.radioTextSelected]}>units</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.radioButton, unit === 'mL' && styles.radioButtonSelected]}
+          onPress={() => handleUnitChange('mL')}
+        >
+          <Text style={[styles.radioText, unit === 'mL' && styles.radioTextSelected]}>mL</Text>
+        </TouchableOpacity>
       </View>
+      {formError && <Text style={styles.errorText}>{formError}</Text>}
+      <Text style={styles.helperText}>Enter the prescribed dose amount and select the unit.</Text>
     </View>
   );
 }
@@ -56,4 +84,6 @@ const styles = StyleSheet.create({
   radioButtonSelected: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   radioText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
   radioTextSelected: { color: '#FFFFFF', fontWeight: 'bold' },
+  errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10, marginBottom: 10 },
+  helperText: { fontSize: 12, color: '#8E8E93', textAlign: 'center', marginTop: 4, marginBottom: 10 },
 });

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -22,11 +23,11 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [screenStep, setScreenStep] = useState<ScreenStep>('intro');
   const [manualStep, setManualStep] = useState<ManualStep>('dose');
   const [dose, setDose] = useState<string>('');
-  const [unit, setUnit] = useState<string>('mg');
+  const [unit, setUnit] = useState<'mg' | 'mcg' | 'units' | 'mL'>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
   const [medicationInputType, setMedicationInputType] = useState<string>('totalAmount');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
-  const [concentrationUnit, setConcentrationUnit] = useState<string>('mg/mL');
+  const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
   const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
@@ -34,7 +35,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
   const [calculatedConcentration, setCalculatedConcentration] = useState<number | null>(null);
-  const [recommendedMarking, setRecommendedMarking] = useState<number | null>(null);
+  const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
@@ -42,6 +43,46 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
+
+  // Validate dose input
+  const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
+    const numericDose = parseFloat(doseValue);
+    if (!doseValue || isNaN(numericDose) || numericDose <= 0) {
+      setFormError('Please enter a valid dose amount greater than 0');
+      return false;
+    }
+    
+    if (concentrationUnit && doseUnit) {
+      const compatibility = validateUnitCompatibility(doseUnit, concentrationUnit);
+      if (!compatibility.isValid) {
+        setFormError(compatibility.errorMessage || 'Incompatible units');
+        return false;
+      }
+    }
+    
+    setFormError(null);
+    return true;
+  }, [concentrationUnit]);
+
+  // Validate concentration input
+  const validateConcentrationInput = useCallback((amount: string, concUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'): boolean => {
+    const numericAmount = parseFloat(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      setFormError('Please enter a valid concentration amount greater than 0');
+      return false;
+    }
+    
+    if (unit && concUnit) {
+      const compatibility = validateUnitCompatibility(unit, concUnit);
+      if (!compatibility.isValid) {
+        setFormError(compatibility.errorMessage || 'Incompatible units');
+        return false;
+      }
+    }
+    
+    setFormError(null);
+    return true;
+  }, [unit]);
 
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
     console.log('[useDoseCalculator] Resetting form state', { startStep });
@@ -52,7 +93,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setSubstanceName('');
     setMedicationInputType('totalAmount');
     setConcentrationAmount('');
-    setConcentrationUnit('mg/mL');
+    setConcentrationUnit('mg/ml');
     setTotalAmount('');
     setSolutionVolume('');
     setManualSyringe({ type: 'Standard', volume: '3 ml' });
@@ -129,11 +170,32 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleNextDose = useCallback(() => {
     try {
-      if (!dose || !unit) {
-        setFormError('Please enter a dose and unit');
+      if (!dose) {
+        setFormError('Please enter a dose amount');
         return;
       }
-      setDoseValue(parseFloat(dose));
+
+      const numericDose = parseFloat(dose);
+      if (isNaN(numericDose) || numericDose <= 0) {
+        setFormError('Please enter a valid dose amount greater than 0');
+        return;
+      }
+
+      if (!unit) {
+        setFormError('Please select a dose unit');
+        return;
+      }
+
+      // Ensure compatibility with any already selected concentration unit
+      if (concentrationUnit) {
+        const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+        if (!compatibility.isValid) {
+          setFormError(compatibility.errorMessage || 'Incompatible units. Please select a different dose unit or concentration unit.');
+          return;
+        }
+      }
+      
+      setDoseValue(numericDose);
       setMedicationInputType(null); // Set to null to trigger intelligent guessing
       setManualStep('medicationSource');
       setFormError(null);
@@ -142,7 +204,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextDose:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [dose, unit, setMedicationInputType]);
+  }, [dose, unit, concentrationUnit, setMedicationInputType]);
 
   const handleNextMedicationSource = useCallback(() => {
     if (medicationInputType === 'totalAmount') {
@@ -155,11 +217,30 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleNextConcentrationInput = useCallback(() => {
     try {
-      if (!concentrationAmount || !concentrationUnit) {
-        setFormError('Please enter concentration amount and unit');
+      if (!concentrationAmount) {
+        setFormError('Please enter concentration amount');
         return;
       }
-      setConcentration(parseFloat(concentrationAmount));
+
+      const numericConcentration = parseFloat(concentrationAmount);
+      if (isNaN(numericConcentration) || numericConcentration <= 0) {
+        setFormError('Please enter a valid concentration amount greater than 0');
+        return;
+      }
+      
+      if (!concentrationUnit) {
+        setFormError('Please select a concentration unit');
+        return;
+      }
+
+      // Check compatibility with dose unit
+      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      if (!compatibility.isValid) {
+        setFormError(compatibility.errorMessage || 'Incompatible units. Please select a different concentration unit.');
+        return;
+      }
+
+      setConcentration(numericConcentration);
       setManualStep('totalAmountInput');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -167,7 +248,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextConcentrationInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [concentrationAmount, concentrationUnit]);
+  }, [concentrationAmount, concentrationUnit, unit]);
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {
@@ -175,6 +256,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         setFormError('Please enter a valid total amount');
         return;
       }
+
+      const numericTotalAmount = parseFloat(totalAmount);
+      if (numericTotalAmount <= 0) {
+        setFormError('Please enter a total amount greater than 0');
+        return;
+      }
+
       // Always go to reconstitution step when using totalAmount input mode 
       // to ensure we get solutionVolume for calculating concentration
       if (medicationInputType === 'totalAmount') {
@@ -197,6 +285,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         setFormError('Please enter solution volume');
         return;
       }
+
+      const numericSolutionVolume = parseFloat(solutionVolume);
+      if (isNaN(numericSolutionVolume) || numericSolutionVolume <= 0) {
+        setFormError('Please enter a valid solution volume greater than 0');
+        return;
+      }
+
       setManualStep('syringe');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -209,8 +304,46 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const handleCalculateFinal = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleCalculateFinal called');
+      
+      // Validate required inputs before calculation
+      if (!doseValue || doseValue <= 0) {
+        setCalculationError('Invalid dose value. Please go back and enter a valid dose.');
+        setManualStep('finalResult');
+        return;
+      }
+
+      if (!manualSyringe || !manualSyringe.volume) {
+        setCalculationError('Invalid syringe selection. Please go back and select a valid syringe.');
+        setManualStep('finalResult');
+        return;
+      }
+
+      // For concentration and totalAmount, their necessity depends on input mode
+      if (unit !== 'mL') { // mL as dose unit doesn't require concentration
+        if ((concentration === null || concentration <= 0) && medicationInputType !== 'totalAmount') {
+          setCalculationError('Invalid concentration. Please go back and enter a valid concentration.');
+          setManualStep('finalResult');
+          return;
+        }
+      }
+
+      // Ensure unit compatibility
+      if (unit !== 'mL') { // Skip for mL as dose unit
+        const unitCompatibility = validateUnitCompatibility(unit, concentrationUnit);
+        if (!unitCompatibility.isValid) {
+          setCalculationError(unitCompatibility.errorMessage || 'Unit mismatch between dose and concentration.');
+          setManualStep('finalResult');
+          return;
+        }
+      }
+
+      // Prepare total amount value
       let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
-      if (unit === 'mcg' && totalAmountValue) {
+      if (unit === 'mcg' && totalAmountValue && concentrationUnit === 'mg/ml') {
+        // Convert mcg dose to mg for comparison with mg/ml concentration
+        totalAmountValue /= 1000;
+      } else if (unit === 'mg' && totalAmountValue && concentrationUnit === 'mcg/ml') {
+        // Convert mg dose to mcg for comparison with mcg/ml concentration
         totalAmountValue *= 1000;
       }
 
@@ -251,7 +384,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
 
   const handleBack = useCallback(() => {
     try {
@@ -402,5 +535,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     handleGoHome,
     handleCapture,
     stateHealth,
+    validateDoseInput,
+    validateConcentrationInput,
   };
 }
