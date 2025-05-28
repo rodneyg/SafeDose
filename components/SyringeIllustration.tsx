@@ -24,27 +24,65 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     );
   }
   
-  const markings = [0, ...markingsString.split(',').map(m => parseFloat(m))];
+  // Safe conversion of markings array
+  const markingsArray = markingsString.split(',').map(m => {
+    try {
+      return parseFloat(m.trim());
+    } catch (e) {
+      return 0;
+    }
+  });
+  
+  // Filter out invalid values and ensure we have at least one valid marking
+  const markings = [0, ...markingsArray.filter(m => !isNaN(m))];
+  
+  // Ensure max marking is valid
   const maxMarking = Math.max(...markings);
+  if (maxMarking <= 0 || !isFinite(maxMarking)) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.syringeBody} />
+        <View style={styles.syringeLine} />
+        <Text style={styles.noMarkingsText}>Invalid markings for this syringe</Text>
+      </View>
+    );
+  }
+  
+  // Calculate positions for markings
   const syringeWidth = 300;
   const markingPositions = markings.map(m => (m / maxMarking) * syringeWidth);
-  const recommendedValue = parseFloat(recommendedMarking || '0');
-  const recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
+  
+  // Safe parsing of recommended marking
+  let recommendedValue = 0;
+  let recommendedPosition = 0;
+  
+  if (recommendedMarking !== null) {
+    try {
+      recommendedValue = parseFloat(recommendedMarking);
+      // Only calculate position if the parsing succeeded
+      if (!isNaN(recommendedValue)) {
+        recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
+      }
+    } catch (e) {
+      // If parsing fails, we won't show the recommended mark
+      recommendedValue = 0;
+    }
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.syringeBody} />
       <View style={styles.syringeLine} />
       {markings.map((m, index) => (
-        <View key={m} style={[styles.marking, { left: markingPositions[index] }]} />
+        <View key={`mark-${m}-${index}`} style={[styles.marking, { left: markingPositions[index] }]} />
       ))}
       {markings.map((m, index) => (
-        <Text key={`label-${m}`} style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}>
+        <Text key={`label-${m}-${index}`} style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}>
           {m}
         </Text>
       ))}
       <Text style={styles.unitLabel}>{unit}</Text>
-      {recommendedMarking && (
+      {recommendedMarking !== null && recommendedValue > 0 && !isNaN(recommendedValue) && (
         <>
           <View style={[styles.recommendedMark, { left: recommendedPosition - 2 }]} />
           <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 30) }]}>

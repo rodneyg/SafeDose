@@ -42,164 +42,183 @@ export default function FinalResultDisplay({
   const safeConcentrationUnit = concentrationUnit || 'mg/ml';
   const safeSubstanceName = substanceName || 'medication';
   const safeManualSyringe = manualSyringe || { type: 'Standard' as const, volume: '3 ml' };
+  const safeRecommendedMarking = recommendedMarking || null;
+  // Ensure calculatedVolume is safe to use with toFixed()
+  const safeCalculatedVolume = (calculatedVolume !== null && !isNaN(calculatedVolume)) ? calculatedVolume : null;
+  const safeCalculatedConcentration = (calculatedConcentration !== null && !isNaN(calculatedConcentration)) ? calculatedConcentration : null;
 
   console.log('[FinalResultDisplay] Rendering with:', { 
     calculationError: safeCalculationError, 
-    recommendedMarking,
+    recommendedMarking: safeRecommendedMarking,
     doseValue: safeDoseValue,
     unit: safeUnit,
     concentrationUnit: safeConcentrationUnit,
     substanceName: safeSubstanceName,
     manualSyringe: safeManualSyringe ? JSON.stringify(safeManualSyringe) : null,
-    calculatedVolume,
-    calculatedConcentration,
+    calculatedVolume: safeCalculatedVolume,
+    calculatedConcentration: safeCalculatedConcentration,
     precisionNote
   });
   
-  // IMPORTANT FIX: Changed display logic to prioritize validating calculatedVolume, not just recommendedMarking
-  // This ensures we show results for calculations even when a precise marking couldn't be determined
-  
-  // Log all props for debugging
-  console.log('[FinalResultDisplay] Detailed props check:', { 
-    calculationError: safeCalculationError, 
-    recommendedMarking,
-    doseValue: safeDoseValue,
-    unit: safeUnit,
-    concentrationUnit: safeConcentrationUnit,
-    substanceName: safeSubstanceName, 
-    calculatedVolume,
-    calculatedConcentration,
-    precisionNote
-  });
-
-  // First handle a successful calculation case - if we have a calculatedVolume without errors,
-  // we should show the recommendation
-  const hasValidCalculation = calculatedVolume !== null && calculatedVolume > 0;
-  
-  // Show recommendation section if we have a valid calculation, regardless of recommendedMarking
-  // This ensures we always show a result when the calculation succeeds
-  const showRecommendation = hasValidCalculation && safeCalculationError === null;
-  
-  // Show error section when there's an explicit error
-  const showError = safeCalculationError !== null;
-  
-  // Show the "no recommendation" section if we have neither an error nor a valid calculation
-  // IMPORTANT: This ensures we always display something, even in edge cases
-  const showNoRecommendation = !showError && !showRecommendation;
-  
-  console.log('[FinalResultDisplay] Display logic:', {
-    hasValidCalculation,
-    showError,
-    showRecommendation,
-    showNoRecommendation,
-    calculationError: safeCalculationError,
-    calculatedVolume,
-    recommendedMarking,
-    precisionNote
-  });
-  
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {showError && (
-        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
-          <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
-          <Text style={styles.errorTitle}>Calculation Error</Text>
-          <Text style={styles.errorText}>{safeCalculationError}</Text>
-          <Text style={styles.errorHelpText}>
-            {safeCalculationError && safeCalculationError.includes('exceeds total amount') && 
-              'Try reducing the dose amount or selecting a medication with a higher total amount.'}
-            {safeCalculationError && safeCalculationError.includes('exceeds what can be made') && 
-              'Try selecting a medication with a higher concentration or total amount.'}
-            {safeCalculationError && safeCalculationError.includes('exceeds syringe capacity') && 
-              'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
-            {safeCalculationError && safeCalculationError.includes('Unit mismatch') && 
-              'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration). Note that mcg and mg are convertible with the right concentration units.'}
-            {safeCalculationError && safeCalculationError.includes('too small to measure') && 
-              'The calculated volume is too small for accurate measurement with standard syringes. Try using a lower concentration or higher dose amount.'}
-          </Text>
-          {/* Display calculated values even when there's an error if they're available */}
-          {calculationError && calculatedVolume !== null && calculatedVolume < 0.01 && (
-            <View style={styles.smallVolumeInfo}>
-              <Text style={styles.smallVolumeText}>
-                Technical details: {safeDoseValue} {safeUnit} with {safeConcentrationUnit} concentration would require {calculatedVolume.toFixed(6)} mL
+  // Explicit type checks for rendering values
+  try {
+    // First handle a successful calculation case - if we have a calculatedVolume without errors,
+    // we should show the recommendation
+    const hasValidCalculation = safeCalculatedVolume !== null && safeCalculatedVolume > 0;
+    
+    // Show recommendation section if we have a valid calculation, regardless of recommendedMarking
+    // This ensures we always show a result when the calculation succeeds
+    const showRecommendation = hasValidCalculation && safeCalculationError === null;
+    
+    // Show error section when there's an explicit error
+    const showError = safeCalculationError !== null;
+    
+    // Show the "no recommendation" section if we have neither an error nor a valid calculation
+    // IMPORTANT: This ensures we always display something, even in edge cases
+    const showNoRecommendation = !showError && !showRecommendation;
+    
+    console.log('[FinalResultDisplay] Display logic:', {
+      hasValidCalculation,
+      showError,
+      showRecommendation,
+      showNoRecommendation,
+      calculationError: safeCalculationError,
+      calculatedVolume: safeCalculatedVolume,
+      recommendedMarking: safeRecommendedMarking,
+      precisionNote
+    });
+    
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        {showError && (
+          <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
+            <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
+            <Text style={styles.errorTitle}>Calculation Error</Text>
+            <Text style={styles.errorText}>{safeCalculationError}</Text>
+            <Text style={styles.errorHelpText}>
+              {safeCalculationError && safeCalculationError.includes('exceeds total amount') && 
+                'Try reducing the dose amount or selecting a medication with a higher total amount.'}
+              {safeCalculationError && safeCalculationError.includes('exceeds what can be made') && 
+                'Try selecting a medication with a higher concentration or total amount.'}
+              {safeCalculationError && safeCalculationError.includes('exceeds syringe capacity') && 
+                'Try selecting a syringe with a larger capacity or reducing the dose amount.'}
+              {safeCalculationError && safeCalculationError.includes('Unit mismatch') && 
+                'The dose unit and concentration unit are not compatible. Ensure they match (e.g., mg dose with mg/mL concentration, or units dose with units/mL concentration). Note that mcg and mg are convertible with the right concentration units.'}
+              {safeCalculationError && safeCalculationError.includes('too small to measure') && 
+                'The calculated volume is too small for accurate measurement with standard syringes. Try using a lower concentration or higher dose amount.'}
+            </Text>
+            {/* Display calculated values even when there's an error if they're available */}
+            {safeCalculationError && safeCalculatedVolume !== null && safeCalculatedVolume < 0.01 && (
+              <View style={styles.smallVolumeInfo}>
+                <Text style={styles.smallVolumeText}>
+                  Technical details: {safeDoseValue} {safeUnit} with {safeConcentrationUnit} concentration would require {safeCalculatedVolume.toFixed(6)} mL
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+        {showNoRecommendation && (
+          <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
+            <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
+              Dose Calculation
+            </Text>
+            <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
+              {safeDoseValue ? `For ${safeDoseValue} ${safeUnit} dose` : 'For the requested dose'} 
+              {safeSubstanceName ? ` of ${safeSubstanceName}` : ''}:
+            </Text>
+            <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
+              No specific recommendation available
+            </Text>
+            <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
+              Please check your inputs and try again, or consult a healthcare professional.
+            </Text>
+          </View>
+        )}
+        {showRecommendation && (
+          <View style={[styles.instructionCard, { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+            <Text style={styles.instructionTitle}>
+              ✅ Dose Calculation Result
+            </Text>
+            <Text style={styles.instructionText}>
+              For a {safeDoseValue} {safeUnit} dose of {safeSubstanceName || 'this medication'}:
+            </Text>
+            <Text style={styles.instructionTextLarge}>
+              {safeRecommendedMarking ? `Draw up to the ${safeRecommendedMarking} mark` : 
+                safeCalculatedVolume !== null ? `Draw up ${safeCalculatedVolume.toFixed(2)} ml` : 
+                "Draw up the calculated dose"}
+            </Text>
+            <Text style={styles.instructionNote}>
+              ({safeManualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
+            </Text>
+            {safeCalculatedVolume !== null && (
+              <Text style={styles.instructionNote}>
+                (Exact calculated volume: {safeCalculatedVolume.toFixed(2)} ml)
               </Text>
+            )}
+            {safeCalculatedConcentration !== null && (
+              <Text style={styles.instructionNote}>
+                (Calculated concentration: {safeCalculatedConcentration.toFixed(2)} {safeConcentrationUnit || 'mg/mL'})
+              </Text>
+            )}
+            {/* Added support for displaying precision notes that aren't blocking errors */}
+            {precisionNote && (
+              <Text style={styles.warningText}>{precisionNote}</Text>
+            )}
+            <View style={styles.illustrationContainer}>
+              <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
+              {/* Safely wrap SyringeIllustration to prevent rendering errors */}
+              <React.Fragment>
+                {safeManualSyringe && syringeOptions && syringeOptions[safeManualSyringe.type] && 
+                 syringeOptions[safeManualSyringe.type][safeManualSyringe.volume] ? (
+                  <SyringeIllustration
+                    syringeType={safeManualSyringe.type}
+                    syringeVolume={safeManualSyringe.volume}
+                    recommendedMarking={safeRecommendedMarking}
+                    syringeOptions={syringeOptions}
+                  />
+                ) : (
+                  <Text style={styles.errorText}>Unable to display syringe illustration</Text>
+                )}
+              </React.Fragment>
             </View>
-          )}
-        </View>
-      )}
-      {showNoRecommendation && (
-        <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
-          <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
-            Dose Calculation
-          </Text>
-          <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
-            {safeDoseValue ? `For ${safeDoseValue} ${safeUnit} dose` : 'For the requested dose'} 
-            {safeSubstanceName ? ` of ${safeSubstanceName}` : ''}:
-          </Text>
-          <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
-            No specific recommendation available
-          </Text>
-          <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
-            Please check your inputs and try again, or consult a healthcare professional.
+          </View>
+        )}
+        <View style={styles.disclaimerContainer}>
+          <Text style={styles.disclaimerText}>
+            **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
           </Text>
         </View>
-      )}
-      {showRecommendation && (
-        <View style={[styles.instructionCard, { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
-          <Text style={styles.instructionTitle}>
-            ✅ Dose Calculation Result
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
+            <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>New Dose</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
+            <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>Scan Again</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  } catch (error) {
+    // Fallback rendering in case of any error
+    console.error('[FinalResultDisplay] Render error:', error);
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171' }]}>
+          <Text style={styles.errorTitle}>Display Error</Text>
+          <Text style={styles.errorText}>
+            There was a problem displaying the calculation result. Please try again with different inputs.
           </Text>
-          <Text style={styles.instructionText}>
-            For a {safeDoseValue} {safeUnit} dose of {safeSubstanceName || 'this medication'}:
-          </Text>
-          <Text style={styles.instructionTextLarge}>
-            {recommendedMarking ? `Draw up to the ${recommendedMarking} mark` : `Draw up ${calculatedVolume?.toFixed(2)} ml`}
-          </Text>
-          <Text style={styles.instructionNote}>
-            ({safeManualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
-          </Text>
-          {calculatedVolume !== null && (
-            <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
-            </Text>
-          )}
-          {calculatedConcentration !== null && (
-            <Text style={styles.instructionNote}>
-              (Calculated concentration: {calculatedConcentration.toFixed(2)} {safeConcentrationUnit || 'mg/mL'})
-            </Text>
-          )}
-          {/* Added support for displaying precision notes that aren't blocking errors */}
-          {precisionNote && (
-            <Text style={styles.warningText}>{precisionNote}</Text>
-          )}
-          <View style={styles.illustrationContainer}>
-            <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
-            <SyringeIllustration
-              syringeType={safeManualSyringe.type}
-              syringeVolume={safeManualSyringe.volume}
-              recommendedMarking={recommendedMarking}
-              syringeOptions={syringeOptions}
-            />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }]} onPress={handleStartOver}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
-      <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerText}>
-          **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
-        </Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
-          <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>New Dose</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
-          <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Scan Again</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    );
+  }
 }
 
 const styles = StyleSheet.create({

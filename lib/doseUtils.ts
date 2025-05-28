@@ -237,8 +237,8 @@ export function calculateDose({
 
     console.log(`[Calculate] Calculated required volume: ${requiredVolume} ml`);
     
-    // Validate the required volume is positive
-    if (requiredVolume <= 0 || isNaN(requiredVolume)) {
+    // Validate the required volume is positive and finite
+    if (requiredVolume <= 0 || isNaN(requiredVolume) || !isFinite(requiredVolume)) {
       calculationError = `Invalid volume calculation: ${requiredVolume} ml. Please check your inputs.`;
       console.log('[Calculate] Error: Invalid volume calculation');
       return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
@@ -261,11 +261,11 @@ export function calculateDose({
       // Convert units if necessary to make a valid comparison
       let doseInSameUnitAsTotal = doseValue;
       
-      if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+      if (normalizedUnit === 'mcg' && normalizedConcentrationUnit === 'mg/ml') {
         // If dose is in mcg but total is in mg, convert dose to mg for comparison
         doseInSameUnitAsTotal = doseValue / 1000;
         console.log(`[Calculate] Converting ${doseValue} mcg to ${doseInSameUnitAsTotal} mg for comparison with total amount`);
-      } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
+      } else if (normalizedUnit === 'mg' && normalizedConcentrationUnit === 'mcg/ml') {
         // If dose is in mg but total is in mcg, convert dose to mcg for comparison
         doseInSameUnitAsTotal = doseValue * 1000;
         console.log(`[Calculate] Converting ${doseValue} mg to ${doseInSameUnitAsTotal} mcg for comparison with total amount`);
@@ -273,7 +273,7 @@ export function calculateDose({
       
       // Now compare if the dose exceeds the total amount
       if (doseInSameUnitAsTotal > totalAmount) {
-        calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
+        calculationError = `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${normalizedConcentrationUnit.split('/')[0]}).`;
         console.log('[Calculate] Error: Dose exceeds total available');
         return { calculatedVolume: null, recommendedMarking: null, calculationError, calculatedConcentration: null, calculatedMass: null };
       }
@@ -298,25 +298,53 @@ export function calculateDose({
       return { calculatedVolume, recommendedMarking: null, calculationError, calculatedConcentration, calculatedMass };
     }
 
-    // Find nearest marking on syringe
-    const markings = markingsString.split(',').map(m => parseFloat(m));
-    const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
-    console.log('[Calculate] Marking scale value:', markingScaleValue);
+    try {
+      // Find nearest marking on syringe (with added error handling)
+      const markings = markingsString.split(',').map(m => {
+        try {
+          return parseFloat(m.trim());
+        } catch (e) {
+          console.log('[Calculate] Error parsing marking:', m);
+          return 0;
+        }
+      }).filter(m => !isNaN(m) && isFinite(m));
 
-    const nearestMarking = markings.reduce((prev, curr) =>
-      Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
-    );
-    console.log('[Calculate] Nearest marking:', nearestMarking);
+      // Safety check - ensure we have valid markings
+      if (markings.length === 0) {
+        console.log('[Calculate] Warning: No valid markings found');
+        precisionNote = "Could not determine precise syringe markings. Use calculated volume instead.";
+        return { calculatedVolume, recommendedMarking: null, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
+      }
 
-    // Check for precision issues
-    if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
-      const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-      precisionNote = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
-      console.log('[Calculate] Precision note:', precisionNote);
+      // For insulin syringes, we use units (×100), for standard syringes we use ml directly
+      const markingScaleValue = manualSyringe.type === 'Insulin' ? requiredVolume * 100 : requiredVolume;
+      console.log('[Calculate] Marking scale value:', markingScaleValue);
+
+      if (isNaN(markingScaleValue) || !isFinite(markingScaleValue)) {
+        console.log('[Calculate] Invalid marking scale value');
+        return { calculatedVolume, recommendedMarking: null, calculationError: null, calculatedConcentration, calculatedMass, precisionNote: "Could not determine precise syringe markings." };
+      }
+
+      // Find the nearest marking
+      const nearestMarking = markings.reduce((prev, curr) =>
+        Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
+      );
+      console.log('[Calculate] Nearest marking:', nearestMarking);
+
+      // Check for precision issues
+      if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+        const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
+        precisionNote = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
+        console.log('[Calculate] Precision note:', precisionNote);
+      }
+
+      recommendedMarking = nearestMarking.toString();
+      console.log('[Calculate] Set recommended marking:', recommendedMarking);
+    } catch (error) {
+      // If there's any error determining the marking, fall back to just volume
+      console.log('[Calculate] Error finding nearest marking:', error);
+      precisionNote = "Could not determine precise syringe markings. Use calculated volume instead.";
     }
-
-    recommendedMarking = nearestMarking.toString();
-    console.log('[Calculate] Set recommended marking:', recommendedMarking);
 
     // Return successful calculation - note calculationError is null here
     return { calculatedVolume, recommendedMarking, calculationError: null, calculatedConcentration, calculatedMass, precisionNote };
