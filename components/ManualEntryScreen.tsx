@@ -15,8 +15,8 @@ interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
   dose: string;
   setDose: (value: string) => void;
-  unit: 'mg' | 'mcg' | 'units';
-  setUnit: (value: 'mg' | 'mcg' | 'units') => void;
+  unit: 'mg' | 'mcg' | 'units' | 'mL';
+  setUnit: (value: 'mg' | 'mcg' | 'units' | 'mL') => void;
   substanceName: string;
   setSubstanceName: (value: string) => void;
   medicationInputType: 'concentration' | 'totalAmount' | null;
@@ -54,6 +54,8 @@ interface ManualEntryScreenProps {
   handleBack: () => void;
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
+  validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
 }
 
 export default function ManualEntryScreen({
@@ -99,6 +101,8 @@ export default function ManualEntryScreen({
   handleBack,
   handleStartOver,
   setScreenStep,
+  validateDoseInput,
+  validateConcentrationInput,
 }: ManualEntryScreenProps) {
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
@@ -110,7 +114,19 @@ export default function ManualEntryScreen({
   };
 
   const isConcentrationInputStepValid = (): boolean => {
-    return Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+    // Check for valid concentration input
+    const valid = Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+    
+    // Also validate unit compatibility if both units are set
+    if (valid && unit && concentrationUnit) {
+      const { validateUnitCompatibility } = require('../lib/doseUtils');
+      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      if (!compatibility.isValid) {
+        return false;
+      }
+    }
+    
+    return valid;
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
@@ -157,6 +173,8 @@ export default function ManualEntryScreen({
           setDose={setDose}
           unit={unit}
           setUnit={setUnit}
+          formError={formError}
+          validateInput={validateDoseInput}
         />
       );
       progress = 1 / 3;
@@ -185,6 +203,8 @@ export default function ManualEntryScreen({
           setConcentrationUnit={setConcentrationUnit}
           setConcentrationHint={setConcentrationHint}
           concentrationHint={concentrationHint}
+          doseUnit={unit}
+          formError={formError}
         />
       );
       progress = 3 / 5;
