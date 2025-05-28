@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
@@ -18,6 +18,7 @@ interface IntroScreenProps {
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   const { user, auth, logout } = useAuth();
   const router = useRouter();
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] Logout button pressed');
+    setIsProfileMenuOpen(false);
     try {
       await logout();
       console.log('Logged out successfully');
@@ -69,6 +71,35 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       console.error('Logout error:', error);
     }
   }, [logout]);
+  
+  const toggleProfileMenu = useCallback(() => {
+    if (user?.isAnonymous) {
+      // If user is anonymous, directly trigger sign in
+      handleSignInPress();
+    } else {
+      // If user is logged in, toggle profile menu
+      setIsProfileMenuOpen(prevState => !prevState);
+    }
+  }, [user, handleSignInPress]);
+
+  // Use effect to add a tap outside handler to close the profile menu
+  useEffect(() => {
+    if (isProfileMenuOpen) {
+      const handleTapOutside = () => {
+        setIsProfileMenuOpen(false);
+      };
+      
+      // Add a setTimeout to ensure this executes after the current event cycle
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('click', handleTapOutside);
+      }, 0);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('click', handleTapOutside);
+      };
+    }
+  }, [isProfileMenuOpen]);
 
   // Check if the auto-login flag is enabled
   useEffect(() => {
@@ -113,14 +144,41 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       <View style={styles.profileButtonContainer}>
         <TouchableOpacity 
           style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-          onPress={user?.isAnonymous ? handleSignInPress : handleLogoutPress}>
-          <User color={user?.isAnonymous ? '#10b981' : '#ef4444'} size={18} />
+          onPress={toggleProfileMenu}
+          onClick={(e) => {
+            // Prevent click from propagating to document
+            e.stopPropagation();
+          }}>
+          <User color={user?.isAnonymous ? '#10b981' : '#3b82f6'} size={18} />
           <Text style={styles.profileText}>
             {user?.isAnonymous 
               ? 'Profile' 
               : user.email ? user.email.split('@')[0] : 'Profile'}
           </Text>
         </TouchableOpacity>
+        
+        {/* Profile dropdown menu */}
+        {isProfileMenuOpen && !user?.isAnonymous && (
+          <View 
+            style={styles.profileMenu} 
+            onClick={(e) => {
+              // Prevent click from propagating to document
+              e.stopPropagation();
+            }}>
+            {user.email && (
+              <View style={styles.profileMenuItem}>
+                <Mail color="#64748b" size={16} />
+                <Text style={styles.profileMenuEmail}>{user.email}</Text>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogoutPress}>
+              <LogOut color="#ef4444" size={16} />
+              <Text style={styles.logoutText}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* App icon and welcome message */}
@@ -191,16 +249,17 @@ const styles = StyleSheet.create({
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    top: 16,
+    right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
   profileButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#f8fafc',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 20, // Pill shape
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -212,13 +271,58 @@ const styles = StyleSheet.create({
   },
   profileButtonMobile: {
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   profileText: {
     fontSize: 14,
     fontWeight: '500',
-    marginLeft: 6,
+    marginLeft: 8,
     color: '#334155',
+  },
+  // Profile menu dropdown
+  profileMenu: {
+    position: 'absolute',
+    top: 46,
+    right: 0,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  profileMenuEmail: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginLeft: 8,
+    color: '#64748b',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#ef4444',
   },
   // Welcome section
   welcomeContainer: {
