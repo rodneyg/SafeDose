@@ -91,12 +91,12 @@ export default function FinalResultDisplay({
           <Text style={styles.instructionNote}>
             ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
           </Text>
-          {calculatedVolume !== null && (
+          {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
               (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
             </Text>
           )}
-          {calculatedConcentration !== null && (
+          {calculatedConcentration !== null && calculatedConcentration !== undefined && (
             <Text style={styles.instructionNote}>
               (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
