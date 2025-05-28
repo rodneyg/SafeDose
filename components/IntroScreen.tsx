@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
@@ -18,6 +18,7 @@ interface IntroScreenProps {
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   const { user, auth, logout } = useAuth();
   const router = useRouter();
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] Logout button pressed');
+    setIsProfileMenuOpen(false);
     try {
       await logout();
       console.log('Logged out successfully');
@@ -69,6 +71,14 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       console.error('Logout error:', error);
     }
   }, [logout]);
+  
+  const toggleProfileMenu = useCallback(() => {
+    // Always toggle the profile menu, regardless of authentication status
+    setIsProfileMenuOpen(prevState => !prevState);
+  }, []);
+
+  // For React Native, we'll close the menu manually in button handlers
+  // instead of using web-specific tap outside detection
 
   // Check if the auto-login flag is enabled
   useEffect(() => {
@@ -109,67 +119,333 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
-      <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-      <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-      <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerText}>
-          **Medical Disclaimer**: This app is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider before making any decisions regarding medication or treatment. Incorrect dosing can lead to serious health risks.
-        </Text>
-      </View>
-      {/* Authentication buttons - different UI for anonymous vs authenticated users */}
-      {user?.isAnonymous ? (
-        // Anonymous users see separate Sign In and Upgrade buttons
-        <>
-          <TouchableOpacity 
-            style={[styles.button, styles.signInButton, isMobileWeb && styles.buttonMobile]} 
-            onPress={handleSignInPress}>
-            <LogIn color={'#fff'} size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.buttonText}>Sign In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.button, styles.upgradeButton, isMobileWeb && styles.buttonMobile]} 
-            onPress={handleUpgradePress}>
-            <CreditCard color={'#fff'} size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.buttonText}>Upgrade Plan</Text>
-          </TouchableOpacity>
-        </>
-      ) : (
-        // Authenticated users see a logout option
+      {/* Invisible overlay to close menu when tapping outside */}
+      {isProfileMenuOpen && (
         <TouchableOpacity 
-          style={[styles.button, styles.logoutButton, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleLogoutPress}>
-          <LogOut color={'#fff'} size={20} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Sign Out</Text>
-        </TouchableOpacity>
+          style={styles.menuOverlay} 
+          onPress={() => setIsProfileMenuOpen(false)}
+          activeOpacity={1}
+        />
       )}
-      <TouchableOpacity 
-        style={[styles.button, isMobileWeb && styles.buttonMobile]} 
-        onPress={handleScanPress}>
-        <CameraIcon color={'#fff'} size={20} style={{ marginRight: 8 }} />
-        <Text style={styles.buttonText}>Scan Items</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.button, styles.manualButton, isMobileWeb && styles.buttonMobile]}
-        onPress={handleManualEntryPress}
-      >
-        <Pill color={'#fff'} size={20} style={{ marginRight: 8 }} />
-        <Text style={styles.buttonText}>Enter Details Manually</Text>
-      </TouchableOpacity>
+      
+      {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
+      <View style={styles.profileButtonContainer}>
+        <TouchableOpacity 
+          style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+          onPress={toggleProfileMenu}>
+          {user?.isAnonymous 
+            ? <LogIn color="#10b981" size={18} />
+            : <User color="#3b82f6" size={18} />
+          }
+          <Text style={styles.profileText}>
+            {user?.isAnonymous 
+              ? 'Sign In' 
+              : user.email ? user.email.split('@')[0] : 'Profile'}
+          </Text>
+        </TouchableOpacity>
+        
+        {/* Profile dropdown menu */}
+        {isProfileMenuOpen && (
+          <View style={styles.profileMenu}>
+            {user?.isAnonymous ? (
+              // Menu for anonymous users
+              <TouchableOpacity 
+                style={styles.signInButton}
+                onPress={() => {
+                  setIsProfileMenuOpen(false);
+                  handleSignInPress();
+                }}>
+                <LogIn color="#10b981" size={16} />
+                <Text style={styles.signInText}>Sign In</Text>
+              </TouchableOpacity>
+            ) : (
+              // Menu for logged-in users
+              <>
+                {user?.email && (
+                  <View style={styles.profileMenuItem}>
+                    <Mail color="#64748b" size={16} />
+                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                  </View>
+                )}
+                <TouchableOpacity 
+                  style={styles.logoutButton}
+                  onPress={handleLogoutPress}>
+                  <LogOut color="#ef4444" size={16} />
+                  <Text style={styles.logoutText}>Sign Out</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        )}
+      </View>
+
+      {/* App icon and welcome message */}
+      <View style={styles.welcomeContainer}>
+        <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
+        
+        {/* Dynamic welcome message based on authentication status */}
+        {user && !user.isAnonymous && user.displayName ? (
+          <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
+        ) : (
+          <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
+        )}
+      </View>
+      
+      {/* Main action buttons grouped together (Law of Proximity) */}
+      <View style={styles.actionButtonsContainer}>
+        {/* Primary action */}
+        <TouchableOpacity 
+          style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
+          onPress={handleScanPress}>
+          <CameraIcon color={'#fff'} size={20} />
+          <Text style={styles.buttonText}>Scan Items</Text>
+        </TouchableOpacity>
+        
+        {/* Secondary action */}
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
+          onPress={handleManualEntryPress}
+        >
+          <Pill color={'#fff'} size={20} />
+          <Text style={styles.buttonText}>Enter Details Manually</Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Disclaimer with Info icon */}
+      <View style={styles.disclaimerContainer}>
+        <View style={styles.disclaimerIconContainer}>
+          <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
+          <Text style={styles.disclaimerText}>
+            Medical information provided by this app is for guidance only. Always consult a healthcare provider before making medication decisions. Incorrect dosing may cause health risks.
+          </Text>
+        </View>
+      </View>
+      
+      {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
+      {user?.isAnonymous && (
+        <View style={styles.upgradeContainer}>
+          <TouchableOpacity 
+            style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+            onPress={handleUpgradePress}>
+            <CreditCard color={'#f59e0b'} size={16} />
+            <Text style={styles.upgradeText}>Upgrade</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 20 },
-  icon: { marginBottom: 16 },
-  text: { fontSize: 16, color: '#000000', textAlign: 'center', paddingHorizontal: 16 },
-  disclaimerContainer: { backgroundColor: '#FFF3CD', padding: 12, borderRadius: 8, marginVertical: 10, width: '90%', alignSelf: 'center' },
-  disclaimerText: { fontSize: 12, color: '#856404', textAlign: 'center', fontStyle: 'italic' },
-  button: { backgroundColor: '#007AFF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
-  buttonMobile: { paddingVertical: 16, paddingHorizontal: 32, minHeight: 60 },
-  manualButton: { backgroundColor: '#6366f1' },
-  signInButton: { backgroundColor: '#10b981' }, // Green color for sign in
-  upgradeButton: { backgroundColor: '#f59e0b' }, // Amber color for upgrade
-  logoutButton: { backgroundColor: '#ef4444' }, // Red color for logout
-  buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
+  content: { 
+    flex: 1, 
+    alignItems: 'center',
+    justifyContent: 'center', 
+    padding: 16,
+    position: 'relative', // To support absolute positioning of profile button
+  },
+  // Invisible overlay to capture taps outside the menu
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5, // Below profile menu but above everything else
+  },
+  // Profile button styles (Fitts's Law)
+  profileButtonContainer: {
+    position: 'absolute',
+    top: 8,
+    right: 16,
+    zIndex: 10, // Ensure it's above other elements
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20, // Pill shape
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  profileButtonMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  profileText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#334155',
+  },
+  // Profile menu dropdown
+  profileMenu: {
+    position: 'absolute',
+    top: 46,
+    right: 0,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  profileMenuEmail: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginLeft: 8,
+    color: '#64748b',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#ef4444',
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  signInText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
+  },
+  // Welcome section
+  welcomeContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  icon: { 
+    marginBottom: 12,
+  },
+  text: { 
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000', 
+    textAlign: 'center', 
+    paddingHorizontal: 16,
+  },
+  // Action buttons group (Law of Proximity)
+  actionButtonsContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  button: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 10,
+    width: '80%',
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  buttonMobile: { 
+    paddingVertical: 16, 
+    paddingHorizontal: 28, 
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF', 
+  },
+  secondaryButton: {
+    backgroundColor: '#6366f1',
+  },
+  buttonText: { 
+    color: '#ffffff', 
+    fontSize: 16, 
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Disclaimer styles
+  disclaimerContainer: { 
+    backgroundColor: '#FFF3CD', 
+    padding: 10,
+    borderRadius: 8, 
+    marginBottom: 16,
+    width: '90%', 
+    maxWidth: 500,
+    borderLeftWidth: 3,
+    borderLeftColor: '#856404',
+  },
+  disclaimerIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  disclaimerIcon: {
+    marginRight: 8,
+    marginTop: 3,
+  },
+  disclaimerText: { 
+    fontSize: 11, 
+    color: '#856404', 
+    textAlign: 'left',
+    fontStyle: 'italic',
+    flex: 1,
+  },
+  // Upgrade section (Law of Visual Hierarchy)
+  upgradeContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center',
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  upgradeButtonMobile: {
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+  },
+  upgradeText: {
+    color: '#f59e0b',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
 });
