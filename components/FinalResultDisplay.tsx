@@ -78,13 +78,13 @@ export default function FinalResultDisplay({
   }
 
   // Check 2: Validate syringeOptions structure
-  const syringeKey = syringeType;
-  if (!syringeOptions[syringeKey] || !syringeOptions[syringeKey][volume]) {
+  const earlyValidationSyringeKey = syringeType;
+  if (!syringeOptions[earlyValidationSyringeKey] || !syringeOptions[earlyValidationSyringeKey][volume]) {
     console.error('[FinalResultDisplay] Invalid syringe configuration:', {
       syringeType,
       volume,
       availableTypes: Object.keys(syringeOptions || {}),
-      availableVolumes: syringeOptions[syringeKey] ? Object.keys(syringeOptions[syringeKey]) : []
+      availableVolumes: syringeOptions[earlyValidationSyringeKey] ? Object.keys(syringeOptions[earlyValidationSyringeKey]) : []
     });
     return (
       <ScrollView contentContainerStyle={styles.container}>
@@ -104,10 +104,10 @@ export default function FinalResultDisplay({
   }
   
   // Check 3: Validate markings
-  const markings = syringeOptions[syringeKey][volume].split(',') || [];
-  if (recommendedMarking && !markings.includes(recommendedMarking.toString())) {
+  const earlyValidationMarkings = syringeOptions[earlyValidationSyringeKey][volume].split(',') || [];
+  if (recommendedMarking && !earlyValidationMarkings.includes(recommendedMarking.toString())) {
     console.warn('[FinalResultDisplay] Marking not found in available options', { 
-      markings, 
+      markings: earlyValidationMarkings, 
       recommendedMarking,
       syringeType,
       volume
@@ -141,12 +141,12 @@ export default function FinalResultDisplay({
   const { type: safeType, volume: safeVolume } = safeManualSyringe;
   
   // Get markings from syringeOptions with proper validation
-  const syringeKey = safeType || 'Standard';
-  const markings = syringeOptions[syringeKey]?.[safeVolume]?.split(',') || [];
+  const displaySyringeKey = safeType || 'Standard';
+  const displayMarkings = syringeOptions[displaySyringeKey]?.[safeVolume]?.split(',') || [];
   
-  if (recommendedMarking && !markings.includes(recommendedMarking.toString())) {
+  if (recommendedMarking && !displayMarkings.includes(recommendedMarking.toString())) {
     console.warn("Marking not found in available options", { 
-      markings, 
+      markings: displayMarkings, 
       recommendedMarking 
     });
   }
@@ -318,7 +318,7 @@ export default function FinalResultDisplay({
                 {(() => {
                   try {
                     // Get the correct syringeKey with fallbacks
-                    const syringeKey = safeManualSyringe.type || 'Standard';
+                    const illustrationSyringeKey = safeManualSyringe.type || 'Standard';
                     
                     // Double-check we have valid syringe options before attempting to render
                     const hasSyringeOptions = !!(syringeOptions && 
@@ -327,25 +327,25 @@ export default function FinalResultDisplay({
                       safeManualSyringe.volume);
                       
                     // Safely check if the specific syringe type and volume exist
-                    const markings = syringeOptions?.[syringeKey]?.[safeManualSyringe.volume]?.split(',') || [];
+                    const illustrationMarkings = syringeOptions?.[illustrationSyringeKey]?.[safeManualSyringe.volume]?.split(',') || [];
                     
                     console.log('[FinalResultDisplay] Syringe validation:', {
                       hasSyringeOptions,
-                      syringeKey,
+                      syringeKey: illustrationSyringeKey,
                       volume: safeManualSyringe.volume,
-                      availableMarkings: markings,
+                      availableMarkings: illustrationMarkings,
                       recommendedMarking: safeRecommendedMarking
                     });
                     
                     // Check if recommended marking is valid
-                    if (safeRecommendedMarking && markings.length > 0) {
-                      const isMarkingValid = markings.some(mark => 
+                    if (safeRecommendedMarking && illustrationMarkings.length > 0) {
+                      const isMarkingValid = illustrationMarkings.some(mark => 
                         mark.trim() === safeRecommendedMarking.trim()
                       );
                       
                       if (!isMarkingValid) {
                         console.warn("[FinalResultDisplay] Marking not found in available options", { 
-                          markings, 
+                          markings: illustrationMarkings, 
                           recommendedMarking: safeRecommendedMarking 
                         });
                       }
