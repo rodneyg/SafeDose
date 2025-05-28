@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect } from 'react';
+import React, { RefObject, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Camera as CameraIcon } from 'lucide-react-native';
 import { CameraView } from 'expo-camera';
@@ -11,6 +11,7 @@ interface ScanScreenProps {
   isProcessing: boolean;
   scanError: string | null;
   cameraRef: RefObject<CameraView>;
+  webCameraStream?: MediaStream | null;
   openai: any;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   setManualStep: (step: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
@@ -40,6 +41,7 @@ export default function ScanScreen({
   isProcessing,
   scanError,
   cameraRef,
+  webCameraStream,
   openai,
   setScreenStep,
   setManualStep,
@@ -61,7 +63,20 @@ export default function ScanScreen({
   handleGoHome,
   onCapture,
 }: ScanScreenProps) {
-  console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied });
+  console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied, hasStream: !!webCameraStream });
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Connect video element to stream for web camera
+  useEffect(() => {
+    if (isMobileWeb && webCameraStream && videoRef.current) {
+      console.log('[ScanScreen] Connecting web camera stream to video element');
+      videoRef.current.srcObject = webCameraStream;
+      videoRef.current.play().catch(err => {
+        console.error('[ScanScreen] Error playing video:', err);
+      });
+    }
+  }, [webCameraStream]);
 
   // Safeguard: Reset isProcessing state after 20 seconds if it gets stuck
   useEffect(() => {
@@ -153,6 +168,14 @@ export default function ScanScreen({
     console.log('[ScanScreen] Rendering mobile web capture view');
     return (
       <View style={styles.scanContainer}>
+        {webCameraStream && (
+          <video
+            ref={videoRef}
+            style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }}
+            playsInline
+            autoPlay
+          />
+        )}
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>

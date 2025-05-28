@@ -137,6 +137,7 @@ export default function NewDoseScreen() {
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const webCameraStreamRef = useRef<MediaStream | null>(null);
 
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
@@ -168,6 +169,13 @@ export default function NewDoseScreen() {
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
       requestWebCameraPermission();
+    }
+    
+    // Clean up camera stream when navigating away from scan screen
+    if (screenStep !== 'scan' && webCameraStreamRef.current) {
+      console.log("[WebCamera] Cleaning up camera stream on screen change");
+      webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+      webCameraStreamRef.current = null;
     }
   }, [screenStep]);
 
@@ -209,6 +217,7 @@ export default function NewDoseScreen() {
         permission,
         openai,
         isMobileWeb,
+        webCameraStream: webCameraStreamRef.current,
         setIsProcessing,
         setProcessingMessage,
         setScanError,
@@ -321,6 +330,12 @@ export default function NewDoseScreen() {
     if (!isMobileWeb) return;
     
     try {
+      // Release any existing stream first to avoid multiple active streams
+      if (webCameraStreamRef.current) {
+        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+        webCameraStreamRef.current = null;
+      }
+      
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.warn("getUserMedia not supported in this browser");
         setPermissionStatus('denied');
@@ -336,8 +351,8 @@ export default function NewDoseScreen() {
       setPermissionStatus('granted');
       setMobileWebPermissionDenied(false);
       
-      // Stop all tracks to release the camera
-      stream.getTracks().forEach(track => track.stop());
+      // Store the stream for later use instead of stopping it
+      webCameraStreamRef.current = stream;
     } catch (error) {
       console.error("[WebCamera] Error requesting camera permission:", error);
       
@@ -354,6 +369,17 @@ export default function NewDoseScreen() {
       setMobileWebPermissionDenied(true);
     }
   };
+
+  // Clean up camera resources when component unmounts
+  useEffect(() => {
+    return () => {
+      if (webCameraStreamRef.current) {
+        console.log("[WebCamera] Cleaning up camera stream on unmount");
+        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+        webCameraStreamRef.current = null;
+      }
+    };
+  }, []);
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
@@ -421,6 +447,7 @@ export default function NewDoseScreen() {
           isProcessing={isProcessing}
           scanError={scanError}
           cameraRef={cameraRef}
+          webCameraStream={webCameraStreamRef.current}
           openai={openai}
           setScreenStep={handleSetScreenStep}
           setManualStep={setManualStep}

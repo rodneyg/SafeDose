@@ -17,6 +17,7 @@ interface CaptureAndProcessImageProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  webCameraStream?: MediaStream | null;
 }
 
 interface ScanResult {
@@ -42,6 +43,7 @@ export async function captureAndProcessImage({
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
 
@@ -65,7 +67,26 @@ export async function captureAndProcessImage({
     let mimeType: string;
 
     if (isMobileWeb) {
-      console.log('[Capture] Mobile web detected, using file input');
+      // First check if we have an active web camera stream
+      if (webCameraStream && webCameraStream.active) {
+        console.log('[Capture] Using active web camera stream');
+        setProcessingMessage('Taking photo...');
+        
+        try {
+          const { base64Image: capturedImage, mimeType: capturedMimeType } = await captureImageFromStream(webCameraStream);
+          base64Image = capturedImage;
+          mimeType = capturedMimeType;
+          console.log('[Capture] Captured image from web camera stream');
+        } catch (streamError) {
+          console.error('[Capture] Error capturing from stream:', streamError);
+          // Fall back to file input if stream capture fails
+          console.log('[Capture] Falling back to file input');
+        }
+      }
+      
+      // If we don't have a stream or stream capture failed, use file input
+      if (!base64Image) {
+        console.log('[Capture] Mobile web detected, using file input');
 
       // Clean up any existing file inputs first
       const existingInputs = document.querySelectorAll('input[type="file"]');
@@ -334,4 +355,66 @@ export async function captureAndProcessImage({
     setIsProcessing(false);
     console.log('[Capture] isProcessing set to false');
   }
+}
+
+// Helper function to capture an image from a web camera stream
+async function captureImageFromStream(stream: MediaStream): Promise<{ base64Image: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create a video element to display the stream
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.setAttribute('playsinline', 'true'); // Required for iOS Safari
+      
+      // Wait for the video to be ready
+      video.onloadedmetadata = () => {
+        // Start playing the video
+        video.play().then(() => {
+          // Create a canvas to draw the video frame
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          // Draw the current video frame to the canvas
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert the canvas to a base64 image
+          try {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const base64Data = dataUrl.split(',')[1];
+            
+            // Stop video display
+            video.pause();
+            video.srcObject = null;
+            
+            resolve({
+              base64Image: base64Data,
+              mimeType: 'image/jpeg'
+            });
+          } catch (error) {
+            console.error('Error converting canvas to image:', error);
+            reject(error);
+          }
+        }).catch(error => {
+          console.error('Error playing video:', error);
+          reject(error);
+        });
+      };
+      
+      video.onerror = (error) => {
+        console.error('Video element error:', error);
+        reject(error);
+      };
+      
+    } catch (error) {
+      console.error('Error setting up video capture:', error);
+      reject(error);
+    }
+  });
 }
