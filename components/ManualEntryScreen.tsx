@@ -278,25 +278,67 @@ export default function ManualEntryScreen({
         progress = 3 / 3;
         break;
       case 'finalResult':
-        // IMPORTANT: Always render the FinalResultDisplay even if we're missing some props
-        // This prevents blank screens by ensuring something always renders
-        currentStepComponent = (
-          <FinalResultDisplay
-            calculationError={calculationError || null}
-            recommendedMarking={recommendedMarking}
-            doseValue={doseValue || 0}
-            unit={unit || 'mg'}
-            concentrationUnit={concentrationUnit || 'mg/ml'}
-            substanceName={substanceName || 'medication'}
-            manualSyringe={manualSyringe || { type: 'Standard', volume: '3 ml' }}
-            calculatedVolume={calculatedVolume}
-            calculatedConcentration={calculatedConcentration}
-            precisionNote={precisionNote}
-            handleStartOver={handleStartOver}
-            setScreenStep={setScreenStep}
-            isMobileWeb={isMobileWeb}
-          />
-        );
+        console.log('[ManualEntryScreen] finalResult payload:', {
+          calculationError,
+          recommendedMarking,
+          doseValue,
+          unit,
+          concentrationUnit,
+          substanceName,
+          manualSyringe: manualSyringe ? JSON.stringify(manualSyringe) : 'null',
+          calculatedVolume,
+          calculatedConcentration,
+          precisionNote,
+          isMobileWeb
+        });
+
+        // Wrap FinalResultDisplay in a try-catch to prevent rendering crashes
+        try {
+          // Default props to ensure we never pass undefined or null to the child component
+          const safeProps = {
+            calculationError: calculationError || null,
+            recommendedMarking: recommendedMarking || null,
+            doseValue: doseValue || 0,
+            unit: unit || 'mg',
+            concentrationUnit: concentrationUnit || 'mg/ml',
+            substanceName: substanceName || 'medication',
+            manualSyringe: manualSyringe || { type: 'Standard', volume: '3 ml' },
+            calculatedVolume: calculatedVolume || null,
+            calculatedConcentration: calculatedConcentration || null,
+            precisionNote: precisionNote || null,
+            handleStartOver: handleStartOver,
+            setScreenStep: setScreenStep,
+            isMobileWeb: !!isMobileWeb
+          };
+          
+          // Import check - verify FinalResultDisplay is loaded
+          if (typeof FinalResultDisplay !== 'function') {
+            console.error('[ManualEntryScreen] FinalResultDisplay component is not a function:', typeof FinalResultDisplay);
+            throw new Error('FinalResultDisplay component not loaded correctly');
+          }
+          
+          currentStepComponent = <FinalResultDisplay {...safeProps} />;
+          console.log('[ManualEntryScreen] FinalResultDisplay created successfully');
+        } catch (error) {
+          console.error('[ManualEntryScreen] Error creating FinalResultDisplay:', error);
+          // Fallback UI component if FinalResultDisplay fails to render
+          currentStepComponent = (
+            <View style={{ padding: 20, margin: 20, backgroundColor: '#fee2e2', borderRadius: 8 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#991b1b', marginBottom: 10 }}>
+                Display Error
+              </Text>
+              <Text style={{ fontSize: 16, color: '#991b1b', marginBottom: 20 }}>
+                There was a problem displaying the calculation result.
+              </Text>
+              <TouchableOpacity 
+                style={{ backgroundColor: '#10B981', padding: 15, borderRadius: 8, alignItems: 'center' }}
+                onPress={handleStartOver}
+              >
+                <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '500' }}>Start Over</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }
         progress = 1;
         break;
       default:
