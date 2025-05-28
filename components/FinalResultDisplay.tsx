@@ -42,10 +42,28 @@ export default function FinalResultDisplay({
   const safeConcentrationUnit = concentrationUnit || 'mg/ml';
   const safeSubstanceName = substanceName || 'medication';
   const safeManualSyringe = manualSyringe || { type: 'Standard' as const, volume: '3 ml' };
-  const safeRecommendedMarking = recommendedMarking || null;
+  
+  // Ensure recommendedMarking is safely handled - it can be string or number in different parts of the app
+  let safeRecommendedMarking: string | null = null;
+  if (recommendedMarking !== null && recommendedMarking !== undefined) {
+    if (typeof recommendedMarking === 'number') {
+      safeRecommendedMarking = recommendedMarking.toString();
+    } else if (typeof recommendedMarking === 'string') {
+      safeRecommendedMarking = recommendedMarking;
+    }
+  }
+  
   // Ensure calculatedVolume is safe to use with toFixed()
-  const safeCalculatedVolume = (calculatedVolume !== null && !isNaN(calculatedVolume)) ? calculatedVolume : null;
-  const safeCalculatedConcentration = (calculatedConcentration !== null && !isNaN(calculatedConcentration)) ? calculatedConcentration : null;
+  const safeCalculatedVolume = (calculatedVolume !== null && 
+    calculatedVolume !== undefined && 
+    !isNaN(calculatedVolume) &&
+    isFinite(calculatedVolume)) ? calculatedVolume : null;
+    
+  // Ensure calculatedConcentration is safe to use with toFixed()
+  const safeCalculatedConcentration = (calculatedConcentration !== null && 
+    calculatedConcentration !== undefined && 
+    !isNaN(calculatedConcentration) &&
+    isFinite(calculatedConcentration)) ? calculatedConcentration : null;
 
   console.log('[FinalResultDisplay] Rendering with:', { 
     calculationError: safeCalculationError, 
@@ -64,11 +82,19 @@ export default function FinalResultDisplay({
   try {
     // First handle a successful calculation case - if we have a calculatedVolume without errors,
     // we should show the recommendation
-    const hasValidCalculation = safeCalculatedVolume !== null && safeCalculatedVolume > 0;
+    const hasValidCalculation = safeCalculatedVolume !== null && 
+      safeCalculatedVolume !== undefined && 
+      isFinite(safeCalculatedVolume) &&
+      safeCalculatedVolume > 0;
+    
+    // Additional guard: Ensure concentration is also valid if available
+    const hasValidConcentration = safeCalculatedConcentration === null || 
+      (safeCalculatedConcentration !== undefined && 
+       isFinite(safeCalculatedConcentration));
     
     // Show recommendation section if we have a valid calculation, regardless of recommendedMarking
     // This ensures we always show a result when the calculation succeeds
-    const showRecommendation = hasValidCalculation && safeCalculationError === null;
+    const showRecommendation = hasValidCalculation && safeCalculationError === null && hasValidConcentration;
     
     // Show error section when there's an explicit error
     const showError = safeCalculationError !== null;
@@ -108,7 +134,8 @@ export default function FinalResultDisplay({
                 'The calculated volume is too small for accurate measurement with standard syringes. Try using a lower concentration or higher dose amount.'}
             </Text>
             {/* Display calculated values even when there's an error if they're available */}
-            {safeCalculationError && safeCalculatedVolume !== null && safeCalculatedVolume < 0.01 && (
+            {safeCalculationError && safeCalculatedVolume !== null && 
+             isFinite(safeCalculatedVolume) && safeCalculatedVolume < 0.01 && (
               <View style={styles.smallVolumeInfo}>
                 <Text style={styles.smallVolumeText}>
                   Technical details: {safeDoseValue} {safeUnit} with {safeConcentrationUnit} concentration would require {safeCalculatedVolume.toFixed(6)} mL
@@ -143,19 +170,31 @@ export default function FinalResultDisplay({
               For a {safeDoseValue} {safeUnit} dose of {safeSubstanceName || 'this medication'}:
             </Text>
             <Text style={styles.instructionTextLarge}>
-              {safeRecommendedMarking ? `Draw up to the ${safeRecommendedMarking} mark` : 
-                safeCalculatedVolume !== null ? `Draw up ${safeCalculatedVolume.toFixed(2)} ml` : 
-                "Draw up the calculated dose"}
+              {(() => {
+                // Use a function to safely determine what to display
+                try {
+                  if (safeRecommendedMarking && safeRecommendedMarking !== 'null' && safeRecommendedMarking !== 'undefined') {
+                    return `Draw up to the ${safeRecommendedMarking} mark`;
+                  } else if (safeCalculatedVolume !== null && isFinite(safeCalculatedVolume)) {
+                    return `Draw up ${safeCalculatedVolume.toFixed(2)} ml`;
+                  } else {
+                    return "Draw up the calculated dose";
+                  }
+                } catch (error) {
+                  console.error('[FinalResultDisplay] Error rendering dose text:', error);
+                  return "Draw up the required dose";
+                }
+              })()}
             </Text>
             <Text style={styles.instructionNote}>
               ({safeManualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
             </Text>
-            {safeCalculatedVolume !== null && (
+            {typeof safeCalculatedVolume === 'number' && isFinite(safeCalculatedVolume) && (
               <Text style={styles.instructionNote}>
                 (Exact calculated volume: {safeCalculatedVolume.toFixed(2)} ml)
               </Text>
             )}
-            {safeCalculatedConcentration !== null && (
+            {typeof safeCalculatedConcentration === 'number' && isFinite(safeCalculatedConcentration) && (
               <Text style={styles.instructionNote}>
                 (Calculated concentration: {safeCalculatedConcentration.toFixed(2)} {safeConcentrationUnit || 'mg/mL'})
               </Text>
@@ -166,19 +205,39 @@ export default function FinalResultDisplay({
             )}
             <View style={styles.illustrationContainer}>
               <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
-              {/* Safely wrap SyringeIllustration to prevent rendering errors */}
+              {/* Safely wrap SyringeIllustration with enhanced error handling */}
               <React.Fragment>
-                {safeManualSyringe && syringeOptions && syringeOptions[safeManualSyringe.type] && 
-                 syringeOptions[safeManualSyringe.type][safeManualSyringe.volume] ? (
-                  <SyringeIllustration
-                    syringeType={safeManualSyringe.type}
-                    syringeVolume={safeManualSyringe.volume}
-                    recommendedMarking={safeRecommendedMarking}
-                    syringeOptions={syringeOptions}
-                  />
-                ) : (
-                  <Text style={styles.errorText}>Unable to display syringe illustration</Text>
-                )}
+                {(() => {
+                  try {
+                    // Double-check we have valid syringe options before attempting to render
+                    const hasSyringeOptions = !!(syringeOptions && 
+                      safeManualSyringe && 
+                      safeManualSyringe.type && 
+                      safeManualSyringe.volume &&
+                      syringeOptions[safeManualSyringe.type] &&
+                      syringeOptions[safeManualSyringe.type][safeManualSyringe.volume]);
+                      
+                    if (!hasSyringeOptions) {
+                      console.warn('[FinalResultDisplay] Missing syringe details:', {
+                        hasSyringeOptions: !!syringeOptions,
+                        syringe: safeManualSyringe ? JSON.stringify(safeManualSyringe) : null
+                      });
+                      return <Text style={styles.errorText}>Unable to display syringe illustration: missing data</Text>;
+                    }
+                    
+                    return (
+                      <SyringeIllustration
+                        syringeType={safeManualSyringe.type}
+                        syringeVolume={safeManualSyringe.volume}
+                        recommendedMarking={safeRecommendedMarking}
+                        syringeOptions={syringeOptions}
+                      />
+                    );
+                  } catch (error) {
+                    console.error('[FinalResultDisplay] Error rendering syringe illustration:', error);
+                    return <Text style={styles.errorText}>Unable to display syringe illustration: rendering error</Text>;
+                  }
+                })()}
               </React.Fragment>
             </View>
           </View>
