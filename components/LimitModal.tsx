@@ -45,7 +45,7 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You’ve used all 5 free scans. Sign in to get 15 scans per month or upgrade for more.'
+              ? 'You’ve used all 3 free scans. Sign in to get 10 scans per month or upgrade for more.'
               : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
           </Text>
           <View style={styles.buttonContainer}>
