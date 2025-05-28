@@ -1,16 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
+import Constants from 'expo-constants';
+
+// Base URL for API
+const API_BASE_URL = "https://app.safedoseai.com";
 
 export default function SuccessScreen() {
+  const { session_id } = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState<boolean>(false);
 
   useEffect(() => {
-    const updateUserPlan = async () => {
+    const validatePaymentAndUpdatePlan = async () => {
+      // Redirect if no session_id is provided
+      if (!session_id) {
+        console.log('[SuccessScreen] No session_id provided, redirecting to home');
+        router.replace('/(tabs)/new-dose');
+        return;
+      }
+
       try {
+        // Call our API to validate the payment session
+        const response = await fetch(`${API_BASE_URL}/api/validate-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ session_id }),
+        });
+
+        const data = await response.json();
+        
+        // Check if the response indicates a valid payment
+        if (!response.ok || !data.isValid) {
+          console.log('[SuccessScreen] Invalid session or payment not completed, redirecting to home');
+          router.replace('/(tabs)/new-dose');
+          return;
+        }
+        
+        // Payment is valid, mark as valid
+        setIsValid(true);
+        
+        // Update user plan in Firestore since payment is confirmed
         const auth = getAuth();
         const user = auth.currentUser;
         if (user) {
@@ -21,16 +56,23 @@ export default function SuccessScreen() {
           throw new Error('No authenticated user found');
         }
       } catch (err) {
-        console.error('[SuccessScreen] Error updating user plan:', err);
-        setError('Failed to update your plan. Please try again.');
+        console.error('[SuccessScreen] Error validating payment or updating user:', err);
+        setError('Failed to process your upgrade. Please try again.');
+        router.replace('/(tabs)/new-dose');
       }
     };
-    updateUserPlan();
-  }, []);
+    
+    validatePaymentAndUpdatePlan();
+  }, [session_id]);
 
   const handleContinue = () => {
     router.push('/(tabs)/new-dose');
   };
+  
+  // Show nothing while validating or redirecting
+  if (!isValid) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
