@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info } from 'lucide-react-native';
+import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
@@ -109,14 +109,51 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
-      <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
+      {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
+      <View style={styles.profileButtonContainer}>
+        <TouchableOpacity 
+          style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+          onPress={user?.isAnonymous ? handleSignInPress : handleLogoutPress}>
+          <User color={user?.isAnonymous ? '#10b981' : '#ef4444'} size={18} />
+          <Text style={styles.profileText}>
+            {user?.isAnonymous 
+              ? 'Profile' 
+              : user.email ? user.email.split('@')[0] : 'Profile'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* App icon and welcome message */}
+      <View style={styles.welcomeContainer}>
+        <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
+        
+        {/* Dynamic welcome message based on authentication status */}
+        {user && !user.isAnonymous && user.displayName ? (
+          <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
+        ) : (
+          <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
+        )}
+      </View>
       
-      {/* Dynamic welcome message based on authentication status */}
-      {user && !user.isAnonymous && user.displayName ? (
-        <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
-      ) : (
-        <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-      )}
+      {/* Main action buttons grouped together (Law of Proximity) */}
+      <View style={styles.actionButtonsContainer}>
+        {/* Primary action */}
+        <TouchableOpacity 
+          style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
+          onPress={handleScanPress}>
+          <CameraIcon color={'#fff'} size={20} />
+          <Text style={styles.buttonText}>Scan Items</Text>
+        </TouchableOpacity>
+        
+        {/* Secondary action */}
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
+          onPress={handleManualEntryPress}
+        >
+          <Pill color={'#fff'} size={20} />
+          <Text style={styles.buttonText}>Enter Details Manually</Text>
+        </TouchableOpacity>
+      </View>
       
       {/* Disclaimer with Info icon */}
       <View style={styles.disclaimerContainer}>
@@ -128,47 +165,16 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         </View>
       </View>
       
-      {/* Authentication button - consistent position regardless of auth state */}
-      {user?.isAnonymous ? (
-        <TouchableOpacity 
-          style={[styles.button, styles.signInButton, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleSignInPress}>
-          <LogIn color={'#fff'} size={20} />
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity 
-          style={[styles.button, styles.logoutButton, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleLogoutPress}>
-          <LogOut color={'#fff'} size={20} />
-          <Text style={styles.buttonText}>Sign Out</Text>
-        </TouchableOpacity>
-      )}
-      
-      {/* Main action buttons */}
-      <TouchableOpacity 
-        style={[styles.button, isMobileWeb && styles.buttonMobile]} 
-        onPress={handleScanPress}>
-        <CameraIcon color={'#fff'} size={20} />
-        <Text style={styles.buttonText}>Scan Items</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[styles.button, styles.manualButton, isMobileWeb && styles.buttonMobile]}
-        onPress={handleManualEntryPress}
-      >
-        <Pill color={'#fff'} size={20} />
-        <Text style={styles.buttonText}>Enter Details Manually</Text>
-      </TouchableOpacity>
-      
-      {/* Upgrade plan button - moved below main actions and only shown for anonymous users */}
+      {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
       {user?.isAnonymous && (
-        <TouchableOpacity 
-          style={[styles.button, styles.upgradeButton, styles.upgradeButtonSmaller, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleUpgradePress}>
-          <CreditCard color={'#fff'} size={18} />
-          <Text style={styles.buttonText}>Upgrade Plan</Text>
-        </TouchableOpacity>
+        <View style={styles.upgradeContainer}>
+          <TouchableOpacity 
+            style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+            onPress={handleUpgradePress}>
+            <CreditCard color={'#f59e0b'} size={16} />
+            <Text style={styles.upgradeText}>Upgrade</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </Animated.View>
   );
@@ -177,82 +183,144 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 const styles = StyleSheet.create({
   content: { 
     flex: 1, 
-    alignItems: 'center', 
+    alignItems: 'center',
     justifyContent: 'center', 
-    gap: 16, // More consistent spacing between buttons
-    padding: 20, 
-    paddingTop: 10, // Reduced top padding to bring content closer to center
+    padding: 16,
+    position: 'relative', // To support absolute positioning of profile button
+  },
+  // Profile button styles (Fitts's Law)
+  profileButtonContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10, // Ensure it's above other elements
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20, // Pill shape
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  profileButtonMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  profileText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
+    color: '#334155',
+  },
+  // Welcome section
+  welcomeContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   icon: { 
-    marginBottom: 12, // Reduced margin to bring content closer together
+    marginBottom: 12,
   },
   text: { 
-    fontSize: 16, 
+    fontSize: 18,
+    fontWeight: '600',
     color: '#000000', 
     textAlign: 'center', 
     paddingHorizontal: 16,
-    marginBottom: 4, // Add some space after the text
   },
+  // Action buttons group (Law of Proximity)
+  actionButtonsContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  button: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 10,
+    width: '80%',
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  buttonMobile: { 
+    paddingVertical: 16, 
+    paddingHorizontal: 28, 
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF', 
+  },
+  secondaryButton: {
+    backgroundColor: '#6366f1',
+  },
+  buttonText: { 
+    color: '#ffffff', 
+    fontSize: 16, 
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Disclaimer styles
   disclaimerContainer: { 
     backgroundColor: '#FFF3CD', 
-    padding: 10, // Slightly reduced padding
+    padding: 12,
     borderRadius: 8, 
-    marginVertical: 8, 
+    marginBottom: 16,
     width: '90%', 
-    alignSelf: 'center',
+    maxWidth: 500,
   },
   disclaimerIconContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   disclaimerIcon: {
-    marginRight: 6,
-    marginTop: 2,
+    marginRight: 8,
+    marginTop: 3,
   },
   disclaimerText: { 
-    fontSize: 11, // Slightly reduced font size
+    fontSize: 11, 
     color: '#856404', 
-    textAlign: 'left', // Left-aligned for better readability with the icon
+    textAlign: 'left',
     fontStyle: 'italic',
     flex: 1,
   },
-  button: { 
-    backgroundColor: '#007AFF', 
-    paddingVertical: 14, 
-    paddingHorizontal: 28, 
-    borderRadius: 10, // Consistent border radius
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 10, // Consistent spacing between icon and text
-    width: '80%', 
-    minHeight: 50 
+  // Upgrade section (Law of Visual Hierarchy)
+  upgradeContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center',
   },
-  buttonMobile: { 
-    paddingVertical: 16, 
-    paddingHorizontal: 32, 
-    minHeight: 60 
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
   },
-  manualButton: { 
-    backgroundColor: '#6366f1' 
+  upgradeButtonMobile: {
+    paddingVertical: 9,
+    paddingHorizontal: 18,
   },
-  signInButton: { 
-    backgroundColor: '#10b981' // Green color for sign in
-  },
-  upgradeButton: { 
-    backgroundColor: '#f59e0b' // Amber color for upgrade
-  },
-  upgradeButtonSmaller: {
-    width: '70%', // Smaller width for less prominence
-    minHeight: 45, // Slightly smaller height
-  },
-  logoutButton: { 
-    backgroundColor: '#ef4444' // Red color for logout
-  },
-  buttonText: { 
-    color: '#f8fafc', 
-    fontSize: 16, 
-    fontWeight: '600', // Slightly increased font weight for better visibility
-    textAlign: 'center' 
+  upgradeText: {
+    color: '#f59e0b',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
   },
 });
