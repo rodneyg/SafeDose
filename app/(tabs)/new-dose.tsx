@@ -11,9 +11,11 @@ import ManualEntryScreen from '../../components/ManualEntryScreen';
 import LimitModal from '../../components/LimitModal';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 
 export default function NewDoseScreen() {
+  const { user } = useAuth();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -441,7 +443,7 @@ export default function NewDoseScreen() {
       )}
       <LimitModal
         visible={showLimitModal}
-        isAnonymous={true}
+        isAnonymous={user?.isAnonymous ?? true}
         onClose={() => setShowLimitModal(false)}
       />
       {isProcessing && (
