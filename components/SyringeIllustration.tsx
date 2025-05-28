@@ -13,7 +13,8 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     syringeType,
     syringeVolume,
     recommendedMarking,
-    hasOptions: !!syringeOptions
+    hasOptions: !!syringeOptions,
+    availableTypes: syringeOptions ? Object.keys(syringeOptions) : []
   });
 
   try {
@@ -33,29 +34,111 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
 
     const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
     
-    // Safely access markings with defensive checks at each level
-    const typeMappings = syringeOptions[syringeType];
+    // Dump complete syringeOptions for debugging
+    console.log('[SyringeIllustration] Available syringeOptions:', 
+      JSON.stringify(syringeOptions, null, 2));
+    
+    // Try to find the markings with more flexible matching
+    let typeMappings = syringeOptions[syringeType];
+    let markingsString = null;
+    
     if (!typeMappings) {
-      console.error(`[SyringeIllustration] No options found for syringe type: ${syringeType}`);
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>No markings found for {syringeType} type</Text>
-        </View>
+      console.error(`[SyringeIllustration] No options found for syringe type: ${syringeType}. Available types:`, 
+        Object.keys(syringeOptions));
+      
+      // Try case-insensitive match as fallback
+      const caseInsensitiveMatch = Object.keys(syringeOptions).find(
+        key => key.toLowerCase() === syringeType.toLowerCase()
       );
+      
+      if (caseInsensitiveMatch) {
+        console.log(`[SyringeIllustration] Found case-insensitive match for type: ${caseInsensitiveMatch}`);
+        typeMappings = syringeOptions[caseInsensitiveMatch];
+      } else {
+        return (
+          <View style={styles.container}>
+            <View style={styles.syringeBody} />
+            <View style={styles.syringeLine} />
+            <Text style={styles.noMarkingsText}>No markings found for {syringeType} type</Text>
+          </View>
+        );
+      }
     }
     
-    const markingsString = typeMappings[syringeVolume];
+    // Now try to get markings from the typeMappings
+    if (typeMappings) {
+      // First try direct match
+      markingsString = typeMappings[syringeVolume];
+      
+      // If no direct match, try with normalized volume string (handle spacing differences)
+      if (!markingsString) {
+        const normalizedVolume = syringeVolume.replace(/\s+/g, ' ').trim();
+        console.log(`[SyringeIllustration] Trying normalized volume: "${normalizedVolume}"`);
+        
+        // Try different volume formats (with/without spaces)
+        const volumeVariations = [
+          normalizedVolume,
+          normalizedVolume.replace(' ', ''),
+          normalizedVolume.replace('ml', ' ml'),
+          normalizedVolume.replace('mL', ' mL')
+        ];
+        
+        for (const volumeVar of volumeVariations) {
+          if (typeMappings[volumeVar]) {
+            markingsString = typeMappings[volumeVar];
+            console.log(`[SyringeIllustration] Found markings with alternative format: ${volumeVar}`);
+            break;
+          }
+        }
+      }
+      
+      // If still not found, try pattern match based on the numeric part
+      if (!markingsString) {
+        console.log(`[SyringeIllustration] Trying numeric match for volume: ${syringeVolume}`);
+        const numericVolume = parseFloat(syringeVolume);
+        
+        if (!isNaN(numericVolume)) {
+          // Find a key in typeMappings that starts with this number
+          const volumeKey = Object.keys(typeMappings).find(key => {
+            const keyNumber = parseFloat(key);
+            return !isNaN(keyNumber) && Math.abs(keyNumber - numericVolume) < 0.01;
+          });
+          
+          if (volumeKey) {
+            markingsString = typeMappings[volumeKey];
+            console.log(`[SyringeIllustration] Found numeric match: ${volumeKey}`);
+          }
+        }
+      }
+    }
+    
+    // If we still don't have markings, use default fallback markings
     if (!markingsString) {
-      console.error(`[SyringeIllustration] No markings for ${syringeType} ${syringeVolume}`);
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>No markings available for {syringeVolume} syringe</Text>
-        </View>
-      );
+      console.warn(`[SyringeIllustration] No markings for ${syringeType} ${syringeVolume}`);
+      console.log('[SyringeIllustration] Available volumes:', typeMappings ? Object.keys(typeMappings) : 'none');
+      
+      // Generate default fallback markings based on the volume
+      const numericVolume = parseFloat(syringeVolume);
+      if (!isNaN(numericVolume) && numericVolume > 0) {
+        // Generate simple markings: divide the volume into 5 or 10 equal parts
+        const divisions = numericVolume <= 1 ? 10 : 5;
+        const increment = numericVolume / divisions;
+        const fallbackMarkings = Array.from(
+          { length: divisions }, 
+          (_, i) => ((i + 1) * increment).toFixed(1)
+        );
+        
+        markingsString = fallbackMarkings.join(',');
+        console.log(`[SyringeIllustration] Using fallback markings: ${markingsString}`);
+      } else {
+        return (
+          <View style={styles.container}>
+            <View style={styles.syringeBody} />
+            <View style={styles.syringeLine} />
+            <Text style={styles.noMarkingsText}>No markings available for {syringeVolume} syringe</Text>
+          </View>
+        );
+      }
     }
     
     // Safe conversion of markings array with explicit error handling
@@ -84,13 +167,24 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
     // Check for empty markings array after filtering
     if (markings.length <= 1) { // only has the 0 we added
       console.error('[SyringeIllustration] No valid markings found after filtering');
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>No valid markings found for this syringe</Text>
-        </View>
-      );
+      
+      // Generate simple fallback markings if none are valid
+      const numericVolume = parseFloat(syringeVolume);
+      if (!isNaN(numericVolume) && numericVolume > 0) {
+        // Generate equal divisions from 0 to max volume
+        for (let i = 1; i <= 5; i++) {
+          markings.push((i * numericVolume / 5));
+        }
+        console.log(`[SyringeIllustration] Created fallback markings: ${JSON.stringify(markings)}`);
+      } else {
+        return (
+          <View style={styles.container}>
+            <View style={styles.syringeBody} />
+            <View style={styles.syringeLine} />
+            <Text style={styles.noMarkingsText}>No valid markings found for this syringe</Text>
+          </View>
+        );
+      }
     }
     
     // Safely find maximum marking with explicit error handling
@@ -102,13 +196,21 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
       }
     } catch (error) {
       console.error('[SyringeIllustration] Error calculating max marking:', error);
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>Invalid markings data for this syringe</Text>
-        </View>
-      );
+      
+      // Try to recover by using the syringe volume as max marking
+      const volumeAsNumber = parseFloat(syringeVolume);
+      if (!isNaN(volumeAsNumber) && volumeAsNumber > 0) {
+        maxMarking = volumeAsNumber;
+        console.log(`[SyringeIllustration] Using syringe volume as max marking: ${maxMarking}`);
+      } else {
+        return (
+          <View style={styles.container}>
+            <View style={styles.syringeBody} />
+            <View style={styles.syringeLine} />
+            <Text style={styles.noMarkingsText}>Invalid markings data for this syringe</Text>
+          </View>
+        );
+      }
     }
     
     // Calculate positions for markings - with safety checks
