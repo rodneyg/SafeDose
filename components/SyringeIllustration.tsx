@@ -9,6 +9,40 @@ type Props = {
 };
 
 export default function SyringeIllustration({ syringeType, syringeVolume, recommendedMarking, syringeOptions }: Props) {
+  // Insert the exact validation patch requested by @rodneyg
+  if (
+    !syringeType ||
+    !syringeVolume ||
+    !syringeOptions[syringeType] ||
+    !syringeOptions[syringeType][syringeVolume]
+  ) {
+    console.warn("Syringe configuration not found:", { 
+      syringeType, 
+      syringeVolume, 
+      hasOptions: !!syringeOptions,
+      availableTypes: syringeOptions ? Object.keys(syringeOptions) : []
+    });
+    return (
+      <View style={styles.container}>
+        <Text style={styles.noMarkingsText}>⚠️ Invalid syringe configuration. Cannot render illustration.</Text>
+      </View>
+    );
+  }
+
+  const markings = syringeOptions[syringeType][syringeVolume].split(',') || [];
+
+  if (recommendedMarking && !markings.includes(recommendedMarking)) {
+    console.warn("Recommended marking not found in markings:", {
+      recommendedMarking,
+      markings,
+    });
+    return (
+      <View style={styles.container}>
+        <Text style={styles.noMarkingsText}>⚠️ Marking not supported for selected syringe.</Text>
+      </View>
+    );
+  }
+
   console.log('[SyringeIllustration] Rendering with:', {
     syringeType,
     syringeVolume,
@@ -18,293 +52,71 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
   });
 
   try {
-    // Apply the exact patch requested by @rodneyg
-    const syringeKey = syringeType;
-    if (!syringeType || !syringeOptions[syringeKey]) {
-      console.warn("Missing or invalid syringe data", { syringe: syringeType, syringeKey });
-      return (
-        <View style={styles.container}>
-          <Text style={styles.noMarkingsText}>Cannot render syringe — configuration not found.</Text>
-        </View>
-      );
-    }
-
-    const markings = syringeOptions[syringeKey][syringeVolume]?.split(',') || [];
-    if (recommendedMarking && !markings.includes(recommendedMarking)) {
-      console.warn("Marking not in syringe markings", { recommendedMarking, markings });
-      return (
-        <View style={styles.container}>
-          <Text style={styles.noMarkingsText}>Cannot render — invalid marking for selected syringe.</Text>
-        </View>
-      );
-    }
-
-    // Safety check for props
-    if (!syringeType || !syringeVolume || !syringeOptions) {
-      console.error('[SyringeIllustration] Missing required props:', {
-        syringeType, syringeVolume, hasOptions: !!syringeOptions
-      });
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>Missing syringe information</Text>
-        </View>
-      );
-    }
 
     const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
     
-    // Dump complete syringeOptions for debugging
-    console.log('[SyringeIllustration] Available syringeOptions:', 
-      JSON.stringify(syringeOptions, null, 2));
+    // Get markings from syringeOptions - this is guaranteed to exist due to validation above
+    const markingsString = syringeOptions[syringeType][syringeVolume];
     
-    // Try to find the markings with more flexible matching
-    let typeMappings = syringeOptions?.[syringeType] || null;
-    let markingsString = null;
+    // Parse markings array - guaranteed to be valid due to validation above
+    const markingsArray: number[] = markingsString.split(',').map(m => {
+      const parsed = parseFloat(m.trim());
+      return isNaN(parsed) ? 0 : parsed;
+    });
     
-    if (!typeMappings) {
-      console.error(`[SyringeIllustration] No options found for syringe type: ${syringeType}. Available types:`, 
-        Object.keys(syringeOptions || {}));
-      
-      // Try case-insensitive match as fallback
-      const caseInsensitiveMatch = Object.keys(syringeOptions || {}).find(
-        key => key.toLowerCase() === syringeType.toLowerCase()
-      );
-      
-      if (caseInsensitiveMatch) {
-        console.log(`[SyringeIllustration] Found case-insensitive match for type: ${caseInsensitiveMatch}`);
-        typeMappings = syringeOptions[caseInsensitiveMatch];
-      } else {
-        return (
-          <View style={styles.container}>
-            <View style={styles.syringeBody} />
-            <View style={styles.syringeLine} />
-            <Text style={styles.noMarkingsText}>No markings found for {syringeType} type</Text>
-          </View>
-        );
-      }
-    }
-    
-    // Now try to get markings from the typeMappings
-    if (typeMappings) {
-      // First try direct match
-      markingsString = typeMappings[syringeVolume];
-      
-      // If no direct match, try with normalized volume string (handle spacing differences)
-      if (!markingsString) {
-        const normalizedVolume = syringeVolume.replace(/\s+/g, ' ').trim();
-        console.log(`[SyringeIllustration] Trying normalized volume: "${normalizedVolume}"`);
-        
-        // Try different volume formats (with/without spaces)
-        const volumeVariations = [
-          normalizedVolume,
-          normalizedVolume.replace(' ', ''),
-          normalizedVolume.replace('ml', ' ml'),
-          normalizedVolume.replace('mL', ' mL')
-        ];
-        
-        for (const volumeVar of volumeVariations) {
-          if (typeMappings?.[volumeVar]) {
-            markingsString = typeMappings[volumeVar];
-            console.log(`[SyringeIllustration] Found markings with alternative format: ${volumeVar}`);
-            break;
-          }
-        }
-      }
-      
-      // If still not found, try pattern match based on the numeric part
-      if (!markingsString) {
-        console.log(`[SyringeIllustration] Trying numeric match for volume: ${syringeVolume}`);
-        const numericVolume = parseFloat(syringeVolume);
-        
-        if (!isNaN(numericVolume)) {
-          // Find a key in typeMappings that starts with this number
-          const volumeKey = Object.keys(typeMappings).find(key => {
-            const keyNumber = parseFloat(key);
-            return !isNaN(keyNumber) && Math.abs(keyNumber - numericVolume) < 0.01;
-          });
-          
-          if (volumeKey && typeMappings?.[volumeKey]) {
-            markingsString = typeMappings[volumeKey];
-            console.log(`[SyringeIllustration] Found numeric match: ${volumeKey}`);
-          }
-        }
-      }
-    }
-    
-    // If we still don't have markings, use default fallback markings
-    if (!markingsString) {
-      console.warn(`[SyringeIllustration] No markings for ${syringeType} ${syringeVolume}`);
-      console.log('[SyringeIllustration] Available volumes:', typeMappings ? Object.keys(typeMappings) : 'none');
-      
-      // Generate default fallback markings based on the volume
-      const numericVolume = parseFloat(syringeVolume);
-      if (!isNaN(numericVolume) && numericVolume > 0) {
-        // Generate simple markings: divide the volume into 5 or 10 equal parts
-        const divisions = numericVolume <= 1 ? 10 : 5;
-        const increment = numericVolume / divisions;
-        const fallbackMarkings = Array.from(
-          { length: divisions }, 
-          (_, i) => ((i + 1) * increment).toFixed(1)
-        );
-        
-        markingsString = fallbackMarkings.join(',');
-        console.log(`[SyringeIllustration] Using fallback markings: ${markingsString}`);
-      } else {
-        return (
-          <View style={styles.container}>
-            <View style={styles.syringeBody} />
-            <View style={styles.syringeLine} />
-            <Text style={styles.noMarkingsText}>No markings available for {syringeVolume} syringe</Text>
-          </View>
-        );
-      }
-    }
-    
-    // Safe conversion of markings array with explicit error handling
-    let markingsArray: number[] = [];
-    try {
-      markingsArray = markingsString.split(',').map(m => {
-        const parsed = parseFloat(m.trim());
-        return isNaN(parsed) ? 0 : parsed;
-      });
-      console.log(`[SyringeIllustration] Parsed markings: ${JSON.stringify(markingsArray)}`);
-    } catch (error) {
-      console.error('[SyringeIllustration] Error parsing markings:', error);
-      return (
-        <View style={styles.container}>
-          <View style={styles.syringeBody} />
-          <View style={styles.syringeLine} />
-          <Text style={styles.noMarkingsText}>Error parsing syringe markings</Text>
-        </View>
-      );
-    }
-    
-    // Filter out invalid values and ensure we have at least one valid marking
     // Always include 0 as a baseline marking
     const filteredMarkings = [0, ...markingsArray.filter(m => !isNaN(m) && isFinite(m))];
     
-    // Check for empty markings array after filtering
-    if (filteredMarkings.length <= 1) { // only has the 0 we added
-      console.error('[SyringeIllustration] No valid markings found after filtering');
-      
-      // Generate simple fallback markings if none are valid
-      const numericVolume = parseFloat(syringeVolume);
-      if (!isNaN(numericVolume) && numericVolume > 0) {
-        // Generate equal divisions from 0 to max volume
-        for (let i = 1; i <= 5; i++) {
-          filteredMarkings.push((i * numericVolume / 5));
-        }
-        console.log(`[SyringeIllustration] Created fallback markings: ${JSON.stringify(filteredMarkings)}`);
-      } else {
-        return (
-          <View style={styles.container}>
-            <View style={styles.syringeBody} />
-            <View style={styles.syringeLine} />
-            <Text style={styles.noMarkingsText}>No valid markings found for this syringe</Text>
-          </View>
-        );
-      }
-    }
+    // Calculate maximum marking
+    const maxMarking = Math.max(...filteredMarkings);
     
-    // Safely find maximum marking with explicit error handling
-    let maxMarking = 0;
-    try {
-      maxMarking = Math.max(...filteredMarkings);
-      if (maxMarking <= 0 || !isFinite(maxMarking)) {
-        throw new Error(`Invalid max marking: ${maxMarking}`);
-      }
-    } catch (error) {
-      console.error('[SyringeIllustration] Error calculating max marking:', error);
-      
-      // Try to recover by using the syringe volume as max marking
-      const volumeAsNumber = parseFloat(syringeVolume);
-      if (!isNaN(volumeAsNumber) && volumeAsNumber > 0) {
-        maxMarking = volumeAsNumber;
-        console.log(`[SyringeIllustration] Using syringe volume as max marking: ${maxMarking}`);
-      } else {
-        return (
-          <View style={styles.container}>
-            <View style={styles.syringeBody} />
-            <View style={styles.syringeLine} />
-            <Text style={styles.noMarkingsText}>Invalid markings data for this syringe</Text>
-          </View>
-        );
-      }
-    }
-    
-    // Calculate positions for markings - with safety checks
+    // Calculate positions for markings
     const syringeWidth = 300;
-    const markingPositions = filteredMarkings.map(m => {
-      // Ensure position is valid, defaulting to 0 if calculation fails
-      try {
-        const position = (m / maxMarking) * syringeWidth;
-        return isNaN(position) || !isFinite(position) ? 0 : position;
-      } catch (e) {
-        console.error(`[SyringeIllustration] Error calculating position for marking ${m}:`, e);
-        return 0;
-      }
-    });
+    const markingPositions = filteredMarkings.map(m => (m / maxMarking) * syringeWidth);
     
-    // Safe parsing of recommended marking with comprehensive error handling
-    let recommendedValue = 0;
+    // Calculate recommended marking position
     let recommendedPosition = 0;
     let showRecommendation = false;
     
     if (recommendedMarking !== null && recommendedMarking !== undefined) {
-      try {
-        // Handle both string and number types for recommendedMarking
-        recommendedValue = typeof recommendedMarking === 'number' 
-          ? recommendedMarking 
-          : parseFloat(recommendedMarking);
-          
-        // Validate the parsed value
-        if (!isNaN(recommendedValue) && isFinite(recommendedValue) && recommendedValue > 0) {
-          recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
-          showRecommendation = true;
-          console.log(`[SyringeIllustration] Valid recommended marking: ${recommendedValue}, position: ${recommendedPosition}`);
-        } else {
-          console.warn(`[SyringeIllustration] Invalid recommended marking: ${recommendedMarking} -> ${recommendedValue}`);
-        }
-      } catch (error) {
-        console.error(`[SyringeIllustration] Error processing recommendedMarking: ${recommendedMarking}`, error);
-        showRecommendation = false;
+      const recommendedValue = typeof recommendedMarking === 'number' 
+        ? recommendedMarking 
+        : parseFloat(recommendedMarking);
+        
+      if (!isNaN(recommendedValue) && isFinite(recommendedValue) && recommendedValue > 0) {
+        recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
+        showRecommendation = true;
       }
     }
 
-    // Render the syringe with all safety guards in place
+    // Render the syringe
     return (
       <View style={styles.container}>
         <View style={styles.syringeBody} />
         <View style={styles.syringeLine} />
         
-        {/* Only render markings if positions array has valid values */}
-        {filteredMarkings.length > 0 && markingPositions.length === filteredMarkings.length && 
-          filteredMarkings.map((m, index) => (
-            <View 
-              key={`mark-${m}-${index}`} 
-              style={[styles.marking, { left: markingPositions[index] }]} 
-            />
-          ))
-        }
+        {/* Render markings */}
+        {filteredMarkings.map((m, index) => (
+          <View 
+            key={`mark-${m}-${index}`} 
+            style={[styles.marking, { left: markingPositions[index] }]} 
+          />
+        ))}
         
-        {/* Only render labels if positions array has valid values */}
-        {filteredMarkings.length > 0 && markingPositions.length === filteredMarkings.length && 
-          filteredMarkings.map((m, index) => (
-            <Text 
-              key={`label-${m}-${index}`} 
-              style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}
-            >
-              {m}
-            </Text>
-          ))
-        }
+        {/* Render labels */}
+        {filteredMarkings.map((m, index) => (
+          <Text 
+            key={`label-${m}-${index}`} 
+            style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}
+          >
+            {m}
+          </Text>
+        ))}
         
         <Text style={styles.unitLabel}>{unit}</Text>
         
-        {/* Only render recommendation if all values are valid */}
-        {showRecommendation && recommendedPosition > 0 && isFinite(recommendedPosition) && (
+        {/* Render recommendation if valid */}
+        {showRecommendation && (
           <>
             <View style={[styles.recommendedMark, { left: recommendedPosition - 2 }]} />
             <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 30) }]}>
