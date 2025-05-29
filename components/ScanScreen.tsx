@@ -74,6 +74,19 @@ export default function ScanScreen({
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
+  const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
+
+  // Debug component mount and initial state
+  useEffect(() => {
+    console.log('[ScanScreen] Component mounted', {
+      isMobileWeb,
+      platformOS: Platform.OS,
+      permissionStatus,
+      hasPermission: !!permission,
+      permissionStatusFromProp: permission?.status,
+      cameraFacing
+    });
+  }, []);
 
   // Connect video element to stream for web camera
   useEffect(() => {
@@ -238,12 +251,14 @@ export default function ScanScreen({
     status: permission.status, 
     permission,
     isMobileWeb,
-    platformOS: Platform.OS
+    platformOS: Platform.OS,
+    isPermissionGranted: permission.status === 'granted',
+    canShowCamera: permission.status === 'granted' && !isMobileWeb
   });
 
   if (permission.status === 'granted') {
     console.log('[ScanScreen] Rendering camera view', { 
-      facing: 'back', 
+      facing: cameraFacing, 
       flashMode, 
       isMobileWeb, 
       platformOS: Platform.OS,
@@ -254,9 +269,10 @@ export default function ScanScreen({
         <CameraView 
           ref={cameraRef} 
           style={StyleSheet.absoluteFill} 
-          facing="back" 
+          facing={cameraFacing} 
           flash={flashMode}
-          onCameraReady={() => console.log('[ScanScreen] Camera ready with back facing')}
+          onCameraReady={() => console.log('[ScanScreen] Camera ready with facing:', cameraFacing)}
+          mode="picture"
         />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}

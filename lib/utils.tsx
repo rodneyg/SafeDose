@@ -6,6 +6,16 @@ export const isMobileDevice = userAgent ? /Android|iPhone|iPad/i.test(userAgent)
 // More precise mobile web detection: only consider it mobile web if it's actually running in a web browser
 export const isMobileWeb = isWeb && Platform.OS === 'web' && isMobileDevice;
 
+// Debug logging for platform detection
+console.log('[Utils] Platform detection', {
+  isWeb,
+  userAgent,
+  isMobileDevice,
+  platformOS: Platform.OS,
+  isMobileWeb,
+  calculation: `${isWeb} && ${Platform.OS === 'web'} && ${isMobileDevice} = ${isMobileWeb}`
+});
+
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export const syringeOptions = {
