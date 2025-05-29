@@ -138,6 +138,7 @@ export default function NewDoseScreen() {
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
   const [webFlashlightEnabled, setWebFlashlightEnabled] = useState(false);
+  const [webFlashlightSupported, setWebFlashlightSupported] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
 
@@ -377,6 +378,15 @@ export default function NewDoseScreen() {
       
       // Store the stream for later use instead of stopping it
       webCameraStreamRef.current = stream;
+      
+      // Check if torch is supported
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities();
+        const torchSupported = !!capabilities.torch;
+        setWebFlashlightSupported(torchSupported);
+        console.log("[WebCamera] Torch support:", torchSupported);
+      }
     } catch (error) {
       console.error("[WebCamera] Error requesting camera permission:", error);
       
@@ -525,6 +535,7 @@ export default function NewDoseScreen() {
           handleGoHome={handleGoHome}
           onCapture={handleScanAttempt}
           webFlashlightEnabled={webFlashlightEnabled}
+          webFlashlightSupported={webFlashlightSupported}
           toggleWebFlashlight={toggleWebFlashlight}
         />
       )}

@@ -33,6 +33,7 @@ interface ScanScreenProps {
   handleGoHome: () => void;
   onCapture: () => void;
   webFlashlightEnabled?: boolean;
+  webFlashlightSupported?: boolean;
   toggleWebFlashlight?: () => void;
 }
 
@@ -65,6 +66,7 @@ export default function ScanScreen({
   handleGoHome,
   onCapture,
   webFlashlightEnabled = false,
+  webFlashlightSupported = false,
   toggleWebFlashlight,
 }: ScanScreenProps) {
   console.log('[ScanScreen] Rendering scan screen', { 
@@ -215,8 +217,8 @@ export default function ScanScreen({
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
           <View style={styles.captureRow}>
-            {/* Flashlight button for mobile web */}
-            {toggleWebFlashlight && (
+            {/* Flashlight button for mobile web - only show if supported */}
+            {toggleWebFlashlight && webFlashlightSupported && (
               <TouchableOpacity
                 style={[styles.flashlightButton, webFlashlightEnabled && styles.flashlightButtonActive]}
                 onPress={toggleWebFlashlight}
@@ -233,7 +235,7 @@ export default function ScanScreen({
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
             {/* Spacer to center the capture button when flashlight is present */}
-            {toggleWebFlashlight && <View style={styles.spacer} />}
+            {toggleWebFlashlight && webFlashlightSupported && <View style={styles.spacer} />}
           </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
