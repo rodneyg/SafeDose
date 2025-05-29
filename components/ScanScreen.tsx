@@ -32,6 +32,8 @@ interface ScanScreenProps {
   requestWebCameraPermission: () => Promise<void>;
   handleGoHome: () => void;
   onCapture: () => void;
+  webFlashlightEnabled?: boolean;
+  toggleWebFlashlight?: () => void;
 }
 
 export default function ScanScreen({
@@ -62,6 +64,8 @@ export default function ScanScreen({
   requestWebCameraPermission,
   handleGoHome,
   onCapture,
+  webFlashlightEnabled = false,
+  toggleWebFlashlight,
 }: ScanScreenProps) {
   console.log('[ScanScreen] Rendering scan screen', { 
     isProcessing, 
@@ -210,13 +214,27 @@ export default function ScanScreen({
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
-          <TouchableOpacity
-            style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={handleButtonPress}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
-          </TouchableOpacity>
+          <View style={styles.captureRow}>
+            {/* Flashlight button for mobile web */}
+            {toggleWebFlashlight && (
+              <TouchableOpacity
+                style={[styles.flashlightButton, webFlashlightEnabled && styles.flashlightButtonActive]}
+                onPress={toggleWebFlashlight}
+                disabled={isProcessing}
+              >
+                <Flashlight color={webFlashlightEnabled ? '#000' : '#fff'} size={20} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.captureButton, isProcessing && styles.disabledButton]}
+              onPress={handleButtonPress}
+              disabled={isProcessing}
+            >
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+            </TouchableOpacity>
+            {/* Spacer to center the capture button when flashlight is present */}
+            {toggleWebFlashlight && <View style={styles.spacer} />}
+          </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
               style={styles.manualEntryButtonScan}
