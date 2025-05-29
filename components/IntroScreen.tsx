@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
     position: 'absolute',
-    top: -50, // Adjusted to provide spacing from header elements like premium badge
+    top: -30, // Adjusted to ensure adequate spacing from header elements like premium badge
     right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
