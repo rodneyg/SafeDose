@@ -63,7 +63,14 @@ export default function ScanScreen({
   handleGoHome,
   onCapture,
 }: ScanScreenProps) {
-  console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied, hasStream: !!webCameraStream });
+  console.log('[ScanScreen] Rendering scan screen', { 
+    isProcessing, 
+    permissionStatus, 
+    mobileWebPermissionDenied, 
+    hasStream: !!webCameraStream,
+    isMobileWeb,
+    platformOS: Platform.OS
+  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
@@ -223,7 +230,12 @@ export default function ScanScreen({
   }
 
   if (permission.status === 'granted') {
-    console.log('[ScanScreen] Rendering camera view');
+    console.log('[ScanScreen] Rendering camera view', { 
+      facing: 'back', 
+      flashMode, 
+      isMobileWeb, 
+      platformOS: Platform.OS 
+    });
     return (
       <View style={styles.scanContainer}>
         <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" flash={flashMode} />
@@ -241,6 +253,11 @@ export default function ScanScreen({
                 <Flashlight color={flashMode === 'on' ? '#000' : '#fff'} size={20} />
               </TouchableOpacity>
             )}
+            {console.log('[ScanScreen] Flashlight button visibility', { 
+              shouldShow: !isMobileWeb, 
+              isMobileWeb, 
+              platformOS: Platform.OS 
+            })}
             <TouchableOpacity
               style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={handleButtonPress}
