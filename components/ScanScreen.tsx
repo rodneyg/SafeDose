@@ -127,7 +127,12 @@ export default function ScanScreen({
   };
 
   const toggleFlashlight = () => {
-    console.log('[ScanScreen] Flashlight toggle pressed', { currentMode: flashMode });
+    console.log('[ScanScreen] Flashlight toggle pressed', { 
+      currentMode: flashMode, 
+      willSwitchTo: flashMode === 'off' ? 'on' : 'off',
+      isMobileWeb,
+      platformOS: Platform.OS
+    });
     setFlashMode(current => current === 'off' ? 'on' : 'off');
   };
 
@@ -220,7 +225,7 @@ export default function ScanScreen({
   }
 
   if (!permission) {
-    console.log('[ScanScreen] Rendering permission loading view');
+    console.log('[ScanScreen] Rendering permission loading view - permission object is null');
     return (
       <View style={styles.content}>
         <ActivityIndicator size="large" color="#000000" />
@@ -229,16 +234,30 @@ export default function ScanScreen({
     );
   }
 
+  console.log('[ScanScreen] Permission object available', { 
+    status: permission.status, 
+    permission,
+    isMobileWeb,
+    platformOS: Platform.OS
+  });
+
   if (permission.status === 'granted') {
     console.log('[ScanScreen] Rendering camera view', { 
       facing: 'back', 
       flashMode, 
       isMobileWeb, 
-      platformOS: Platform.OS 
+      platformOS: Platform.OS,
+      permissionStatus: permission.status
     });
     return (
       <View style={styles.scanContainer}>
-        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" flash={flashMode} />
+        <CameraView 
+          ref={cameraRef} 
+          style={StyleSheet.absoluteFill} 
+          facing="back" 
+          flash={flashMode}
+          onCameraReady={() => console.log('[ScanScreen] Camera ready with back facing')}
+        />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Position syringe & vial clearly</Text>
