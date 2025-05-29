@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X } from 'lucide-react-native';
+import { CameraIcon, Plus, X, Info } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 
@@ -116,9 +116,12 @@ export default function FinalResultDisplay({
         </View>
       )}
       <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerText}>
-          **Medical Disclaimer**: This calculation is for informational purposes only. It is not a substitute for professional medical advice. Verify all doses with a healthcare provider before administration to avoid potential health risks. Incorrect dosing can lead to serious harm.
-        </Text>
+        <View style={styles.disclaimerIconContainer}>
+          <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
+          <Text style={styles.disclaimerText}>
+            **Critical**: Double-check this calculated dose with a healthcare professional before administration. This result is for informational purposes only and should not replace professional medical judgment. Verify all calculations independently to ensure patient safety.
+          </Text>
+        </View>
       </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
@@ -143,8 +146,31 @@ const styles = StyleSheet.create({
   instructionNote: { fontSize: 13, color: '#065F46', textAlign: 'center', marginTop: 4, fontStyle: 'italic' },
   warningText: { fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' },
   illustrationContainer: { marginTop: 20, alignItems: 'center' },
-  disclaimerContainer: { backgroundColor: '#FFF3CD', padding: 12, borderRadius: 8, marginVertical: 10, width: '90%', alignSelf: 'center' },
-  disclaimerText: { fontSize: 12, color: '#856404', textAlign: 'center', fontStyle: 'italic' },
+  disclaimerContainer: { 
+    backgroundColor: '#FFF3CD', 
+    padding: 12, 
+    borderRadius: 8, 
+    marginVertical: 10, 
+    width: '90%', 
+    alignSelf: 'center',
+    borderLeftWidth: 3,
+    borderLeftColor: '#856404',
+  },
+  disclaimerIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  disclaimerIcon: {
+    marginRight: 8,
+    marginTop: 3,
+  },
+  disclaimerText: { 
+    fontSize: 12, 
+    color: '#856404', 
+    textAlign: 'left', 
+    fontStyle: 'italic',
+    flex: 1,
+  },
   buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20, gap: 10 },
   actionButton: { paddingVertical: 14, borderRadius: 8, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginHorizontal: 5, minHeight: 50 },
   actionButtonMobile: { paddingVertical: 16, minHeight: 60 },
