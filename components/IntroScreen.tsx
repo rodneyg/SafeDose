@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
     position: 'absolute',
-    top: -10,
+    top: 0,
     right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
