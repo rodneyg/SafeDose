@@ -95,16 +95,34 @@ export default function PricingPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create checkout session");
+        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
+        
+        // Provide specific error messages for common configuration issues
+        if (errorData.error && errorData.error.includes("publishable API key")) {
+          throw new Error("Payment system configuration error. Please contact support.");
+        } else if (errorData.error && errorData.error.includes("secret key")) {
+          throw new Error("Payment system temporarily unavailable. Please try again later.");
+        } else {
+          throw new Error(errorData.error || "Failed to create checkout session");
+        }
       }
 
       const { sessionId } = await res.json();
       await stripe.redirectToCheckout({ sessionId });
     } catch (error) {
       console.error("Checkout error:", error);
+      
+      // Provide user-friendly error messages
+      let description = "Unable to initiate checkout. Please try again.";
+      if (error.message.includes("configuration error")) {
+        description = "Payment system configuration error. Please contact support - this issue has been logged.";
+      } else if (error.message.includes("temporarily unavailable")) {
+        description = "Payment system temporarily unavailable. Please try again in a few moments.";
+      }
+      
       toast({
         title: "Checkout Error",
-        description: "Unable to initiate checkout. Please try again.",
+        description,
         variant: "destructive",
       });
     }

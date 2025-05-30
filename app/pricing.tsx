@@ -92,10 +92,25 @@ export default function PricingPage() {
 
       if (!res.ok) {
         console.error("Error response from API:", data);
-        setErrorMessage(data.error || "Failed to create checkout session");
+        
+        // Provide specific error messages for common configuration issues
+        let userFriendlyMessage = data.error || "Failed to create checkout session";
+        
+        if (data.error && data.error.includes("publishable API key")) {
+          userFriendlyMessage = "Payment system configuration error. Please contact support - this issue has been logged for immediate attention.";
+          console.error("CRITICAL: Stripe configuration error detected - publishable key used as secret key");
+        } else if (data.error && data.error.includes("secret key")) {
+          userFriendlyMessage = "Payment system temporarily unavailable. Please try again later or contact support.";
+          console.error("CRITICAL: Stripe secret key configuration error");
+        } else if (res.status === 500) {
+          userFriendlyMessage = "Payment system temporarily unavailable. Please try again in a few moments.";
+        }
+        
+        setErrorMessage(userFriendlyMessage);
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
           plan: 'plus', 
-          error: data.error || 'Failed to create checkout session' 
+          error: data.error || 'Failed to create checkout session',
+          userMessage: userFriendlyMessage
         });
         return;
       }
