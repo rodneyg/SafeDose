@@ -1,7 +1,7 @@
-import React, { RefObject, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Camera as CameraIcon } from 'lucide-react-native';
-import { CameraView } from 'expo-camera';
+import React, { RefObject, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { Camera as CameraIcon, Flashlight } from 'lucide-react-native';
+import { CameraView, FlashMode } from 'expo-camera';
 import { isMobileWeb } from '../lib/utils';
 
 interface ScanScreenProps {
@@ -32,6 +32,9 @@ interface ScanScreenProps {
   requestWebCameraPermission: () => Promise<void>;
   handleGoHome: () => void;
   onCapture: () => void;
+  webFlashlightEnabled?: boolean;
+  webFlashlightSupported?: boolean;
+  toggleWebFlashlight?: () => void;
 }
 
 export default function ScanScreen({
@@ -62,10 +65,34 @@ export default function ScanScreen({
   requestWebCameraPermission,
   handleGoHome,
   onCapture,
+  webFlashlightEnabled = false,
+  webFlashlightSupported = false,
+  toggleWebFlashlight,
 }: ScanScreenProps) {
-  console.log('[ScanScreen] Rendering scan screen', { isProcessing, permissionStatus, mobileWebPermissionDenied, hasStream: !!webCameraStream });
+  console.log('[ScanScreen] Rendering scan screen', { 
+    isProcessing, 
+    permissionStatus, 
+    mobileWebPermissionDenied, 
+    hasStream: !!webCameraStream,
+    isMobileWeb,
+    platformOS: Platform.OS
+  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [flashMode, setFlashMode] = useState<FlashMode>('off');
+  const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
+
+  // Debug component mount and initial state
+  useEffect(() => {
+    console.log('[ScanScreen] Component mounted', {
+      isMobileWeb,
+      platformOS: Platform.OS,
+      permissionStatus,
+      hasPermission: !!permission,
+      permissionStatusFromProp: permission?.status,
+      cameraFacing
+    });
+  }, []);
 
   // Connect video element to stream for web camera
   useEffect(() => {
@@ -116,6 +143,16 @@ export default function ScanScreen({
       console.error('[ScanScreen] onCapture is not a function', onCapture);
       setScanError('Camera functionality unavailable');
     }
+  };
+
+  const toggleFlashlight = () => {
+    console.log('[ScanScreen] Flashlight toggle pressed', { 
+      currentMode: flashMode, 
+      willSwitchTo: flashMode === 'off' ? 'on' : 'off',
+      isMobileWeb,
+      platformOS: Platform.OS
+    });
+    setFlashMode(current => current === 'off' ? 'on' : 'off');
   };
 
   if (isMobileWeb) {
@@ -179,13 +216,27 @@ export default function ScanScreen({
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
-          <TouchableOpacity
-            style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={handleButtonPress}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
-          </TouchableOpacity>
+          <View style={styles.captureRow}>
+            {/* Flashlight button for mobile web - only show if supported */}
+            {toggleWebFlashlight && webFlashlightSupported && (
+              <TouchableOpacity
+                style={[styles.flashlightButton, webFlashlightEnabled && styles.flashlightButtonActive]}
+                onPress={toggleWebFlashlight}
+                disabled={isProcessing}
+              >
+                <Flashlight color={webFlashlightEnabled ? '#000' : '#fff'} size={20} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.captureButton, isProcessing && styles.disabledButton]}
+              onPress={handleButtonPress}
+              disabled={isProcessing}
+            >
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+            </TouchableOpacity>
+            {/* Spacer to center the capture button when flashlight is present */}
+            {toggleWebFlashlight && webFlashlightSupported && <View style={styles.spacer} />}
+          </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
               style={styles.manualEntryButtonScan}
@@ -207,7 +258,7 @@ export default function ScanScreen({
   }
 
   if (!permission) {
-    console.log('[ScanScreen] Rendering permission loading view');
+    console.log('[ScanScreen] Rendering permission loading view - permission object is null');
     return (
       <View style={styles.content}>
         <ActivityIndicator size="large" color="#000000" />
@@ -216,21 +267,62 @@ export default function ScanScreen({
     );
   }
 
+  console.log('[ScanScreen] Permission object available', { 
+    status: permission.status, 
+    permission,
+    isMobileWeb,
+    platformOS: Platform.OS,
+    isPermissionGranted: permission.status === 'granted',
+    canShowCamera: permission.status === 'granted' && !isMobileWeb
+  });
+
   if (permission.status === 'granted') {
-    console.log('[ScanScreen] Rendering camera view');
+    console.log('[ScanScreen] Rendering camera view', { 
+      facing: cameraFacing, 
+      flashMode, 
+      isMobileWeb, 
+      platformOS: Platform.OS,
+      permissionStatus: permission.status
+    });
     return (
       <View style={styles.scanContainer}>
-        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+        <CameraView 
+          ref={cameraRef} 
+          style={StyleSheet.absoluteFill} 
+          facing={cameraFacing} 
+          flash={flashMode}
+          onCameraReady={() => console.log('[ScanScreen] Camera ready with facing:', cameraFacing)}
+          mode="picture"
+        />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           <Text style={styles.scanText}>Position syringe & vial clearly</Text>
-          <TouchableOpacity
-            style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={handleButtonPress}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
-          </TouchableOpacity>
+          <View style={styles.captureRow}>
+            {/* Flashlight button - only show on mobile, not web */}
+            {!isMobileWeb && (
+              <TouchableOpacity
+                style={[styles.flashlightButton, flashMode === 'on' && styles.flashlightButtonActive]}
+                onPress={toggleFlashlight}
+                disabled={isProcessing}
+              >
+                <Flashlight color={flashMode === 'on' ? '#000' : '#fff'} size={20} />
+              </TouchableOpacity>
+            )}
+            {console.log('[ScanScreen] Flashlight button visibility', { 
+              shouldShow: !isMobileWeb, 
+              isMobileWeb, 
+              platformOS: Platform.OS 
+            })}
+            <TouchableOpacity
+              style={[styles.captureButton, isProcessing && styles.disabledButton]}
+              onPress={handleButtonPress}
+              disabled={isProcessing}
+            >
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+            </TouchableOpacity>
+            {/* Spacer to center the capture button when flashlight is present */}
+            {!isMobileWeb && <View style={styles.spacer} />}
+          </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
               style={styles.manualEntryButtonScan}
@@ -298,7 +390,11 @@ const styles = StyleSheet.create({
   manualEntryButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
   backButtonScan: { padding: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', borderRadius: 20 },
   scanText: { fontSize: 18, color: '#fff', textAlign: 'center', paddingHorizontal: 20, marginBottom: 15, fontWeight: 'bold' },
-  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 255, 0.5)', marginBottom: 20 },
+  captureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%', paddingHorizontal: 20 },
+  captureButton: { backgroundColor: '#ef4444', width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255, 255, 255, 0.5)' },
+  flashlightButton: { backgroundColor: 'rgba(0, 0, 0, 0.6)', width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 'auto' },
+  flashlightButtonActive: { backgroundColor: '#fff' },
+  spacer: { width: 50, marginLeft: 'auto' },
   backButtonText: { color: '#fff', fontSize: 14 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   disabledButton: { backgroundColor: '#C7C7CC' },
