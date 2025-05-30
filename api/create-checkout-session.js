@@ -2,12 +2,10 @@
 // In Vercel, go to Settings > Environment Variables, add STRIPE_LIVE_SECRET_KEY with your live secret key (sk_live_...), and redeploy the app.
 
 const Stripe = require('stripe');
-const stripeConfig = require('../lib/stripeConfig.server.js');
-
-// Version logging for deployment verification
-console.log('create-checkout-session.js Version: 1.5 (fixed environment variable loading)');
+const stripeConfig = require('../lib/stripeConfig');
 
 // Enhanced error checking and logging
+console.log('create-checkout-session.js Version: 1.6 (deployed with process.env fix)');
 console.log('Loading create-checkout-session with config:', {
   mode: stripeConfig.mode,
   hasSecretKey: !!stripeConfig.secretKey,
@@ -23,10 +21,10 @@ module.exports = async (req, res) => {
     STRIPE_MODE: stripeMode,
     isLiveMode: isLiveMode,
     STRIPE_LIVE_SECRET_KEY: isLiveMode ? 
-      (process.env.STRIPE_LIVE_SECRET_KEY ? 'Set (value redacted)' : 'Not Set') :
+      (process.env.STRIPE_LIVE_SECRET_KEY ? `Set (value: ${process.env.STRIPE_LIVE_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
       'Not applicable (test mode)',
     STRIPE_TEST_SECRET_KEY: !isLiveMode ? 
-      (process.env.STRIPE_TEST_SECRET_KEY ? 'Set (value redacted)' : 'Not Set') :
+      (process.env.STRIPE_TEST_SECRET_KEY ? `Set (value: ${process.env.STRIPE_TEST_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
       'Not applicable (live mode)'
   });
 
@@ -46,10 +44,10 @@ module.exports = async (req, res) => {
   if (!stripeConfig.secretKey) {
     const envVarName = stripeConfig.mode === 'live' ? 'STRIPE_LIVE_SECRET_KEY' : 'STRIPE_TEST_SECRET_KEY';
     console.error(`Stripe secret key not configured for ${stripeConfig.mode} mode. Environment variable ${envVarName} is missing or undefined.`);
-    console.error('Deployment guidance: In Vercel, go to Settings > Environment Variables and add the missing key.');
+    console.error('Deployment guidance: In Vercel, go to Settings > Environment Variables, add the missing key under the Production environment, and redeploy with `vercel --prod`.');
     return res.status(500).json({ 
       error: `Payment system not configured for ${stripeConfig.mode} mode. Please contact support.`,
-      details: `Missing environment variable: ${envVarName}. Please check your deployment configuration.`
+      details: `Missing environment variable: ${envVarName}. Please check your Vercel Production environment configuration.`
     });
   }
 
