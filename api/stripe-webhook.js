@@ -1,7 +1,8 @@
 const Stripe = require('stripe');
 const { buffer } = require('micro');
+const stripeConfig = require('../lib/stripeConfig.server');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2025-03-31.basil', // Use a stable, supported version
 });
 

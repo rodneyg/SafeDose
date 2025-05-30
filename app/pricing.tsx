@@ -1,18 +1,13 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import Constants from "expo-constants";
+import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 
-// Read your publishable key from Expo constants
-const stripePublishableKey =
-  Constants.expoConfig?.extra?.STRIPE_PUBLISHABLE_KEY || "";
-console.log("Stripe Publishable Key:", stripePublishableKey);
-
-// Initialize Stripe.js
-const stripePromise = stripePublishableKey
-  ? loadStripe(stripePublishableKey)
+// Initialize Stripe.js with the configuration
+const stripePromise = stripeConfig.publishableKey
+  ? loadStripe(stripeConfig.publishableKey)
   : Promise.reject(new Error("Stripe publishable key is missing"));
 
 // Base URL for your API
@@ -22,14 +17,14 @@ const API_BASE_URL = "https://app.safedoseai.com";
 const premiumPlan = {
   name: "Premium Plan",
   price: 10, // $10/month
-  description: "150 Scans per Month",
+  description: "50 Scans per Month",
   features: [
-    { name: "150 AI scans/month", available: true },
+    { name: "50 AI scans/month", available: true },
     { name: "Unlimited manual calculations", available: true },
     { name: "Faster scans", available: true },
     { name: "No mid-session limits", available: true },
   ],
-  priceId: "price_1REyzMPE5x6FmwJPyJVJIEXe", // Using the existing price ID
+  priceId: stripeConfig.priceId,
 };
 
 export default function PricingPage() {
@@ -163,7 +158,7 @@ export default function PricingPage() {
           disabled={isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading ? "Processing..." : "Upgrade with Stripe"}
+            {isLoading ? "Processing..." : "Buy Now"}
           </Text>
         </TouchableOpacity>
         
