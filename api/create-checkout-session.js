@@ -1,3 +1,6 @@
+// Note: Ensure STRIPE_LIVE_SECRET_KEY is set in your deployment environment (e.g., Vercel).
+// In Vercel, go to Settings > Environment Variables, add STRIPE_LIVE_SECRET_KEY with your live secret key (sk_live_...), and redeploy the app.
+
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 
@@ -9,6 +12,21 @@ console.log('Loading create-checkout-session with config:', {
 });
 
 module.exports = async (req, res) => {
+  // Direct environment variable logging for diagnostics
+  const stripeMode = process.env.STRIPE_MODE || 'test';
+  const isLiveMode = stripeMode === 'live';
+  
+  console.log('Environment variable diagnostic:', {
+    STRIPE_MODE: stripeMode,
+    isLiveMode: isLiveMode,
+    STRIPE_LIVE_SECRET_KEY: isLiveMode ? 
+      (process.env.STRIPE_LIVE_SECRET_KEY ? `Set (value: ${process.env.STRIPE_LIVE_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
+      'Not applicable (test mode)',
+    STRIPE_TEST_SECRET_KEY: !isLiveMode ? 
+      (process.env.STRIPE_TEST_SECRET_KEY ? `Set (value: ${process.env.STRIPE_TEST_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
+      'Not applicable (live mode)'
+  });
+
   console.log('Received request to /api/create-checkout-session:', req.body);
   console.log('Stripe config being used:', {
     mode: stripeConfig.mode,
@@ -23,9 +41,12 @@ module.exports = async (req, res) => {
 
   // Validate Stripe configuration before proceeding
   if (!stripeConfig.secretKey) {
-    console.error('Stripe secret key not configured for', stripeConfig.mode, 'mode');
+    const envVarName = stripeConfig.mode === 'live' ? 'STRIPE_LIVE_SECRET_KEY' : 'STRIPE_TEST_SECRET_KEY';
+    console.error(`Stripe secret key not configured for ${stripeConfig.mode} mode. Environment variable ${envVarName} is missing or undefined.`);
+    console.error('Deployment guidance: In Vercel, go to Settings > Environment Variables and add the missing key.');
     return res.status(500).json({ 
-      error: `Stripe secret key is not configured for ${stripeConfig.mode} mode. Please set the appropriate environment variables.` 
+      error: `Payment system not configured for ${stripeConfig.mode} mode. Please contact support.`,
+      details: `Missing environment variable: ${envVarName}. Please check your deployment configuration.`
     });
   }
 
