@@ -17,9 +17,9 @@ const API_BASE_URL = "https://app.safedoseai.com";
 const premiumPlan = {
   name: "Premium Plan",
   price: 10, // $10/month
-  description: "150 Scans per Month",
+  description: "50 Scans per Month",
   features: [
-    { name: "150 AI scans/month", available: true },
+    { name: "50 AI scans/month", available: true },
     { name: "Unlimited manual calculations", available: true },
     { name: "Faster scans", available: true },
     { name: "No mid-session limits", available: true },
@@ -158,7 +158,7 @@ export default function PricingPage() {
           disabled={isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading ? "Processing..." : "Upgrade with Stripe"}
+            {isLoading ? "Processing..." : "Buy Now"}
           </Text>
         </TouchableOpacity>
         
