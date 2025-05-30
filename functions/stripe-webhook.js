@@ -13277,7 +13277,11 @@ var require_lib3 = __commonJS({
 // api/stripe-webhook.js
 var Stripe = require_stripe_cjs_node();
 var { buffer } = require_lib3();
-var stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+var stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error("Stripe secret key is not configured. Please set STRIPE_LIVE_SECRET_KEY environment variable.");
+}
+var stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-03-31.basil"
 });
 module.exports = async (req, res) => {
