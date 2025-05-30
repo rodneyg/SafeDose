@@ -77,7 +77,9 @@
     "expo-cli": "^6.3.12",
     "rimraf": "^6.0.1",
     "typescript": "^5.3.3",
-    "vercel": "^28.4.8"
+    "vercel": "^28.4.8",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "~8.0.1"
   },
   "overrides": {
     "ts-node": "10.9.1"
