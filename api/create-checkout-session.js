@@ -4,6 +4,9 @@
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 
+// Version logging for deployment verification
+console.log('create-checkout-session.js Version: 1.2 (with enhanced logging)');
+
 // Enhanced error checking and logging
 console.log('Loading create-checkout-session with config:', {
   mode: stripeConfig.mode,
@@ -20,10 +23,10 @@ module.exports = async (req, res) => {
     STRIPE_MODE: stripeMode,
     isLiveMode: isLiveMode,
     STRIPE_LIVE_SECRET_KEY: isLiveMode ? 
-      (process.env.STRIPE_LIVE_SECRET_KEY ? `Set (value: ${process.env.STRIPE_LIVE_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
+      (process.env.STRIPE_LIVE_SECRET_KEY ? 'Set (value redacted)' : 'Not Set') :
       'Not applicable (test mode)',
     STRIPE_TEST_SECRET_KEY: !isLiveMode ? 
-      (process.env.STRIPE_TEST_SECRET_KEY ? `Set (value: ${process.env.STRIPE_TEST_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
+      (process.env.STRIPE_TEST_SECRET_KEY ? 'Set (value redacted)' : 'Not Set') :
       'Not applicable (live mode)'
   });
 
