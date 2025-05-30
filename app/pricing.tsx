@@ -5,10 +5,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 
-// Initialize Stripe.js with the configuration
+// Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
   ? loadStripe(stripeConfig.publishableKey)
-  : Promise.reject(new Error("Stripe publishable key is missing"));
+  : null;
 
 // Base URL for your API
 const API_BASE_URL = "https://app.safedoseai.com";
@@ -44,6 +44,17 @@ export default function PricingPage() {
     setErrorMessage("");
     
     try {
+      // Check if publishable key is missing before proceeding
+      if (!stripeConfig.publishableKey) {
+        console.error("Stripe publishable key is missing");
+        setErrorMessage("Payment system configuration error. Please contact support - Stripe publishable key is missing.");
+        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
+          plan: 'plus', 
+          error: 'Stripe publishable key is missing' 
+        });
+        return;
+      }
+
       const stripe = await stripePromise;
       console.log("Stripe instance:", stripe);
       if (!stripe) {
