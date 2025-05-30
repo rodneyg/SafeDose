@@ -5,7 +5,7 @@ const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 
 // Version logging for deployment verification
-console.log('create-checkout-session.js Version: 1.2 (with enhanced logging)');
+console.log('create-checkout-session.js Version: 1.5 (fixed environment variable loading)');
 
 // Enhanced error checking and logging
 console.log('Loading create-checkout-session with config:', {
