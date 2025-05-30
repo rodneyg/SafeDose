@@ -8,29 +8,52 @@ console.log('Loading validate-session with config:', {
   secretKeyFormat: stripeConfig.secretKey ? (stripeConfig.secretKey.startsWith('sk_') ? 'valid' : 'invalid') : 'missing'
 });
 
-if (!stripeConfig.secretKey) {
-  throw new Error(`Stripe secret key is not configured for ${stripeConfig.mode} mode. Please set the appropriate environment variables.`);
-}
-
-// Additional validation to ensure we're not using a publishable key as secret key
-if (stripeConfig.secretKey.startsWith('pk_')) {
-  throw new Error(`CRITICAL: A publishable key was provided as secret key. This will cause API failures. Please check your environment configuration.`);
-}
-
-if (!stripeConfig.secretKey.startsWith('sk_')) {
-  throw new Error(`Invalid secret key format. Secret keys should start with 'sk_'. Current key starts with: ${stripeConfig.secretKey.substring(0, 3)}`);
-}
-
-const stripe = new Stripe(stripeConfig.secretKey, {
-  apiVersion: '2022-11-15',
-});
-
 module.exports = async (req, res) => {
   console.log('Received request to /api/validate-session');
 
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return res.status(405).end('Method Not Allowed');
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Validate Stripe configuration before proceeding
+  if (!stripeConfig.secretKey) {
+    console.error('Stripe secret key not configured for', stripeConfig.mode, 'mode');
+    return res.status(500).json({ 
+      error: `Stripe secret key is not configured for ${stripeConfig.mode} mode. Please set the appropriate environment variables.`,
+      isValid: false 
+    });
+  }
+
+  // Additional validation to ensure we're not using a publishable key as secret key
+  if (stripeConfig.secretKey.startsWith('pk_')) {
+    console.error('CRITICAL: A publishable key was provided as secret key');
+    return res.status(500).json({ 
+      error: 'CRITICAL: A publishable key was provided as secret key. This will cause API failures. Please check your environment configuration.',
+      isValid: false 
+    });
+  }
+
+  if (!stripeConfig.secretKey.startsWith('sk_')) {
+    console.error('Invalid secret key format:', stripeConfig.secretKey.substring(0, 3));
+    return res.status(500).json({ 
+      error: `Invalid secret key format. Secret keys should start with 'sk_'. Current key starts with: ${stripeConfig.secretKey.substring(0, 3)}`,
+      isValid: false 
+    });
+  }
+
+  // Initialize Stripe only after validation
+  let stripe;
+  try {
+    stripe = new Stripe(stripeConfig.secretKey, {
+      apiVersion: '2022-11-15',
+    });
+  } catch (stripeInitError) {
+    console.error('Failed to initialize Stripe:', stripeInitError.message);
+    return res.status(500).json({ 
+      error: 'Failed to initialize payment system. Please contact support.',
+      isValid: false 
+    });
   }
 
   const { session_id } = req.body;
