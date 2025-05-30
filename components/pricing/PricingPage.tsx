@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
-import stripeConfig from "@/lib/stripeConfig";
+import stripeConfig from "../../lib/stripeConfig";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
 import PriceToggle from "@/components/pricing/PriceToggle";
 import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";

@@ -36,6 +36,3 @@ yarn-error.*
 *.tsbuildinfo
 .env
 .vercel
-
-# Test files
-test-stripe-config.js
