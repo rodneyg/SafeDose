@@ -1,14 +1,12 @@
 const Stripe = require('stripe');
 const { buffer } = require('micro');
+const stripeConfig = require('../lib/stripeConfig.server.js');
 
-// Use environment variables directly for better reliability in serverless context
-const stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
-
-if (!stripeSecretKey) {
-  throw new Error('Stripe secret key is not configured. Please set STRIPE_LIVE_SECRET_KEY environment variable.');
+if (!stripeConfig.secretKey) {
+  throw new Error(`Stripe secret key is not configured for ${stripeConfig.mode} mode. Please set the appropriate environment variables.`);
 }
 
-const stripe = new Stripe(stripeSecretKey, {
+const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2025-03-31.basil', // Use a stable, supported version
 });
 
