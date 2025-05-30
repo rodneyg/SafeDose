@@ -16,7 +16,7 @@ const API_BASE_URL = "https://app.safedoseai.com";
 // Premium plan details
 const premiumPlan = {
   name: "Premium Plan",
-  price: 10, // $10/month
+  price: 20, // $20/month
   description: "50 Scans per Month",
   features: [
     { name: "50 AI scans/month", available: true },

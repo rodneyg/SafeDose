@@ -1,6 +1,13 @@
 const Stripe = require('stripe');
-const stripeConfig = require('../lib/stripeConfig.server');
-const stripe = new Stripe(stripeConfig.secretKey, {
+
+// Use environment variables directly for better reliability in serverless context
+const stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  throw new Error('Stripe secret key is not configured. Please set STRIPE_LIVE_SECRET_KEY environment variable.');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2022-11-15',
 });
 

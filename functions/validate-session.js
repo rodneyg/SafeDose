@@ -8572,7 +8572,7 @@ var require_stripe_cjs_node = __commonJS({
   }
 });
 
-// api/create-checkout-session.js
+// api/validate-session.js
 var Stripe = require_stripe_cjs_node();
 var stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
@@ -8582,28 +8582,31 @@ var stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2022-11-15"
 });
 module.exports = async (req, res) => {
-  console.log("Received request to /api/create-checkout-session:", req.body);
+  console.log("Received request to /api/validate-session");
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).end("Method Not Allowed");
   }
-  const { priceId, successUrl, cancelUrl } = req.body;
-  if (!priceId || !successUrl || !cancelUrl) {
-    console.log("Missing parameters:", { priceId, successUrl, cancelUrl });
-    return res.status(400).json({ error: "Missing parameters" });
+  const { session_id } = req.body;
+  if (!session_id) {
+    console.log("Missing session_id parameter");
+    return res.status(400).json({ error: "Missing session_id parameter", isValid: false });
   }
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl,
-      cancel_url: cancelUrl
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const isValid = session && session.payment_status === "paid" && session.mode === "subscription";
+    console.log(`Session ${session_id} validation result:`, {
+      isValid,
+      paymentStatus: session.payment_status,
+      mode: session.mode
     });
-    console.log("Created checkout session:", session.id);
-    res.status(200).json({ sessionId: session.id });
+    res.status(200).json({
+      isValid,
+      paymentStatus: session.payment_status,
+      mode: session.mode
+    });
   } catch (err) {
-    console.error("Error creating checkout session:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("Error validating session:", err.message);
+    res.status(500).json({ error: err.message, isValid: false });
   }
 };
