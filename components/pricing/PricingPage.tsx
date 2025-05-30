@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
-import Constants from "expo-constants";
+import stripeConfig from "@/lib/stripeConfig";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
 import PriceToggle from "@/components/pricing/PriceToggle";
 import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";
 
-const stripePublishableKey = Constants.expoConfig?.extra?.STRIPE_PUBLISHABLE_KEY || "";
-console.log("Stripe Publishable Key:", stripePublishableKey);
-
-const stripePromise = stripePublishableKey
-  ? loadStripe(stripePublishableKey)
+const stripePromise = stripeConfig.publishableKey
+  ? loadStripe(stripeConfig.publishableKey)
   : Promise.reject(new Error("Stripe publishable key is missing"));
 
 const pricingPlans: PricingPlan[] = [
