@@ -9,10 +9,13 @@ const stripePromise = stripeConfig.publishableKey
   ? loadStripe(stripeConfig.publishableKey)
   : Promise.reject(new Error("Stripe publishable key is missing"));
 
+// SafeDose Pricing Plans
+// Note: Yearly plan requires a separate Stripe price ID to be created with annual billing interval
+// Current yearly plan uses a placeholder - needs actual Stripe yearly price ID for $149.99/year
 const pricingPlans: PricingPlan[] = [
   {
     name: "Monthly Plan",
-    price: { monthly: 20, annual: 20 },
+    price: { monthly: 20, annual: 240 },
     description: "For consistent at-home dosing",
     subtext: "Billed monthly. Cancel anytime.",
     features: [
@@ -30,9 +33,9 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: "Yearly Plan",
-    price: { monthly: 149.99, annual: 149.99 },
+    price: { monthly: 12.50, annual: 149.99 },
     description: "For consistent at-home dosing",
-    subtext: "SAVE 38%",
+    subtext: "SAVE 38% - Pay annually",
     features: [
       { name: "50 AI scans/month", available: true },
       { name: "Unlimited manual calculations", available: true },
@@ -43,7 +46,7 @@ const pricingPlans: PricingPlan[] = [
     cta: "Try Free Now",
     ctaSubtext: "1 week free trial, then $149.99/year",
     badge: "discount",
-    priceId: { monthly: "price_1REz2UAY2p4W374YGel1OISL", annual: "price_1REz2UAY2p4W374YGel1OISL" },
+    priceId: { monthly: "price_1REz2UAY2p4W374YGel1OISL_YEARLY_PLACEHOLDER", annual: "price_1REz2UAY2p4W374YGel1OISL_YEARLY_PLACEHOLDER" },
     isTrial: true,
   },
 ];
@@ -67,6 +70,17 @@ export default function PricingPage() {
 
       const isYearlyPlan = plan.name === "Yearly Plan";
       const priceId = isYearlyPlan ? plan.priceId.annual : plan.priceId.monthly;
+      
+      // Check for placeholder price ID that needs setup
+      if (priceId && priceId.includes("_PLACEHOLDER")) {
+        toast({
+          title: "Configuration Required",
+          description: "Yearly plan pricing is being set up. Please try the monthly plan for now or contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       if (!priceId) {
         toast({
           title: "Free Trial",
