@@ -9,6 +9,7 @@ import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import LimitModal from '../../components/LimitModal';
+import ConfirmationScreen from '../../components/ConfirmationScreen';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useAuth } from '../../contexts/AuthContext';
@@ -480,6 +481,7 @@ export default function NewDoseScreen() {
               manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
               manualStep === 'reconstitution' ? 'Reconstitution' :
               manualStep === 'syringe' ? 'Select Syringe' :
+              manualStep === 'confirmation' ? 'Confirm Dose Details' :
               'Calculation Result'
             }`
           )}
@@ -582,6 +584,23 @@ export default function NewDoseScreen() {
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
+        />
+      )}
+      {screenStep === 'manualEntry' && manualStep === 'confirmation' && (
+        <ConfirmationScreen
+          substanceName={substanceName}
+          concentrationAmount={concentrationAmount}
+          concentrationUnit={concentrationUnit}
+          doseValue={doseValue}
+          unit={unit}
+          calculatedVolume={calculatedVolume}
+          onConfirm={() => {
+            setManualStep('finalResult');
+            // Log analytics event for dose confirmation if needed
+            // logAnalyticsEvent(ANALYTICS_EVENTS.DOSE_CONFIRMED);
+          }}
+          onGoBack={handleBack} // Assuming handleBack will be updated to go to 'syringe'
+          isMobileWeb={isMobileWeb} // Pass isMobileWeb prop
         />
       )}
       <LimitModal

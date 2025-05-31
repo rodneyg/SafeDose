@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
-type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
+type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'confirmation' | 'finalResult';
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
@@ -373,16 +373,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setCalculationError(result.calculationError);
       setCalculatedConcentration(result.calculatedConcentration || null);
 
-      // Always navigate to finalResult screen regardless of calculation errors
-      // Previously only navigated if there was no error or a recommendedMarking was available
-      setManualStep('finalResult');
-      console.log('[useDoseCalculator] Set manualStep to finalResult');
+      // Navigate to the new confirmation step
+      setManualStep('confirmation');
+      console.log('[useDoseCalculator] Set manualStep to confirmation');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
-      // Ensure we still navigate to the results screen even if there's an error
-      setManualStep('finalResult');
-      console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
+      // Ensure we still navigate to the confirmation screen even if there's an error
+      setManualStep('confirmation');
+      console.log('[useDoseCalculator] Set manualStep to confirmation (after error)');
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
 
@@ -400,7 +399,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       }
       else if (manualStep === 'reconstitution') setManualStep('totalAmountInput');
       else if (manualStep === 'syringe') setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
-      else if (manualStep === 'finalResult') setManualStep('syringe');
+      else if (manualStep === 'confirmation') setManualStep('syringe'); // New: from confirmation to syringe
+      else if (manualStep === 'finalResult') setManualStep('confirmation'); // Changed: from finalResult to confirmation
 
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -409,7 +409,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       resetFullForm();
       setScreenStep('intro');
     }
-  }, [manualStep, medicationInputType, resetFullForm]);
+  }, [manualStep, medicationInputType, resetFullForm, setScreenStep]);
 
   const handleStartOver = useCallback(() => {
     resetFullForm('dose');
