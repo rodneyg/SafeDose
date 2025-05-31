@@ -16,22 +16,6 @@ const API_BASE_URL = "https://app.safedoseai.com";
 export default function PricingPage() {
   const pricingPlansData = [
     {
-      id: 'weekly',
-      name: "Weekly Plan",
-      price: 4.99,
-      priceSuffix: "/week",
-      subtext: "Billed weekly. Cancel anytime.",
-      priceId: 'price_weekly_placeholder',
-      features: [
-        { name: "AI scans/week (pro-rated)", available: true }, // Assuming ~12 scans/week (50/4.33)
-        { name: "Unlimited manual calculations", available: true },
-        { name: "Faster scans", available: true },
-        { name: "No mid-session limits", available: true },
-      ],
-      badgeText: null,
-      isDefault: false,
-    },
-    {
       id: 'monthly',
       name: "Monthly Plan",
       price: 20,
@@ -74,7 +58,7 @@ export default function PricingPage() {
   useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.VIEW_PRICING_PAGE);
     console.warn(
-      "TODO: Replace placeholder Stripe Price IDs ('price_weekly_placeholder', 'price_yearly_placeholder') in pricingPlansData with actual Price IDs from your Stripe dashboard."
+      "TODO: Replace placeholder Stripe Price IDs ('price_yearly_placeholder') in pricingPlansData with actual Price IDs from your Stripe dashboard."
     );
   }, []);
 
