@@ -227,8 +227,8 @@ export default function PricingPage() {
           <Text style={styles.planSubtext}>{plan.subtext}</Text>
 
           <View style={styles.featureList}>
-            {plan.features.map((feature, idx) => (
-              <View key={idx} style={styles.featureItem}>
+            {plan.features.map((feature) => (
+              <View key={feature.name} style={styles.featureItem}>
                 <Text style={styles.featureText}>• {feature.name}</Text>
               </View>
             ))}
