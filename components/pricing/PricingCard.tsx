@@ -37,7 +37,9 @@ interface PricingCardProps {
 }
 
 const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
-  const price = isAnnual ? plan.price.annual : plan.price.monthly;
+  const isYearlyPlan = plan.name === "Yearly Plan";
+  const price = isYearlyPlan ? plan.price.annual : plan.price.monthly;
+  const period = isYearlyPlan ? "year" : "month";
   const originalPrice = plan.dynamicPrice ? plan.dynamicPrice.basePrice : null;
   const hasDynamicPrice = plan.dynamicPrice && plan.dynamicPrice.percentIncrease > 0;
 
@@ -58,7 +60,7 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
       <div className="mb-4">
         <div className="flex items-end">
           <span className="text-3xl font-bold">${price}</span>
-          <span className="text-muted-foreground ml-1">/{isAnnual ? "year" : "month"}</span>
+          <span className="text-muted-foreground ml-1">/{period}</span>
         </div>
         {hasDynamicPrice && (
           <div className="mt-2 flex items-center gap-1.5">

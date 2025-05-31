@@ -3,7 +3,6 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
 import stripeConfig from "../../lib/stripeConfig";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
-import PriceToggle from "@/components/pricing/PriceToggle";
 import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";
 
 const stripePromise = stripeConfig.publishableKey
@@ -13,7 +12,7 @@ const stripePromise = stripeConfig.publishableKey
 const pricingPlans: PricingPlan[] = [
   {
     name: "Monthly Plan",
-    price: { monthly: 20, annual: 240 },
+    price: { monthly: 20, annual: 20 },
     description: "For consistent at-home dosing",
     subtext: "Billed monthly. Cancel anytime.",
     features: [
@@ -31,7 +30,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: "Yearly Plan",
-    price: { monthly: 20, annual: 149.99 },
+    price: { monthly: 149.99, annual: 149.99 },
     description: "For consistent at-home dosing",
     subtext: "SAVE 38%",
     features: [
@@ -51,7 +50,6 @@ const pricingPlans: PricingPlan[] = [
 
 export default function PricingPage() {
   const { toast } = useToast();
-  const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPaymentProvider, setSelectedPaymentProvider] =
     useState<PaymentProvider>("stripe");
 
@@ -67,7 +65,8 @@ export default function PricingPage() {
         return;
       }
 
-      const priceId = isAnnual ? plan.priceId.annual : plan.priceId.monthly;
+      const isYearlyPlan = plan.name === "Yearly Plan";
+      const priceId = isYearlyPlan ? plan.priceId.annual : plan.priceId.monthly;
       if (!priceId) {
         toast({
           title: "Free Trial",
@@ -149,13 +148,12 @@ export default function PricingPage() {
           onSelectProvider={setSelectedPaymentProvider}
         />
       </div>
-      <PriceToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
       <div className="flex flex-col gap-8 mt-6 max-w-md mx-auto">
         {pricingPlans.map((plan, idx) => (
           <PricingCard
             key={idx}
             plan={plan}
-            isAnnual={isAnnual}
+            isAnnual={false}
             onSelectPlan={handleCheckout}
           />
         ))}
