@@ -3,8 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "typeRoots": [
-      "./types"
+      "./types",
+      "./node_modules/@types"
     ],
+    "types": ["jest"], // Add jest to the types
     "paths": {
       "@/*": [
         "./*"

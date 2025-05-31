@@ -1,12 +1,22 @@
 import { syringeOptions } from '../lib/utils';
 
+// Define specific volume types for better type safety
+export type InsulinSyringeVolume = keyof typeof syringeOptions['Insulin'];
+export type StandardSyringeVolume = keyof typeof syringeOptions['Standard'];
+export type SyringeVolume = InsulinSyringeVolume | StandardSyringeVolume;
+
+export interface ManualSyringe {
+  type: 'Insulin' | 'Standard';
+  volume: SyringeVolume; // Use the more specific type
+}
+
 interface CalculateDoseParams {
   doseValue: number | null;
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   totalAmount?: number | null;  // Total amount in vial
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string } | null;
+  manualSyringe: ManualSyringe | { type: 'Insulin' | 'Standard'; volume: string } | null; // Allow string for initial state, but cast later
   solutionVolume?: string | null; // Added solution volume for concentration calculation
 }
 
@@ -133,10 +143,17 @@ export function calculateDose({
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
-  const markingsString = syringeOptions[manualSyringe.type][manualSyringe.volume];
+  let markingsString: string | undefined;
+
+  if (manualSyringe.type === 'Insulin') {
+    markingsString = syringeOptions['Insulin'][manualSyringe.volume as InsulinSyringeVolume];
+  } else if (manualSyringe.type === 'Standard') {
+    markingsString = syringeOptions['Standard'][manualSyringe.volume as StandardSyringeVolume];
+  }
+
   if (!markingsString) {
     calculationError = `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`;
-    console.log('[Calculate] Error: Invalid syringe option');
+    console.log('[Calculate] Error: Invalid syringe option or volume for type');
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
@@ -163,6 +180,13 @@ export function calculateDose({
 
     calculatedVolume = requiredVolume;
     console.log('[Calculate] Adjusted required volume (ml):', requiredVolume);
+  }
+
+  // Validate calculated volume against safe thresholds
+  if (calculatedVolume !== null && (calculatedVolume < 0.005 || calculatedVolume > 2)) {
+    calculationError = "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.";
+    console.log('[Calculate] Error: Calculated volume is outside safe thresholds');
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
   // Validate that the total amount is sufficient for the required dose
@@ -201,11 +225,11 @@ export function calculateDose({
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
-  const markings = markingsString.split(',').map(m => parseFloat(m));
+  const markings = markingsString.split(',').map((m: string) => parseFloat(m));
   const markingScaleValue = manualSyringe.type === 'Insulin' ? calculatedVolume * 100 : calculatedVolume;
   console.log('[Calculate] Marking scale value:', markingScaleValue);
 
-  const nearestMarking = markings.reduce((prev, curr) =>
+  const nearestMarking = markings.reduce((prev: number, curr: number) =>
     Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
   );
   console.log('[Calculate] Nearest marking:', nearestMarking);
