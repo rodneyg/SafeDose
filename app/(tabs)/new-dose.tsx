@@ -104,6 +104,7 @@ export default function NewDoseScreen() {
     setConcentration,
     calculatedVolume,
     setCalculatedVolume,
+    calculatedConcentration, // Added this
     recommendedMarking,
     setRecommendedMarking,
     calculationError,
@@ -573,6 +574,7 @@ export default function NewDoseScreen() {
           setTotalAmountHint={setTotalAmountHint}
           syringeHint={syringeHint}
           setSyringeHint={setSyringeHint}
+          calculatedConcentration={calculatedConcentration} // Added this
           handleNextDose={handleNextDose}
           handleNextMedicationSource={handleNextMedicationSource}
           handleNextConcentrationInput={handleNextConcentrationInput}

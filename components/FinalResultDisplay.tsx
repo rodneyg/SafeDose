@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info } from 'lucide-react-native';
+import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 
@@ -43,6 +43,13 @@ export default function FinalResultDisplay({
     calculatedVolume,
     calculatedConcentration
   });
+
+  const [isBreakdownVisible, setIsBreakdownVisible] = useState(false);
+
+  const toggleBreakdownVisibility = () => {
+    setIsBreakdownVisible(!isBreakdownVisible);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {calculationError && !recommendedMarking && (
@@ -115,6 +122,60 @@ export default function FinalResultDisplay({
           </View>
         </View>
       )}
+
+      <TouchableOpacity onPress={toggleBreakdownVisibility} style={styles.breakdownButton}>
+        <Text style={styles.breakdownButtonText}>
+          {isBreakdownVisible ? 'Hide Calculation Breakdown' : 'Show Calculation Breakdown'}
+        </Text>
+        {isBreakdownVisible ? <ChevronUp color="#3b82f6" size={20} /> : <ChevronDown color="#3b82f6" size={20} />}
+      </TouchableOpacity>
+
+      {isBreakdownVisible && (
+        <View style={styles.breakdownContainer}>
+          <Text style={styles.breakdownTitle}>Calculation Breakdown:</Text>
+
+          <Text style={styles.breakdownLabel}>Substance:</Text>
+          <Text style={styles.breakdownValue}>{substanceName || 'N/A'}</Text>
+
+          <Text style={styles.breakdownLabel}>Target Dose:</Text>
+          <Text style={styles.breakdownValue}>
+            {doseValue !== null ? `${doseValue} ${unit || 'units'}` : 'N/A'}
+          </Text>
+
+          <Text style={styles.breakdownLabel}>Concentration Used:</Text>
+          <Text style={styles.breakdownValue}>
+            {calculatedConcentration !== null && concentrationUnit
+              ? `${calculatedConcentration.toFixed(2)} ${concentrationUnit}`
+              : 'N/A'}
+          </Text>
+
+          <Text style={styles.breakdownLabel}>Final Volume to Draw:</Text>
+          <Text style={styles.breakdownValue}>
+            {calculatedVolume !== null ? `${calculatedVolume.toFixed(2)} ml` : 'N/A'}
+          </Text>
+
+          <Text style={styles.breakdownLabel}>Calculation Formula:</Text>
+          {unit === 'ml' ? (
+            <Text style={styles.breakdownValue}>
+              Final Volume (ml) = Target Dose (ml)
+              <Text style={styles.breakdownFormulaDetail}>
+                {` (${calculatedVolume !== null ? calculatedVolume.toFixed(2) : 'N/A'} ml = ${doseValue !== null ? doseValue : 'N/A'} ml)`}
+              </Text>
+            </Text>
+          ) : (
+            <Text style={styles.breakdownValue}>
+              Final Volume (ml) = Target Dose / Concentration
+              <Text style={styles.breakdownFormulaDetail}>
+                {` (${calculatedVolume !== null ? calculatedVolume.toFixed(2) : 'N/A'} ml = ${doseValue !== null ? doseValue : 'N/A'} ${unit || ''} / ${calculatedConcentration !== null ? calculatedConcentration.toFixed(2) : 'N/A'} ${concentrationUnit || ''})`}
+              </Text>
+            </Text>
+          )}
+
+          <Text style={styles.breakdownLabel}>Selected Syringe:</Text>
+          <Text style={styles.breakdownValue}>{manualSyringe.type} - {manualSyringe.volume}</Text>
+        </View>
+      )}
+
       <View style={styles.disclaimerContainer}>
         <View style={styles.disclaimerIconContainer}>
           <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
@@ -146,6 +207,59 @@ const styles = StyleSheet.create({
   instructionNote: { fontSize: 13, color: '#065F46', textAlign: 'center', marginTop: 4, fontStyle: 'italic' },
   warningText: { fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' },
   illustrationContainer: { marginTop: 20, alignItems: 'center' },
+  breakdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#EFF6FF', // Light blue background
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BFDBFE', // Lighter blue border
+    marginBottom: 16,
+  },
+  breakdownButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#3b82f6', // Blue text
+  },
+  breakdownContainer: {
+    padding: 16,
+    backgroundColor: '#F9FAFB', // Very light gray
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB', // Light gray border
+  },
+  breakdownTitle: {
+    fontSize: 16,
+    fontWeight: 'bold', // Make title bold
+    color: '#1F2937',
+    marginBottom: 12, // Increased margin
+    borderBottomWidth: 1, // Add a separator line
+    borderBottomColor: '#D1D5DB', // Separator color
+    paddingBottom: 8, // Padding for the separator
+  },
+  breakdownLabel: { // Style for labels
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#4B5563', // Slightly lighter than value text
+    marginTop: 10, // Increased top margin for better separation
+  },
+  breakdownValue: { // Style for values
+    fontSize: 14,
+    color: '#1F2937', // Darker text for values for contrast
+    marginBottom: 10, // Increased bottom margin
+    paddingLeft: 8, // Indent values slightly
+    lineHeight: 20, // Added line height for readability
+  },
+  breakdownFormulaDetail: { // Style for the formula's numeric part
+    fontSize: 13,
+    color: '#6B7280', // Lighter text for less emphasis
+    fontStyle: 'italic',
+    lineHeight: 18, // Added line height
+  },
   disclaimerContainer: { 
     backgroundColor: '#FFF3CD', 
     padding: 12, 
