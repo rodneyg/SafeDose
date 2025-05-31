@@ -17,6 +17,10 @@ type Props = {
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   isMobileWeb: boolean;
+  // Log saving props
+  isLogSaved?: boolean;
+  logSaveError?: string | null;
+  handleSaveLog?: () => void;
 };
 
 export default function FinalResultDisplay({
@@ -32,9 +36,13 @@ export default function FinalResultDisplay({
   handleStartOver,
   setScreenStep,
   isMobileWeb,
+  // Destructure log saving props
+  isLogSaved,
+  logSaveError,
+  handleSaveLog,
 }: Props) {
-  console.log('[FinalResultDisplay] Rendering with:', { 
-    calculationError, 
+  console.log('[FinalResultDisplay] Rendering with:', {
+    calculationError,
     recommendedMarking,
     doseValue,
     unit,
@@ -123,6 +131,36 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       </View>
+
+      {/* Log Save Button and Error Display */}
+      {handleSaveLog && recommendedMarking && !calculationError && ( // Only show save button if calculation is valid and there's a marking
+        <View style={styles.logSaveContainer}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              styles.saveButton,
+              isLogSaved ? styles.savedButton : {},
+              (!recommendedMarking || (calculationError && !isLogSaved)) ? styles.disabledButton : {},
+              isMobileWeb && styles.actionButtonMobile
+            ]}
+            onPress={handleSaveLog}
+            disabled={isLogSaved || !recommendedMarking || (!!calculationError && !isLogSaved)}
+          >
+            <Text style={styles.buttonText}>{isLogSaved ? 'Saved ✓' : 'Save to Logbook'}</Text>
+          </TouchableOpacity>
+          {logSaveError && (
+            <Text style={styles.logSaveErrorText}>{logSaveError}</Text>
+          )}
+        </View>
+      )}
+       {/* Display general calculation errors if save button is not shown due to them but marking exists */}
+      {calculationError && recommendedMarking && (
+         <View style={styles.logSaveContainer}>
+            <Text style={styles.errorHelpText}>Note: Log saving is disabled when there are calculation warnings that affect the dose.</Text>
+         </View>
+      )}
+
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
           <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
@@ -178,4 +216,9 @@ const styles = StyleSheet.create({
   errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
   errorText: { fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 },
   errorHelpText: { fontSize: 13, color: '#991B1B', textAlign: 'center', marginTop: 12, paddingVertical: 8, backgroundColor: 'rgba(248, 113, 113, 0.1)', paddingHorizontal: 12, borderRadius: 6, width: '90%', alignSelf: 'center' },
+  logSaveContainer: { width: '100%', marginTop: 10, marginBottom: 10, alignItems: 'center' },
+  saveButton: { backgroundColor: '#5A67D8', width: '80%', alignSelf: 'center' }, // Indigo color for save
+  savedButton: { backgroundColor: '#4A5568' }, // Gray out when saved
+  disabledButton: { backgroundColor: '#A0AEC0', opacity: 0.7 }, // Lighter gray for disabled
+  logSaveErrorText: { fontSize: 13, color: '#C53030', textAlign: 'center', marginTop: 8, paddingHorizontal: 10 },
 });

@@ -56,6 +56,10 @@ interface ManualEntryScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
+  // New props for log saving
+  isLogSaved?: boolean;
+  logSaveError?: string | null;
+  handleSaveLog?: () => void;
 }
 
 export default function ManualEntryScreen({
@@ -103,6 +107,10 @@ export default function ManualEntryScreen({
   setScreenStep,
   validateDoseInput,
   validateConcentrationInput,
+  // Destructure new props
+  isLogSaved,
+  logSaveError,
+  handleSaveLog,
 }: ManualEntryScreenProps) {
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
@@ -261,6 +269,10 @@ export default function ManualEntryScreen({
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           isMobileWeb={isMobileWeb}
+          // Pass log saving props
+          isLogSaved={isLogSaved}
+          logSaveError={logSaveError}
+          handleSaveLog={handleSaveLog}
         />
       );
       progress = 1;
