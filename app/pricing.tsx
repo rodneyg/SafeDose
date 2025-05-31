@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import stripeConfig from "../lib/stripeConfig";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 
@@ -183,7 +183,7 @@ export default function PricingPage() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContentContainer}>
       <Text style={styles.title}>Choose Your Plan</Text>
 
       {pricingPlansData.map((plan) => (
@@ -251,17 +251,23 @@ export default function PricingPage() {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  scrollViewContentContainer: {
     padding: 24,
     alignItems: 'center',
+    flexGrow: 1, // Ensures content expands if shorter than screen
   },
+  // container style is now applied to scrollViewContentContainer or scrollView itself
+  // We might not need a separate 'container' style anymore, or it can be merged/adjusted.
+  // For now, let's assume padding and alignItems are for the content within ScrollView.
   title: {
     fontSize: 20, // text-xl equivalent (~20px)
     fontWeight: '600', // font-semibold
@@ -272,10 +278,11 @@ const styles = StyleSheet.create({
   planCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 32, // Increased vertical padding
+    paddingHorizontal: 32, // Keep horizontal padding
+    paddingVertical: 24, // Reduced vertical padding
     width: '100%',
     maxWidth: 400,
-    marginBottom: 24,
+    marginBottom: 16, // Reduced margin bottom
     alignItems: 'center',
     // Add soft shadow
     shadowColor: '#000',
