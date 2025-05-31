@@ -129,6 +129,10 @@ export default function NewDoseScreen() {
     handleStartOver,
     handleGoHome,
     handleCapture,
+    // Log saving related props from the hook
+    isLogSaved,
+    logSaveError,
+    handleSaveLog,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -582,6 +586,10 @@ export default function NewDoseScreen() {
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
+          // Pass log saving props
+          isLogSaved={isLogSaved}
+          logSaveError={logSaveError}
+          handleSaveLog={handleSaveLog}
         />
       )}
       <LimitModal

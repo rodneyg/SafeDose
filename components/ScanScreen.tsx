@@ -1,7 +1,8 @@
-import React, { RefObject, useEffect, useRef, useState } from 'react';
+import React, { RefObject, useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Camera as CameraIcon, Flashlight } from 'lucide-react-native';
-import { CameraView, FlashMode } from 'expo-camera';
+import { CameraView, FlashMode, BarcodeScanningResult } from 'expo-camera';
+import { BarCodeScanner } from 'expo-barcode-scanner'; // For BarCodeType constants
 import { isMobileWeb } from '../lib/utils';
 
 interface ScanScreenProps {
@@ -81,6 +82,7 @@ export default function ScanScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
   const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
+  const [barcodeScanned, setBarcodeScanned] = useState<boolean>(false); // To prevent multiple scans
 
   // Debug component mount and initial state
   useEffect(() => {
@@ -128,7 +130,55 @@ export default function ScanScreen({
     // Ensure we're using the safest navigation path back to intro
     console.log('[ScanScreen] Navigating back to intro screen');
     setScreenStep('intro');
+    setBarcodeScanned(false); // Reset barcode scan status when leaving screen
   };
+
+  const handleGoHome = () => {
+    // Original handleGoHome passed as prop might do more, ensure to call it if needed
+    // For now, just navigate to intro and reset barcode status
+    console.log('[ScanScreen] Navigating to home/intro screen');
+    setScreenStep('intro');
+    setBarcodeScanned(false); // Reset barcode scan status
+    // if (props.handleGoHome) props.handleGoHome(); // If there was an original prop
+  };
+
+
+  const handleBarcodeScanned = useCallback(({ type, data, boundingBox }: BarcodeScanningResult) => {
+    if (!barcodeScanned) {
+      setBarcodeScanned(true); // Set flag to true to prevent further processing for this session
+      console.log(`[ScanScreen] Barcode Scanned! Type: ${type}, Data: ${data}`);
+      // Here you could:
+      // 1. Display an alert or toast with the data.
+      // 2. Set state with the barcode data.
+      // 3. Trigger a navigation or pre-fill logic.
+      // For now, just logging and preventing re-scans.
+
+      // Example: Show an alert (consider removing for production if too intrusive)
+      // Alert.alert("Barcode Scanned!", `Type: ${type}\nData: ${data}`, [{ text: "OK", onPress: () => setBarcodeScanned(false) }]);
+
+      // --- MODIFICATION START: Pre-fill substance name and navigate ---
+      if (data) {
+        // 1. Reset the form, potentially to the step where substance name is usually entered.
+        //    'medicationSource' is the step where 'substanceName' is an input.
+        resetFullForm('medicationSource');
+
+        // 2. Set the substance name and hint *after* resetting the form.
+        setSubstanceName(data);
+        setSubstanceNameHint(`Scanned: ${type} barcode`);
+
+        // 3. Navigate to the manual entry screen.
+        setScreenStep('manualEntry');
+        // The manualStep is already set to 'medicationSource' by resetFullForm.
+        // If you want to start at a different step *after* medicationSource, set it here:
+        // setManualStep('anotherStep');
+
+      } else {
+        // Allow another scan if data is null/empty, and stay on the scan screen.
+        setTimeout(() => setBarcodeScanned(false), 3000);
+      }
+      // --- MODIFICATION END ---
+    }
+  }, [barcodeScanned, resetFullForm, setSubstanceName, setSubstanceNameHint, setScreenStep, setManualStep]);
 
   const handleButtonPress = () => {
     console.log('[ScanScreen] Capture button pressed', { isProcessing });
@@ -289,10 +339,26 @@ export default function ScanScreen({
         <CameraView 
           ref={cameraRef} 
           style={StyleSheet.absoluteFill} 
-          facing={cameraFacing} 
+          facing={cameraFacing}
           flash={flashMode}
           onCameraReady={() => console.log('[ScanScreen] Camera ready with facing:', cameraFacing)}
           mode="picture"
+          // Barcode scanning props
+          onBarcodeScanned={isMobileWeb ? undefined : handleBarcodeScanned} // Barcode scanning for native only for now
+          barcodeScannerSettings={{
+            barCodeTypes: [
+              BarCodeScanner.Constants.BarCodeType.ean13,
+              BarCodeScanner.Constants.BarCodeType.ean8,
+              BarCodeScanner.Constants.BarCodeType.upc_a,
+              BarCodeScanner.Constants.BarCodeType.upc_e,
+              BarCodeScanner.Constants.BarCodeType.qr,
+              BarCodeScanner.Constants.BarCodeType.pdf417,
+              BarCodeScanner.Constants.BarCodeType.dataMatrix,
+              BarCodeScanner.Constants.BarCodeType.code128,
+              BarCodeScanner.Constants.BarCodeType.code39,
+              BarCodeScanner.Constants.BarCodeType.interleaved2of5,
+            ],
+          }}
         />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
@@ -332,7 +398,7 @@ export default function ScanScreen({
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.backButtonScan}
-              onPress={handleGoHome}
+              onPress={handleGoHome} // Updated to use the local or prop-based handleGoHome
               disabled={isProcessing}
             >
               <Text style={styles.backButtonText}>Cancel</Text>
@@ -343,35 +409,37 @@ export default function ScanScreen({
     );
   }
 
+  // Fallback for undetermined or denied status if not handled above (should be, but as a safeguard)
+  const renderPermissionMessage = (message: string, buttonText: string) => (
+    <View style={styles.content}>
+      <Text style={styles.text}>{message}</Text>
+      <TouchableOpacity
+        style={[styles.button, isMobileWeb && styles.buttonMobile]}
+        onPress={isMobileWeb ? requestWebCameraPermission : () => {
+          // For native, permission request is typically handled by expo-camera or through app settings
+          // This button could link to app settings if feasible, or just be a general prompt
+          console.log("Requesting native permissions (typically via OS prompt or settings)");
+        }}
+      >
+        <Text style={styles.buttonText}>{buttonText}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.backButton, isMobileWeb && styles.backButtonMobile]}
+        onPress={() => { setScreenStep('intro'); setBarcodeScanned(false); }}
+      >
+        <Text style={styles.buttonText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (permission.status === 'denied') {
-    console.log('[ScanScreen] Rendering permission denied view');
-    return (
-      <View style={styles.content}>
-        <Text style={styles.errorText}>Camera permission is required to scan items.</Text>
-        <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-          <Text style={styles.buttonText}>Request Permissions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-          <Text style={styles.buttonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    console.log('[ScanScreen] Rendering permission denied view (final check)');
+    return renderPermissionMessage('Camera permission is required to scan items.', 'Request Permissions');
   }
 
-  if (permission.status === 'undetermined') {
-    console.log('[ScanScreen] Rendering permission undetermined view');
-    return (
-      <View style={styles.content}>
-        <Text style={styles.text}>Camera permission is needed to scan items.</Text>
-        <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-      </View>
-    );
-  }
+  // Default to undetermined if no other state matches (should ideally not be reached if logic above is correct)
+  console.log('[ScanScreen] Rendering permission undetermined view (final check)');
+  return renderPermissionMessage('Camera permission is needed to scan items.', 'Grant Permission');
 }
 
 const styles = StyleSheet.create({

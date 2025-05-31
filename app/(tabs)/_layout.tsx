@@ -39,6 +39,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="logs"
+        options={{
+          title: 'Logbook',
+          tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

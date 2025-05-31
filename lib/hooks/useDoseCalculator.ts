@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
+import { saveMedicationLog, MedicationLogData } from '../logUtils'; // Import logging utilities
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -43,6 +44,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
+  const [isLogSaved, setIsLogSaved] = useState<boolean>(false); // Track if current calculation is saved
+  const [logSaveError, setLogSaveError] = useState<string | null>(null); // Error during log saving
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -104,6 +107,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setRecommendedMarking(null);
     setCalculationError(null);
     setFormError(null);
+    setIsLogSaved(false); // Reset save status on form reset
+    setLogSaveError(null); // Reset save error
     setSubstanceNameHint(null);
     setConcentrationHint(null);
     setTotalAmountHint(null);
@@ -372,19 +377,80 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       setRecommendedMarking(result.recommendedMarking);
       setCalculationError(result.calculationError);
       setCalculatedConcentration(result.calculatedConcentration || null);
+      setIsLogSaved(false); // Reset save status for new calculation
+      setLogSaveError(null); // Reset save error for new calculation
 
       // Always navigate to finalResult screen regardless of calculation errors
-      // Previously only navigated if there was no error or a recommendedMarking was available
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
+      setIsLogSaved(false); // Ensure save status is reset on error too
+      setLogSaveError(null);
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
+
+  const handleSaveLogInternal = useCallback(async () => {
+    if (!substanceName) {
+      console.error("[useDoseCalculator] Medication name is missing, cannot save log.");
+      setLogSaveError("Medication name is required to save the log.");
+      return;
+    }
+    if (calculatedVolume === null || recommendedMarking === null) {
+      console.error("[useDoseCalculator] Calculation result is incomplete, cannot save log.");
+      setLogSaveError("Incomplete calculation, cannot save the log.");
+      return;
+    }
+    // Allow saving even if there's a calculationError, as it might be a warning (e.g., precision)
+    // However, if calculatedVolume is null, it's a more severe error.
+
+    const logData: MedicationLogData = {
+      medicationName: substanceName,
+      doseParams: {
+        doseValue: doseValue, // This is already a number or null
+        unit: unit,
+        concentration: concentration, // This is already a number or null
+        concentrationUnit: concentrationUnit,
+        totalAmount: totalAmount ? parseFloat(totalAmount) : null,
+        manualSyringe: manualSyringe,
+        solutionVolume: solutionVolume || null,
+      },
+      doseResult: {
+        calculatedVolume: calculatedVolume,
+        recommendedMarking: recommendedMarking,
+        calculatedConcentration: calculatedConcentration,
+      },
+      calculationWarning: calculationError, // Save any non-critical errors/warnings
+    };
+
+    setLogSaveError(null); // Clear previous errors
+    const savedId = await saveMedicationLog(logData);
+    if (savedId) {
+      setIsLogSaved(true);
+      console.log("[useDoseCalculator] Log saved successfully with ID:", savedId);
+    } else {
+      setIsLogSaved(false);
+      setLogSaveError("Failed to save medication log. Please try again.");
+      console.error("[useDoseCalculator] Failed to save medication log.");
+    }
+  }, [
+    substanceName,
+    doseValue,
+    unit,
+    concentration,
+    concentrationUnit,
+    totalAmount,
+    manualSyringe,
+    solutionVolume,
+    calculatedVolume,
+    recommendedMarking,
+    calculatedConcentration,
+    calculationError,
+  ]);
 
   const handleBack = useCallback(() => {
     try {
@@ -537,5 +603,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     stateHealth,
     validateDoseInput,
     validateConcentrationInput,
+    isLogSaved, // Export new state
+    logSaveError, // Export new error state
+    handleSaveLog: handleSaveLogInternal, // Export new handler
   };
 }
