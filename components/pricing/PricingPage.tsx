@@ -12,22 +12,10 @@ const stripePromise = stripeConfig.publishableKey
 
 const pricingPlans: PricingPlan[] = [
   {
-    name: "Free",
-    price: { monthly: 0, annual: 0 },
-    description: "Manual calculations only, ideal for light or trial use",
-    features: [
-      { name: "3 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans & no mid-session limits", available: false },
-      { name: "Priority scan queue", available: false },
-    ],
-    cta: "Start Free",
-    priceId: { monthly: null, annual: null },
-  },
-  {
-    name: "Plus",
+    name: "Monthly Plan",
     price: { monthly: 20, annual: 240 },
     description: "For consistent at-home dosing",
+    subtext: "Billed monthly. Cancel anytime.",
     features: [
       { name: "50 AI scans/month", available: true },
       { name: "Unlimited manual calculations", available: true },
@@ -35,25 +23,29 @@ const pricingPlans: PricingPlan[] = [
       { name: "No mid-session limits", available: true },
       { name: "Priority scan queue", available: false },
     ],
-    cta: "Upgrade to Plus",
+    cta: "Try Free Now",
+    ctaSubtext: "1 week free trial, then $20/month",
     badge: "popular",
     priceId: { monthly: "price_1REz2UAY2p4W374YGel1OISL", annual: "price_1REz2UAY2p4W374YGel1OISL" },
+    isTrial: true,
   },
   {
-    name: "Pro",
-    price: { monthly: 50, annual: 600 },
-    description: "Clinical-grade volume and control",
+    name: "Yearly Plan",
+    price: { monthly: 20, annual: 149.99 },
+    description: "For consistent at-home dosing",
+    subtext: "SAVE 38%",
     features: [
-      { name: "500 AI scans/month", available: true },
+      { name: "50 AI scans/month", available: true },
       { name: "Unlimited manual calculations", available: true },
       { name: "Faster scans", available: true },
       { name: "No mid-session limits", available: true },
-      { name: "Priority scan queue", available: true },
-      { name: "Dedicated support line", available: true },
+      { name: "Priority scan queue", available: false },
     ],
-    cta: "Go Pro",
-    badge: "best-value",
-    priceId: { monthly: "price_1REz24AY2p4W374Y0HsCxUre", annual: "price_1REz24AY2p4W374Y0HsCxUre" },
+    cta: "Try Free Now",
+    ctaSubtext: "1 week free trial, then $149.99/year",
+    badge: "discount",
+    priceId: { monthly: "price_1REz2UAY2p4W374YGel1OISL", annual: "price_1REz2UAY2p4W374YGel1OISL" },
+    isTrial: true,
   },
 ];
 
@@ -78,8 +70,8 @@ export default function PricingPage() {
       const priceId = isAnnual ? plan.priceId.annual : plan.priceId.monthly;
       if (!priceId) {
         toast({
-          title: "Free Plan Selected",
-          description: "No checkout needed for Free plan.",
+          title: "Free Trial",
+          description: "Starting your free trial.",
         });
         return;
       }
@@ -148,7 +140,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-12 pricing-page">
       <h2 className="text-3xl font-bold text-center mb-8">SafeDose Pricing</h2>
       <div className="mb-8">
         <PaymentProviders
@@ -158,7 +150,7 @@ export default function PricingPage() {
         />
       </div>
       <PriceToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+      <div className="flex flex-col gap-8 mt-6 max-w-md mx-auto">
         {pricingPlans.map((plan, idx) => (
           <PricingCard
             key={idx}

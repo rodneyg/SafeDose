@@ -13,9 +13,11 @@ export interface PricingPlan {
     annual: number;
   };
   description: string;
+  subtext?: string;
   features: Feature[];
   cta: string;
-  badge?: "popular" | "best-value";
+  ctaSubtext?: string;
+  badge?: "popular" | "best-value" | "discount";
   priceId: {
     monthly: string | null;
     annual: string | null;
@@ -40,15 +42,18 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
   const hasDynamicPrice = plan.dynamicPrice && plan.dynamicPrice.percentIncrease > 0;
 
   return (
-    <div className={`pricing-card ${plan.badge === "popular" ? "pricing-card-popular" : ""} ${plan.badge === "best-value" ? "pricing-card-best-value" : ""}`}>
+    <div className={`pricing-card ${plan.badge === "popular" ? "pricing-card-popular" : ""} ${plan.badge === "best-value" ? "pricing-card-best-value" : ""} ${plan.badge === "discount" ? "pricing-card-discount" : ""}`}>
       {plan.badge && (
-        <div className={`pricing-badge ${plan.badge === "popular" ? "popular-badge" : "value-badge"}`}>
-          {plan.badge === "popular" ? "Most Popular" : "Best Value"}
+        <div className={`pricing-badge ${plan.badge === "popular" ? "popular-badge" : plan.badge === "discount" ? "discount-badge" : "value-badge"}`}>
+          {plan.badge === "popular" ? "Most Popular" : plan.badge === "discount" ? "SAVE 38%" : "Best Value"}
         </div>
       )}
 
       <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
       <p className="text-muted-foreground mb-4">{plan.description}</p>
+      {plan.subtext && (
+        <p className="text-sm text-muted-foreground mb-4">{plan.subtext}</p>
+      )}
       
       <div className="mb-4">
         <div className="flex items-end">
@@ -99,6 +104,9 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
       >
         {plan.cta}
       </Button>
+      {plan.ctaSubtext && (
+        <p className="text-xs text-muted-foreground text-center mt-2">{plan.ctaSubtext}</p>
+      )}
     </div>
   );
 };

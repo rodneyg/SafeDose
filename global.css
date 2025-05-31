@@ -84,11 +84,18 @@
   .pricing-page .pricing-card-popular {
     @apply border-brand-light dark:border-brand-light border-2;
     background-image: linear-gradient(to bottom right, rgba(139, 92, 246, 0.05), rgba(139, 92, 246, 0.1));
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
   }
 
   .pricing-page .pricing-card-best-value {
     @apply border-highlight dark:border-highlight border-2;
     background-image: linear-gradient(to bottom right, rgba(249, 115, 22, 0.05), rgba(249, 115, 22, 0.1));
+  }
+
+  .pricing-page .pricing-card-discount {
+    @apply border-green-400 dark:border-green-400 border-2;
+    background-image: linear-gradient(to bottom right, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1));
   }
 
   .pricing-page .feature-available {
@@ -112,6 +119,11 @@
   .pricing-page .value-badge {
     @apply bg-highlight text-white;
     background-image: linear-gradient(to right, #F97316, #ea580c);
+  }
+
+  .pricing-page .discount-badge {
+    @apply bg-green-500 text-white;
+    background-image: linear-gradient(to right, #22c55e, #16a34a);
   }
 
   .pricing-page .shimmer {
