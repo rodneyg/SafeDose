@@ -102,7 +102,7 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
         </Button>
         {plan.isTrial && (
           <p className="text-xs text-muted-foreground text-center">
-            1 week free trial, then ${plan.name === "Monthly" ? "20/month" : "149.99/year"}
+            1 week free trial, then $20/month
           </p>
         )}
       </div>
