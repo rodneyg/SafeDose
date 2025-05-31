@@ -17,6 +17,20 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ---
 
+## ⚠️ AI Usage and Safety Protocols
+
+**Assistive Technology Only:** This AI tool is designed to be an assistive technology. It is intended to support healthcare professionals in their decision-making process, not to replace their expertise or judgment.
+
+**Embedded Safety Features:**
+*   **Pre-Dose Review:** All AI-generated dosage recommendations undergo a mandatory review step by a qualified healthcare professional before administration. This ensures human oversight and allows for adjustments based on individual patient needs and clinical context.
+*   **Hard Stops:** The system includes built-in hard stops for critical parameters. These are predefined limits and conditions that, if met or exceeded, will prevent the AI from making a recommendation or prompt immediate human intervention. This is designed to prevent egregious errors.
+
+**Not a Replacement for Professional Medical Advice:** This tool is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read or interpreted from this tool.
+
+**Open-Source Review Flow for Critical Logic:** The core logic and algorithms underpinning critical calculations (e.g., dosage calculations, risk assessments) are developed under an open-source model. This means the code is publicly available for review, scrutiny, and contribution by the broader medical and software engineering community. This transparent process invites independent verification and helps to identify and mitigate potential risks or biases in the AI's decision-making. We encourage peer review and contributions to ensure the highest standards of safety and efficacy.
+
+---
+
 ## 🚀 Hosted Version
 
 A hosted version of SafeDose is **coming soon**.  
@@ -111,4 +125,3 @@ By using this project, you agree not to market it as a certified medical device 
 ⸻
 
 Built by SafeLab — advancing open tools for human systems.
-
