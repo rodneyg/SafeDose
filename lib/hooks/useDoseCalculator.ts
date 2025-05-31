@@ -16,6 +16,54 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
+/**
+ * Custom hook for managing dose calculation logic and state.
+ *
+ * This hook encapsulates the entire state management for the dose calculation process,
+ * including user inputs, screen navigation, validation, and calculation results.
+ *
+ * @param props - Properties for the hook.
+ * @param props.checkUsageLimit - Function to check if the usage limit has been reached.
+ * @returns An object containing state variables and functions to interact with the dose calculator.
+ *   - `screenStep`: Current screen step ('intro', 'scan', 'manualEntry').
+ *   - `setScreenStep`: Function to set the current screen step.
+ *   - `manualStep`: Current step in the manual entry process.
+ *   - `setManualStep`: Function to set the current manual entry step.
+ *   - `dose`, `setDose`: Dose amount string and setter.
+ *   - `unit`, `setUnit`: Dose unit and setter.
+ *   - `substanceName`, `setSubstanceName`: Substance name string and setter.
+ *   - `medicationInputType`, `setMedicationInputType`: Type of medication input ('totalAmount' or other) and setter.
+ *   - `concentrationAmount`, `setConcentrationAmount`: Concentration amount string and setter.
+ *   - `concentrationUnit`, `setConcentrationUnit`: Concentration unit and setter.
+ *   - `totalAmount`, `setTotalAmount`: Total amount of medication string and setter.
+ *   - `solutionVolume`, `setSolutionVolume`: Solution volume string for reconstitution and setter.
+ *   - `manualSyringe`, `setManualSyringe`: Selected syringe details and setter.
+ *   - `doseValue`, `setDoseValue`: Parsed numeric dose value and setter.
+ *   - `concentration`, `setConcentration`: Parsed numeric concentration value and setter.
+ *   - `calculatedVolume`, `setCalculatedVolume`: Calculated dose volume and setter.
+ *   - `calculatedConcentration`, `setCalculatedConcentration`: Calculated concentration (if applicable) and setter.
+ *   - `recommendedMarking`, `setRecommendedMarking`: Recommended syringe marking and setter.
+ *   - `calculationError`, `setCalculationError`: Error message from calculation and setter.
+ *   - `formError`, `setFormError`: Error message for form validation and setter.
+ *   - `substanceNameHint`, `setSubstanceNameHint`: Hint for substance name input and setter.
+ *   - `concentrationHint`, `setConcentrationHint`: Hint for concentration input and setter.
+ *   - `totalAmountHint`, `setTotalAmountHint`: Hint for total amount input and setter.
+ *   - `syringeHint`, `setSyringeHint`: Hint for syringe selection and setter.
+ *   - `resetFullForm`: Function to reset the entire form state.
+ *   - `handleNextDose`: Function to proceed from dose input step.
+ *   - `handleNextMedicationSource`: Function to proceed from medication source selection.
+ *   - `handleNextConcentrationInput`: Function to proceed from concentration input.
+ *   - `handleNextTotalAmountInput`: Function to proceed from total amount input.
+ *   - `handleNextReconstitution`: Function to proceed from reconstitution input.
+ *   - `handleCalculateFinal`: Function to perform the final dose calculation.
+ *   - `handleBack`: Function to navigate to the previous step.
+ *   - `handleStartOver`: Function to reset the form and go to the intro screen.
+ *   - `handleGoHome`: Function to go to the intro screen and reset the form.
+ *   - `handleCapture`: Function to initiate the capture process (e.g., scanning).
+ *   - `stateHealth`: Indicates the health of the hook's internal state ('healthy', 'recovering').
+ *   - `validateDoseInput`: Function to validate dose input.
+ *   - `validateConcentrationInput`: Function to validate concentration input.
+ */
 export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
@@ -44,7 +92,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
 
-  // Validate dose input
+  /**
+   * Validates the dose input fields.
+   * @param doseValue - The string value of the dose.
+   * @param doseUnit - The selected unit for the dose.
+   * @returns True if the input is valid, false otherwise.
+   */
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
     const numericDose = parseFloat(doseValue);
     if (!doseValue || isNaN(numericDose) || numericDose <= 0) {
@@ -64,7 +117,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     return true;
   }, [concentrationUnit]);
 
-  // Validate concentration input
+  /**
+   * Validates the concentration input fields.
+   * @param amount - The string value of the concentration.
+   * @param concUnit - The selected unit for the concentration.
+   * @returns True if the input is valid, false otherwise.
+   */
   const validateConcentrationInput = useCallback((amount: string, concUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'): boolean => {
     const numericAmount = parseFloat(amount);
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
@@ -84,6 +142,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     return true;
   }, [unit]);
 
+  /**
+   * Resets the entire form state to its initial values.
+   * @param startStep - Optional. The manual step to reset to, defaults to 'dose'.
+   */
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
     console.log('[useDoseCalculator] Resetting form state', { startStep });
     lastActionTimestamp.current = Date.now();
@@ -117,6 +179,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, []);
 
+  /**
+   * Safely sets the screen step, handling potential initialization and navigation issues.
+   * @param step - The screen step to navigate to.
+   */
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
     console.log('[useDoseCalculator] Setting screen step to:', step);
     try {
@@ -157,6 +223,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [resetFullForm, screenStep]);
 
+  /**
+   * Effect hook to initialize the form state when the component mounts.
+   * It ensures that the form is reset and the screen is set to 'intro'.
+   */
   useEffect(() => {
     if (!isInitialized.current) {
       console.log('[useDoseCalculator] Initial setup');
@@ -168,6 +238,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [resetFullForm]);
 
+  /**
+   * Handles the action to proceed from the dose input step.
+   * Validates the dose and unit, then navigates to the medication source step.
+   */
   const handleNextDose = useCallback(() => {
     try {
       if (!dose) {
@@ -206,6 +280,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [dose, unit, concentrationUnit, setMedicationInputType]);
 
+  /**
+   * Handles the action to proceed from the medication source selection step.
+   * Navigates to either total amount input or concentration input based on selection.
+   */
   const handleNextMedicationSource = useCallback(() => {
     if (medicationInputType === 'totalAmount') {
       setManualStep('totalAmountInput');
@@ -215,6 +293,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setFormError(null);
   }, [medicationInputType]);
 
+  /**
+   * Handles the action to proceed from the concentration input step.
+   * Validates concentration and unit, then navigates to the total amount input step.
+   */
   const handleNextConcentrationInput = useCallback(() => {
     try {
       if (!concentrationAmount) {
@@ -250,6 +332,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [concentrationAmount, concentrationUnit, unit]);
 
+  /**
+   * Handles the action to proceed from the total amount input step.
+   * Validates the total amount and navigates to the reconstitution or syringe step.
+   */
   const handleNextTotalAmountInput = useCallback(() => {
     try {
       if (!totalAmount || isNaN(parseFloat(totalAmount))) {
@@ -279,6 +365,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [totalAmount, medicationInputType]);
 
+  /**
+   * Handles the action to proceed from the reconstitution (solution volume) input step.
+   * Validates the solution volume and navigates to the syringe selection step.
+   */
   const handleNextReconstitution = useCallback(() => {
     try {
       if (!solutionVolume) {
@@ -301,6 +391,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [solutionVolume]);
 
+  /**
+   * Handles the final calculation of the dose.
+   * Validates all necessary inputs, performs the calculation using `doseUtils`,
+   * and sets the calculated volume, recommended marking, and any errors.
+   * Navigates to the final result step.
+   */
   const handleCalculateFinal = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleCalculateFinal called');
@@ -386,6 +482,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
 
+  /**
+   * Handles the action to go back to the previous step in the manual entry process.
+   * Updates the `manualStep` or `screenStep` accordingly.
+   */
   const handleBack = useCallback(() => {
     try {
       if (manualStep === 'dose') setScreenStep('intro');
@@ -411,17 +511,30 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [manualStep, medicationInputType, resetFullForm]);
 
+  /**
+   * Handles the action to start the form over from the beginning.
+   * Resets the form and navigates to the intro screen.
+   */
   const handleStartOver = useCallback(() => {
     resetFullForm('dose');
     setScreenStep('intro');
     lastActionTimestamp.current = Date.now();
   }, [resetFullForm]);
 
+  /**
+   * Handles the action to go to the home/intro screen.
+   * Resets the form and navigates to the intro screen.
+   */
   const handleGoHome = useCallback(() => {
     setScreenStep('intro');
     resetFullForm('dose');
   }, [resetFullForm]);
 
+  /**
+   * Handles the initiation of a capture action (e.g., scanning a medication).
+   * Checks usage limits before proceeding.
+   * @returns A promise that resolves to true if the capture process can proceed, false otherwise.
+   */
   const handleCapture = useCallback(async () => {
     try {
       const canProceed = await checkUsageLimit();
@@ -435,6 +548,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [checkUsageLimit]);
 
+  /**
+   * Effect hook to periodically check the "health" of the hook's state.
+   * If the state is detected as stale (no action for a long time), it resets the form.
+   */
   useEffect(() => {
     const checkStateHealth = () => {
       const now = Date.now();

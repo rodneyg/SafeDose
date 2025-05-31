@@ -27,6 +27,8 @@ export function validateUnitCompatibility(
   doseUnit: 'mg' | 'mcg' | 'units' | 'mL',
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'
 ): { isValid: boolean; errorMessage?: string } {
+  // JSDoc comments for this function are already present.
+  // No changes needed for this function.
   // For mL dose, any concentration unit is valid (direct volume-based dose)
   if (doseUnit === 'mL') {
     return { isValid: true };
@@ -62,6 +64,8 @@ export function validateUnitCompatibility(
 export function getCompatibleConcentrationUnits(
   doseUnit: 'mg' | 'mcg' | 'units' | 'mL'
 ): ('mg/ml' | 'mcg/ml' | 'units/ml')[] {
+  // JSDoc comments for this function are already present.
+  // No changes needed for this function.
   switch (doseUnit) {
     case 'mg':
       return ['mg/ml', 'mcg/ml'];
@@ -76,6 +80,19 @@ export function getCompatibleConcentrationUnits(
   }
 }
 
+/**
+ * Calculates the dose volume and recommended syringe marking.
+ *
+ * @param params - The parameters for dose calculation.
+ * @param params.doseValue - The value of the dose to be administered. Can be null if not provided.
+ * @param params.concentration - The concentration of the medication. Can be null if not provided.
+ * @param params.unit - The unit of the dose ('mg', 'mcg', 'units', 'mL').
+ * @param params.concentrationUnit - The unit of the concentration ('mg/ml', 'mcg/ml', 'units/ml').
+ * @param params.totalAmount - Optional. The total amount of medication in the vial.
+ * @param params.manualSyringe - Optional. Details of the manually selected syringe, including type and volume.
+ * @param params.solutionVolume - Optional. The volume of the solution if concentration needs to be calculated.
+ * @returns An object containing the calculated volume, recommended syringe marking, any calculation error, and the calculated concentration if applicable.
+ */
 export function calculateDose({
   doseValue,
   concentration,

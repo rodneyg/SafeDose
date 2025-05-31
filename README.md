@@ -80,6 +80,7 @@ rodneyg-safedose/
 ├── ios/                 # iOS project files
 ├── docs/                # Documentation
 │   └── auth-config.md   # Authentication configuration info
+│   └── components.md    # UI component documentation
 ├── types/               # Global type definitions
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration
