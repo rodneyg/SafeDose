@@ -43,7 +43,7 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
     <div className={`pricing-card ${plan.badge === "popular" ? "pricing-card-popular" : ""} ${plan.badge === "best-value" ? "pricing-card-best-value" : ""}`}>
       {plan.badge && (
         <div className={`pricing-badge ${plan.badge === "popular" ? "popular-badge" : "value-badge"}`}>
-          {plan.badge === "popular" ? "Most Popular" : "Best Value"}
+          {plan.badge === "popular" ? "Most Popular" : plan.badge === "best-value" ? "Best Value" : ""}
         </div>
       )}
 
@@ -92,13 +92,20 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
         </div>
       </div>
       
-      <Button 
-        onClick={() => onSelectPlan(plan)}
-        className={`w-full ${plan.badge ? 'bg-brand hover:bg-brand-dark' : ''}`}
-        variant={plan.badge ? "default" : "outline"}
-      >
-        {plan.cta}
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          onClick={() => onSelectPlan(plan)}
+          className={`w-full ${plan.badge ? 'bg-brand hover:bg-brand-dark' : ''}`}
+          variant={plan.badge ? "default" : "outline"}
+        >
+          {plan.cta}
+        </Button>
+        {plan.isTrial && (
+          <p className="text-xs text-muted-foreground text-center">
+            1 week free trial, then ${plan.name === "Monthly" ? "20/month" : "149.99/year"}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
