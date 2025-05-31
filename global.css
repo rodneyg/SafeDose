@@ -84,6 +84,8 @@
   .pricing-page .pricing-card-popular {
     @apply border-brand-light dark:border-brand-light border-2;
     background-image: linear-gradient(to bottom right, rgba(139, 92, 246, 0.05), rgba(139, 92, 246, 0.1));
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
   }
 
   .pricing-page .pricing-card-best-value {

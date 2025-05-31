@@ -9,6 +9,7 @@ export interface Feature {
 export interface PricingPlan {
   name: string;
   price: {
+    weekly?: number;
     monthly: number;
     annual: number;
   };
@@ -17,6 +18,7 @@ export interface PricingPlan {
   cta: string;
   badge?: "popular" | "best-value";
   priceId: {
+    weekly?: string | null;
     monthly: string | null;
     annual: string | null;
   };
@@ -26,6 +28,8 @@ export interface PricingPlan {
     percentIncrease: number;
   };
   isTrial?: boolean;
+  period?: "weekly" | "monthly" | "annual";
+  subtext?: string;
 }
 
 interface PricingCardProps {
@@ -35,7 +39,17 @@ interface PricingCardProps {
 }
 
 const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
-  const price = isAnnual ? plan.price.annual : plan.price.monthly;
+  const getPriceAndPeriod = () => {
+    if (plan.period === "weekly" && plan.price.weekly) {
+      return { price: plan.price.weekly, period: "week" };
+    } else if (plan.period === "annual") {
+      return { price: plan.price.annual, period: "year" };
+    } else {
+      return { price: plan.price.monthly, period: "month" };
+    }
+  };
+
+  const { price, period } = getPriceAndPeriod();
   const originalPrice = plan.dynamicPrice ? plan.dynamicPrice.basePrice : null;
   const hasDynamicPrice = plan.dynamicPrice && plan.dynamicPrice.percentIncrease > 0;
 
@@ -43,7 +57,7 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
     <div className={`pricing-card ${plan.badge === "popular" ? "pricing-card-popular" : ""} ${plan.badge === "best-value" ? "pricing-card-best-value" : ""}`}>
       {plan.badge && (
         <div className={`pricing-badge ${plan.badge === "popular" ? "popular-badge" : "value-badge"}`}>
-          {plan.badge === "popular" ? "Most Popular" : "Best Value"}
+          {plan.badge === "popular" ? "Most Popular" : (plan.subtext?.includes("SAVE") ? plan.subtext : "Best Value")}
         </div>
       )}
 
@@ -53,8 +67,13 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
       <div className="mb-4">
         <div className="flex items-end">
           <span className="text-3xl font-bold">${price}</span>
-          <span className="text-muted-foreground ml-1">/{isAnnual ? "year" : "month"}</span>
+          <span className="text-muted-foreground ml-1">/{period}</span>
         </div>
+        {plan.subtext && (
+          <div className="mt-1">
+            <span className="text-sm text-muted-foreground">{plan.subtext}</span>
+          </div>
+        )}
         {hasDynamicPrice && (
           <div className="mt-2 flex items-center gap-1.5">
             <span className="text-sm text-muted-foreground line-through">${originalPrice}</span>
@@ -92,13 +111,20 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
         </div>
       </div>
       
-      <Button 
-        onClick={() => onSelectPlan(plan)}
-        className={`w-full ${plan.badge ? 'bg-brand hover:bg-brand-dark' : ''}`}
-        variant={plan.badge ? "default" : "outline"}
-      >
-        {plan.cta}
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          onClick={() => onSelectPlan(plan)}
+          className={`w-full ${plan.badge ? 'bg-brand hover:bg-brand-dark' : ''}`}
+          variant={plan.badge ? "default" : "outline"}
+        >
+          {plan.cta}
+        </Button>
+        {plan.isTrial && (
+          <p className="text-xs text-muted-foreground text-center">
+            1 week free trial, then ${plan.price.monthly}/month
+          </p>
+        )}
+      </div>
     </div>
   );
 };
