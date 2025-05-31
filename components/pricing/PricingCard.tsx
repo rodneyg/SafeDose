@@ -60,6 +60,11 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
           {plan.badge === "popular" ? "Most Popular" : (plan.subtext?.includes("SAVE") ? plan.subtext : "Best Value")}
         </div>
       )}
+      {plan.subtext?.includes("SAVE") && (
+        <div className="discount-badge">
+          {plan.subtext}
+        </div>
+      )}
 
       <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
       <p className="text-muted-foreground mb-4">{plan.description}</p>

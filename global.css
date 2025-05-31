@@ -116,6 +116,11 @@
     background-image: linear-gradient(to right, #F97316, #ea580c);
   }
 
+  .pricing-page .discount-badge {
+    @apply absolute -top-2 -right-2 px-2 py-1 text-xs font-bold rounded bg-green-500 text-white;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+  }
+
   .pricing-page .shimmer {
     @apply bg-gradient-to-r from-transparent via-gray-200 to-transparent bg-[length:500px_100%] animate-shimmer;
   }

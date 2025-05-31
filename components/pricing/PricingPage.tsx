@@ -171,7 +171,7 @@ export default function PricingPage() {
           onSelectProvider={setSelectedPaymentProvider}
         />
       </div>
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-6">
         {pricingPlans.map((plan, idx) => (
           <PricingCard
             key={idx}
