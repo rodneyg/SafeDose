@@ -456,7 +456,7 @@ export default function NewDoseScreen() {
         <View style={styles.usageInfoContainer}>
           <View style={styles.scanCreditsContainer}>
             <Text style={styles.scanCreditsText}>
-              🎟️ {usageData.limit - usageData.scansUsed} remaining
+              🎟️ {usageData.limit - usageData.scansUsed} scans remaining
             </Text>
           </View>
           
