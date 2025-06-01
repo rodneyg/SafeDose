@@ -56,6 +56,7 @@ interface ManualEntryScreenProps {
   handleBack: () => void;
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
 }
@@ -104,6 +105,7 @@ export default function ManualEntryScreen({
   handleBack,
   handleStartOver,
   setScreenStep,
+  handleGoToFeedback,
   validateDoseInput,
   validateConcentrationInput,
 }: ManualEntryScreenProps) {
@@ -271,6 +273,11 @@ export default function ManualEntryScreen({
       progress = 0.95; // Almost complete but not fully
       break;
     case 'finalResult':
+      // Calculate the concentration value to pass to FinalResultDisplay
+      const concentrationValue = medicationInputType === 'concentration' 
+        ? (parseFloat(concentrationAmount) || null)
+        : (calculatedConcentration || null);
+        
       currentStepComponent = (
         <FinalResultDisplay
           calculationError={calculationError}
@@ -282,8 +289,10 @@ export default function ManualEntryScreen({
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          concentration={concentrationValue}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
+          handleGoToFeedback={handleGoToFeedback}
           isMobileWeb={isMobileWeb}
         />
       );

@@ -8,10 +8,12 @@ import { isMobileWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
+import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import LimitModal from '../../components/LimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
@@ -25,6 +27,7 @@ export default function NewDoseScreen() {
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
+  const feedbackStorage = useFeedbackStorage();
   
   // Ensure intro screen is shown on initial load
   useEffect(() => {
@@ -138,6 +141,12 @@ export default function NewDoseScreen() {
     volumeErrorValue,
     handleCloseVolumeErrorModal,
     handleReEnterVialData,
+    // Feedback context
+    feedbackContext,
+    handleGoToFeedback,
+    handleFeedbackComplete,
+    validateDoseInput,
+    validateConcentrationInput,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -445,6 +454,23 @@ export default function NewDoseScreen() {
     }
   };
 
+  // Feedback handlers
+  const handleFeedbackSubmit = useCallback(async (feedbackType: any, notes?: string) => {
+    if (!feedbackContext) return;
+    
+    await feedbackStorage.submitFeedback(
+      feedbackType,
+      feedbackContext.doseInfo,
+      notes
+    );
+    
+    handleFeedbackComplete();
+  }, [feedbackContext, feedbackStorage, handleFeedbackComplete]);
+
+  const handleFeedbackSkip = useCallback(() => {
+    handleFeedbackComplete();
+  }, [handleFeedbackComplete]);
+
   // Clean up camera resources when component unmounts
   useEffect(() => {
     return () => {
@@ -481,6 +507,7 @@ export default function NewDoseScreen() {
         <Text style={styles.subtitle}>
           {screenStep === 'intro' && 'Welcome'}
           {screenStep === 'scan' && 'Scan Syringe & Vial'}
+          {screenStep === 'postDoseFeedback' && 'How did this dose feel?'}
           {screenStep === 'manualEntry' && (
             `${
               manualStep === 'dose' ? 'Enter Dose' :
@@ -594,6 +621,17 @@ export default function NewDoseScreen() {
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
+          handleGoToFeedback={handleGoToFeedback}
+          validateDoseInput={validateDoseInput}
+          validateConcentrationInput={validateConcentrationInput}
+        />
+      )}
+      {screenStep === 'postDoseFeedback' && feedbackContext && (
+        <PostDoseFeedbackScreen
+          context={feedbackContext}
+          onSubmit={handleFeedbackSubmit}
+          onSkip={handleFeedbackSkip}
+          isMobileWeb={isMobileWeb}
         />
       )}
       <LimitModal
