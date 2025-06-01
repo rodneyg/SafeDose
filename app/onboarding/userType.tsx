@@ -297,7 +297,7 @@ export default function UserTypeSegmentation() {
   };
 
   const getProgressWidth = () => {
-    return `${((currentStep + 1) / 3) * 100}%`;
+    return ((currentStep + 1) / 3) * 100;
   };
 
   return (
@@ -313,7 +313,7 @@ export default function UserTypeSegmentation() {
           <View style={styles.progressContainer}>
             <View style={styles.progressBackground}>
               <Animated.View 
-                style={[styles.progressBar, { width: getProgressWidth() }]}
+                style={[styles.progressBar, { width: `${getProgressWidth()}%` }]}
                 entering={FadeInRight.duration(300)}
               />
             </View>
