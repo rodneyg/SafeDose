@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -122,132 +123,145 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
   
   return (
-    <Animated.View entering={FadeIn.duration(400)} style={styles.content}>
-      {/* Invisible overlay to close menu when tapping outside */}
-      {isProfileMenuOpen && (
-        <TouchableOpacity 
-          style={styles.menuOverlay} 
-          onPress={() => setIsProfileMenuOpen(false)}
-          activeOpacity={1}
-        />
-      )}
-      
-      {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
-      <View style={styles.profileButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-          onPress={toggleProfileMenu}>
-          {user?.isAnonymous 
-            ? <LogIn color="#10b981" size={18} />
-            : <User color="#3b82f6" size={18} />
-          }
-          <Text style={styles.profileText}>
-            {user?.isAnonymous 
-              ? 'Sign In' 
-              : user.email ? user.email.split('@')[0] : 'Profile'}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Profile dropdown menu */}
+    <SafeAreaView style={styles.safeArea}>
+      <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+        {/* Invisible overlay to close menu when tapping outside */}
         {isProfileMenuOpen && (
-          <View style={styles.profileMenu}>
-            {user?.isAnonymous ? (
-              // Menu for anonymous users
+          <TouchableOpacity 
+            style={styles.menuOverlay} 
+            onPress={() => setIsProfileMenuOpen(false)}
+            activeOpacity={1}
+          />
+        )}
+        
+        {/* Header section with Sign-In button */}
+        <View style={styles.headerSection}>
+          <View style={styles.headerContent}>
+            {/* Spacer to push Sign-In button to the right */}
+            <View style={styles.headerSpacer} />
+            
+            {/* Profile Control - Naturally positioned in header */}
+            <View style={styles.profileButtonContainer}>
               <TouchableOpacity 
-                style={styles.signInButton}
-                onPress={() => {
-                  setIsProfileMenuOpen(false);
-                  handleSignInPress();
-                }}>
-                <LogIn color="#10b981" size={16} />
-                <Text style={styles.signInText}>Sign In</Text>
+                style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+                onPress={toggleProfileMenu}>
+                {user?.isAnonymous 
+                  ? <LogIn color="#10b981" size={18} />
+                  : <User color="#3b82f6" size={18} />
+                }
+                <Text style={styles.profileText}>
+                  {user?.isAnonymous 
+                    ? 'Sign In' 
+                    : user.email ? user.email.split('@')[0] : 'Profile'}
+                </Text>
               </TouchableOpacity>
+              
+              {/* Profile dropdown menu */}
+              {isProfileMenuOpen && (
+                <View style={styles.profileMenu}>
+                  {user?.isAnonymous ? (
+                    // Menu for anonymous users
+                    <TouchableOpacity 
+                      style={styles.signInButton}
+                      onPress={() => {
+                        setIsProfileMenuOpen(false);
+                        handleSignInPress();
+                      }}>
+                      <LogIn color="#10b981" size={16} />
+                      <Text style={styles.signInText}>Sign In</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    // Menu for logged-in users
+                    <>
+                      {user?.email && (
+                        <View style={styles.profileMenuItem}>
+                          <Mail color="#64748b" size={16} />
+                          <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity 
+                        style={styles.logoutButton}
+                        onPress={handleLogoutPress}>
+                        <LogOut color="#ef4444" size={16} />
+                        <Text style={styles.logoutText}>Sign Out</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Main content section */}
+        <View style={styles.content}>
+          {/* App icon and welcome message */}
+          <View style={styles.welcomeContainer}>
+            <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
+            
+            {/* Dynamic welcome message based on authentication status */}
+            {user && !user.isAnonymous && user.displayName ? (
+              <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
             ) : (
-              // Menu for logged-in users
-              <>
-                {user?.email && (
-                  <View style={styles.profileMenuItem}>
-                    <Mail color="#64748b" size={16} />
-                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                  </View>
-                )}
-                <TouchableOpacity 
-                  style={styles.logoutButton}
-                  onPress={handleLogoutPress}>
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.logoutText}>Sign Out</Text>
-                </TouchableOpacity>
-              </>
+              <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
             )}
           </View>
-        )}
-      </View>
-
-      {/* App icon and welcome message */}
-      <View style={styles.welcomeContainer}>
-        <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-        
-        {/* Dynamic welcome message based on authentication status */}
-        {user && !user.isAnonymous && user.displayName ? (
-          <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
-        ) : (
-          <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-        )}
-      </View>
-      
-      {/* Main action buttons grouped together (Law of Proximity) */}
-      <View style={styles.actionButtonsContainer}>
-        {/* Primary action */}
-        <TouchableOpacity 
-          style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
-          onPress={handleScanPress}>
-          <CameraIcon color={'#fff'} size={20} />
-          <Text style={styles.buttonText}>Scan Items</Text>
-        </TouchableOpacity>
-        
-        {/* Secondary action */}
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
-          onPress={handleManualEntryPress}
-        >
-          <Pill color={'#fff'} size={20} />
-          <Text style={styles.buttonText}>Enter Details Manually</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Disclaimer with Info icon */}
-      <View style={styles.disclaimerContainer}>
-        <View style={styles.disclaimerIconContainer}>
-          <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
-          <Text style={styles.disclaimerText}>
-            {disclaimerText}
-          </Text>
+          
+          {/* Main action buttons grouped together (Law of Proximity) */}
+          <View style={styles.actionButtonsContainer}>
+            {/* Primary action */}
+            <TouchableOpacity 
+              style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
+              onPress={handleScanPress}>
+              <CameraIcon color={'#fff'} size={20} />
+              <Text style={styles.buttonText}>Scan Items</Text>
+            </TouchableOpacity>
+            
+            {/* Secondary action */}
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
+              onPress={handleManualEntryPress}
+            >
+              <Pill color={'#fff'} size={20} />
+              <Text style={styles.buttonText}>Enter Details Manually</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Disclaimer with Info icon */}
+          <View style={styles.disclaimerContainer}>
+            <View style={styles.disclaimerIconContainer}>
+              <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
+              <Text style={styles.disclaimerText}>
+                {disclaimerText}
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
-      
-      {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
-      {(usageData.plan === 'free') && (
-        <View style={styles.upgradeContainer}>
-          <TouchableOpacity 
-            style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-            onPress={handleUpgradePress}>
-            <CreditCard color={'#f59e0b'} size={16} />
-            <Text style={styles.upgradeText}>Upgrade</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </Animated.View>
+        
+        {/* Upgrade Plan - Footer Element */}
+        {(usageData.plan === 'free') && (
+          <View style={styles.footerSection}>
+            <TouchableOpacity 
+              style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+              onPress={handleUpgradePress}>
+              <CreditCard color={'#f59e0b'} size={16} />
+              <Text style={styles.upgradeText}>Upgrade</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { 
-    flex: 1, 
-    alignItems: 'center',
-    justifyContent: 'center', 
-    padding: 16,
-    paddingTop: 60, // Additional top padding to ensure sign-in button doesn't overlap content
-    position: 'relative', // To support absolute positioning of profile button
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F2F2F7',
+  },
+  container: {
+    flex: 1,
+    flexDirection: 'column',
   },
   // Invisible overlay to capture taps outside the menu
   menuOverlay: {
@@ -258,11 +272,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 5, // Below profile menu but above everything else
   },
-  // Profile button styles (Fitts's Law)
+  // Header section containing the Sign-In button
+  headerSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  headerSpacer: {
+    flex: 1, // Pushes Sign-In button to the right
+  },
+  // Profile button styles (naturally positioned in header)
   profileButtonContainer: {
-    position: 'absolute',
-    top: 20, // Safely positioned within container bounds to avoid interference
-    right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
   profileButton: {
@@ -348,6 +372,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#10b981',
   },
+  // Main content section
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center', 
+    padding: 16,
+  },
   // Welcome section
   welcomeContainer: {
     alignItems: 'center',
@@ -427,10 +458,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  // Upgrade section (Law of Visual Hierarchy)
-  upgradeContainer: {
-    position: 'absolute',
-    bottom: 20,
+  // Footer section for upgrade button
+  footerSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     alignItems: 'center',
   },
   upgradeButton: {
