@@ -215,7 +215,7 @@ export default function ScanScreen({
         )}
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
-          <Text style={styles.scanText}>Click below to take a photo of the syringe & vial</Text>
+          <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
           <View style={styles.captureRow}>
             {/* Flashlight button for mobile web - only show if supported */}
             {toggleWebFlashlight && webFlashlightSupported && (
@@ -224,7 +224,7 @@ export default function ScanScreen({
                 onPress={toggleWebFlashlight}
                 disabled={isProcessing}
               >
-                <Flashlight color={webFlashlightEnabled ? '#000' : '#fff'} size={20} />
+                <Flashlight color={webFlashlightEnabled ? '#000' : '#fff'} size={22} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -232,7 +232,7 @@ export default function ScanScreen({
               onPress={handleButtonPress}
               disabled={isProcessing}
             >
-              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={28} />}
             </TouchableOpacity>
             {/* Spacer to center the capture button when flashlight is present */}
             {toggleWebFlashlight && webFlashlightSupported && <View style={styles.spacer} />}
@@ -296,7 +296,7 @@ export default function ScanScreen({
         />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
-          <Text style={styles.scanText}>Position syringe & vial clearly</Text>
+          <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
           <View style={styles.captureRow}>
             {/* Flashlight button - only show on mobile, not web */}
             {!isMobileWeb && (
@@ -305,7 +305,7 @@ export default function ScanScreen({
                 onPress={toggleFlashlight}
                 disabled={isProcessing}
               >
-                <Flashlight color={flashMode === 'on' ? '#000' : '#fff'} size={20} />
+                <Flashlight color={flashMode === 'on' ? '#000' : '#fff'} size={22} />
               </TouchableOpacity>
             )}
             {console.log('[ScanScreen] Flashlight button visibility', { 
@@ -318,7 +318,7 @@ export default function ScanScreen({
               onPress={handleButtonPress}
               disabled={isProcessing}
             >
-              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
+              {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={28} />}
             </TouchableOpacity>
             {/* Spacer to center the capture button when flashlight is present */}
             {!isMobileWeb && <View style={styles.spacer} />}
@@ -385,29 +385,29 @@ const styles = StyleSheet.create({
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },
   scanContainer: { flex: 1, backgroundColor: '#000' },
-  overlayBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 40, paddingTop: 20, alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.6)' },
-  bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 10 },
-  manualEntryButtonScan: { paddingVertical: 8, paddingHorizontal: 14, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 16 },
-  backButtonScan: { paddingVertical: 8, paddingHorizontal: 14, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 16 },
-  scanText: { fontSize: 16, color: '#fff', textAlign: 'center', paddingHorizontal: 20, marginBottom: 15, fontWeight: '500' },
-  captureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%', paddingHorizontal: 20 },
+  overlayBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 50, paddingTop: 40, alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+  bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 30, marginTop: 25 },
+  manualEntryButtonScan: { paddingVertical: 12, paddingHorizontal: 18, backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 20, minWidth: 100 },
+  backButtonScan: { paddingVertical: 12, paddingHorizontal: 18, backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 20, minWidth: 100 },
+  scanText: { fontSize: 18, color: '#fff', textAlign: 'center', paddingHorizontal: 30, marginBottom: 25, fontWeight: '400', lineHeight: 24 },
+  captureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 30, width: '100%', paddingHorizontal: 20 },
   captureButton: { 
     backgroundColor: '#ef4444', 
-    width: 70, 
-    height: 70, 
-    borderRadius: 35, 
+    width: 85, 
+    height: 85, 
+    borderRadius: 42.5, 
     justifyContent: 'center', 
     alignItems: 'center',
     shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
   },
-  flashlightButton: { backgroundColor: 'rgba(0, 0, 0, 0.6)', width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 'auto' },
-  flashlightButtonActive: { backgroundColor: '#fff' },
-  spacer: { width: 50, marginLeft: 'auto' },
-  backButtonText: { color: '#fff', fontSize: 13 },
+  flashlightButton: { backgroundColor: 'rgba(255, 255, 255, 0.2)', width: 55, height: 55, borderRadius: 27.5, justifyContent: 'center', alignItems: 'center', marginRight: 'auto' },
+  flashlightButtonActive: { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+  spacer: { width: 55, marginLeft: 'auto' },
+  backButtonText: { color: '#fff', fontSize: 14, fontWeight: '500' },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   disabledButton: { backgroundColor: '#C7C7CC' },
 });
