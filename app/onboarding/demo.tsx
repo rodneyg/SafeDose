@@ -21,12 +21,12 @@ export default function Demo() {
       try {
         // Persist onboarding completion status
         await AsyncStorage.setItem('onboardingComplete', 'true');
-        // Navigate to the main tabs screen, replacing the stack
-        router.replace('/new-dose'); // Consistent path for all platforms
+        // Navigate to user type segmentation screen
+        router.replace('/onboarding/userType');
       } catch (e) {
         console.warn('Error completing onboarding:', e);
         // Fallback navigation in case of error
-        router.replace('/new-dose');
+        router.replace('/onboarding/userType');
       }
     }
   }, [step, router]);

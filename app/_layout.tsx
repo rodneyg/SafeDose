@@ -2,6 +2,7 @@
 import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
+import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { analytics } from '../lib/firebase';
 import "../global.css";
 
@@ -19,7 +20,9 @@ export default function RootLayout() {
   
   return (
     <AuthProvider>
-      <Slot />
+      <UserProfileProvider>
+        <Slot />
+      </UserProfileProvider>
     </AuthProvider>
   );
 }
