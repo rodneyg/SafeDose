@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
@@ -17,6 +18,7 @@ const isValidValue = (value: any): boolean => {
 };
 
 export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+  const { userProfile } = useAuth(); // Get userProfile from AuthContext
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -359,6 +361,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         totalAmount: totalAmountValue,
         manualSyringe: syringeObj,
         solutionVolume, // Add solutionVolume for concentration calculation
+        userProfile, // Pass userProfile
       });
 
       console.log('[useDoseCalculator] Calculation result:', { 
