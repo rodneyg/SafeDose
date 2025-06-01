@@ -3,6 +3,7 @@ import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { analytics } from '../lib/firebase';
+import { Toaster } from '@/components/ui/toaster'; // Import Toaster
 import "../global.css";
 
 export default function RootLayout() {
@@ -20,6 +21,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <Slot />
+      <Toaster /> {/* Add Toaster here */}
     </AuthProvider>
   );
 }

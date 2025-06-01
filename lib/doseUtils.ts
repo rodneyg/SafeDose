@@ -1,6 +1,8 @@
 import { syringeOptions } from '../lib/utils';
+import { UserProfile } from '@/contexts/AuthContext';
 
 interface CalculateDoseParams {
+  userProfile?: UserProfile | null; // Added userProfile
   doseValue: number | null;
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
@@ -84,9 +86,10 @@ export function calculateDose({
   totalAmount,
   manualSyringe,
   solutionVolume,
+  userProfile, // Destructure userProfile
 }: CalculateDoseParams): CalculateDoseResult {
   console.log('[Calculate] Starting calculation');
-  console.log('[Calculate] Input params:', { doseValue, concentration, unit, concentrationUnit, totalAmount, solutionVolume });
+  console.log('[Calculate] Input params:', { doseValue, concentration, unit, concentrationUnit, totalAmount, solutionVolume, userProfile });
 
   let calculatedVolume: number | null = null;
   let recommendedMarking: string | null = null;
@@ -222,6 +225,22 @@ export function calculateDose({
   if (precisionMessage) {
     calculationError = precisionMessage;
     console.log('[Calculate] Precision message:', precisionMessage);
+  }
+
+  // Apply user profile based adjustments to calculationError
+  if (userProfile) {
+    let profileNotes = "";
+    if (userProfile.isHealthProfessional) {
+      profileNotes = "[Professional Use] ";
+    }
+    if (userProfile.isPersonalUse && userProfile.useType === 'Cosmetic') {
+      profileNotes += "Note: Cosmetic use may have different considerations.";
+    }
+
+    if (profileNotes) {
+      calculationError = calculationError ? `${profileNotes} ${calculationError}` : profileNotes;
+      console.log('[Calculate] Adjusted error/note with profile info:', calculationError);
+    }
   }
 
   return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };

@@ -12,11 +12,13 @@ import LimitModal from '../../components/LimitModal';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
 export default function NewDoseScreen() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth(); // Add userProfile
+  const { toast } = useToast(); // Get toast function
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -141,6 +143,8 @@ export default function NewDoseScreen() {
   const [webFlashlightSupported, setWebFlashlightSupported] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
+  const [hasShownCosmeticToast, setHasShownCosmeticToast] = useState(false);
+  const [hasShownPersonalUseAdvisory, setHasShownPersonalUseAdvisory] = useState(false);
 
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
@@ -156,6 +160,50 @@ export default function NewDoseScreen() {
       setProcessingMessage('Processing image... This may take a few seconds');
     }
   }, [screenStep]);
+
+  // Toast for High Dosage Warning
+  useEffect(() => {
+    if (
+      userProfile && !userProfile.isHealthProfessional &&
+      calculatedVolume && calculatedVolume > 5 && // Example threshold: 5 mL
+      (!calculationError || calculationError.includes("[Professional Use]")) // Avoid showing if a more critical error exists, unless it's the professional use note
+    ) {
+      toast({
+        title: "Caution: High Dosage",
+        description: "This dose is higher than typically recommended for non-professionals. Please double-check.",
+        variant: "destructive",
+      });
+    }
+  }, [calculatedVolume, userProfile, calculationError, toast]);
+
+  // Toast for Cosmetic Use Reminder
+  useEffect(() => {
+    if (
+      manualStep === 'finalResult' &&
+      userProfile && userProfile.useType === 'Cosmetic' &&
+      !hasShownCosmeticToast // Show only once per session/appropriate condition
+    ) {
+      toast({
+        title: "Cosmetic Use Reminder",
+        description: "Ensure this product is suitable for cosmetic application and follow all product guidelines.",
+      });
+      setHasShownCosmeticToast(true); // Mark as shown
+    }
+  }, [manualStep, userProfile, toast, hasShownCosmeticToast]);
+
+  // Toast for Personal Use Advisory
+  useEffect(() => {
+    if (
+      userProfile && userProfile.isPersonalUse && !userProfile.isHealthProfessional &&
+      !hasShownPersonalUseAdvisory // Show only once
+    ) {
+      toast({
+        title: "Personal Use Advisory",
+        description: "Always consult with a health professional for medical advice. This tool is for guidance only.",
+      });
+      setHasShownPersonalUseAdvisory(true); // Mark as shown
+    }
+  }, [userProfile, toast, hasShownPersonalUseAdvisory]);
 
   useEffect(() => {
     setFormError(null);
@@ -446,6 +494,14 @@ export default function NewDoseScreen() {
       }
     };
   }, []);
+
+  // Reset session toasts when the screen is left or main state changes significantly
+  useEffect(() => {
+    if (screenStep === 'intro') {
+      setHasShownCosmeticToast(false);
+      // Personal use advisory is meant to be more persistent, so not resetting it here unless desired
+    }
+  }, [screenStep]);
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
