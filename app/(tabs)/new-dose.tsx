@@ -11,6 +11,7 @@ import ManualEntryScreen from '../../components/ManualEntryScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import LimitModal from '../../components/LimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
+import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
@@ -160,6 +161,11 @@ export default function NewDoseScreen() {
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
 
+  // Image preview modal state
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [capturedImageUri, setCapturedImageUri] = useState<string>('');
+  const [pendingScanResult, setPendingScanResult] = useState<any>(null);
+
   const openai = new OpenAI({
     apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
     dangerouslyAllowBrowser: true,
@@ -214,6 +220,77 @@ export default function NewDoseScreen() {
     }
   }, [isProcessing]);
 
+  // Function to apply scan results to form state
+  const applyScanResults = (result: any) => {
+    const scannedSyringe = result.syringe || {};
+    const scannedVial = result.vial || {};
+
+    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
+    const scannedVolume = scannedSyringe.volume;
+    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
+    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
+    let selectedVolume = defaultVolume;
+
+    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
+      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
+      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
+      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
+    } else {
+      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+    }
+    setManualSyringe({ type: scannedType, volume: selectedVolume });
+    setSyringeHint('Detected from image scan');
+
+    if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
+      setSubstanceName(String(scannedVial.substance));
+      setSubstanceNameHint('Detected from vial scan');
+      console.log('[Process] Set substance name:', scannedVial.substance);
+    }
+
+    const vialConcentration = scannedVial.concentration;
+    const vialTotalAmount = scannedVial.totalAmount;
+
+    if (vialConcentration && vialConcentration !== 'unreadable') {
+      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
+      if (concMatch) {
+        setConcentrationAmount(concMatch[1]);
+        const detectedUnit = concMatch[2].toLowerCase();
+        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
+        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
+        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
+        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
+      } else {
+        setConcentrationAmount(String(vialConcentration));
+        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
+      }
+      setMedicationInputType('concentration');
+      setConcentrationHint('Detected from vial scan');
+      setTotalAmountHint(null);
+    } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
+      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
+      if (amountMatch) {
+        setTotalAmount(amountMatch[1]);
+        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
+      } else {
+        setTotalAmount(String(vialTotalAmount));
+        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
+      }
+      setMedicationInputType('totalAmount');
+      setTotalAmountHint('Detected from vial scan');
+      setConcentrationHint(null);
+    } else {
+      console.log('[Process] No reliable concentration or total amount detected');
+      setMedicationInputType(null);
+      setConcentrationHint('No concentration detected, please enter manually');
+      setTotalAmountHint('No total amount detected, please enter manually');
+    }
+
+    console.log('[Process] Scan successful, transitioning to manual entry');
+    resetFullForm('dose');
+    setScreenStep('manualEntry');
+    setManualStep('dose');
+  };
+
   const handleScanAttempt = async () => {
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
@@ -252,73 +329,18 @@ export default function NewDoseScreen() {
       if (result) {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
-        const scannedSyringe = result.syringe || {};
-        const scannedVial = result.vial || {};
-
-        const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-        const scannedVolume = scannedSyringe.volume;
-        const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-        const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-        let selectedVolume = defaultVolume;
-
-        if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-          const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-          selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-          console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-        } else {
-          console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
-        }
-        setManualSyringe({ type: scannedType, volume: selectedVolume });
-        setSyringeHint('Detected from image scan');
-
-        if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
-          setSubstanceName(String(scannedVial.substance));
-          setSubstanceNameHint('Detected from vial scan');
-          console.log('[Process] Set substance name:', scannedVial.substance);
+        
+        // If we have a captured image, show the preview modal first
+        if (result.capturedImage?.uri) {
+          console.log('[Process] Showing image preview modal');
+          setCapturedImageUri(result.capturedImage.uri);
+          setPendingScanResult(result);
+          setShowImagePreview(true);
+          return; // Don't proceed to manual entry yet
         }
 
-        const vialConcentration = scannedVial.concentration;
-        const vialTotalAmount = scannedVial.totalAmount;
-
-        if (vialConcentration && vialConcentration !== 'unreadable') {
-          const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-          if (concMatch) {
-            setConcentrationAmount(concMatch[1]);
-            const detectedUnit = concMatch[2].toLowerCase();
-            if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-            else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-            else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-            console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-          } else {
-            setConcentrationAmount(String(vialConcentration));
-            console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-          }
-          setMedicationInputType('concentration');
-          setConcentrationHint('Detected from vial scan');
-          setTotalAmountHint(null);
-        } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-          const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-          if (amountMatch) {
-            setTotalAmount(amountMatch[1]);
-            console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-          } else {
-            setTotalAmount(String(vialTotalAmount));
-            console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-          }
-          setMedicationInputType('totalAmount');
-          setTotalAmountHint('Detected from vial scan');
-          setConcentrationHint(null);
-        } else {
-          console.log('[Process] No reliable concentration or total amount detected');
-          setMedicationInputType(null);
-          setConcentrationHint('No concentration detected, please enter manually');
-          setTotalAmountHint('No total amount detected, please enter manually');
-        }
-
-        console.log('[Process] Scan successful, transitioning to manual entry');
-        resetFullForm('dose');
-        setScreenStep('manualEntry');
-        setManualStep('dose');
+        // If no captured image, proceed directly (fallback for older flow)
+        applyScanResults(result);
       } else {
         console.log('[Process] Scan failed, transitioning to manual entry with defaults');
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
@@ -453,6 +475,27 @@ export default function NewDoseScreen() {
       // Silently fail - flashlight is a nice-to-have feature
     }
   };
+
+  // Image preview modal handlers
+  const handleImagePreviewRetake = useCallback(() => {
+    console.log('[ImagePreview] User chose to retake image');
+    setShowImagePreview(false);
+    setCapturedImageUri('');
+    setPendingScanResult(null);
+    // Stay on scan screen for retake
+  }, []);
+
+  const handleImagePreviewContinue = useCallback(() => {
+    console.log('[ImagePreview] User chose to continue with image');
+    setShowImagePreview(false);
+    setCapturedImageUri('');
+    
+    // Apply the pending scan results and proceed to manual entry
+    if (pendingScanResult) {
+      applyScanResults(pendingScanResult);
+      setPendingScanResult(null);
+    }
+  }, [pendingScanResult]);
 
   // Feedback handlers
   const handleFeedbackSubmit = useCallback(async (feedbackType: any, notes?: string) => {
@@ -645,6 +688,13 @@ export default function NewDoseScreen() {
         onClose={handleCloseVolumeErrorModal}
         onReEnterVialData={handleReEnterVialData}
         // volumeErrorValue={volumeErrorValue} // Pass if needed by the modal for display
+      />
+      <ImagePreviewModal
+        visible={showImagePreview}
+        imageUri={capturedImageUri}
+        onRetake={handleImagePreviewRetake}
+        onContinue={handleImagePreviewContinue}
+        autoAdvanceDelay={4000} // 4 seconds auto-advance
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>

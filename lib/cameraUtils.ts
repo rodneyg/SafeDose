@@ -32,6 +32,10 @@ interface ScanResult {
     concentration: string | 'unreadable' | null;
     expiration: string | 'unreadable' | null;
   };
+  capturedImage?: {
+    uri: string;
+    mimeType: string;
+  };
 }
 
 export async function captureAndProcessImage({
@@ -64,7 +68,7 @@ export async function captureAndProcessImage({
 
   try {
     let base64Image: string | undefined;
-    let mimeType: string;
+    let mimeType: string = '';
 
     if (isMobileWeb) {
       // First check if we have an active web camera stream
@@ -331,6 +335,15 @@ export async function captureAndProcessImage({
 
     await incrementScansUsed();
     console.log('[Process] Incremented scans used');
+
+    // Add the captured image data to the result for preview
+    if (base64Image && mimeType) {
+      result.capturedImage = {
+        uri: `data:${mimeType};base64,${base64Image}`,
+        mimeType
+      };
+      console.log('[Process] Added captured image data to result');
+    }
 
     return result;
   } catch (error) {
