@@ -258,7 +258,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [concentrationAmount, concentrationUnit, unit]);
 
-  const handleNextTotalAmountInput = useCallback(() => {
+  const handleNextTotalAmountInput = useCallback((proceedToReconstitution?: boolean) => {
     try {
       if (!totalAmount || isNaN(parseFloat(totalAmount))) {
         setFormError('Please enter a valid total amount');
@@ -271,12 +271,17 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         return;
       }
 
-      // Always go to reconstitution step when using totalAmount input mode 
-      // to ensure we get solutionVolume for calculating concentration
       if (medicationInputType === 'totalAmount') {
-        setManualStep('reconstitution');
-        console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+        if (proceedToReconstitution) {
+          setManualStep('reconstitution');
+          console.log('[useDoseCalculator] Total amount mode: Proceeding to reconstitution step as requested.');
+        } else {
+          setManualStep('syringe');
+          console.log('[useDoseCalculator] Total amount mode: Defaulting to syringe step (reconstitution not requested).');
+        }
       } else {
+        // If not 'totalAmount' (i.e., 'concentration' or 'solution'), proceed as before.
+        // 'solution' type will go to 'reconstitution', 'concentration' will go to 'syringe'.
         setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
       }
       setFormError(null);
@@ -285,7 +290,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextTotalAmountInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [totalAmount, medicationInputType]);
+  }, [totalAmount, medicationInputType]); // Dependencies remain the same
 
   const handleNextReconstitution = useCallback(() => {
     try {

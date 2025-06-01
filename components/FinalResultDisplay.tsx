@@ -79,18 +79,41 @@ export default function FinalResultDisplay({
     return null;
   };
   
-  console.log('[FinalResultDisplay] Rendering with:', { 
-    calculationError, 
+  console.log('[FinalResultDisplay] Rendering with:', {
+    calculationError,
     recommendedMarking,
     doseValue,
     unit,
     substanceName,
     manualSyringe,
     calculatedVolume,
-    calculatedConcentration
+    calculatedConcentration,
+    concentration,
+    concentrationUnit
   });
+
+  const showInitialConcentrationInfo = concentration !== null && concentration !== undefined && concentration > 0;
+  const isCalculatedDifferentFromInitial = calculatedConcentration !== null && calculatedConcentration !== undefined && concentration !== calculatedConcentration;
+  const volumeWarning = calculatedVolume && calculatedVolume > 1;
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Dose Overview Section */}
+      <View style={[styles.instructionCard, { backgroundColor: '#F3F4F6', borderColor: '#D1D5DB'}]}>
+        <Text style={[styles.instructionTitle, {color: '#1F2937'}]}>Dose Overview</Text>
+        {substanceName && (
+          <Text style={styles.instructionText}>Medication: {substanceName}</Text>
+        )}
+        {doseValue && unit && (
+          <Text style={styles.instructionText}>Requested Dose: {doseValue} {unit}</Text>
+        )}
+        {showInitialConcentrationInfo && (
+          <Text style={styles.instructionText}>
+            Initial Concentration: {concentration?.toFixed(2)} {concentrationUnit}
+          </Text>
+        )}
+      </View>
+
       {calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
@@ -138,13 +161,23 @@ export default function FinalResultDisplay({
             ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
-            <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
-            </Text>
+            <>
+              <Text style={styles.instructionNote}>
+                (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
+              </Text>
+              {volumeWarning && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 5, padding: 5, backgroundColor: 'rgba(251, 191, 36, 0.1)', borderRadius: 4}}>
+                  <Info color="#F59E0B" size={16} style={{marginRight: 5}}/>
+                  <Text style={[styles.warningText, {marginTop: 0, paddingHorizontal:0, backgroundColor: 'transparent'}]}>
+                    Volume exceeds 1 mL. Please verify dose with a healthcare professional.
+                  </Text>
+                </View>
+              )}
+            </>
           )}
           {calculatedConcentration !== null && calculatedConcentration !== undefined && (
             <Text style={styles.instructionNote}>
-              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
+              (Final Concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
           {calculationError && (
@@ -280,6 +313,85 @@ const styles = StyleSheet.create({
   errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
   errorText: { fontSize: 15, color: '#991B1B', textAlign: 'center', fontWeight: '500', marginLeft: 8, flexShrink: 1 },
   errorHelpText: { fontSize: 13, color: '#991B1B', textAlign: 'center', marginTop: 12, paddingVertical: 8, backgroundColor: 'rgba(248, 113, 113, 0.1)', paddingHorizontal: 12, borderRadius: 6, width: '90%', alignSelf: 'center' },
+  // Styles for added sections (Dose Overview, Warnings, Safety Reminder)
+  summaryCard: { // Replaces instructionCard for the overview section for potentially different styling
+    backgroundColor: '#F3F4F6', // A light grey, distinct from error/success cards
+    borderColor: '#D1D5DB', // Neutral border
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1, // Use 1px border for a softer look than instructionCard's 2px
+    marginBottom: 16,
+    width: '100%',
+  },
+  summaryCardTitle: { // Similar to instructionTitle but can be different if needed
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937', // Darker text for titles
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6, // Reduced padding for tighter rows
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB', // Lighter separator line
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#4B5563', // Medium grey
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#1F2937', // Darker text for values
+    fontWeight: '600',
+    textAlign: 'right',
+    flexShrink: 1, // Allow value to shrink if label is long
+  },
+  volumeWarningContainer: { // Styles for the volume warning message inline
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8, // Spacing from the volume text
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)', // Light warning background
+    borderRadius: 6,
+  },
+  volumeWarningMessage: { // Style for the warning text itself
+    fontSize: 13,
+    color: '#92400E', // Dark warning color, matching other warnings
+    marginLeft: 5, // Space from icon
+    flexShrink: 1, // Allow text to wrap
+  },
+  safetyContainer: { // Container for the safety reminder text
+    padding: 16,
+    backgroundColor: '#F9FAFB', // Very light grey, almost white
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6B7280', // Accent border color
+    marginVertical: 15, // Give it some space
+    width: '100%', // Take full width relative to its ScrollView parent
+    alignSelf: 'center',
+  },
+  safetyHeader: { // Header for the safety reminder (Icon + Title)
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  safetyTitle: { // Title "Safety Reminder"
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563', // Medium-dark grey
+    marginLeft: 8,
+  },
+  safetyText: { // The reminder text itself
+    fontSize: 13,
+    color: '#4B5563', // Medium-dark grey
+    lineHeight: 18, // Improve readability
+  },
   // Calculation Breakdown Styles
   calculationBreakdownContainer: {
     backgroundColor: '#F8FAFF',

@@ -34,7 +34,7 @@ export default function ImagePreviewModal({
   scanResult,
   onRetake, 
   onContinue,
-  autoAdvanceDelay = 15000
+  autoAdvanceDelay = 8000
 }: ImagePreviewModalProps) {
   const [countdown, setCountdown] = useState<number>(autoAdvanceDelay / 1000);
   const [userInteracted, setUserInteracted] = useState(false);

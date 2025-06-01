@@ -8,6 +8,8 @@ type Props = {
   totalAmountHint: string | null;
   unit: 'mg' | 'mcg' | 'units';
   dose?: string; // Optional dose parameter to enable validation against dose amount
+  needsReconstitution: boolean;
+  setNeedsReconstitution: (value: boolean) => void;
 };
 
 export default function TotalAmountInputStep({
@@ -17,6 +19,8 @@ export default function TotalAmountInputStep({
   totalAmountHint,
   unit,
   dose = '',
+  needsReconstitution,
+  setNeedsReconstitution,
 }: Props) {
   // Validate total amount whenever it changes, comparing with dose if available
   useEffect(() => {
@@ -58,6 +62,17 @@ export default function TotalAmountInputStep({
         Enter the total amount of substance in the vial as a number. Unit is '{unit === 'mcg' ? 'mg' : unit}'.
         {unit === 'mcg' && ' (Note: Converted to mcg for calculation.)'}
       </Text>
+
+      <TouchableOpacity
+        style={styles.checkboxContainer}
+        onPress={() => setNeedsReconstitution(!needsReconstitution)}
+        accessibilityLabel="Toggle reconstitution requirement"
+      >
+        <View style={[styles.checkbox, needsReconstitution && styles.checkboxChecked]}>
+          {needsReconstitution && <Text style={styles.checkboxCheckmark}>✓</Text>}
+        </View>
+        <Text style={styles.checkboxLabel}>Does this medication require reconstitution/dilution before use?</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -70,4 +85,33 @@ const styles = StyleSheet.create({
   helperHint: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, marginBottom: 8, fontStyle: 'italic' },
   warningHint: { color: '#B45309', backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: 8, borderRadius: 4 },
   helperText: { fontSize: 12, color: '#8E8E93', textAlign: 'center', marginTop: 4, marginBottom: 10 },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#007AFF', // Blue border color
+    borderRadius: 3,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#007AFF', // Blue background when checked
+  },
+  checkboxCheckmark: {
+    color: '#FFFFFF', // White checkmark
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#000000',
+    flex: 1, // Allow label to wrap
+  },
 });

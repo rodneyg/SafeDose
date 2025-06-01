@@ -133,7 +133,6 @@ export default function NewDoseScreen() {
     handleNextTotalAmountInput,
     handleNextReconstitution,
     handleCalculateFinal,
-    handleNextPreDoseConfirmation,
     handleBack,
     handleStartOver,
     handleGoHome,
@@ -572,7 +571,6 @@ export default function NewDoseScreen() {
               manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
               manualStep === 'reconstitution' ? 'Reconstitution' :
               manualStep === 'syringe' ? 'Select Syringe' :
-              manualStep === 'preDoseConfirmation' ? 'Pre-Dose Safety Review' :
               'Calculation Result'
             }`
           )}
@@ -673,7 +671,6 @@ export default function NewDoseScreen() {
           handleNextTotalAmountInput={handleNextTotalAmountInput}
           handleNextReconstitution={handleNextReconstitution}
           handleCalculateFinal={handleCalculateFinal}
-          handleNextPreDoseConfirmation={handleNextPreDoseConfirmation}
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
