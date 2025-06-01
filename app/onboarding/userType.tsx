@@ -92,6 +92,7 @@ export default function UserTypeSegmentation() {
         userId: user?.uid,
       };
 
+      // Ensure profile is saved before navigation
       await saveProfile(profile);
       
       // Log completion
@@ -102,11 +103,16 @@ export default function UserTypeSegmentation() {
         skipped_personal_use: answers.isPersonalUse === null
       });
       
-      router.replace('/(tabs)/new-dose');
+      // Add a small delay to ensure profile is fully persisted before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to root and let the app routing logic handle the proper destination
+      // This avoids race conditions with the app/index.tsx routing logic
+      router.replace('/');
     } catch (error) {
       console.error('Error saving user profile:', error);
-      // Fallback navigation
-      router.replace('/(tabs)/new-dose');
+      // Fallback navigation to root
+      router.replace('/');
     }
   }, [answers, saveProfile, router, user?.uid]);
 
