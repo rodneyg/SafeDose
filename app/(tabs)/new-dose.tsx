@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect } from 'expo-router';
-import { isMobileWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
+import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
@@ -207,7 +207,7 @@ export default function NewDoseScreen() {
   }, [screenStep, navigation]);
 
   useEffect(() => {
-    if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
+    if (isWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
       requestWebCameraPermission();
     }
     
@@ -401,7 +401,7 @@ export default function NewDoseScreen() {
   };
 
   const requestWebCameraPermission = async () => {
-    if (!isMobileWeb) return;
+    if (!isWeb) return;
     
     try {
       // Release any existing stream first to avoid multiple active streams
@@ -458,7 +458,7 @@ export default function NewDoseScreen() {
   };
 
   const toggleWebFlashlight = async () => {
-    if (!isMobileWeb || !webCameraStreamRef.current) return;
+    if (!isWeb || !webCameraStreamRef.current) return;
     
     try {
       const videoTrack = webCameraStreamRef.current.getVideoTracks()[0];
