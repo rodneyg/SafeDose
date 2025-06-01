@@ -16,6 +16,7 @@ type Props = {
   calculatedConcentration?: number | null; // Add calculated concentration prop
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
   isMobileWeb: boolean;
 };
 
@@ -31,6 +32,7 @@ export default function FinalResultDisplay({
   calculatedConcentration,
   handleStartOver,
   setScreenStep,
+  handleGoToFeedback,
   isMobileWeb,
 }: Props) {
   console.log('[FinalResultDisplay] Rendering with:', { 
@@ -124,11 +126,11 @@ export default function FinalResultDisplay({
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={handleStartOver}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('new_dose')}>
           <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>New Dose</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => setScreenStep('scan')}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('scan_again')}>
           <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>Scan Again</Text>
         </TouchableOpacity>
