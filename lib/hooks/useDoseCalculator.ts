@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry';
@@ -17,6 +18,7 @@ const isValidValue = (value: any): boolean => {
 };
 
 export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+  const router = useRouter();
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -377,14 +379,17 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Previously only navigated if there was no error or a recommendedMarking was available
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
+      router.push('/post-dose-feedback');
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
       // Ensure we still navigate to the results screen even if there's an error
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
+      // Consider if navigation to feedback should also happen in catch block
+      // For now, only navigating on successful calculation path, even if result is an error message
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType, router]);
 
   const handleBack = useCallback(() => {
     try {
