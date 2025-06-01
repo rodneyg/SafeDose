@@ -335,11 +335,6 @@ export default function ManualEntryScreen({
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
                       handleCalculateFinal();
-                      // Navigate to pre-dose confirmation instead of final result
-                      if (manualStep !== 'preDoseConfirmation') {
-                        console.log('[ManualEntry] Manually ensuring transition to preDoseConfirmation step');
-                        setManualStep('preDoseConfirmation');
-                      }
                     } else if (manualStep === 'preDoseConfirmation') {
                       handleNextPreDoseConfirmation();
                     }

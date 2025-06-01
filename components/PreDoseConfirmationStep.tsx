@@ -23,16 +23,16 @@ export default function PreDoseConfirmationStep({
   calculatedConcentration,
   calculationError,
 }: PreDoseConfirmationStepProps) {
-  const hasVolumeWarning = calculatedVolume !== null && calculatedVolume > 1;
+  const hasVolumeWarning = calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
   // Determine which concentration to display
-  const hasManualConcentration = concentrationAmount && concentrationAmount.trim() !== '';
-  const hasCalculatedConcentration = calculatedConcentration !== null && calculatedConcentration > 0;
+  const hasManualConcentration = concentrationAmount && concentrationAmount.trim() !== '' && concentrationAmount.trim() !== '0';
+  const hasCalculatedConcentration = calculatedConcentration !== null && calculatedConcentration !== undefined && calculatedConcentration > 0;
   const displayConcentration = hasManualConcentration 
     ? `${concentrationAmount} ${concentrationUnit}`
     : hasCalculatedConcentration 
-    ? `${calculatedConcentration?.toFixed(2)} ${concentrationUnit}`
+    ? `${calculatedConcentration.toFixed(2)} ${concentrationUnit}`
     : null;
 
   return (
@@ -84,7 +84,7 @@ export default function PreDoseConfirmationStep({
             </View>
           )}
 
-          {calculatedVolume !== null && (
+          {calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Volume to Draw:</Text>
               <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
