@@ -692,9 +692,10 @@ export default function NewDoseScreen() {
       <ImagePreviewModal
         visible={showImagePreview}
         imageUri={capturedImageUri}
+        scanResult={pendingScanResult}
         onRetake={handleImagePreviewRetake}
         onContinue={handleImagePreviewContinue}
-        autoAdvanceDelay={4000} // 4 seconds auto-advance
+        autoAdvanceDelay={8000} // 8 seconds auto-advance for less rushed feel
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>
