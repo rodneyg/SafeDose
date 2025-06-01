@@ -25,7 +25,7 @@ interface ImagePreviewModalProps {
   scanResult?: ScanResult | null;
   onRetake: () => void;
   onContinue: () => void;
-  autoAdvanceDelay?: number; // in milliseconds, default 8000 (8 seconds)
+  autoAdvanceDelay?: number; // in milliseconds, default 15000 (15 seconds)
 }
 
 export default function ImagePreviewModal({ 
@@ -34,7 +34,7 @@ export default function ImagePreviewModal({
   scanResult,
   onRetake, 
   onContinue,
-  autoAdvanceDelay = 8000
+  autoAdvanceDelay = 15000
 }: ImagePreviewModalProps) {
   const [countdown, setCountdown] = useState<number>(autoAdvanceDelay / 1000);
   const [userInteracted, setUserInteracted] = useState(false);

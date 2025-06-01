@@ -695,7 +695,7 @@ export default function NewDoseScreen() {
         scanResult={pendingScanResult}
         onRetake={handleImagePreviewRetake}
         onContinue={handleImagePreviewContinue}
-        autoAdvanceDelay={8000} // 8 seconds auto-advance for less rushed feel
+        autoAdvanceDelay={15000} // 15 seconds auto-advance for concentration
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>
