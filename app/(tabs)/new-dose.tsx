@@ -20,6 +20,7 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -186,6 +187,18 @@ export default function NewDoseScreen() {
       setCalculationError(null);
     }
   }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError]);
+
+  // Control tab bar visibility based on screen step
+  useEffect(() => {
+    if (navigation?.getParent) {
+      const parent = navigation.getParent();
+      if (parent?.setOptions) {
+        parent.setOptions({
+          tabBarStyle: screenStep === 'scan' ? { display: 'none' } : undefined,
+        });
+      }
+    }
+  }, [screenStep, navigation]);
 
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
