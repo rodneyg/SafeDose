@@ -486,6 +486,7 @@ export default function NewDoseScreen() {
               manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
               manualStep === 'reconstitution' ? 'Reconstitution' :
               manualStep === 'syringe' ? 'Select Syringe' :
+              manualStep === 'preDoseConfirmation' ? 'Pre-Dose Safety Review' :
               'Calculation Result'
             }`
           )}
