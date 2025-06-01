@@ -18,6 +18,11 @@ export const ANALYTICS_EVENTS = {
   REACH_SCAN_LIMIT: 'reach_scan_limit',
   LIMIT_MODAL_ACTION: 'limit_modal_action',
   ERROR_OCCURRED: 'error_occurred',
+  // Onboarding events
+  ONBOARDING_STEP_START: 'onboarding_step_start',
+  ONBOARDING_STEP_COMPLETE: 'onboarding_step_complete',
+  ONBOARDING_STEP_SKIP: 'onboarding_step_skip',
+  ONBOARDING_COMPLETE: 'onboarding_complete',
 } as const;
 
 // User property names
