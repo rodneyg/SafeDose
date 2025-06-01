@@ -96,7 +96,7 @@ export default function ScanScreen({
 
   // Connect video element to stream for web camera
   useEffect(() => {
-    if (isMobileWeb && webCameraStream && videoRef.current) {
+    if (isWeb && webCameraStream && videoRef.current) {
       console.log('[ScanScreen] Connecting web camera stream to video element');
       videoRef.current.srcObject = webCameraStream;
       videoRef.current.play().catch(err => {
