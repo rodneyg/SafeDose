@@ -125,7 +125,7 @@ export default function ImagePreviewModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Image Captured</Text>
+          <Text style={styles.title}>Review Your Scan</Text>
           
           <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             {imageUri && (
