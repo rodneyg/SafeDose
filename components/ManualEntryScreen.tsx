@@ -247,6 +247,11 @@ export default function ManualEntryScreen({
       progress = 3 / 3;
       break;
     case 'finalResult':
+      // Calculate the concentration value to pass to FinalResultDisplay
+      const concentrationValue = medicationInputType === 'concentration' 
+        ? (parseFloat(concentrationAmount) || null)
+        : (calculatedConcentration || null);
+        
       currentStepComponent = (
         <FinalResultDisplay
           calculationError={calculationError}
@@ -258,6 +263,7 @@ export default function ManualEntryScreen({
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          concentration={concentrationValue}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           isMobileWeb={isMobileWeb}
