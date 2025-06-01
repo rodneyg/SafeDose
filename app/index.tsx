@@ -16,14 +16,22 @@ export default function InitialScreen() {
           AsyncStorage.getItem('userProfile')
         ]);
 
+        console.log('[InitialScreen] Checking app state:', {
+          onboardingComplete,
+          userProfile: userProfile ? 'exists' : 'null'
+        });
+
         if (onboardingComplete !== 'true') {
           // Onboarding not complete, start from beginning
+          console.log('[InitialScreen] Onboarding not complete, routing to /onboarding');
           router.replace('/onboarding');
         } else if (!userProfile) {
           // Onboarding complete but no user profile, go to user type setup
+          console.log('[InitialScreen] No user profile, routing to /onboarding/userType');
           router.replace('/onboarding/userType');
         } else {
           // Both onboarding and user profile complete, go to main app
+          console.log('[InitialScreen] All complete, routing to main app');
           router.replace('/(tabs)/new-dose');
         }
       } catch (e) {

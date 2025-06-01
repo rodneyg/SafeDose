@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import Animated, { FadeIn, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, X, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileAnswers, UserProfile } from '@/types/userProfile';
@@ -92,8 +93,12 @@ export default function UserTypeSegmentation() {
         userId: user?.uid,
       };
 
+      console.log('[UserType] Starting profile save and completion...');
+      
       // Ensure profile is saved before navigation
       await saveProfile(profile);
+      
+      console.log('[UserType] Profile saved successfully');
       
       // Log completion
       logAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETE, {
@@ -106,13 +111,26 @@ export default function UserTypeSegmentation() {
       // Add a small delay to ensure profile is fully persisted before navigation
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Check AsyncStorage state before navigation
+      const [onboardingComplete, storedProfile] = await Promise.all([
+        AsyncStorage.getItem('onboardingComplete'),
+        AsyncStorage.getItem('userProfile')
+      ]);
+      
+      console.log('[UserType] Pre-navigation state check:', {
+        onboardingComplete,
+        storedProfile: storedProfile ? 'exists' : 'null',
+        storedProfileLength: storedProfile?.length
+      });
+      
       // Navigate to root and let the app routing logic handle the proper destination
       // This avoids race conditions with the app/index.tsx routing logic
-      router.replace('/');
+      console.log('[UserType] Navigating to main app directly...');
+      router.replace('/(tabs)/new-dose');
     } catch (error) {
       console.error('Error saving user profile:', error);
-      // Fallback navigation to root
-      router.replace('/');
+      // Fallback navigation to main app
+      router.replace('/(tabs)/new-dose');
     }
   }, [answers, saveProfile, router, user?.uid]);
 
