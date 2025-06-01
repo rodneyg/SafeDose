@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
+import { FeedbackContextType } from '../../types/feedback';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
@@ -45,6 +46,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
+  const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -459,6 +461,37 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     resetFullForm('dose');
   }, [resetFullForm]);
 
+  const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again') => {
+    setFeedbackContext({
+      nextAction,
+      doseInfo: {
+        substanceName,
+        doseValue,
+        unit,
+        calculatedVolume,
+      },
+    });
+    setScreenStep('postDoseFeedback');
+    lastActionTimestamp.current = Date.now();
+  }, [substanceName, doseValue, unit, calculatedVolume]);
+
+  const handleFeedbackComplete = useCallback(() => {
+    if (!feedbackContext) return;
+    
+    // Clear feedback context
+    setFeedbackContext(null);
+    
+    // Navigate to the intended destination
+    if (feedbackContext.nextAction === 'new_dose') {
+      resetFullForm('dose');
+      setScreenStep('intro');
+    } else {
+      setScreenStep('scan');
+    }
+    
+    lastActionTimestamp.current = Date.now();
+  }, [feedbackContext, resetFullForm]);
+
   const handleCapture = useCallback(async () => {
     try {
       const canProceed = await checkUsageLimit();
@@ -579,5 +612,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     volumeErrorValue,
     handleCloseVolumeErrorModal,
     handleReEnterVialData,
+    // Feedback context
+    feedbackContext,
+    setFeedbackContext,
+    handleGoToFeedback,
+    handleFeedbackComplete,
   };
 }

@@ -54,6 +54,7 @@ interface ManualEntryScreenProps {
   handleBack: () => void;
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
 }
@@ -101,6 +102,7 @@ export default function ManualEntryScreen({
   handleBack,
   handleStartOver,
   setScreenStep,
+  handleGoToFeedback,
   validateDoseInput,
   validateConcentrationInput,
 }: ManualEntryScreenProps) {
@@ -260,6 +262,7 @@ export default function ManualEntryScreen({
           calculatedConcentration={calculatedConcentration}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
+          handleGoToFeedback={handleGoToFeedback}
           isMobileWeb={isMobileWeb}
         />
       );
