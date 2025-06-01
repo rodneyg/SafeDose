@@ -9,10 +9,11 @@ import ConcentrationInputStep from '../components/ConcentrationInputStep';
 import TotalAmountInputStep from '../components/TotalAmountInputStep';
 import ReconstitutionStep from '../components/ReconstitutionStep';
 import SyringeStep from '../components/SyringeStep';
+import PreDoseConfirmationStep from '../components/PreDoseConfirmationStep';
 import FinalResultDisplay from '../components/FinalResultDisplay';
 
 interface ManualEntryScreenProps {
-  manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult';
+  manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
   dose: string;
   setDose: (value: string) => void;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
@@ -51,9 +52,11 @@ interface ManualEntryScreenProps {
   handleNextTotalAmountInput: () => void;
   handleNextReconstitution: () => void;
   handleCalculateFinal: () => void;
+  handleNextPreDoseConfirmation: () => void;
   handleBack: () => void;
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
+  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
 }
@@ -98,9 +101,11 @@ export default function ManualEntryScreen({
   handleNextTotalAmountInput,
   handleNextReconstitution,
   handleCalculateFinal,
+  handleNextPreDoseConfirmation,
   handleBack,
   handleStartOver,
   setScreenStep,
+  handleGoToFeedback,
   validateDoseInput,
   validateConcentrationInput,
 }: ManualEntryScreenProps) {
@@ -143,6 +148,11 @@ export default function ManualEntryScreen({
     return Boolean(manualSyringe && manualSyringe.volume);
   };
 
+  const isPreDoseConfirmationStepValid = (): boolean => {
+    // Pre-dose confirmation is valid if calculations are done (even with errors)
+    return calculatedVolume !== null;
+  };
+
   // Function to check if current step is valid
   const isCurrentStepValid = (): boolean => {
     let result = false;
@@ -153,6 +163,7 @@ export default function ManualEntryScreen({
       case 'totalAmountInput': result = isTotalAmountInputStepValid(); break;
       case 'reconstitution': result = isReconstitutionStepValid(); break;
       case 'syringe': result = isSyringeStepValid(); break;
+      case 'preDoseConfirmation': result = isPreDoseConfirmationStepValid(); break;
       default: result = false;
     }
     console.log(`[ValidationCheck] step=${manualStep}, isValid=${result}`);
@@ -246,7 +257,27 @@ export default function ManualEntryScreen({
       );
       progress = 3 / 3;
       break;
+    case 'preDoseConfirmation':
+      currentStepComponent = (
+        <PreDoseConfirmationStep
+          substanceName={substanceName}
+          concentrationAmount={concentrationAmount}
+          concentrationUnit={concentrationUnit}
+          doseValue={doseValue}
+          unit={unit}
+          calculatedVolume={calculatedVolume}
+          calculatedConcentration={calculatedConcentration}
+          calculationError={calculationError}
+        />
+      );
+      progress = 0.95; // Almost complete but not fully
+      break;
     case 'finalResult':
+      // Calculate the concentration value to pass to FinalResultDisplay
+      const concentrationValue = medicationInputType === 'concentration' 
+        ? (parseFloat(concentrationAmount) || null)
+        : (calculatedConcentration || null);
+        
       currentStepComponent = (
         <FinalResultDisplay
           calculationError={calculationError}
@@ -258,8 +289,10 @@ export default function ManualEntryScreen({
           manualSyringe={manualSyringe}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          concentration={concentrationValue}
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
+          handleGoToFeedback={handleGoToFeedback}
           isMobileWeb={isMobileWeb}
         />
       );
@@ -311,11 +344,8 @@ export default function ManualEntryScreen({
                       handleNextReconstitution();
                     } else if (manualStep === 'syringe') {
                       handleCalculateFinal();
-                      // Ensure we always proceed to finalResult step even if calculation fails
-                      if (manualStep !== 'finalResult') {
-                        console.log('[ManualEntry] Manually ensuring transition to finalResult step');
-                        setManualStep('finalResult');
-                      }
+                    } else if (manualStep === 'preDoseConfirmation') {
+                      handleNextPreDoseConfirmation();
                     }
                   } catch (error) {
                     console.error('Error in next button handler:', error);
@@ -328,16 +358,17 @@ export default function ManualEntryScreen({
                   handleNextConcentrationInput,
                   handleNextTotalAmountInput,
                   handleNextReconstitution,
-                  handleCalculateFinal
+                  handleCalculateFinal,
+                  handleNextPreDoseConfirmation
                 ])}
                 disabled={!isCurrentStepValid()}
                 accessibilityRole="button"
-                accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : "Next step"}
+                accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : manualStep === 'preDoseConfirmation' ? "Proceed to result" : "Next step"}
               >
                 <Text style={styles.buttonText}>
-                  {manualStep === 'syringe' ? 'Calculate' : 'Next'}
+                  {manualStep === 'syringe' ? 'Calculate' : manualStep === 'preDoseConfirmation' ? 'Proceed to Result' : 'Next'}
                 </Text>
-                {manualStep !== 'syringe' && <ArrowRight color="#fff" size={18} />}
+                {manualStep !== 'syringe' && manualStep !== 'preDoseConfirmation' && <ArrowRight color="#fff" size={18} />}
               </TouchableOpacity>
             </View>
           )}
