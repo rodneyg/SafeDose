@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
 import * as Google from 'expo-auth-session/providers/google';
+import { isMobileWeb } from '../lib/utils';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -47,14 +48,17 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
             } else {
               console.log('Signed in with Google');
             }
-            router.replace('/(tabs)/new-dose');
+            // Give the authentication state time to update
+            setTimeout(() => {
+              console.log('Authentication successful, auth state should have updated');
+            }, 100);
           })
           .catch((error) => {
             console.error('Google sign-in error:', error);
           });
       }
     }
-  }, [response, auth, user, router]);
+  }, [response, auth, user]);
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
@@ -85,7 +89,10 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
             } else {
               console.log('Signed in with Google');
             }
-            router.replace('/(tabs)/new-dose');
+            // Give the authentication state time to update
+            setTimeout(() => {
+              console.log('Web authentication successful, auth state should have updated');
+            }, 100);
           })
           .catch((error) => {
             console.error('Google sign-in error:', error);
@@ -95,7 +102,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       // For React Native, use the expo auth session
       promptAsync();
     }
-  }, [auth, user, router, promptAsync]);
+  }, [auth, user, promptAsync]);
 
   const handleUpgradePress = useCallback(() => {
     console.log('[IntroScreen] Upgrade button pressed');
