@@ -23,6 +23,16 @@ export default function PreDoseConfirmationStep({
   calculatedConcentration,
   calculationError,
 }: PreDoseConfirmationStepProps) {
+  // Debug logging
+  console.log('[PreDoseConfirmation] Props:', {
+    concentrationAmount,
+    concentrationUnit,
+    calculatedConcentration,
+    doseValue,
+    unit,
+    calculatedVolume
+  });
+
   const hasVolumeWarning = calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
