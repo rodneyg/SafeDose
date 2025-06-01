@@ -9,6 +9,7 @@ import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import LimitModal from '../../components/LimitModal';
+import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,6 +130,11 @@ export default function NewDoseScreen() {
     handleStartOver,
     handleGoHome,
     handleCapture,
+    // Destructure new state and handlers
+    showVolumeErrorModal,
+    volumeErrorValue,
+    handleCloseVolumeErrorModal,
+    handleReEnterVialData,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -589,6 +595,12 @@ export default function NewDoseScreen() {
         isAnonymous={user?.isAnonymous ?? true}
         isPremium={usageData.plan !== 'free'}
         onClose={() => setShowLimitModal(false)}
+      />
+      <VolumeErrorModal
+        visible={showVolumeErrorModal}
+        onClose={handleCloseVolumeErrorModal}
+        onReEnterVialData={handleReEnterVialData}
+        // volumeErrorValue={volumeErrorValue} // Pass if needed by the modal for display
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>

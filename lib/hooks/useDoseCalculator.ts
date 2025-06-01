@@ -38,6 +38,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showVolumeErrorModal, setShowVolumeErrorModal] = useState<boolean>(false);
+  const [volumeErrorValue, setVolumeErrorValue] = useState<number | null>(null);
   const [substanceNameHint, setSubstanceNameHint] = useState<string | null>(null);
   const [concentrationHint, setConcentrationHint] = useState<string | null>(null);
   const [totalAmountHint, setTotalAmountHint] = useState<string | null>(null);
@@ -104,6 +106,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setRecommendedMarking(null);
     setCalculationError(null);
     setFormError(null);
+    // Reset new state variables
+    setShowVolumeErrorModal(false);
+    setVolumeErrorValue(null);
     setSubstanceNameHint(null);
     setConcentrationHint(null);
     setTotalAmountHint(null);
@@ -361,20 +366,29 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         solutionVolume, // Add solutionVolume for concentration calculation
       });
 
-      console.log('[useDoseCalculator] Calculation result:', { 
+      console.log('[useDoseCalculator] Calculation result:', {
         calculatedVolume: result.calculatedVolume,
         recommendedMarking: result.recommendedMarking,
         calculatedConcentration: result.calculatedConcentration,
-        calculationError: result.calculationError 
+        calculationError: result.calculationError
       });
 
-      setCalculatedVolume(result.calculatedVolume);
-      setRecommendedMarking(result.recommendedMarking);
-      setCalculationError(result.calculationError);
-      setCalculatedConcentration(result.calculatedConcentration || null);
+      if (result.calculationError && result.calculationError.startsWith("VOLUME_THRESHOLD_ERROR:")) {
+        setShowVolumeErrorModal(true);
+        setVolumeErrorValue(result.calculatedVolume);
+        setCalculationError(null); // Clear the generic error
+        // Still set other results so they are available if modal is cancelled
+        setCalculatedVolume(result.calculatedVolume);
+        setRecommendedMarking(result.recommendedMarking);
+        setCalculatedConcentration(result.calculatedConcentration || null);
+      } else {
+        setCalculatedVolume(result.calculatedVolume);
+        setRecommendedMarking(result.recommendedMarking);
+        setCalculationError(result.calculationError);
+        setCalculatedConcentration(result.calculatedConcentration || null);
+      }
 
       // Always navigate to finalResult screen regardless of calculation errors
-      // Previously only navigated if there was no error or a recommendedMarking was available
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
     } catch (error) {
@@ -385,6 +399,29 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.log('[useDoseCalculator] Set manualStep to finalResult (after error)');
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
+
+  const handleCloseVolumeErrorModal = useCallback(() => {
+    setShowVolumeErrorModal(false);
+    lastActionTimestamp.current = Date.now();
+  }, []);
+
+  const handleReEnterVialData = useCallback(() => {
+    setShowVolumeErrorModal(false);
+    setConcentrationAmount('');
+    setConcentrationUnit('mg/ml'); // Or your default
+    setTotalAmount('');
+    setSolutionVolume('');
+    setConcentration(null);
+    setCalculatedVolume(null);
+    setRecommendedMarking(null);
+    setCalculationError(null);
+    setFormError(null);
+    // also clear doseValue as it might be related to the vial data error
+    // setDose(''); // Optional: decide if dose itself should be cleared
+    // setDoseValue(null); // Optional
+    setManualStep('medicationSource'); // Navigate to medication source selection
+    lastActionTimestamp.current = Date.now();
+  }, []);
 
   const handleBack = useCallback(() => {
     try {
@@ -537,5 +574,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     stateHealth,
     validateDoseInput,
     validateConcentrationInput,
+    // New state and handlers
+    showVolumeErrorModal,
+    volumeErrorValue,
+    handleCloseVolumeErrorModal,
+    handleReEnterVialData,
   };
 }
