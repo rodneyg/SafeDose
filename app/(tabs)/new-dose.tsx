@@ -105,6 +105,8 @@ export default function NewDoseScreen() {
     setConcentration,
     calculatedVolume,
     setCalculatedVolume,
+    calculatedConcentration,
+    setCalculatedConcentration,
     recommendedMarking,
     setRecommendedMarking,
     calculationError,
@@ -126,6 +128,7 @@ export default function NewDoseScreen() {
     handleNextTotalAmountInput,
     handleNextReconstitution,
     handleCalculateFinal,
+    handleNextPreDoseConfirmation,
     handleBack,
     handleStartOver,
     handleGoHome,
@@ -569,6 +572,7 @@ export default function NewDoseScreen() {
           setManualSyringe={setManualSyringe}
           doseValue={doseValue}
           calculatedVolume={calculatedVolume}
+          calculatedConcentration={calculatedConcentration}
           recommendedMarking={recommendedMarking}
           calculationError={calculationError}
           formError={formError}
@@ -586,6 +590,7 @@ export default function NewDoseScreen() {
           handleNextTotalAmountInput={handleNextTotalAmountInput}
           handleNextReconstitution={handleNextReconstitution}
           handleCalculateFinal={handleCalculateFinal}
+          handleNextPreDoseConfirmation={handleNextPreDoseConfirmation}
           handleBack={handleBack}
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}

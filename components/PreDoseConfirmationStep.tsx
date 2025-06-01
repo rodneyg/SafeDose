@@ -9,6 +9,7 @@ interface PreDoseConfirmationStepProps {
   doseValue: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   calculatedVolume: number | null;
+  calculatedConcentration?: number | null;
   calculationError: string | null;
 }
 
@@ -19,10 +20,20 @@ export default function PreDoseConfirmationStep({
   doseValue,
   unit,
   calculatedVolume,
+  calculatedConcentration,
   calculationError,
 }: PreDoseConfirmationStepProps) {
   const hasVolumeWarning = calculatedVolume !== null && calculatedVolume > 1;
   const hasError = calculationError !== null;
+  
+  // Determine which concentration to display
+  const hasManualConcentration = concentrationAmount && concentrationAmount.trim() !== '';
+  const hasCalculatedConcentration = calculatedConcentration !== null && calculatedConcentration > 0;
+  const displayConcentration = hasManualConcentration 
+    ? `${concentrationAmount} ${concentrationUnit}`
+    : hasCalculatedConcentration 
+    ? `${calculatedConcentration?.toFixed(2)} ${concentrationUnit}`
+    : null;
 
   return (
     <View style={styles.container}>
@@ -46,34 +57,42 @@ export default function PreDoseConfirmationStep({
         </View>
 
         <View style={styles.summaryContent}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Compound:</Text>
-            <Text style={styles.summaryValue}>
-              {substanceName || 'Not specified'}
-            </Text>
-          </View>
+          {substanceName && substanceName.trim() !== '' && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Compound:</Text>
+              <Text style={styles.summaryValue}>
+                {substanceName}
+              </Text>
+            </View>
+          )}
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Concentration:</Text>
-            <Text style={styles.summaryValue}>
-              {concentrationAmount} {concentrationUnit}
-            </Text>
-          </View>
+          {displayConcentration && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Concentration:</Text>
+              <Text style={styles.summaryValue}>
+                {displayConcentration}
+              </Text>
+            </View>
+          )}
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Requested Dose:</Text>
-            <Text style={styles.summaryValue}>
-              {doseValue} {unit}
-            </Text>
-          </View>
+          {doseValue !== null && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Requested Dose:</Text>
+              <Text style={styles.summaryValue}>
+                {doseValue} {unit}
+              </Text>
+            </View>
+          )}
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Volume to Draw:</Text>
-            <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
-              {calculatedVolume?.toFixed(2)} mL
-              {hasVolumeWarning && ' ⚠️'}
-            </Text>
-          </View>
+          {calculatedVolume !== null && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Volume to Draw:</Text>
+              <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
+                {calculatedVolume.toFixed(2)} mL
+                {hasVolumeWarning && ' ⚠️'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {hasVolumeWarning && (

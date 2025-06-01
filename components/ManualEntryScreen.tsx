@@ -264,6 +264,7 @@ export default function ManualEntryScreen({
           doseValue={doseValue}
           unit={unit}
           calculatedVolume={calculatedVolume}
+          calculatedConcentration={calculatedConcentration}
           calculationError={calculationError}
         />
       );
