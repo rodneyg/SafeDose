@@ -12,6 +12,8 @@ module.exports = {
   moduleNameMapper: {
     // Mock react-native to prevent errors when lib/utils.tsx (imported by doseUtils) tries to import Platform
     '^react-native$': '<rootDir>/__mocks__/react-native.js',
+    // Handle path aliases used in the project
+    '^@/(.*)$': '<rootDir>/$1',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   // transformIgnorePatterns might not be needed if react-native is properly mocked

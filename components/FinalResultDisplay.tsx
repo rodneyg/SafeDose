@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
+import { useUserProfile } from '@/contexts/UserProfileContext';
 
 type Props = {
   calculationError: string | null;
@@ -37,6 +38,8 @@ export default function FinalResultDisplay({
   handleGoToFeedback,
   isMobileWeb,
 }: Props) {
+  const { disclaimerText } = useUserProfile();
+
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   
   // Helper function to get the calculation formula based on unit types
@@ -218,7 +221,7 @@ export default function FinalResultDisplay({
         <View style={styles.disclaimerIconContainer}>
           <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
           <Text style={styles.disclaimerText}>
-            **Critical**: Double-check this calculated dose with a healthcare professional before administration. This result is for informational purposes only and should not replace professional medical judgment. Verify all calculations independently to ensure patient safety.
+            {disclaimerText}
           </Text>
         </View>
       </View>
