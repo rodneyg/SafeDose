@@ -21,6 +21,7 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -192,6 +193,18 @@ export default function NewDoseScreen() {
       setCalculationError(null);
     }
   }, [dose, unit, medicationInputType, concentrationAmount, totalAmount, solutionVolume, manualSyringe, setCalculatedVolume, setRecommendedMarking, setCalculationError]);
+
+  // Control tab bar visibility based on screen step
+  useEffect(() => {
+    if (navigation?.getParent) {
+      const parent = navigation.getParent();
+      if (parent?.setOptions) {
+        parent.setOptions({
+          tabBarStyle: screenStep === 'scan' ? { display: 'none' } : undefined,
+        });
+      }
+    }
+  }, [screenStep, navigation]);
 
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan' && permissionStatus === 'undetermined') {
@@ -710,10 +723,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 4 },
+  subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
   usageInfoContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  scanCreditsContainer: { backgroundColor: '#FFFFFF', borderRadius: 8, padding: 8 },
-  scanCreditsText: { color: '#333333', fontSize: 14, fontWeight: '500' },
+  scanCreditsContainer: { 
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+    borderRadius: 20, 
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  scanCreditsText: { color: '#333333', fontSize: 13, fontWeight: '500' },
   premiumBadgeContainer: { 
     backgroundColor: '#FFD700', 
     borderRadius: 8, 
