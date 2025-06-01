@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
 import * as Google from 'expo-auth-session/providers/google';
-import { isMobileWeb } from '../lib/utils';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
