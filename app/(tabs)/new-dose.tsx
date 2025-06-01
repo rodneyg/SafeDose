@@ -563,7 +563,7 @@ export default function NewDoseScreen() {
         <Text style={styles.subtitle}>
           {screenStep === 'intro' && 'Welcome'}
           {screenStep === 'scan' && 'Scan Syringe & Vial'}
-          {screenStep === 'postDoseFeedback' && 'How did this dose feel?'}
+          {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
           {screenStep === 'manualEntry' && (
             `${
               manualStep === 'dose' ? 'Enter Dose' :
