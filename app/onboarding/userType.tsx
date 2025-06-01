@@ -98,7 +98,10 @@ export default function UserTypeSegmentation() {
       // Ensure profile is saved before navigation
       await saveProfile(profile);
       
-      console.log('[UserType] Profile saved successfully');
+      // CRITICAL: Set onboarding completion flag - this was missing!
+      await AsyncStorage.setItem('onboardingComplete', 'true');
+      
+      console.log('[UserType] Profile saved and onboarding marked complete');
       
       // Log completion
       logAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETE, {
@@ -123,14 +126,14 @@ export default function UserTypeSegmentation() {
         storedProfileLength: storedProfile?.length
       });
       
-      // Navigate to root and let the app routing logic handle the proper destination
-      // This avoids race conditions with the app/index.tsx routing logic
-      console.log('[UserType] Navigating to main app directly...');
-      router.replace('/(tabs)/new-dose');
+      // Navigate to root and let index.tsx routing logic determine the proper destination
+      // This ensures the app's main routing logic handles the completed state properly
+      console.log('[UserType] Navigating to root for proper routing...');
+      router.replace('/');
     } catch (error) {
       console.error('Error saving user profile:', error);
-      // Fallback navigation to main app
-      router.replace('/(tabs)/new-dose');
+      // Fallback navigation to root
+      router.replace('/');
     }
   }, [answers, saveProfile, router, user?.uid]);
 
