@@ -134,65 +134,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           />
         )}
         
-        {/* Header section with Sign-In button */}
-        <View style={styles.headerSection}>
-          <View style={styles.headerContent}>
-            {/* Spacer to push Sign-In button to the right */}
-            <View style={styles.headerSpacer} />
-            
-            {/* Profile Control - Naturally positioned in header */}
-            <View style={styles.profileButtonContainer}>
-              <TouchableOpacity 
-                style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-                onPress={toggleProfileMenu}>
-                {user?.isAnonymous 
-                  ? <LogIn color="#10b981" size={18} />
-                  : <User color="#3b82f6" size={18} />
-                }
-                <Text style={styles.profileText}>
-                  {user?.isAnonymous 
-                    ? 'Sign In' 
-                    : user.email ? user.email.split('@')[0] : 'Profile'}
-                </Text>
-              </TouchableOpacity>
-              
-              {/* Profile dropdown menu */}
-              {isProfileMenuOpen && (
-                <View style={styles.profileMenu}>
-                  {user?.isAnonymous ? (
-                    // Menu for anonymous users
-                    <TouchableOpacity 
-                      style={styles.signInButton}
-                      onPress={() => {
-                        setIsProfileMenuOpen(false);
-                        handleSignInPress();
-                      }}>
-                      <LogIn color="#10b981" size={16} />
-                      <Text style={styles.signInText}>Sign In</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    // Menu for logged-in users
-                    <>
-                      {user?.email && (
-                        <View style={styles.profileMenuItem}>
-                          <Mail color="#64748b" size={16} />
-                          <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                        </View>
-                      )}
-                      <TouchableOpacity 
-                        style={styles.logoutButton}
-                        onPress={handleLogoutPress}>
-                        <LogOut color="#ef4444" size={16} />
-                        <Text style={styles.logoutText}>Sign Out</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-
         {/* Main content section */}
         <View style={styles.content}>
           {/* App icon and welcome message */}
@@ -238,17 +179,80 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         </View>
         
-        {/* Upgrade Plan - Footer Element */}
-        {(usageData.plan === 'free') && (
-          <View style={styles.footerSection}>
+        {/* Bottom section with authentication and upgrade options */}
+        <View style={styles.bottomSection}>
+          {/* Sign-In section - appears for anonymous users */}
+          {user?.isAnonymous && (
+            <View style={styles.authSection}>
+              <Text style={styles.authPromptText}>
+                Sign in to save calculations and get unlimited scans
+              </Text>
+              <TouchableOpacity 
+                style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
+                onPress={toggleProfileMenu}>
+                <LogIn color="#10b981" size={16} />
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </TouchableOpacity>
+              
+              {/* Profile dropdown menu positioned above button */}
+              {isProfileMenuOpen && (
+                <View style={styles.authMenu}>
+                  <TouchableOpacity 
+                    style={styles.authMenuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      handleSignInPress();
+                    }}>
+                    <LogIn color="#10b981" size={16} />
+                    <Text style={styles.authMenuText}>Sign In with Google</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          
+          {/* Profile section - appears for logged-in users */}
+          {user && !user.isAnonymous && (
+            <View style={styles.profileSection}>
+              <TouchableOpacity 
+                style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+                onPress={toggleProfileMenu}>
+                <User color="#3b82f6" size={16} />
+                <Text style={styles.profileButtonText}>
+                  {user.email ? user.email.split('@')[0] : 'Profile'}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Profile dropdown menu */}
+              {isProfileMenuOpen && (
+                <View style={styles.profileMenu}>
+                  {user?.email && (
+                    <View style={styles.profileMenuItem}>
+                      <Mail color="#64748b" size={16} />
+                      <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.logoutButton}
+                    onPress={handleLogoutPress}>
+                    <LogOut color="#ef4444" size={16} />
+                    <Text style={styles.logoutText}>Sign Out</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          
+          {/* Upgrade Plan - Footer Element */}
+          {(usageData.plan === 'free') && (
             <TouchableOpacity 
               style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
               onPress={handleUpgradePress}>
               <CreditCard color={'#f59e0b'} size={16} />
               <Text style={styles.upgradeText}>Upgrade</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
+        </View>
       </Animated.View>
     </SafeAreaView>
   );
@@ -271,106 +275,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 5, // Below profile menu but above everything else
-  },
-  // Header section containing the Sign-In button
-  headerSection: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  headerSpacer: {
-    flex: 1, // Pushes Sign-In button to the right
-  },
-  // Profile button styles (naturally positioned in header)
-  profileButtonContainer: {
-    zIndex: 10, // Ensure it's above other elements
-  },
-  profileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8fafc',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20, // Pill shape
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  profileButtonMobile: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  profileText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#334155',
-  },
-  // Profile menu dropdown
-  profileMenu: {
-    position: 'absolute',
-    top: 46,
-    right: 0,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  profileMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  profileMenuEmail: {
-    fontSize: 14,
-    fontWeight: '400',
-    marginLeft: 8,
-    color: '#64748b',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  logoutText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#ef4444',
-  },
-  signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  signInText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#10b981',
   },
   // Main content section
   content: {
@@ -458,12 +362,165 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  // Footer section for upgrade button
-  footerSection: {
+  // Bottom section containing auth and upgrade elements
+  bottomSection: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 20,
     alignItems: 'center',
+    gap: 12,
   },
+  // Authentication section for anonymous users
+  authSection: {
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    position: 'relative',
+  },
+  authPromptText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  signInButtonMobile: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  signInButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
+  },
+  authMenu: {
+    position: 'absolute',
+    bottom: 55, // Position above the sign-in button
+    left: 16,
+    right: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  authMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  authMenuText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
+  },
+  // Profile section for logged-in users
+  profileSection: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20, // Pill shape
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  profileButtonMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  profileButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#334155',
+  },
+  // Profile menu dropdown
+  profileMenu: {
+    position: 'absolute',
+    bottom: 46, // Position above the profile button
+    left: '50%',
+    transform: [{ translateX: -90 }], // Center the menu
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  profileMenuEmail: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginLeft: 8,
+    color: '#64748b',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#ef4444',
+  },
+  // Upgrade button
   upgradeButton: {
     flexDirection: 'row',
     alignItems: 'center',
