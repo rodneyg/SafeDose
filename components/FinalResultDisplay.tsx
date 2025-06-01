@@ -39,11 +39,17 @@ export default function FinalResultDisplay({
   
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
-    if (!doseValue || !concentrationUnit) return 'Formula not available';
+    if (!doseValue) return 'Formula not available';
     
+    // For mL doses, concentrationUnit is not required
     if (unit === 'mL') {
       return 'Volume (ml) = Dose (ml) [Direct volume administration]';
-    } else if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
+    } 
+    
+    // For other units, we need concentrationUnit
+    if (!concentrationUnit) return 'Formula not available';
+    
+    if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
       return 'Volume (ml) = Dose (mcg) ÷ 1000 ÷ Concentration (mg/ml)';
     } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
       return 'Volume (ml) = Dose (mg) × 1000 ÷ Concentration (mcg/ml)';
