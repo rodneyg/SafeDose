@@ -246,6 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center', 
     padding: 16,
+    paddingTop: 60, // Additional top padding to ensure sign-in button doesn't overlap content
     position: 'relative', // To support absolute positioning of profile button
   },
   // Invisible overlay to capture taps outside the menu
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   // Profile button styles (Fitts's Law)
   profileButtonContainer: {
     position: 'absolute',
-    top: -30, // Adjusted to ensure adequate spacing from header elements like premium badge
+    top: 20, // Safely positioned within container bounds to avoid interference
     right: 16,
     zIndex: 10, // Ensure it's above other elements
   },
