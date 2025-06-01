@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
 import { useAuth } from '../contexts/AuthContext';
+import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -18,6 +19,7 @@ interface IntroScreenProps {
 
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   const { user, auth, logout } = useAuth();
+  const { disclaimerText } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -218,7 +220,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         <View style={styles.disclaimerIconContainer}>
           <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
           <Text style={styles.disclaimerText}>
-            Medical information provided by this app is for guidance only. Always consult a healthcare provider before making medication decisions. Incorrect dosing may cause health risks.
+            {disclaimerText}
           </Text>
         </View>
       </View>

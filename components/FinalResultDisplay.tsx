@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { CameraIcon, Plus, X, Info } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
+import { useUserProfile } from '@/contexts/UserProfileContext';
 
 type Props = {
   calculationError: string | null;
@@ -33,6 +34,8 @@ export default function FinalResultDisplay({
   setScreenStep,
   isMobileWeb,
 }: Props) {
+  const { disclaimerText } = useUserProfile();
+  
   console.log('[FinalResultDisplay] Rendering with:', { 
     calculationError, 
     recommendedMarking,
@@ -119,7 +122,7 @@ export default function FinalResultDisplay({
         <View style={styles.disclaimerIconContainer}>
           <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
           <Text style={styles.disclaimerText}>
-            **Critical**: Double-check this calculated dose with a healthcare professional before administration. This result is for informational purposes only and should not replace professional medical judgment. Verify all calculations independently to ensure patient safety.
+            {disclaimerText}
           </Text>
         </View>
       </View>
