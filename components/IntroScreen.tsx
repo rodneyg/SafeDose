@@ -9,8 +9,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
+import * as Google from 'expo-auth-session/providers/google';
+import { isMobileWeb } from '../lib/utils';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -24,6 +26,36 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Set up Google authentication
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: Constants.expoConfig?.extra?.googleAuth?.androidClientId,
+    iosClientId: Constants.expoConfig?.extra?.googleAuth?.iosClientId,
+    webClientId: Constants.expoConfig?.extra?.googleAuth?.webClientId,
+  });
+
+  // Handle Google auth response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.idToken) {
+        const credential = GoogleAuthProvider.credential(authentication.idToken);
+        signInWithCredential(auth, credential)
+          .then((result) => {
+            console.log('Google Sign-In successful', result.user);
+            if (user?.isAnonymous) {
+              console.log('Linked anonymous account with Google');
+            } else {
+              console.log('Signed in with Google');
+            }
+            router.replace('/(tabs)/new-dose');
+          })
+          .catch((error) => {
+            console.error('Google sign-in error:', error);
+          });
+      }
+    }
+  }, [response, auth, user, router]);
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
@@ -40,25 +72,31 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   // Use memoized handlers to ensure stable references across renders
   const handleSignInPress = useCallback(() => {
     console.log('[IntroScreen] Sign In button pressed');
-    const provider = new GoogleAuthProvider();
     
-    // Use Firebase popup sign-in method for authentication
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log('Google Sign-In successful', result.user);
-        if (user?.isAnonymous) {
-          // The anonymous account will be automatically linked to the signed-in account
-          console.log('Linked anonymous account with Google');
-        } else {
-          console.log('Signed in with Google');
-        }
-        // Navigate to the main app screen after successful authentication
-        router.replace('/(tabs)/new-dose');
-      })
-      .catch((error) => {
-        console.error('Google sign-in error:', error);
+    // Use the proper authentication method for the platform
+    if (isMobileWeb) {
+      // For web, we can use the popup method
+      const provider = new GoogleAuthProvider();
+      import('firebase/auth').then(({ signInWithPopup }) => {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            console.log('Google Sign-In successful', result.user);
+            if (user?.isAnonymous) {
+              console.log('Linked anonymous account with Google');
+            } else {
+              console.log('Signed in with Google');
+            }
+            router.replace('/(tabs)/new-dose');
+          })
+          .catch((error) => {
+            console.error('Google sign-in error:', error);
+          });
       });
-  }, [auth, user, router]);
+    } else {
+      // For React Native, use the expo auth session
+      promptAsync();
+    }
+  }, [auth, user, router, promptAsync]);
 
   const handleUpgradePress = useCallback(() => {
     console.log('[IntroScreen] Upgrade button pressed');
@@ -179,8 +217,42 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         </View>
         
-        {/* Bottom section with authentication and upgrade options */}
+        {/* Bottom section with usage info, authentication and upgrade options */}
         <View style={styles.bottomSection}>
+          {/* Usage Status Card - shows scans remaining and upgrade options together */}
+          <View style={styles.usageStatusCard}>
+            {/* Scans remaining display */}
+            <View style={styles.usageInfoRow}>
+              <Text style={styles.scanCreditsText}>
+                🎟️ {usageData.limit - usageData.scansUsed} scans remaining
+              </Text>
+              
+              {/* Premium Badge (only for plus users) */}
+              {usageData.plan === 'plus' && (
+                <View style={styles.premiumBadgeContainer}>
+                  <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
+                </View>
+              )}
+            </View>
+            
+            {/* Upgrade button - appears right below scans for free users */}
+            {(usageData.plan === 'free') && (
+              <TouchableOpacity 
+                style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+                onPress={handleUpgradePress}>
+                <CreditCard color={'#f59e0b'} size={16} />
+                <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Low scans warning for free users */}
+            {(usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
+              <Text style={styles.lowScansWarning}>
+                ⚠️ Running low on scans. Upgrade to continue calculating doses.
+              </Text>
+            )}
+          </View>
+          
           {/* Sign-In section - appears for anonymous users */}
           {user?.isAnonymous && (
             <View style={styles.authSection}>
@@ -241,16 +313,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 </View>
               )}
             </View>
-          )}
-          
-          {/* Upgrade Plan - Footer Element */}
-          {(usageData.plan === 'free') && (
-            <TouchableOpacity 
-              style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-              onPress={handleUpgradePress}>
-              <CreditCard color={'#f59e0b'} size={16} />
-              <Text style={styles.upgradeText}>Upgrade</Text>
-            </TouchableOpacity>
           )}
         </View>
       </Animated.View>
@@ -362,12 +424,59 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  // Bottom section containing auth and upgrade elements
+  // Bottom section containing usage, auth and upgrade elements
   bottomSection: {
     paddingHorizontal: 16,
     paddingBottom: 20,
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+  },
+  // Usage Status Card - combines scans remaining with upgrade
+  usageStatusCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  usageInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  scanCreditsText: { 
+    color: '#333333', 
+    fontSize: 14, 
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  premiumBadgeContainer: { 
+    backgroundColor: '#FFD700', 
+    borderRadius: 8, 
+    padding: 4, 
+    marginLeft: 8,
+    shadowColor: '#FFC107',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
+  lowScansWarning: {
+    fontSize: 13,
+    color: '#d97706',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
   // Authentication section for anonymous users
   authSection: {
@@ -524,21 +633,23 @@ const styles = StyleSheet.create({
   upgradeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    backgroundColor: '#fef3c7',
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#f59e0b',
+    width: '100%',
   },
   upgradeButtonMobile: {
-    paddingVertical: 9,
+    paddingVertical: 12,
     paddingHorizontal: 18,
   },
   upgradeText: {
-    color: '#f59e0b',
+    color: '#92400e',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 6,
   },
 });
