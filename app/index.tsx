@@ -24,7 +24,7 @@ export default function InitialScreen() {
           router.replace('/onboarding/userType');
         } else {
           // Both onboarding and user profile complete, go to main app
-          router.replace('/(tabs)');
+          router.replace('/(tabs)/new-dose');
         }
       } catch (e) {
         console.warn('Error checking app state:', e);

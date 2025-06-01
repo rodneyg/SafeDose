@@ -4,10 +4,12 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, X } from 'lucide-react-native';
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileAnswers, UserProfile } from '@/types/userProfile';
 
 export default function UserTypeSegmentation() {
   const router = useRouter();
+  const { user } = useAuth();
   const { saveProfile } = useUserProfile();
   const [answers, setAnswers] = useState<UserProfileAnswers>({
     isLicensedProfessional: null,
@@ -30,14 +32,15 @@ export default function UserTypeSegmentation() {
         isPersonalUse: answers.isPersonalUse!,
         isCosmeticUse: answers.isCosmeticUse!,
         dateCreated: new Date().toISOString(),
+        userId: user?.uid, // Link profile to user ID
       };
 
       await saveProfile(profile);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/new-dose');
     } catch (error) {
       console.error('Error saving user profile:', error);
       // Fallback navigation
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/new-dose');
     }
   }, [answers, isComplete, saveProfile, router]);
 
@@ -136,7 +139,7 @@ export default function UserTypeSegmentation() {
         </TouchableOpacity>
         
         <Text style={styles.privacyText}>
-          Your answers are stored locally on your device and help customize safety warnings.
+          Your answers are stored locally and securely in your account to customize safety warnings.
         </Text>
       </Animated.View>
     </View>

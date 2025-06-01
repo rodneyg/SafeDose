@@ -3,6 +3,7 @@ export interface UserProfile {
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
   dateCreated: string;
+  userId?: string; // Optional field to track which user this profile belongs to
 }
 
 export type UserProfileAnswers = {
