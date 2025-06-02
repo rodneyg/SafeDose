@@ -303,6 +303,7 @@ export default function ManualEntryScreen({
   }
 
   return (
+    // KeyboardAvoidingView wrapper prevents layout shifts when keyboard appears after tapping text fields
     <KeyboardAvoidingView 
       style={styles.keyboardContainer}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -392,22 +393,26 @@ export default function ManualEntryScreen({
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
+    // Overflow constraints to prevent layout dragging during keyboard interaction
     overflow: 'hidden', // Prevent keyboard container from being draggable
     position: 'relative', // Ensure proper positioning
   },
   manualEntryContainer: { 
     flex: 1,
+    // Additional overflow constraints to prevent content from exceeding bounds
     overflow: 'hidden', // Prevent content from being draggable beyond bounds
     maxHeight: '100%', // Ensure container doesn't exceed screen height
   },
   scrollContent: {
     flexGrow: 1,
+    // Prevent scroll content overflow that could cause dragging issues
     overflow: 'hidden', // Prevent scroll content overflow
   },
   formWrapper: { 
     alignItems: 'center', 
     paddingHorizontal: 16, 
     paddingBottom: 20,
+    // Form content overflow constraints to maintain layout stability
     overflow: 'hidden', // Prevent form content from overflowing
     maxWidth: '100%', // Ensure form doesn't exceed container width
     position: 'relative', // Ensure proper positioning during keyboard events

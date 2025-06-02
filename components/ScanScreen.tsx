@@ -394,6 +394,7 @@ const styles = StyleSheet.create({
   scanContainer: { 
     flex: 1, 
     backgroundColor: '#000',
+    // Overflow constraint to prevent scan content from extending beyond screen bounds
     overflow: 'hidden', // Prevent content from extending beyond bounds
   },
   overlayBottom: { 
@@ -406,6 +407,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     maxHeight: '50%', // Prevent overlay from taking up too much screen space
+    // Overflow constraint to ensure scan overlay content doesn't exceed allocated space
     overflow: 'hidden', // Ensure content doesn't overflow
   },
   bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 12 },

@@ -49,6 +49,7 @@ export default function NewDoseScreen() {
   }, []);
   
   // Keyboard event listeners to track keyboard state and prevent layout dragging
+  // This prevents the issue where the view becomes draggable after keyboard interaction
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
       console.log('[Keyboard] Will show, height:', e.endCoordinates.height);
@@ -253,7 +254,7 @@ export default function NewDoseScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            // Prevent tab bar from being affected by keyboard
+            // Prevent tab bar from being affected by keyboard - stabilizes positioning during navigation
             transform: keyboardVisible ? [{ translateY: 0 }] : undefined,
             zIndex: keyboardVisible ? 999 : undefined,
           },
@@ -606,6 +607,7 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
+    // Main container with overflow constraints to prevent dragging issues
     <View style={[styles.container, keyboardVisible && { height: screenHeight }]}>
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
@@ -774,6 +776,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#F2F2F7',
+    // Overflow constraints to prevent unexpected scrolling and layout dragging
     overflow: 'hidden', // Prevent container content from being draggable
     height: '100%', // Ensure full height constraint
     maxHeight: '100vh', // Web-specific constraint to prevent dragging beyond viewport

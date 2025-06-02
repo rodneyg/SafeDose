@@ -44,6 +44,7 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
         blurOnSubmit={true}
         onSubmitEditing={() => {
           // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          // This addresses the issue where hitting enter manually makes the layout draggable
           Keyboard.dismiss();
         }}
       />
@@ -88,6 +89,7 @@ const styles = StyleSheet.create({
     width: '100%', 
     maxWidth: 600, 
     marginBottom: 20,
+    // Overflow constraint to prevent input content from extending beyond container bounds
     overflow: 'hidden', // Prevent container content from overflowing
   },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },

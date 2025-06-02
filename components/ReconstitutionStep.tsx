@@ -34,6 +34,7 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         blurOnSubmit={true}
         onSubmitEditing={() => {
           // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          // This addresses the issue where hitting enter manually makes the layout draggable
           Keyboard.dismiss();
         }}
       />

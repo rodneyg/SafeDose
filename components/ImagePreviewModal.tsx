@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     maxHeight: '85%',
     alignItems: 'center',
+    // Overflow constraint to prevent modal content from exceeding size limits
     overflow: 'hidden', // Prevent content overflow
   },
   title: {
@@ -216,6 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     borderRadius: 8,
     marginBottom: 16,
+    // Overflow constraint to ensure image content stays within container bounds
     overflow: 'hidden',
   },
   image: {
