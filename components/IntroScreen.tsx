@@ -176,20 +176,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         </View>
       </View>
       
-      {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
-      {(usageData.plan === 'free') && (
-        <View style={styles.upgradeContainer}>
-          <TouchableOpacity 
-            style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-            onPress={handleUpgradePress}>
-            <CreditCard color={'#f59e0b'} size={16} />
-            <Text style={styles.upgradeText}>Upgrade</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Bottom Auth Section */}
-      <View style={styles.bottomSection}>
+      {/* Auth Section - positioned between disclaimer and upgrade */}
+      <View style={styles.authSectionContainer}>
         <View style={styles.authContainer}>
           {user?.isAnonymous ? (
             // Auth section for anonymous users
@@ -252,6 +240,18 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           )}
         </View>
       </View>
+      
+      {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
+      {(usageData.plan === 'free') && (
+        <View style={styles.upgradeContainer}>
+          <TouchableOpacity 
+            style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+            onPress={handleUpgradePress}>
+            <CreditCard color={'#f59e0b'} size={16} />
+            <Text style={styles.upgradeText}>Upgrade</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -365,14 +365,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  // Bottom section for auth UI
-  bottomSection: {
-    position: 'absolute',
-    bottom: 120, // Increased spacing to avoid overlap with disclaimer
-    left: 16,
-    right: 16,
+  // Auth section container - positioned in normal document flow
+  authSectionContainer: {
+    width: '100%',
     alignItems: 'center',
-    zIndex: 10,
+    marginTop: 16,
+    marginBottom: 16,
   },
   // Gray container wrapper for auth components
   authContainer: {
