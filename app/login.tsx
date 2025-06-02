@@ -117,7 +117,10 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => router.back()}>
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            accessibilityHint="Return to the previous screen">
             <ArrowLeft color="#64748b" size={24} />
           </TouchableOpacity>
           <Text style={styles.title}>Sign In</Text>
@@ -140,6 +143,8 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoComplete="email"
               editable={!isLoading}
+              accessibilityLabel="Email address"
+              accessibilityHint="Enter your email address to sign in"
             />
           </View>
 
@@ -157,10 +162,15 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoComplete="password"
               editable={!isLoading}
+              accessibilityLabel="Password"
+              accessibilityHint="Enter your password to sign in"
             />
             <TouchableOpacity 
               style={styles.passwordToggle}
-              onPress={() => setShowPassword(!showPassword)}>
+              onPress={() => setShowPassword(!showPassword)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+              accessibilityHint={showPassword ? "Tap to hide your password" : "Tap to show your password"}>
               {showPassword ? (
                 <EyeOff color="#64748b" size={20} />
               ) : (
@@ -181,7 +191,11 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.primaryButton, isLoading && styles.buttonDisabled]} 
               onPress={handleEmailSignIn}
-              disabled={isLoading}>
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in with email"
+              accessibilityHint="Sign in using your email and password"
+              accessibilityState={{ disabled: isLoading }}>
               <Mail color="#ffffff" size={20} />
               <Text style={styles.primaryButtonText}>
                 {isLoading ? 'Signing In...' : 'Sign In with Email'}
@@ -197,7 +211,11 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.secondaryButton, isLoading && styles.buttonDisabled]} 
               onPress={handleGoogleSignIn}
-              disabled={isLoading}>
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Continue with Google"
+              accessibilityHint="Sign in using your Google account"
+              accessibilityState={{ disabled: isLoading }}>
               <LogIn color="#10b981" size={20} />
               <Text style={styles.secondaryButtonText}>Continue with Google</Text>
             </TouchableOpacity>

@@ -65,7 +65,7 @@ describe('IntroScreen Sign Out Functionality', () => {
       />
     );
 
-    // Since we can't easily test the exact menu interaction in React Native Testing Library,
+    // Since the new UI shows the sign out button directly (no dropdown menu),
     // we'll focus on testing that the logout function works properly when called
     // This test verifies the core functionality rather than the UI interaction
 

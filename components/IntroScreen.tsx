@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -179,14 +179,37 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
-    console.log('[IntroScreen] Initiating logout...');
-    try {
-      console.log('[IntroScreen] Calling logout function...');
-      await logout();
-      console.log('[IntroScreen] ✅ Logout completed successfully');
-    } catch (error) {
-      console.error('[IntroScreen] ❌ Logout error:', error);
-    }
+    
+    // Show confirmation dialog
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out? You can always sign back in to access your saved calculations.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            console.log('[IntroScreen] User confirmed logout, initiating...');
+            try {
+              console.log('[IntroScreen] Calling logout function...');
+              await logout();
+              console.log('[IntroScreen] ✅ Logout completed successfully');
+            } catch (error) {
+              console.error('[IntroScreen] ❌ Logout error:', error);
+              Alert.alert(
+                'Sign Out Failed',
+                'There was an error signing out. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          },
+        },
+      ]
+    );
   }, [logout]);
 
   // For React Native, we'll close the menu manually in button handlers
@@ -248,12 +271,15 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         )}
 
-        {/* Show signing out message */}
+        {/* Show signing out message with better visual feedback */}
         {isSigningOut && (
           <View style={styles.signingOutContainer}>
-            <Text style={styles.signingOutText}>
-              Signed out successfully. You will be signed in anonymously shortly.
-            </Text>
+            <View style={styles.signingOutCard}>
+              <Text style={styles.signingOutTitle}>Signing Out</Text>
+              <Text style={styles.signingOutText}>
+                You've been signed out successfully. We'll sign you in anonymously in a moment to continue using the app.
+              </Text>
+            </View>
           </View>
         )}
         
@@ -352,14 +378,20 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 <View style={styles.signInOptionsContainer}>
                   <TouchableOpacity 
                     style={[styles.primarySignInButton, isMobileWeb && styles.primarySignInButtonMobile]} 
-                    onPress={handleSignInPress}>
+                    onPress={handleSignInPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign in with Google"
+                    accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
                     <LogIn color="#ffffff" size={16} />
                     <Text style={styles.primarySignInButtonText}>Sign In with Google</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
                     style={[styles.secondarySignInButton, isMobileWeb && styles.secondarySignInButtonMobile]} 
-                    onPress={() => router.push('/login')}>
+                    onPress={() => router.push('/login')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign in with email"
+                    accessibilityHint="Go to the email sign in page to sign in with email and password">
                     <Mail color="#10b981" size={16} />
                     <Text style={styles.secondarySignInButtonText}>Sign In with Email</Text>
                   </TouchableOpacity>
@@ -388,7 +420,10 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 {/* Sign out button - always visible for better discoverability */}
                 <TouchableOpacity 
                   style={[styles.signOutButton, isMobileWeb && styles.signOutButtonMobile]} 
-                  onPress={handleLogoutPress}>
+                  onPress={handleLogoutPress}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign out"
+                  accessibilityHint="Sign out of your account. You will be asked to confirm this action.">
                   <LogOut color="#ef4444" size={16} />
                   <Text style={styles.signOutButtonText}>Sign Out</Text>
                 </TouchableOpacity>
@@ -444,13 +479,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.05)', // Slight overlay to indicate change
+    backgroundColor: '#F8FAFC',
+  },
+  signingOutCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 320,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  signingOutTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   signingOutText: {
-    fontSize: 16,
-    color: '#333', // Darker text for better readability
+    fontSize: 14,
+    color: '#6B7280',
     textAlign: 'center',
-    paddingHorizontal: 30, // Ensure text doesn't touch edges
+    lineHeight: 20,
   },
   // Main content section
   content: {
