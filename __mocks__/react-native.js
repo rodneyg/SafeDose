@@ -17,6 +17,7 @@ const StyleSheet = {
 const View = 'View';
 const Text = 'Text';
 const TouchableOpacity = 'TouchableOpacity';
+const ActivityIndicator = 'ActivityIndicator';
 const NativeModules = {};
 
 module.exports = {
@@ -25,6 +26,7 @@ module.exports = {
   View,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   NativeModules,
   // Default export for general react-native import (if any code does `import ReactNative from 'react-native'`)
   default: {
@@ -33,6 +35,7 @@ module.exports = {
     View,
     Text,
     TouchableOpacity,
+    ActivityIndicator,
     NativeModules,
   }
 };

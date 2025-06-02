@@ -347,11 +347,11 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
               )}
             </View>
             
-            {/* Sign-In section - appears for anonymous users */}
-            {user?.isAnonymous && (
+            {/* Sign-In section - appears for anonymous users or when signed out */}
+            {(user?.isAnonymous || !user) && (
               <View style={styles.authSection}>
                 <Text style={styles.authPromptText}>
-                  Sign in to save calculations and get unlimited scans
+                  {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
                 </Text>
                 <TouchableOpacity 
                   style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
