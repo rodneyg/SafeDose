@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3CD', 
     padding: 10,
     borderRadius: 8, 
-    marginBottom: 16,
+    marginBottom: 32, // Increased from 16 to 32 to create better visual separation from bottom section
     width: '90%', 
     maxWidth: 500,
     borderLeftWidth: 3,
