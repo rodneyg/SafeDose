@@ -38,8 +38,17 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
         value={dose}
         onChangeText={handleDoseChange}
         keyboardType="numeric"
+        inputMode="numeric"
         placeholder="e.g., 100"
         placeholderTextColor="#9ca3af"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        onSubmitEditing={() => {
+          // Dismiss keyboard on submit
+          if (typeof window !== 'undefined' && window.Keyboard) {
+            window.Keyboard.dismiss();
+          }
+        }}
       />
       <Text style={styles.label}>Unit:</Text>
       <View style={styles.radioContainer}>
@@ -75,10 +84,33 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  container: { 
+    backgroundColor: '#FFFFFF', 
+    padding: 16, 
+    borderRadius: 8, 
+    width: '100%', 
+    maxWidth: '100%',
+    marginBottom: 20,
+    overflow: 'hidden',
+    margin: 0
+  },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
-  input: { backgroundColor: '#FFFFFF', color: '#000000', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 6, fontSize: 15, borderWidth: 1, borderColor: '#E5E5EA', marginBottom: 10, width: '100%' },
+  input: { 
+    backgroundColor: '#FFFFFF', 
+    color: '#000000', 
+    paddingVertical: 10, 
+    paddingHorizontal: 15, 
+    borderRadius: 6, 
+    fontSize: 16, // 16px prevents iOS zoom
+    borderWidth: 1, 
+    borderColor: '#E5E5EA', 
+    marginBottom: 10, 
+    width: '100%',
+    maxWidth: '100%',
+    margin: 0,
+    outlineStyle: 'none'
+  },
   radioContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10, width: '100%' },
   radioButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: '#E5E5EA', alignItems: 'center', flex: 1, marginHorizontal: 5 },
   radioButtonSelected: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
