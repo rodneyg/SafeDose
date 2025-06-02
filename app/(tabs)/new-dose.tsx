@@ -316,8 +316,7 @@ export default function NewDoseScreen() {
     setRecommendedMarking(null);
     setCalculationError(null);
     setFormError(null);
-    setShowVolumeErrorModal(false);
-    setVolumeErrorValue(null);
+    // Note: showVolumeErrorModal and volumeErrorValue are managed internally by doseCalculator
     setScreenStep('manualEntry');
     setManualStep('dose');
   };
