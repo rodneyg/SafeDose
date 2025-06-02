@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -298,13 +298,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#ef4444',
   },
-  signInButton: {
+  signInMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  signInText: {
+  signInMenuText: {
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 8,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   // Bottom section for auth UI
   bottomSection: {
     position: 'absolute',
-    bottom: 80, // Above the upgrade button
+    bottom: 100, // Increased spacing above the upgrade button
     left: 16,
     right: 16,
     alignItems: 'center',
@@ -383,6 +383,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     paddingHorizontal: 16,
+    lineHeight: 20, // Better line spacing for readability
+    flexWrap: 'wrap', // Ensure text wraps on small screens
   },
   // Profile section for signed-in users
   profileSection: {
@@ -459,18 +461,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     zIndex: 15,
-  },
-  signInMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  signInMenuText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#10b981',
   },
   // Profile menu dropdown for signed-in users
   profileMenu: {
