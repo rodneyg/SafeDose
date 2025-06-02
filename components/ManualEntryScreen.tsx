@@ -408,7 +408,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     maxWidth: '100vw',
     width: '100vw',
-    minHeight: '100vh', // Use minHeight to allow content expansion
+    height: '100vh', // Use fixed height to fit viewport
+    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     position: 'relative',
   },
   manualEntryContainer: { 
@@ -416,7 +417,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     maxWidth: '100vw',
     width: '100vw',
-    minHeight: '100%', // Use minHeight to allow content expansion
+    height: '100%', // Use percentage height within KeyboardAvoidingView
+    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     position: 'relative',
   },
   scrollContent: {

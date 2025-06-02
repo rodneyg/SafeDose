@@ -92,7 +92,8 @@ export default function NewDoseScreen() {
         document.body.style.overflow = 'hidden';
         document.body.style.width = '100vw';
         document.body.style.maxWidth = '100vw';
-        document.body.style.minHeight = '100vh'; // Use minHeight to allow content expansion
+        document.body.style.height = '100vh'; // Use fixed height to fit viewport
+        document.body.style.maxHeight = '100vh'; // Ensure content doesn't exceed viewport
         document.body.style.position = 'fixed';
         document.body.style.top = '0';
         document.body.style.left = '0';
@@ -104,7 +105,8 @@ export default function NewDoseScreen() {
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.width = '100vw';
         document.documentElement.style.maxWidth = '100vw';
-        document.documentElement.style.minHeight = '100vh'; // Use minHeight to allow content expansion
+        document.documentElement.style.height = '100vh'; // Use fixed height to fit viewport
+        document.documentElement.style.maxHeight = '100vh'; // Ensure content doesn't exceed viewport
         document.documentElement.style.webkitTextSizeAdjust = 'none';
         document.documentElement.style.transform = 'none';
       }
@@ -115,9 +117,10 @@ export default function NewDoseScreen() {
         document.body.style.transform = `scale(${1 / window.visualViewport.scale})`;
         document.body.style.transformOrigin = 'top left';
       }
-      // Use minHeight for dynamic viewport adjustment
+      // Use fixed height for stable viewport dimensions
       if (window.visualViewport?.height) {
-        document.body.style.minHeight = `${window.visualViewport.height}px`;
+        document.body.style.height = `${window.visualViewport.height}px`;
+        document.body.style.maxHeight = `${window.visualViewport.height}px`;
       }
     };
     
@@ -910,7 +913,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Prevent horizontal overflow
     maxWidth: '100vw', // Constrain to viewport width
     width: '100vw',
-    minHeight: '100vh', // Use minHeight instead of fixed height
+    height: '100vh', // Use fixed height to fit viewport
+    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     position: 'fixed',
     top: 0,
     left: 0,
@@ -922,7 +926,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     width: '100vw',
-    minHeight: '100vh', // Use minHeight to allow content to expand
+    height: '100vh', // Use fixed height to fit viewport exactly
+    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     overflow: 'hidden',
     maxWidth: '100vw',
     backgroundColor: '#F2F2F7',
