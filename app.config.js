@@ -60,6 +60,11 @@ module.exports = {
         local: "http://localhost:8081/__/auth/handler",
         production: "https://app.safedoseai.com/__/auth/handler"
       }
+    },
+    googleAuth: {
+      webClientId: process.env.GOOGLE_WEB_CLIENT_ID,
+      androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
     }
   },
 };

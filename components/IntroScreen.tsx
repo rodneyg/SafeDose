@@ -131,6 +131,13 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     console.log('[IntroScreen] Sign In button pressed');
     const provider = new GoogleAuthProvider();
     
+    // Set custom parameters for better UX
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
+    console.log('[IntroScreen] Initiating Google Sign-In...');
+    
     // Use Firebase popup sign-in method for authentication
     signInWithPopup(auth, provider)
       .then((result) => {
@@ -148,6 +155,21 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       })
       .catch((error) => {
         console.error('Google sign-in error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        // Log additional context for debugging
+        if (error.code === 'auth/popup-blocked') {
+          console.error('Popup was blocked - user needs to allow popups for this site');
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          console.error('User closed the popup before completing sign-in');
+        } else if (error.code === 'auth/operation-not-allowed') {
+          console.error('Google Sign-In is not enabled in Firebase Console');
+        } else if (error.code === 'auth/unauthorized-domain') {
+          console.error('Domain is not authorized in Firebase Console');
+        } else {
+          console.error('Unknown Google Sign-In error:', error);
+        }
       });
   }, [auth, user]);
 
