@@ -18,6 +18,8 @@ const View = 'View';
 const Text = 'Text';
 const TouchableOpacity = 'TouchableOpacity';
 const ActivityIndicator = 'ActivityIndicator';
+const Modal = 'Modal';
+const SafeAreaView = 'SafeAreaView';
 const NativeModules = {};
 
 module.exports = {
@@ -27,6 +29,8 @@ module.exports = {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  SafeAreaView,
   NativeModules,
   // Default export for general react-native import (if any code does `import ReactNative from 'react-native'`)
   default: {
@@ -36,6 +40,8 @@ module.exports = {
     Text,
     TouchableOpacity,
     ActivityIndicator,
+    Modal,
+    SafeAreaView,
     NativeModules,
   }
 };

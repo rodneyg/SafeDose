@@ -38,13 +38,17 @@ This document describes how to manually test the updated sign out functionality.
 2. **Visual Feedback**: Users now see "Signed out successfully" message for 2 seconds
 3. **Error Handling**: Improved error handling in logout function
 4. **Test Coverage**: Added comprehensive tests for the sign out logic
+5. **Z-Index Fix**: Fixed menu overlay z-index conflict that prevented logout button from working
+6. **Enhanced Debug Logging**: Added detailed console logging to track sign out flow
 
 ## Files Modified
 
-- `contexts/AuthContext.tsx`: Fixed timeout cleanup and improved sign out flow
-- `components/IntroScreen.tsx`: Updated UI to show sign out confirmation
+- `contexts/AuthContext.tsx`: Fixed timeout cleanup, improved sign out flow, added debug logging
+- `components/IntroScreen.tsx`: Fixed z-index issue, updated UI, enhanced debug logging
 - `contexts/AuthContext.test.tsx`: Added tests for sign out functionality
-- `__mocks__/react-native.js`: Updated mock to support ActivityIndicator
+- `__mocks__/react-native.js`: Updated mock to support additional components
+- `components/IntroScreen.test.tsx`: Added new tests for sign out button functionality
+- `SIGN_OUT_BUTTON_FIX_TESTING.md`: Added comprehensive testing guide for the fix
 
 ## Technical Details
 
