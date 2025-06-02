@@ -26,7 +26,8 @@ module.exports = {
     bundler: 'metro',
     output: 'static',
     favicon: './assets/images/favicon.png',
-    publicPath: "/_expo"
+    publicPath: "/_expo",
+    template: './web/index.html'
   },
   plugins: ['expo-router'],
   experiments: {

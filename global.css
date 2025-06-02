@@ -71,6 +71,10 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    /* Prevent horizontal overflow and layout shifts on mobile web */
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 }
 

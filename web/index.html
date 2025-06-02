@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <!-- Viewport meta tag to prevent layout scaling and horizontal scrolling on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>SafeDose</title>
+  <style>
+    /* Ensure body doesn't allow horizontal scrolling */
+    html, body {
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      position: relative;
+    }
+    #root {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>

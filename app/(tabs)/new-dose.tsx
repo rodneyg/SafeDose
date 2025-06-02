@@ -82,6 +82,35 @@ export default function NewDoseScreen() {
       keyboardDidHide?.remove();
     };
   }, []);
+
+  // Web-specific keyboard event handling to prevent layout enlargement and scrolling
+  useEffect(() => {
+    const lockLayout = () => {
+      console.log('[WebKeyboard] Locking layout on focus');
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'hidden';
+        document.body.style.width = '100%';
+        document.body.style.maxWidth = '100%';
+      }
+    };
+    
+    const unlockLayout = () => {
+      console.log('[WebKeyboard] Unlocking layout on blur');
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'auto';
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focusin', lockLayout);
+      window.addEventListener('focusout', unlockLayout);
+      
+      return () => {
+        window.removeEventListener('focusin', lockLayout);
+        window.removeEventListener('focusout', unlockLayout);
+      };
+    }
+  }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
@@ -793,13 +822,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: { 
-    flex: 1, 
+    flex: 1,
     backgroundColor: '#F2F2F7',
-    overflow: 'hidden', // Reinforce no horizontal overflow
-    maxWidth: '100%', // Ensure container stays within viewport
+    overflow: 'hidden',
+    maxWidth: '100%',
     width: '100%',
     height: '100%',
-    maxHeight: '100vh',
   },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
