@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Syringe, User } from 'lucide-react-native';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect } from 'expo-router';
@@ -19,11 +20,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
+const getInitials = (name: string | null | undefined): string => {
+  if (!name) return '';
+  const parts = name.split(' ');
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + (parts[parts.length - 1][0] || '')).toUpperCase();
+};
+
 export default function NewDoseScreen() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
@@ -35,7 +44,8 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] Current screenStep:', doseCalculator.screenStep);
   console.log('[NewDoseScreen] User:', user?.uid || 'No user');
   console.log('[NewDoseScreen] isScreenActive:', isScreenActive);
-  
+  const initials = getInitials(user?.displayName);
+
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
     const lockViewport = () => {
@@ -608,46 +618,68 @@ export default function NewDoseScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>SafeDose</Text>
-        {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
-        {screenStep !== 'intro' && (
-          <Text style={styles.subtitle}>
-            {screenStep === 'scan' && 'Scan Syringe & Vial'}
-            {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
-            {screenStep === 'manualEntry' && (
-              `${
-                manualStep === 'dose' ? 'Enter Dose' :
-                manualStep === 'medicationSource' ? 'Select Medication Type' :
-                manualStep === 'concentrationInput' ? 'Enter Concentration' :
-                manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
-                manualStep === 'reconstitution' ? 'Reconstitution' :
-                manualStep === 'syringe' ? 'Select Syringe' :
-                manualStep === 'preDoseConfirmation' ? 'Pre-Dose Safety Review' :
-                'Calculation Result'
-              }`
+        <View style={styles.headerLeft}>
+          <Syringe color="#007AFF" size={28} style={styles.syringeIcon} />
+          <Text style={styles.title}>SafeDose</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={() => setIsProfileMenuVisible(!isProfileMenuVisible)} style={styles.profileIconContainer}>
+            {initials ? (
+              <Text style={styles.profileInitials}>{initials}</Text>
+            ) : (
+              <User color="#FFFFFF" size={20} />
             )}
-          </Text>
-        )}
-        
-        {/* Recovery button that only shows if state health is recovering */}
-        {doseCalculator.stateHealth === 'recovering' && (
-          <TouchableOpacity 
-            onPress={() => {
-              doseCalculator.resetFullForm();
-              doseCalculator.setScreenStep('intro');
-            }}
-            style={styles.recoveryButton}
-          >
-            <Text style={styles.recoveryButtonText}>Reset App</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </View>
+
+      {isProfileMenuVisible && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isProfileMenuVisible}
+          onRequestClose={() => setIsProfileMenuVisible(false)}
+        >
+          <Pressable style={styles.profileMenuOverlay} onPress={() => setIsProfileMenuVisible(false)}>
+            <View style={styles.profileMenu}>
+              {user?.displayName && <Text style={styles.menuTextName}>{user.displayName}</Text>}
+              {user?.email && <Text style={styles.menuTextEmail}>{user.email}</Text>}
+              <TouchableOpacity onPress={async () => {
+                setIsProfileMenuVisible(false);
+                await logout();
+                // Potentially navigate to login screen or update UI further after logout
+              }}>
+                <Text style={styles.signOutButton}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
+
+      {/* Recovery button that only shows if state health is recovering */}
+      {doseCalculator.stateHealth === 'recovering' && (
+        <TouchableOpacity
+          onPress={() => {
+            doseCalculator.resetFullForm();
+            doseCalculator.setScreenStep('intro');
+          }}
+          style={styles.recoveryButton}
+        >
+          <Text style={styles.recoveryButtonText}>Reset App</Text>
+        </TouchableOpacity>
+      )}
+
       {screenStep === 'intro' && (
-        <IntroScreen
-          setScreenStep={handleSetScreenStep}
-          resetFullForm={resetFullForm}
-          setNavigatingFromIntro={setNavigatingFromIntro}
-        />
+        <>
+          <IntroScreen
+            setScreenStep={handleSetScreenStep}
+            resetFullForm={resetFullForm}
+            setNavigatingFromIntro={setNavigatingFromIntro}
+          />
+          <Text style={styles.disclaimerText}>
+            Always consult a licensed healthcare professional before administering any medication.
+          </Text>
+        </>
       )}
       {screenStep === 'scan' && (
         <ScanScreen
@@ -778,11 +810,86 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     overflow: 'hidden'
   },
-  header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
+  header: {
+    marginTop: Constants.statusBarHeight + 40, // Adjusted for status bar and extra padding
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  syringeIcon: {
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 28, // Kept original size, can be adjusted
+    fontWeight: '700', // Slightly bolder
+    color: '#000000',
+    fontFamily: 'System', // Example of a clean, modern font (iOS specific, use appropriate for cross-platform)
+  },
+  headerRight: {},
+  profileIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF', // Example background color
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitials: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  profileMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)', // Light overlay to indicate menu is active
+  },
+  profileMenu: {
+    position: 'absolute',
+    top: Constants.statusBarHeight + 80, // Position below the header
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1001, // Ensure menu is on top
+  },
+  menuTextName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  menuTextEmail: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 12,
+  },
+  signOutButton: {
+    fontSize: 16,
+    color: '#FF3B30', // Red color for destructive action
+    textAlign: 'center',
+  },
+  // subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 }, // Removed subtitle
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
   loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
   recoveryButton: { backgroundColor: '#ff3b30', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, marginTop: 8, alignSelf: 'center' },
   recoveryButtonText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
+  disclaimerText: {
+    fontSize: 12,
+    color: '#8E8E93', // Muted gray color
+    textAlign: 'center',
+    paddingHorizontal: 20, // Ensure it doesn't touch screen edges
+    paddingVertical: 10,  // Space above and below
+    // marginBottom: 10, // If tab bar is not overlapping, this adds space at the very bottom
+                         // Or adjust paddingVertical if content is scrollable and tab bar is fixed
+  },
 });

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
+import { Camera as CameraIcon, Pill, LogIn, LogOut, CreditCard, Info, User, Mail, Pencil } from 'lucide-react-native'; // Added Pencil, removed Syringe, Modal
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
@@ -286,136 +286,50 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {/* Main content section - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.content}>
-            {/* App icon and welcome message */}
-            <View style={styles.welcomeContainer}>
-              <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-              
-              {/* Dynamic welcome message based on authentication status */}
-              {user && !user.isAnonymous && user.displayName ? (
-                <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
-              ) : (
-                <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-              )}
-            </View>
-            
-            {/* Main action buttons grouped together (Law of Proximity) */}
+            {/* Concise Welcome Message */}
+            <Text style={styles.conciseWelcomeText}>
+              {user?.displayName ? `Hello, ${user.displayName}!` : 'Ready to get started?'}
+            </Text>
+
+            {/* Main action buttons grouped together */}
             <View style={styles.actionButtonsContainer}>
-              {/* Primary action */}
-              <TouchableOpacity 
-                style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
+              {/* Primary action: Scan Items */}
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]}
                 onPress={handleScanPress}>
-                <CameraIcon color={'#fff'} size={20} />
+                <CameraIcon color={'#fff'} size={24} />
                 <Text style={styles.buttonText}>Scan Items</Text>
               </TouchableOpacity>
-              
-              {/* Secondary action */}
+
+              {/* Secondary action: Enter Details Manually */}
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
-                onPress={handleManualEntryPress}
-              >
-                <Pill color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Enter Details Manually</Text>
+                onPress={handleManualEntryPress}>
+                <Pencil color={'#007AFF'} size={24} />
+                <Text style={[styles.buttonText, styles.secondaryButtonText]}>Enter Details Manually</Text>
               </TouchableOpacity>
             </View>
-            
-            {/* Disclaimer with Info icon - show default if disclaimerText is not available */}
-            <View style={styles.disclaimerContainer}>
-              <View style={styles.disclaimerIconContainer}>
-                <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
-                <Text style={styles.disclaimerText}>
-                  {disclaimerText || 'Always consult a licensed healthcare professional before administering any medication.'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-        
-        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading and not signing out */}
-        {!isLoading && !isSigningOut && (
-          <View style={styles.bottomSection}>
-            {/* Usage Status Card - shows scans remaining and upgrade options together */}
-            <View style={styles.usageStatusCard}>
-              {/* Scans remaining display - show default if usageData is not available */}
-              <View style={styles.usageInfoRow}>
-                <Text style={styles.scanCreditsText}>
-                  🎟️ {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining
-                </Text>
-                
-                {/* Premium Badge (only for plus users) */}
-                {usageData?.plan === 'plus' && (
-                  <View style={styles.premiumBadgeContainer}>
-                    <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
-                  </View>
-                )}
-              </View>
-              
-              {/* Upgrade button - appears right below scans for free users */}
-              {(!usageData || usageData.plan === 'free') && (
-                <TouchableOpacity 
-                  style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-                  onPress={handleUpgradePress}>
-                  <CreditCard color={'#f59e0b'} size={16} />
-                  <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
-                </TouchableOpacity>
-              )}
-              
-              {/* Low scans warning for free users */}
-              {usageData && (usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
-                <Text style={styles.lowScansWarning}>
-                  ⚠️ Running low on scans. Upgrade to continue calculating doses.
+
+            {/* Scans Remaining / Upgrade Text Line */}
+            <View style={styles.scansRemainingContainer}>
+              {usageData?.plan === 'plus' ? (
+                <Text style={styles.scansRemainingText}>You have Unlimited Scans.</Text>
+              ) : (
+                <Text style={styles.scansRemainingText}>
+                  You have{' '}
+                  <Text style={
+                    (usageData && (usageData.limit - usageData.scansUsed) <= 5) ? 
+                    styles.lowScansText : styles.normalScansText
+                  }>
+                    {usageData ? usageData.limit - usageData.scansUsed : '...'}
+                  </Text>
+                  {' '}scans remaining.{' '}
+                  <TouchableOpacity onPress={handleUpgradePress} style={styles.upgradeLink}>
+                    <Text style={styles.upgradeLinkText}>[Upgrade]</Text>
+                  </TouchableOpacity>
                 </Text>
               )}
             </View>
-            
-            {/* Sign-In section - appears for anonymous users or when signed out */}
-            {(user?.isAnonymous || !user) && (
-              <View style={styles.authSection}>
-                <Text style={styles.authPromptText}>
-                  {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
-                </Text>
-                
-                <TouchableOpacity 
-                  style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-                  onPress={handleSignInPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign in with Google"
-                  accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
-                  <LogIn color="#10b981" size={16} />
-                  <Text style={styles.signInButtonText}>Sign In with Google</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            
-            {/* Profile section - appears for logged-in users */}
-            {user && !user.isAnonymous && (
-              <View style={styles.profileSection}>
-                {/* User info display */}
-                <View style={styles.userInfoContainer}>
-                  <View style={styles.userInfoRow}>
-                    <User color="#3b82f6" size={18} />
-                    <View style={styles.userInfoText}>
-                      <Text style={styles.userDisplayName}>
-                        {user.displayName || user.email?.split('@')[0] || 'User'}
-                      </Text>
-                      {user.email && (
-                        <Text style={styles.userEmail}>{user.email}</Text>
-                      )}
-                    </View>
-                  </View>
-                </View>
-                
-                {/* Sign out button - always visible for better discoverability */}
-                <TouchableOpacity 
-                  style={[styles.signOutButton, isMobileWeb && styles.signOutButtonMobile]} 
-                  onPress={handleLogoutPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign out"
-                  accessibilityHint="Sign out of your account. You will be asked to confirm this action.">
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.signOutButtonText}>Sign Out</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         )}
       </Animated.View>
@@ -500,274 +414,85 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start', // Changed from center to flex-start for better control
-    paddingTop: 40, // Add top padding for breathing room
+    justifyContent: 'center', // Centering content vertically
     padding: 16,
   },
-  // Welcome section
-  welcomeContainer: {
-    alignItems: 'center',
-    marginBottom: 30, // Reduced from 40 to 30 to create more space for content below
+  conciseWelcomeText: {
+    fontSize: 20, // Slightly larger for welcome
+    fontWeight: '400', // Regular weight
+    color: '#333333',
+    textAlign: 'center',
+    marginBottom: 30, // Space below welcome message
   },
-  icon: { 
-    marginBottom: 8,
-  },
-  text: { 
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000', 
-    textAlign: 'center', 
-    paddingHorizontal: 16,
-  },
-  // Action buttons group (Law of Proximity)
   actionButtonsContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
+    marginBottom: 20, 
   },
-  button: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 10,
-    width: '80%',
-    marginBottom: 20, // Increased from 12 to 20 for better spacing
-    paddingVertical: 14,
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12, // Increased gap for icon
+    width: '90%', // Made buttons wider
+    marginBottom: 16, // Space between buttons
+    paddingVertical: 16, // Increased padding for larger touch target
     paddingHorizontal: 24,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    borderRadius: 12, // Slightly more rounded corners
+    borderWidth: 1, // Added for secondary button, primary will override
   },
-  buttonMobile: { 
-    paddingVertical: 16, 
-    paddingHorizontal: 28, 
+  buttonMobile: {
+    // Specific mobile adjustments if needed, otherwise keep consistent
+    paddingVertical: 18,
   },
   primaryButton: {
-    backgroundColor: '#007AFF', 
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF', // Ensure border color matches background
   },
   secondaryButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: 'transparent', // Outline style
+    borderColor: '#007AFF', // Border color for outline
   },
-  buttonText: { 
-    color: '#ffffff', 
-    fontSize: 16, 
+  buttonText: {
+    fontSize: 18, // Larger text for buttons
     fontWeight: '600',
     textAlign: 'center',
+    color: '#ffffff', // Default text color (for primary button)
   },
-  // Disclaimer styles
-  disclaimerContainer: { 
-    backgroundColor: '#FFF3CD', 
-    padding: 10,
-    borderRadius: 8, 
-    marginBottom: 32, // Increased from 16 to 32 to create better visual separation from bottom section
-    width: '90%', 
-    maxWidth: 500,
-    borderLeftWidth: 3,
-    borderLeftColor: '#856404',
+  secondaryButtonText: {
+    color: '#007AFF', // Text color for secondary button
   },
-  disclaimerIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  disclaimerIcon: {
-    marginRight: 8,
-    marginTop: 3,
-  },
-  disclaimerText: { 
-    fontSize: 11, 
-    color: '#856404', 
-    textAlign: 'left',
-    fontStyle: 'italic',
-    flex: 1,
-  },
-  // Bottom section containing usage, auth and upgrade elements
-  bottomSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
+  scansRemainingContainer: {
+    marginTop: 20, // Space above the scans remaining text
     alignItems: 'center',
-    gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
   },
-  // Usage Status Card - combines scans remaining with upgrade
-  usageStatusCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12, // Reduced from 16 to 12 for more compact design
-    padding: 12, // Reduced from 16 to 12 for smaller footprint
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for more compact look
-    shadowOpacity: 0.08, // Reduced shadow opacity
-    shadowRadius: 3, // Reduced shadow radius
-    elevation: 2, // Reduced elevation
-  },
-  usageInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8, // Reduced from 12 to 8 for more compact layout
-  },
-  scanCreditsText: { 
-    color: '#333333', 
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  premiumBadgeContainer: { 
-    backgroundColor: '#FFD700', 
-    borderRadius: 8, 
-    padding: 4, 
-    marginLeft: 8,
-    shadowColor: '#FFC107',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
-  lowScansWarning: {
-    fontSize: 12, // Reduced from 13 to 12 for more compact layout
-    color: '#d97706',
-    textAlign: 'center',
-    marginTop: 6, // Reduced from 8 to 6 for tighter spacing
-    fontStyle: 'italic',
-    lineHeight: 16, // Reduced from 18 to 16 for tighter line height
-  },
-  // Authentication section for anonymous users
-  authSection: {
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  authPromptText: {
+  scansRemainingText: {
     fontSize: 14,
-    color: '#64748b',
+    color: '#555555',
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
   },
-  signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#10b981',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  lowScansText: {
+    color: '#D9534F', // Bootstrap's danger color (example)
+    fontWeight: 'bold',
   },
-  signInButtonMobile: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+  normalScansText: {
+    color: '#5CB85C', // Bootstrap's success color (example)
+    fontWeight: 'bold',
   },
-  signInButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#10b981',
+  upgradeLink: {
+    // Inline touchable, no specific layout apart from text styling inside
   },
-  // Profile section for logged-in users
-  profileSection: {
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 12,
+  upgradeLinkText: {
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+    fontWeight: 'bold', // Make upgrade link prominent
+    fontSize: 14, // Match surrounding text
   },
-  userInfoContainer: {
-    width: '100%',
-  },
-  userInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  userInfoText: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  userDisplayName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 2,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    width: '100%',
-  },
-  signOutButtonMobile: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  signOutButtonText: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#ef4444',
-  },
-  // Upgrade button
-  upgradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fef3c7',
-    paddingVertical: 8, // Reduced from 10 to 8 for more compact button
-    paddingHorizontal: 14, // Reduced from 16 to 14 for more compact button
-    borderRadius: 8, // Reduced from 10 to 8 for more compact design
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-    width: '100%',
-  },
-  upgradeButtonMobile: {
-    paddingVertical: 9, // Reduced from 12 to 9 for mobile
-    paddingHorizontal: 16, // Reduced from 18 to 16 for mobile
-  },
-  upgradeText: {
-    color: '#92400e',
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    marginLeft: 6,
-  },
+  // Removed styles: welcomeContainer, text (old welcome), icon, disclaimerContainer, 
+  // disclaimerIconContainer, disclaimerIcon, disclaimerText, bottomSection, usageStatusCard,
+  // usageInfoRow, scanCreditsText, premiumBadgeContainer, premiumBadgeText, lowScansWarning,
+  // authSection, authPromptText, signInButton, signInButtonMobile, signInButtonText,
+  // profileSection, userInfoContainer, userInfoRow, userInfoText, userDisplayName, userEmail,
+  // signOutButton, signOutButtonMobile, signOutButtonText, upgradeButton (old), upgradeButtonMobile (old),
+  // upgradeText (old)
 });
