@@ -94,15 +94,21 @@ const styles = StyleSheet.create({
     padding: 16, 
     borderRadius: 8, 
     width: '100%', 
-    maxWidth: '100%', // Changed from 600 to prevent any width overflow
+    maxWidth: '100%', // Prevent any width overflow
     marginBottom: 20,
-    // Enhanced overflow constraints to prevent input content from extending beyond container bounds
+    // Ultra-aggressive overflow constraints to prevent input content from extending beyond container bounds
     overflow: 'hidden', // Prevent container content from overflowing
     position: 'relative',
     boxSizing: 'border-box',
     // Prevent any transforms or scaling
     transform: 'none',
     transformOrigin: '0 0',
+    WebkitTransform: 'none',
+    // Lock text size adjustment
+    WebkitTextSizeAdjust: 'none',
+    MozTextSizeAdjust: 'none',
+    msTextSizeAdjust: 'none',
+    textSizeAdjust: 'none',
   },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
@@ -119,18 +125,26 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     margin: 0,
-    // Enhanced mobile web constraints
+    // Ultra-aggressive mobile web constraints to prevent zoom and scaling
     boxSizing: 'border-box',
     WebkitAppearance: 'none',
     MozAppearance: 'textfield',
     // Prevent transforms and scaling
     transform: 'none',
     transformOrigin: '0 0',
+    WebkitTransform: 'none',
     // Prevent text size adjustment
-    WebkitTextSizeAdjust: '100%',
-    MozTextSizeAdjust: '100%',
-    msTextSizeAdjust: '100%',
-    textSizeAdjust: '100%',
+    WebkitTextSizeAdjust: 'none',
+    MozTextSizeAdjust: 'none',
+    msTextSizeAdjust: 'none',
+    textSizeAdjust: 'none',
+    // Prevent any user zoom triggers
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
+    // Lock positioning
+    position: 'relative',
+    // Ensure no overflow
+    overflow: 'visible',
   },
   radioContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10, width: '100%' },
   radioButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: '#E5E5EA', alignItems: 'center', flex: 1, marginHorizontal: 5 },

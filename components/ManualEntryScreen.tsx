@@ -310,14 +310,17 @@ export default function ManualEntryScreen({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView 
-        style={[styles.manualEntryContainer, { flex: 1, overflow: 'hidden', maxWidth: '100%', width: '100%' }]}
-        contentContainerStyle={[styles.scrollContent, { overflow: 'hidden', maxWidth: '100%' }]}
+        style={[styles.manualEntryContainer, { flex: 1, overflow: 'hidden', maxWidth: '100vw', width: '100vw' }]}
+        contentContainerStyle={[styles.scrollContent, { overflow: 'hidden', maxWidth: '100vw', width: '100%' }]}
         scrollEnabled={true}
         bounces={false}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         alwaysBounceHorizontal={false}
         directionalLockEnabled={true}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
+        scrollsToTop={false}
       >
         <CustomProgressBar progress={progress} />
         <View style={styles.formWrapper}>
@@ -403,27 +406,36 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
     overflow: 'hidden',
-    maxWidth: '100%',
-    width: '100%',
+    maxWidth: '100vw',
+    width: '100vw',
+    height: '100vh',
+    maxHeight: '100vh',
+    position: 'relative',
   },
   manualEntryContainer: { 
     flex: 1,
     overflow: 'hidden',
-    maxWidth: '100%',
-    width: '100%',
+    maxWidth: '100vw',
+    width: '100vw',
+    height: '100%',
+    maxHeight: '100vh',
+    position: 'relative',
   },
   scrollContent: {
     flexGrow: 1,
     overflow: 'hidden',
-    maxWidth: '100%',
+    maxWidth: '100vw',
+    width: '100%',
+    position: 'relative',
   },
   formWrapper: { 
     alignItems: 'center', 
     paddingHorizontal: 16, 
     paddingBottom: 20,
     overflow: 'hidden',
-    maxWidth: '100%',
+    maxWidth: '100vw',
     width: '100%',
+    position: 'relative',
   },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 

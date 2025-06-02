@@ -68,22 +68,25 @@
 
 /* Base styles, scoped to avoid conflicts with NativeWind */
 @layer base {
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
-    /* Enhanced constraints to prevent horizontal overflow and layout shifts on mobile web */
+  html, body {
     overflow: hidden !important;
     width: 100vw !important;
     max-width: 100vw !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-text-size-adjust: none !important; /* Prevent font scaling */
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    /* Additional constraints beyond html */
     position: relative;
-    /* Prevent text size adjustment that can trigger zoom on iOS */
-    -webkit-text-size-adjust: 100% !important;
-    -moz-text-size-adjust: 100% !important;
-    -ms-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
+    transform: none !important;
+    transform-origin: 0 0 !important;
   }
 }
 

@@ -3,24 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-  <!-- Enhanced viewport meta tag to completely prevent zooming and layout scaling on mobile -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+  <!-- Ultra-aggressive viewport meta tag to completely prevent zooming and layout scaling on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <title>SafeDose</title>
   <style>
-    /* Enhanced global styles to prevent any viewport scaling or horizontal scrolling */
+    /* Ultra-aggressive global styles to prevent any viewport scaling or horizontal scrolling */
     html, body {
       overflow: hidden !important;
       width: 100vw !important;
       max-width: 100vw !important;
       height: 100vh !important;
+      max-height: 100vh !important;
       margin: 0 !important;
       padding: 0 !important;
       position: relative;
-      /* Prevent text size adjustment on iOS */
-      -webkit-text-size-adjust: 100% !important;
-      -moz-text-size-adjust: 100% !important;
-      -ms-text-size-adjust: 100% !important;
-      text-size-adjust: 100% !important;
+      /* Prevent font scaling that can trigger zoom */
+      -webkit-text-size-adjust: none !important;
+      -moz-text-size-adjust: none !important;
+      -ms-text-size-adjust: none !important;
+      text-size-adjust: none !important;
+      /* Prevent overflow scrolling */
+      -webkit-overflow-scrolling: touch !important;
       /* Prevent selection and context menus that can trigger zoom */
       -webkit-user-select: none;
       -moz-user-select: none;
@@ -28,6 +31,9 @@
       user-select: none;
       /* Prevent touch callouts */
       -webkit-touch-callout: none;
+      /* Lock transformations */
+      transform: none !important;
+      transform-origin: 0 0 !important;
     }
     #root {
       position: fixed !important;
@@ -55,8 +61,44 @@
     }
   </style>
   <script>
-    // JavaScript fallback to prevent viewport scaling
+    // Ultra-aggressive JavaScript fallback to prevent viewport scaling and ensure layout stability
     document.addEventListener('DOMContentLoaded', function() {
+      // Force viewport meta tag values programmatically as fallback
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover, interactive-widget=resizes-content');
+      }
+      
+      // Aggressive body and html locking
+      const lockLayout = () => {
+        document.body.style.overflow = 'hidden';
+        document.body.style.width = '100vw';
+        document.body.style.maxWidth = '100vw';
+        document.body.style.height = '100vh';
+        document.body.style.maxHeight = '100vh';
+        document.body.style.position = 'fixed';
+        document.body.style.top = '0';
+        document.body.style.left = '0';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        document.body.style.webkitTextSizeAdjust = 'none';
+        document.body.style.transform = 'none';
+        
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.width = '100vw';
+        document.documentElement.style.maxWidth = '100vw';
+        document.documentElement.style.height = '100vh';
+        document.documentElement.style.maxHeight = '100vh';
+        document.documentElement.style.webkitTextSizeAdjust = 'none';
+        document.documentElement.style.transform = 'none';
+      };
+      
+      // Initial lock
+      lockLayout();
+      
+      // Re-lock on window resize
+      window.addEventListener('resize', lockLayout);
+      
       // Disable zoom on double tap
       let lastTouchEnd = 0;
       document.addEventListener('touchend', function (event) {
@@ -80,21 +122,43 @@
         event.preventDefault();
       }, false);
       
-      // Lock viewport on input focus
+      // Ultra-aggressive focus/blur handlers to prevent layout changes during keyboard interaction
       document.addEventListener('focusin', function(event) {
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-          document.body.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
-          document.body.style.height = '100%';
+          console.log('[ViewportLock] Input focused - applying aggressive lock');
+          lockLayout();
+          
+          // Force input font size to prevent zoom
+          if (event.target.style.fontSize !== '16px') {
+            event.target.style.fontSize = '16px';
+          }
+          
+          // Prevent any transforms on the input
+          event.target.style.transform = 'none';
+          event.target.style.webkitTransform = 'none';
         }
       });
       
       document.addEventListener('focusout', function(event) {
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-          document.body.style.position = '';
+          console.log('[ViewportLock] Input blurred - maintaining lock');
+          // Keep layout locked even after focus out
+          setTimeout(lockLayout, 100);
         }
       });
+      
+      // Prevent any scaling via touch events
+      document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+      
+      document.addEventListener('touchmove', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
     });
   </script>
 </head>

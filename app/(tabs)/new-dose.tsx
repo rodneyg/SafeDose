@@ -83,56 +83,70 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  // Enhanced web-specific keyboard event handling to prevent layout enlargement and scrolling
+  // Ultra-aggressive web-specific keyboard event handling to prevent layout enlargement and scrolling
   useEffect(() => {
-    const lockLayout = () => {
-      console.log('[WebKeyboard] Locking layout on focus');
+    const lockBody = () => {
+      console.log('[WebKeyboard] Applying aggressive body lock');
       if (typeof document !== 'undefined') {
-        // Aggressive layout locking to prevent any viewport changes
+        // Ultra-aggressive layout locking to prevent any viewport changes
         document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
         document.body.style.width = '100vw';
-        document.body.style.height = '100vh';
         document.body.style.maxWidth = '100vw';
+        document.body.style.height = '100vh';
         document.body.style.maxHeight = '100vh';
+        document.body.style.position = 'fixed';
+        document.body.style.top = '0';
+        document.body.style.left = '0';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        document.body.style.webkitTextSizeAdjust = 'none';
+        document.body.style.transform = 'none';
+        
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.width = '100vw';
-        document.documentElement.style.height = '100vh';
         document.documentElement.style.maxWidth = '100vw';
+        document.documentElement.style.height = '100vh';
         document.documentElement.style.maxHeight = '100vh';
+        document.documentElement.style.webkitTextSizeAdjust = 'none';
+        document.documentElement.style.transform = 'none';
       }
     };
     
-    const unlockLayout = () => {
-      console.log('[WebKeyboard] Unlocking layout on blur');
-      if (typeof document !== 'undefined') {
-        // Keep overflow hidden but restore position
-        document.body.style.position = '';
-        document.documentElement.style.overflow = 'hidden'; // Keep this locked
-      }
-    };
-    
-    const preventZoomOnNumericInput = (event) => {
+    const preventZoomOnNumericInput = (event: any) => {
       // Specifically target numeric inputs to prevent zoom
       if (event.target.type === 'number' || event.target.inputMode === 'numeric') {
         console.log('[WebKeyboard] Preventing zoom on numeric input');
-        lockLayout();
+        lockBody();
         
-        // Force font size to prevent iOS zoom
+        // Force font size and prevent transforms to prevent iOS zoom
         if (event.target.style.fontSize !== '16px') {
           event.target.style.fontSize = '16px';
         }
+        event.target.style.transform = 'none';
+        event.target.style.webkitTransform = 'none';
+        event.target.style.webkitTextSizeAdjust = 'none';
       }
     };
     
     if (typeof window !== 'undefined') {
-      window.addEventListener('focusin', lockLayout);
-      window.addEventListener('focusout', unlockLayout);
+      // Initial aggressive lock
+      lockBody();
+      
+      // Re-lock on any focus event
+      window.addEventListener('focusin', lockBody);
       window.addEventListener('focusin', preventZoomOnNumericInput);
+      
+      // Maintain lock on blur with delay
+      window.addEventListener('focusout', () => {
+        setTimeout(lockBody, 100);
+      });
+      
+      // Re-lock on resize events
+      window.addEventListener('resize', lockBody);
       
       // Prevent double-tap zoom
       let lastTouchEnd = 0;
-      const preventDoubleTapZoom = (event) => {
+      const preventDoubleTapZoom = (event: any) => {
         const now = (new Date()).getTime();
         if (now - lastTouchEnd <= 300) {
           event.preventDefault();
@@ -140,13 +154,27 @@ export default function NewDoseScreen() {
         lastTouchEnd = now;
       };
       
+      // Prevent multi-touch scaling
+      const preventMultiTouchScale = (event: any) => {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+      };
+      
       window.addEventListener('touchend', preventDoubleTapZoom, false);
+      window.addEventListener('touchstart', preventMultiTouchScale, { passive: false });
+      window.addEventListener('touchmove', preventMultiTouchScale, { passive: false });
       
       return () => {
-        window.removeEventListener('focusin', lockLayout);
-        window.removeEventListener('focusout', unlockLayout);
+        window.removeEventListener('focusin', lockBody);
         window.removeEventListener('focusin', preventZoomOnNumericInput);
+        window.removeEventListener('focusout', () => {
+          setTimeout(lockBody, 100);
+        });
+        window.removeEventListener('resize', lockBody);
         window.removeEventListener('touchend', preventDoubleTapZoom);
+        window.removeEventListener('touchstart', preventMultiTouchScale);
+        window.removeEventListener('touchmove', preventMultiTouchScale);
       };
     }
   }, []);
@@ -857,9 +885,15 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
     overflow: 'hidden', // Prevent horizontal overflow
-    maxWidth: '100%', // Constrain to viewport width
-    width: '100%',
-    position: 'relative',
+    maxWidth: '100vw', // Constrain to viewport width
+    width: '100vw',
+    height: '100vh',
+    maxHeight: '100vh',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    transform: 'none',
+    transformOrigin: '0 0',
   },
   container: { 
     position: 'fixed',
@@ -874,6 +908,11 @@ const styles = StyleSheet.create({
     /* Ensure no transforms or scaling can occur */
     transform: 'none',
     transformOrigin: '0 0',
+    /* Prevent any text size adjustments */
+    webkitTextSizeAdjust: 'none',
+    MozTextSizeAdjust: 'none',
+    msTextSizeAdjust: 'none',
+    textSizeAdjust: 'none',
   },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
