@@ -190,65 +190,67 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
       {/* Bottom Auth Section */}
       <View style={styles.bottomSection}>
-        {user?.isAnonymous ? (
-          // Auth section for anonymous users
-          <View style={styles.authSection}>
-            <Text style={styles.authPromptText}>
-              Sign in to save calculations and get unlimited scans
-            </Text>
-            <TouchableOpacity 
-              style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-              onPress={toggleProfileMenu}>
-              <LogIn color="#10b981" size={18} />
-              <Text style={styles.signInText}>Sign In</Text>
-            </TouchableOpacity>
-            
-            {/* Auth dropdown menu */}
-            {isProfileMenuOpen && (
-              <View style={styles.authMenu}>
-                <TouchableOpacity 
-                  style={styles.signInMenuItem}
-                  onPress={() => {
-                    setIsProfileMenuOpen(false);
-                    handleSignInPress();
-                  }}>
-                  <LogIn color="#10b981" size={16} />
-                  <Text style={styles.signInMenuText}>Sign In with Google</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        ) : (
-          // Profile section for signed-in users
-          <View style={styles.profileSection}>
-            <TouchableOpacity 
-              style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-              onPress={toggleProfileMenu}>
-              <User color="#3b82f6" size={18} />
-              <Text style={styles.profileText}>
-                {user.email ? user.email.split('@')[0] : 'Profile'}
+        <View style={styles.authContainer}>
+          {user?.isAnonymous ? (
+            // Auth section for anonymous users
+            <View style={styles.authSection}>
+              <Text style={styles.authPromptText}>
+                Sign in to save calculations and get unlimited scans
               </Text>
-            </TouchableOpacity>
-            
-            {/* Profile dropdown menu */}
-            {isProfileMenuOpen && (
-              <View style={styles.profileMenu}>
-                {user?.email && (
-                  <View style={styles.profileMenuItem}>
-                    <Mail color="#64748b" size={16} />
-                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                  </View>
-                )}
-                <TouchableOpacity 
-                  style={styles.logoutButton}
-                  onPress={handleLogoutPress}>
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.logoutText}>Sign Out</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
+              <TouchableOpacity 
+                style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
+                onPress={toggleProfileMenu}>
+                <LogIn color="#10b981" size={18} />
+                <Text style={styles.signInText}>Sign In</Text>
+              </TouchableOpacity>
+              
+              {/* Auth dropdown menu */}
+              {isProfileMenuOpen && (
+                <View style={styles.authMenu}>
+                  <TouchableOpacity 
+                    style={styles.signInMenuItem}
+                    onPress={() => {
+                      setIsProfileMenuOpen(false);
+                      handleSignInPress();
+                    }}>
+                    <LogIn color="#10b981" size={16} />
+                    <Text style={styles.signInMenuText}>Sign In with Google</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ) : (
+            // Profile section for signed-in users
+            <View style={styles.profileSection}>
+              <TouchableOpacity 
+                style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+                onPress={toggleProfileMenu}>
+                <User color="#3b82f6" size={18} />
+                <Text style={styles.profileText}>
+                  {user.email ? user.email.split('@')[0] : 'Profile'}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Profile dropdown menu */}
+              {isProfileMenuOpen && (
+                <View style={styles.profileMenu}>
+                  {user?.email && (
+                    <View style={styles.profileMenuItem}>
+                      <Mail color="#64748b" size={16} />
+                      <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.logoutButton}
+                    onPress={handleLogoutPress}>
+                    <LogOut color="#ef4444" size={16} />
+                    <Text style={styles.logoutText}>Sign Out</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
       </View>
     </Animated.View>
   );
@@ -366,11 +368,26 @@ const styles = StyleSheet.create({
   // Bottom section for auth UI
   bottomSection: {
     position: 'absolute',
-    bottom: 100, // Increased spacing above the upgrade button
+    bottom: 120, // Increased spacing to avoid overlap with disclaimer
     left: 16,
     right: 16,
     alignItems: 'center',
     zIndex: 10,
+  },
+  // Gray container wrapper for auth components
+  authContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   // Auth section for anonymous users
   authSection: {
