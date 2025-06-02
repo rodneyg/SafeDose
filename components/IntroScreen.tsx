@@ -132,56 +132,37 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         />
       )}
       
-      {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
-      <View style={styles.profileButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-          onPress={toggleProfileMenu}>
-          {user?.isAnonymous 
-            ? <LogIn color="#10b981" size={18} />
-            : <User color="#3b82f6" size={18} />
-          }
-          <Text style={styles.profileText}>
-            {user?.isAnonymous 
-              ? 'Sign In' 
-              : user.email ? user.email.split('@')[0] : 'Profile'}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Profile dropdown menu */}
-        {isProfileMenuOpen && (
-          <View style={styles.profileMenu}>
-            {user?.isAnonymous ? (
-              // Menu for anonymous users
+      {/* Profile Control - Fixed position in top-right (only for logged-in users) */}
+      {!user?.isAnonymous && (
+        <View style={styles.profileButtonContainer}>
+          <TouchableOpacity 
+            style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+            onPress={toggleProfileMenu}>
+            <User color="#3b82f6" size={18} />
+            <Text style={styles.profileText}>
+              {user.email ? user.email.split('@')[0] : 'Profile'}
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Profile dropdown menu */}
+          {isProfileMenuOpen && (
+            <View style={styles.profileMenu}>
+              {user?.email && (
+                <View style={styles.profileMenuItem}>
+                  <Mail color="#64748b" size={16} />
+                  <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                </View>
+              )}
               <TouchableOpacity 
-                style={styles.signInButton}
-                onPress={() => {
-                  setIsProfileMenuOpen(false);
-                  handleSignInPress();
-                }}>
-                <LogIn color="#10b981" size={16} />
-                <Text style={styles.signInText}>Sign In</Text>
+                style={styles.logoutButton}
+                onPress={handleLogoutPress}>
+                <LogOut color="#ef4444" size={16} />
+                <Text style={styles.logoutText}>Sign Out</Text>
               </TouchableOpacity>
-            ) : (
-              // Menu for logged-in users
-              <>
-                {user?.email && (
-                  <View style={styles.profileMenuItem}>
-                    <Mail color="#64748b" size={16} />
-                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                  </View>
-                )}
-                <TouchableOpacity 
-                  style={styles.logoutButton}
-                  onPress={handleLogoutPress}>
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.logoutText}>Sign Out</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-      </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* App icon and welcome message */}
       <View style={styles.welcomeContainer}>
@@ -224,6 +205,21 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </Text>
         </View>
       </View>
+      
+      {/* Sign-In Section - Bottom placement for anonymous users only */}
+      {user?.isAnonymous && (
+        <View style={styles.signInSectionContainer}>
+          <TouchableOpacity 
+            style={[styles.signInSectionButton, isMobileWeb && styles.signInSectionButtonMobile]} 
+            onPress={handleSignInPress}>
+            <LogIn color="#10b981" size={18} />
+            <Text style={styles.signInSectionButtonText}>Sign In</Text>
+          </TouchableOpacity>
+          <Text style={styles.signInSectionMessage}>
+            Sign in to save calculations and get unlimited scans
+          </Text>
+        </View>
+      )}
       
       {/* Upgrade Plan - Low-Visual-Weight Footer Element (Law of Visual Hierarchy) */}
       {(usageData.plan === 'free') && (
@@ -451,5 +447,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 6,
+  },
+  // Sign-In Section (for anonymous users at bottom)
+  signInSectionContainer: {
+    alignItems: 'center',
+    marginBottom: 80, // Space above upgrade section
+    marginTop: 16,
+  },
+  signInSectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0fdf4', // Light green background
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24, // Pill shape
+    borderWidth: 1,
+    borderColor: '#10b981',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  signInSectionButtonMobile: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  signInSectionButtonText: {
+    color: '#10b981',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  signInSectionMessage: {
+    color: '#6b7280',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    lineHeight: 20,
   },
 });
