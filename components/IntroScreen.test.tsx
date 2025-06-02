@@ -3,10 +3,14 @@ import { render, fireEvent } from '@testing-library/react-native';
 import IntroScreen from './IntroScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
+import { useUsageTracking } from '../lib/hooks/useUsageTracking';
+import { useRouter } from 'expo-router';
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
 jest.mock('../contexts/UserProfileContext');
+jest.mock('../lib/hooks/useUsageTracking');
+jest.mock('expo-router');
 jest.mock('react-native-reanimated', () => ({
   FadeIn: {
     duration: () => ({}),
@@ -16,11 +20,14 @@ jest.mock('react-native-reanimated', () => ({
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseUserProfile = useUserProfile as jest.MockedFunction<typeof useUserProfile>;
+const mockUseUsageTracking = useUsageTracking as jest.MockedFunction<typeof useUsageTracking>;
+const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
 describe('IntroScreen Sign Out Functionality', () => {
   const mockLogout = jest.fn();
   const mockSetScreenStep = jest.fn();
   const mockResetFullForm = jest.fn();
+  const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,6 +49,20 @@ describe('IntroScreen Sign Out Functionality', () => {
       disclaimerText: 'Test disclaimer',
       profile: { isLicensedProfessional: true },
       isLoading: false,
+    } as any);
+
+    // Mock usage tracking
+    mockUseUsageTracking.mockReturnValue({
+      usageData: {
+        scansUsed: 1,
+        limit: 10,
+        plan: 'free',
+      },
+    } as any);
+
+    // Mock router
+    mockUseRouter.mockReturnValue({
+      push: mockPush,
     } as any);
   });
 
@@ -91,6 +112,19 @@ describe('IntroScreen Sign Out Functionality', () => {
       logout: mockLogout,
       isSigningOut: true,
     });
+
+    // Also need to mock the usage tracking and router for this test
+    mockUseUsageTracking.mockReturnValue({
+      usageData: {
+        scansUsed: 1,
+        limit: 10,
+        plan: 'free',
+      },
+    } as any);
+
+    mockUseRouter.mockReturnValue({
+      push: mockPush,
+    } as any);
 
     const { queryByText } = render(
       <IntroScreen

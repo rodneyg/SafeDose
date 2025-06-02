@@ -302,7 +302,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
                 onPress={handleScanPress}>
                 <CameraIcon color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Scan Items</Text>
+                <Text style={styles.buttonText}>Scan</Text>
               </TouchableOpacity>
               
               {/* Secondary action */}
@@ -311,7 +311,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 onPress={handleManualEntryPress}
               >
                 <Pill color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Enter Details Manually</Text>
+                <Text style={styles.buttonText}>Manual</Text>
               </TouchableOpacity>
             </View>
             
@@ -517,20 +517,23 @@ const styles = StyleSheet.create({
   },
   // Action buttons group (Law of Proximity)
   actionButtonsContainer: {
+    flexDirection: 'row', // Changed from column to row for side-by-side layout
     width: '100%',
+    justifyContent: 'space-evenly', // Distribute buttons evenly
     alignItems: 'center',
     marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
+    paddingHorizontal: 20, // Add horizontal padding for better spacing
   },
   button: { 
-    flexDirection: 'row', 
+    flexDirection: 'column', // Changed to column to stack icon and text vertically
     alignItems: 'center', 
     justifyContent: 'center', 
-    gap: 10,
-    width: '80%',
-    marginBottom: 20, // Increased from 12 to 20 for better spacing
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    gap: 8, // Reduced gap for compact design
+    width: 100, // Reduced width for slightly smaller buttons
+    height: 100, // Reduced height to match width for square shape
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16, // Slightly larger border radius for better appearance
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -538,8 +541,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonMobile: { 
-    paddingVertical: 16, 
-    paddingHorizontal: 28, 
+    paddingVertical: 18, 
+    paddingHorizontal: 18,
+    width: 120, // Reduced size for mobile (was 140)
+    height: 120,
   },
   primaryButton: {
     backgroundColor: '#007AFF', 
