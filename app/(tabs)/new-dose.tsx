@@ -83,31 +83,70 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  // Web-specific keyboard event handling to prevent layout enlargement and scrolling
+  // Enhanced web-specific keyboard event handling to prevent layout enlargement and scrolling
   useEffect(() => {
     const lockLayout = () => {
       console.log('[WebKeyboard] Locking layout on focus');
       if (typeof document !== 'undefined') {
+        // Aggressive layout locking to prevent any viewport changes
         document.body.style.overflow = 'hidden';
-        document.body.style.width = '100%';
-        document.body.style.maxWidth = '100%';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100vw';
+        document.body.style.height = '100vh';
+        document.body.style.maxWidth = '100vw';
+        document.body.style.maxHeight = '100vh';
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.width = '100vw';
+        document.documentElement.style.height = '100vh';
+        document.documentElement.style.maxWidth = '100vw';
+        document.documentElement.style.maxHeight = '100vh';
       }
     };
     
     const unlockLayout = () => {
       console.log('[WebKeyboard] Unlocking layout on blur');
       if (typeof document !== 'undefined') {
-        document.body.style.overflow = 'auto';
+        // Keep overflow hidden but restore position
+        document.body.style.position = '';
+        document.documentElement.style.overflow = 'hidden'; // Keep this locked
+      }
+    };
+    
+    const preventZoomOnNumericInput = (event) => {
+      // Specifically target numeric inputs to prevent zoom
+      if (event.target.type === 'number' || event.target.inputMode === 'numeric') {
+        console.log('[WebKeyboard] Preventing zoom on numeric input');
+        lockLayout();
+        
+        // Force font size to prevent iOS zoom
+        if (event.target.style.fontSize !== '16px') {
+          event.target.style.fontSize = '16px';
+        }
       }
     };
     
     if (typeof window !== 'undefined') {
       window.addEventListener('focusin', lockLayout);
       window.addEventListener('focusout', unlockLayout);
+      window.addEventListener('focusin', preventZoomOnNumericInput);
+      
+      // Prevent double-tap zoom
+      let lastTouchEnd = 0;
+      const preventDoubleTapZoom = (event) => {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      };
+      
+      window.addEventListener('touchend', preventDoubleTapZoom, false);
       
       return () => {
         window.removeEventListener('focusin', lockLayout);
         window.removeEventListener('focusout', unlockLayout);
+        window.removeEventListener('focusin', preventZoomOnNumericInput);
+        window.removeEventListener('touchend', preventDoubleTapZoom);
       };
     }
   }, []);
@@ -820,14 +859,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Prevent horizontal overflow
     maxWidth: '100%', // Constrain to viewport width
     width: '100%',
+    position: 'relative',
   },
   container: { 
-    flex: 1,
-    backgroundColor: '#F2F2F7',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
     overflow: 'hidden',
-    maxWidth: '100%',
-    width: '100%',
-    height: '100%',
+    maxWidth: '100vw',
+    maxHeight: '100vh',
+    backgroundColor: '#F2F2F7',
+    /* Ensure no transforms or scaling can occur */
+    transform: 'none',
+    transformOrigin: '0 0',
   },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },

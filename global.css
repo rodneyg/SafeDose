@@ -71,10 +71,19 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
-    /* Prevent horizontal overflow and layout shifts on mobile web */
-    overflow: hidden;
-    width: 100%;
-    max-width: 100%;
+    /* Enhanced constraints to prevent horizontal overflow and layout shifts on mobile web */
+    overflow: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative;
+    /* Prevent text size adjustment that can trigger zoom on iOS */
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
   }
 }
 

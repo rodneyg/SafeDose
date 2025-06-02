@@ -38,6 +38,7 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
         value={dose}
         onChangeText={handleDoseChange}
         keyboardType="numeric"
+        inputMode="numeric"
         placeholder="e.g., 100"
         placeholderTextColor="#9ca3af"
         returnKeyType="done"
@@ -47,6 +48,12 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
           // This addresses the issue where hitting enter manually makes the layout draggable
           Keyboard.dismiss();
         }}
+        // Web-specific props to prevent zoom
+        {...(typeof window !== 'undefined' && {
+          autoCapitalize: 'none',
+          autoCorrect: false,
+          spellCheck: false,
+        })}
       />
       <Text style={styles.label}>Unit:</Text>
       <View style={styles.radioContainer}>
@@ -87,10 +94,15 @@ const styles = StyleSheet.create({
     padding: 16, 
     borderRadius: 8, 
     width: '100%', 
-    maxWidth: 600, 
+    maxWidth: '100%', // Changed from 600 to prevent any width overflow
     marginBottom: 20,
-    // Overflow constraint to prevent input content from extending beyond container bounds
+    // Enhanced overflow constraints to prevent input content from extending beyond container bounds
     overflow: 'hidden', // Prevent container content from overflowing
+    position: 'relative',
+    boxSizing: 'border-box',
+    // Prevent any transforms or scaling
+    transform: 'none',
+    transformOrigin: '0 0',
   },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
@@ -100,13 +112,25 @@ const styles = StyleSheet.create({
     paddingVertical: 10, 
     paddingHorizontal: 10, 
     borderRadius: 6, 
-    fontSize: 15, 
+    fontSize: 16, // Explicitly set to 16px to prevent zoom on iOS
     borderWidth: 1, 
     borderColor: '#E5E5EA', 
     marginBottom: 10, 
     width: '100%',
     maxWidth: '100%',
     margin: 0,
+    // Enhanced mobile web constraints
+    boxSizing: 'border-box',
+    WebkitAppearance: 'none',
+    MozAppearance: 'textfield',
+    // Prevent transforms and scaling
+    transform: 'none',
+    transformOrigin: '0 0',
+    // Prevent text size adjustment
+    WebkitTextSizeAdjust: '100%',
+    MozTextSizeAdjust: '100%',
+    msTextSizeAdjust: '100%',
+    textSizeAdjust: '100%',
   },
   radioContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10, width: '100%' },
   radioButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: '#E5E5EA', alignItems: 'center', flex: 1, marginHorizontal: 5 },
