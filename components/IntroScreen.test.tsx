@@ -3,17 +3,10 @@ import { render, fireEvent } from '@testing-library/react-native';
 import IntroScreen from './IntroScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
-import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
 jest.mock('../contexts/UserProfileContext');
-jest.mock('../lib/hooks/useUsageTracking');
-jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
-}));
 jest.mock('react-native-reanimated', () => ({
   FadeIn: {
     duration: () => ({}),
@@ -23,7 +16,6 @@ jest.mock('react-native-reanimated', () => ({
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseUserProfile = useUserProfile as jest.MockedFunction<typeof useUserProfile>;
-const mockUseUsageTracking = useUsageTracking as jest.MockedFunction<typeof useUsageTracking>;
 
 describe('IntroScreen Sign Out Functionality', () => {
   const mockLogout = jest.fn();
@@ -50,10 +42,6 @@ describe('IntroScreen Sign Out Functionality', () => {
       disclaimerText: 'Test disclaimer',
       profile: { isLicensedProfessional: true },
       isLoading: false,
-    } as any);
-
-    mockUseUsageTracking.mockReturnValue({
-      usageData: { scansUsed: 1, limit: 10, plan: 'free' },
     } as any);
   });
 
