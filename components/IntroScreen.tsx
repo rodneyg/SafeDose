@@ -465,13 +465,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center', 
+    justifyContent: 'flex-start', // Changed from center to flex-start for better control
+    paddingTop: 40, // Add top padding for breathing room
     padding: 16,
   },
   // Welcome section
   welcomeContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 40, // Increased from 24 to 40 for better spacing
   },
   icon: { 
     marginBottom: 12,
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
   actionButtonsContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32, // Increased from 24 to 32 for better spacing
   },
   button: { 
     flexDirection: 'row', 
@@ -495,7 +496,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     gap: 10,
     width: '80%',
-    marginBottom: 12,
+    marginBottom: 20, // Increased from 12 to 20 for better spacing
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -552,7 +553,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
     alignItems: 'center',
-    gap: 16,
+    gap: 20, // Increased from 16 to 20 for better spacing between elements
   },
   // Usage Status Card - combines scans remaining with upgrade
   usageStatusCard: {
@@ -606,7 +607,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8fafc',
     borderRadius: 12,
-    padding: 16,
+    padding: 12, // Reduced from 16 to 12 for more compact layout
     width: '100%',
     maxWidth: 320,
     borderWidth: 1,
@@ -614,11 +615,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   authPromptText: {
-    fontSize: 14,
+    fontSize: 13, // Reduced from 14 for more compact layout
     color: '#64748b',
     textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 10, // Reduced from 12 for more compact layout
+    lineHeight: 18, // Reduced from 20 for more compact layout
   },
   signInButton: {
     flexDirection: 'row',
