@@ -25,7 +25,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   console.log('[IntroScreen] Detailed component state:', {
     user: {
@@ -54,8 +53,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       scansUsed: usageData?.scansUsed || 'undefined',
       limit: usageData?.limit || 'undefined',
       plan: usageData?.plan || 'undefined'
-    },
-    isProfileMenuOpen
+    }
   });
 
   // Log component mount to help debug visibility issues
@@ -181,8 +179,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
-    console.log('[IntroScreen] Closing profile menu and initiating logout...');
-    setIsProfileMenuOpen(false);
+    console.log('[IntroScreen] Initiating logout...');
     try {
       console.log('[IntroScreen] Calling logout function...');
       await logout();
@@ -191,17 +188,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       console.error('[IntroScreen] ❌ Logout error:', error);
     }
   }, [logout]);
-  
-  const toggleProfileMenu = useCallback(() => {
-    console.log('[IntroScreen] ========== PROFILE MENU TOGGLE ==========');
-    console.log('[IntroScreen] Current isProfileMenuOpen:', isProfileMenuOpen);
-    // Always toggle the profile menu, regardless of authentication status
-    setIsProfileMenuOpen(prevState => {
-      const newState = !prevState;
-      console.log('[IntroScreen] Setting isProfileMenuOpen to:', newState);
-      return newState;
-    });
-  }, [isProfileMenuOpen]);
 
   // For React Native, we'll close the menu manually in button handlers
   // instead of using web-specific tap outside detection
@@ -269,15 +255,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
               Signed out successfully. You will be signed in anonymously shortly.
             </Text>
           </View>
-        )}
-        
-        {/* Invisible overlay to close menu when tapping outside */}
-        {isProfileMenuOpen && (
-          <TouchableOpacity 
-            style={styles.menuOverlay} 
-            onPress={() => setIsProfileMenuOpen(false)}
-            activeOpacity={1}
-          />
         )}
         
         {/* Main content section - only show when not loading and not signing out */}
@@ -370,59 +347,51 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 <Text style={styles.authPromptText}>
                   {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
                 </Text>
-                <TouchableOpacity 
-                  style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-                  onPress={toggleProfileMenu}>
-                  <LogIn color="#10b981" size={16} />
-                  <Text style={styles.signInButtonText}>Sign In</Text>
-                </TouchableOpacity>
                 
-                {/* Profile dropdown menu positioned above button */}
-                {isProfileMenuOpen && (
-                  <View style={styles.authMenu}>
-                    <TouchableOpacity 
-                      style={styles.authMenuItem}
-                      onPress={() => {
-                        setIsProfileMenuOpen(false);
-                        handleSignInPress();
-                      }}>
-                      <LogIn color="#10b981" size={16} />
-                      <Text style={styles.authMenuText}>Sign In with Google</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                {/* Primary sign in options - always visible */}
+                <View style={styles.signInOptionsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.primarySignInButton, isMobileWeb && styles.primarySignInButtonMobile]} 
+                    onPress={handleSignInPress}>
+                    <LogIn color="#ffffff" size={16} />
+                    <Text style={styles.primarySignInButtonText}>Sign In with Google</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.secondarySignInButton, isMobileWeb && styles.secondarySignInButtonMobile]} 
+                    onPress={() => router.push('/login')}>
+                    <Mail color="#10b981" size={16} />
+                    <Text style={styles.secondarySignInButtonText}>Sign In with Email</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
             
             {/* Profile section - appears for logged-in users */}
             {user && !user.isAnonymous && (
               <View style={styles.profileSection}>
-                <TouchableOpacity 
-                  style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-                  onPress={toggleProfileMenu}>
-                  <User color="#3b82f6" size={16} />
-                  <Text style={styles.profileButtonText}>
-                    {user.email ? user.email.split('@')[0] : 'Profile'}
-                  </Text>
-                </TouchableOpacity>
-                
-                {/* Profile dropdown menu */}
-                {isProfileMenuOpen && (
-                  <View style={styles.profileMenu}>
-                    {user?.email && (
-                      <View style={styles.profileMenuItem}>
-                        <Mail color="#64748b" size={16} />
-                        <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                      </View>
-                    )}
-                    <TouchableOpacity 
-                      style={styles.logoutButton}
-                      onPress={handleLogoutPress}>
-                      <LogOut color="#ef4444" size={16} />
-                      <Text style={styles.logoutText}>Sign Out</Text>
-                    </TouchableOpacity>
+                {/* User info display */}
+                <View style={styles.userInfoContainer}>
+                  <View style={styles.userInfoRow}>
+                    <User color="#3b82f6" size={18} />
+                    <View style={styles.userInfoText}>
+                      <Text style={styles.userDisplayName}>
+                        {user.displayName || user.email?.split('@')[0] || 'User'}
+                      </Text>
+                      {user.email && (
+                        <Text style={styles.userEmail}>{user.email}</Text>
+                      )}
+                    </View>
                   </View>
-                )}
+                </View>
+                
+                {/* Sign out button - always visible for better discoverability */}
+                <TouchableOpacity 
+                  style={[styles.signOutButton, isMobileWeb && styles.signOutButtonMobile]} 
+                  onPress={handleLogoutPress}>
+                  <LogOut color="#ef4444" size={16} />
+                  <Text style={styles.signOutButtonText}>Sign Out</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -482,15 +451,6 @@ const styles = StyleSheet.create({
     color: '#333', // Darker text for better readability
     textAlign: 'center',
     paddingHorizontal: 30, // Ensure text doesn't touch edges
-  },
-  // Invisible overlay to capture taps outside the menu
-  menuOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 5, // Below profile menu but above everything else
   },
   // Main content section
   content: {
@@ -638,72 +598,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8fafc',
     borderRadius: 12,
-    padding: 12, // Reduced from 16 to 12 for more compact layout
+    padding: 16,
     width: '100%',
     maxWidth: 320,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    position: 'relative',
   },
   authPromptText: {
-    fontSize: 13, // Reduced from 14 for more compact layout
+    fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
-    marginBottom: 10, // Reduced from 12 for more compact layout
-    lineHeight: 18, // Reduced from 20 for more compact layout
+    marginBottom: 16,
+    lineHeight: 20,
   },
-  signInButton: {
+  signInOptionsContainer: {
+    width: '100%',
+    gap: 12,
+  },
+  primarySignInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10b981',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  primarySignInButtonMobile: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  primarySignInButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
+    color: '#ffffff',
+  },
+  secondarySignInButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#10b981',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
-  signInButtonMobile: {
-    paddingVertical: 12,
+  secondarySignInButtonMobile: {
+    paddingVertical: 14,
     paddingHorizontal: 24,
   },
-  signInButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#10b981',
-  },
-  authMenu: {
-    position: 'absolute',
-    bottom: 55, // Position above the sign-in button
-    left: 16,
-    right: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 6,
-    zIndex: 10, // Ensure menu appears above the overlay
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  authMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  authMenuText: {
-    fontSize: 14,
+  secondarySignInButtonText: {
+    fontSize: 15,
     fontWeight: '500',
     marginLeft: 8,
     color: '#10b981',
@@ -711,77 +668,65 @@ const styles = StyleSheet.create({
   // Profile section for logged-in users
   profileSection: {
     alignItems: 'center',
-    position: 'relative',
-  },
-  profileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#f8fafc',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20, // Pill shape
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    maxWidth: 320,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    gap: 12,
   },
-  profileButtonMobile: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+  userInfoContainer: {
+    width: '100%',
   },
-  profileButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#334155',
-  },
-  // Profile menu dropdown
-  profileMenu: {
-    position: 'absolute',
-    bottom: 46, // Position above the profile button
-    left: '50%',
-    transform: [{ translateX: -90 }], // Center the menu
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
+  userInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 6,
-    zIndex: 10, // Ensure menu appears above the overlay
+    paddingHorizontal: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  profileMenuItem: {
+  userInfoText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  userDisplayName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    width: '100%',
   },
-  profileMenuEmail: {
-    fontSize: 14,
-    fontWeight: '400',
-    marginLeft: 8,
-    color: '#64748b',
+  signOutButtonMobile: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  logoutText: {
-    fontSize: 14,
+  signOutButtonText: {
+    fontSize: 15,
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
