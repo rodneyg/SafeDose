@@ -1,14 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
+import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, Info, User, Mail } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
 // Import auth-related dependencies for Sign In functionality
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
-import { useUsageTracking } from '../lib/hooks/useUsageTracking';
-import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
 
@@ -23,8 +21,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
-  const { usageData } = useUsageTracking();
-  const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   console.log('[IntroScreen] Detailed component state:', {
@@ -49,12 +45,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       length: disclaimerText?.length || 0,
       preview: disclaimerText ? disclaimerText.substring(0, 50) + '...' : 'null'
     },
-    usageData: {
-      exists: !!usageData,
-      scansUsed: usageData?.scansUsed || 'undefined',
-      limit: usageData?.limit || 'undefined',
-      plan: usageData?.plan || 'undefined'
-    },
     isProfileMenuOpen
   });
 
@@ -66,8 +56,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       userLoaded: !!user,
       profileLoading: isLoading,
       profileLoaded: !!profile,
-      disclaimerLoaded: !!disclaimerText,
-      usageDataLoaded: !!usageData
+      disclaimerLoaded: !!disclaimerText
     });
     
     // Force log to make sure this component actually renders
@@ -96,19 +85,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     });
   }, [profile, isLoading, disclaimerText]);
 
-  useEffect(() => {
-    console.log('[IntroScreen] ========== USAGE DATA CHANGE TRACKING ==========');
-    console.log('[IntroScreen] Usage data changed:', {
-      usageData: usageData ? {
-        loaded: true,
-        scansUsed: usageData.scansUsed,
-        limit: usageData.limit,
-        plan: usageData.plan,
-        type: typeof usageData
-      } : { loaded: false }
-    });
-  }, [usageData]);
-
   // Check for potential loading issues
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -118,13 +94,10 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       if (!profile && !isLoading) {
         console.warn('[IntroScreen] ⚠️  No profile loaded and not loading - potential data issue');
       }
-      if (!usageData) {
-        console.warn('[IntroScreen] ⚠️  No usage data loaded - potential data issue');
-      }
     }, 5000);
 
     return () => clearTimeout(timeoutId);
-  }, [isLoading, profile, usageData]);
+  }, [isLoading, profile]);
 
   // Use memoized handlers to ensure stable references across renders
   const handleSignInPress = useCallback(() => {
@@ -172,12 +145,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         }
       });
   }, [auth, user]);
-
-  const handleUpgradePress = useCallback(() => {
-    console.log('[IntroScreen] Upgrade button pressed');
-    // Navigate to pricing page for upgrade options
-    router.push('/pricing');
-  }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
@@ -250,7 +217,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {__DEV__ && (
           <View style={styles.debugOverlay}>
             <Text style={styles.debugText}>
-              Debug: Profile={profile ? '✓' : '✗'} Loading={isLoading ? '✓' : '✗'} Usage={usageData ? '✓' : '✗'}
+              Debug: Profile={profile ? '✓' : '✗'} Loading={isLoading ? '✓' : '✗'}
             </Text>
           </View>
         )}
@@ -302,7 +269,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
                 onPress={handleScanPress}>
                 <CameraIcon color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Scan Items</Text>
+                <Text style={styles.buttonText}>Scan</Text>
               </TouchableOpacity>
               
               {/* Secondary action */}
@@ -311,7 +278,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 onPress={handleManualEntryPress}
               >
                 <Pill color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Enter Details Manually</Text>
+                <Text style={styles.buttonText}>Manual</Text>
               </TouchableOpacity>
             </View>
             
@@ -327,43 +294,9 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         )}
         
-        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading and not signing out */}
+        {/* Bottom section with authentication - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.bottomSection}>
-            {/* Usage Status Card - shows scans remaining and upgrade options together */}
-            <View style={styles.usageStatusCard}>
-              {/* Scans remaining display - show default if usageData is not available */}
-              <View style={styles.usageInfoRow}>
-                <Text style={styles.scanCreditsText}>
-                  🎟️ {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining
-                </Text>
-                
-                {/* Premium Badge (only for plus users) */}
-                {usageData?.plan === 'plus' && (
-                  <View style={styles.premiumBadgeContainer}>
-                    <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
-                  </View>
-                )}
-              </View>
-              
-              {/* Upgrade button - appears right below scans for free users */}
-              {(!usageData || usageData.plan === 'free') && (
-                <TouchableOpacity 
-                  style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-                  onPress={handleUpgradePress}>
-                  <CreditCard color={'#f59e0b'} size={16} />
-                  <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
-                </TouchableOpacity>
-              )}
-              
-              {/* Low scans warning for free users */}
-              {usageData && (usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
-                <Text style={styles.lowScansWarning}>
-                  ⚠️ Running low on scans. Upgrade to continue calculating doses.
-                </Text>
-              )}
-            </View>
-            
             {/* Sign-In section - appears for anonymous users or when signed out */}
             {(user?.isAnonymous || !user) && (
               <View style={styles.authSection}>
@@ -517,20 +450,23 @@ const styles = StyleSheet.create({
   },
   // Action buttons group (Law of Proximity)
   actionButtonsContainer: {
+    flexDirection: 'row', // Changed from column to row for side-by-side layout
     width: '100%',
+    justifyContent: 'space-evenly', // Distribute buttons evenly
     alignItems: 'center',
     marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
+    paddingHorizontal: 20, // Add horizontal padding for better spacing
   },
   button: { 
-    flexDirection: 'row', 
+    flexDirection: 'column', // Changed to column to stack icon and text vertically
     alignItems: 'center', 
     justifyContent: 'center', 
-    gap: 10,
-    width: '80%',
-    marginBottom: 20, // Increased from 12 to 20 for better spacing
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    gap: 8, // Reduced gap for compact design
+    width: 120, // Fixed width to make buttons square-ish
+    height: 120, // Fixed height to match width for square shape
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16, // Slightly larger border radius for better appearance
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -538,8 +474,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonMobile: { 
-    paddingVertical: 16, 
-    paddingHorizontal: 28, 
+    paddingVertical: 18, 
+    paddingHorizontal: 18,
+    width: 140, // Slightly larger for mobile
+    height: 140,
   },
   primaryButton: {
     backgroundColor: '#007AFF', 
@@ -579,59 +517,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  // Bottom section containing usage, auth and upgrade elements
+  // Bottom section containing authentication elements
   bottomSection: {
     paddingHorizontal: 16,
-    paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
+    paddingBottom: 16,
     alignItems: 'center',
-    gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
-  },
-  // Usage Status Card - combines scans remaining with upgrade
-  usageStatusCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12, // Reduced from 16 to 12 for more compact design
-    padding: 12, // Reduced from 16 to 12 for smaller footprint
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for more compact look
-    shadowOpacity: 0.08, // Reduced shadow opacity
-    shadowRadius: 3, // Reduced shadow radius
-    elevation: 2, // Reduced elevation
-  },
-  usageInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8, // Reduced from 12 to 8 for more compact layout
-  },
-  scanCreditsText: { 
-    color: '#333333', 
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  premiumBadgeContainer: { 
-    backgroundColor: '#FFD700', 
-    borderRadius: 8, 
-    padding: 4, 
-    marginLeft: 8,
-    shadowColor: '#FFC107',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
-  lowScansWarning: {
-    fontSize: 12, // Reduced from 13 to 12 for more compact layout
-    color: '#d97706',
-    textAlign: 'center',
-    marginTop: 6, // Reduced from 8 to 6 for tighter spacing
-    fontStyle: 'italic',
-    lineHeight: 16, // Reduced from 18 to 16 for tighter line height
   },
   // Authentication section for anonymous users
   authSection: {
@@ -785,28 +675,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
-  },
-  // Upgrade button
-  upgradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fef3c7',
-    paddingVertical: 8, // Reduced from 10 to 8 for more compact button
-    paddingHorizontal: 14, // Reduced from 16 to 14 for more compact button
-    borderRadius: 8, // Reduced from 10 to 8 for more compact design
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-    width: '100%',
-  },
-  upgradeButtonMobile: {
-    paddingVertical: 9, // Reduced from 12 to 9 for mobile
-    paddingHorizontal: 16, // Reduced from 18 to 16 for mobile
-  },
-  upgradeText: {
-    color: '#92400e',
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    marginLeft: 6,
   },
 });
