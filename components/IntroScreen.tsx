@@ -9,9 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // For accessing env variables from app.config.js
-import * as Google from 'expo-auth-session/providers/google';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -58,39 +57,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     },
     isProfileMenuOpen
   });
-
-  // Set up Google authentication
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: Constants.expoConfig?.extra?.googleAuth?.androidClientId,
-    iosClientId: Constants.expoConfig?.extra?.googleAuth?.iosClientId,
-    webClientId: Constants.expoConfig?.extra?.googleAuth?.webClientId,
-  });
-
-  // Handle Google auth response
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      if (authentication?.idToken) {
-        const credential = GoogleAuthProvider.credential(authentication.idToken);
-        signInWithCredential(auth, credential)
-          .then((result) => {
-            console.log('Google Sign-In successful', result.user);
-            if (user?.isAnonymous) {
-              console.log('Linked anonymous account with Google');
-            } else {
-              console.log('Signed in with Google');
-            }
-            // Give the authentication state time to update
-            setTimeout(() => {
-              console.log('Authentication successful, auth state should have updated');
-            }, 100);
-          })
-          .catch((error) => {
-            console.error('Google sign-in error:', error);
-          });
-      }
-    }
-  }, [response, auth, user]);
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
@@ -163,34 +129,27 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   // Use memoized handlers to ensure stable references across renders
   const handleSignInPress = useCallback(() => {
     console.log('[IntroScreen] Sign In button pressed');
+    const provider = new GoogleAuthProvider();
     
-    // Use the proper authentication method for the platform
-    if (isMobileWeb) {
-      // For web, we can use the popup method
-      const provider = new GoogleAuthProvider();
-      import('firebase/auth').then(({ signInWithPopup }) => {
-        signInWithPopup(auth, provider)
-          .then((result) => {
-            console.log('Google Sign-In successful', result.user);
-            if (user?.isAnonymous) {
-              console.log('Linked anonymous account with Google');
-            } else {
-              console.log('Signed in with Google');
-            }
-            // Give the authentication state time to update
-            setTimeout(() => {
-              console.log('Web authentication successful, auth state should have updated');
-            }, 100);
-          })
-          .catch((error) => {
-            console.error('Google sign-in error:', error);
-          });
+    // Use Firebase popup sign-in method for authentication
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log('Google Sign-In successful', result.user);
+        if (user?.isAnonymous) {
+          // The anonymous account will be automatically linked to the signed-in account
+          console.log('Linked anonymous account with Google');
+        } else {
+          console.log('Signed in with Google');
+        }
+        // Give the authentication state time to update
+        setTimeout(() => {
+          console.log('Authentication successful, auth state should have updated');
+        }, 100);
+      })
+      .catch((error) => {
+        console.error('Google sign-in error:', error);
       });
-    } else {
-      // For React Native, use the expo auth session
-      promptAsync();
-    }
-  }, [auth, user, promptAsync]);
+  }, [auth, user]);
 
   const handleUpgradePress = useCallback(() => {
     console.log('[IntroScreen] Upgrade button pressed');
