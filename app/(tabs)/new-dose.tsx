@@ -31,11 +31,19 @@ export default function NewDoseScreen() {
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   const feedbackStorage = useFeedbackStorage();
   
+  console.log('[NewDoseScreen] ========== NEW DOSE SCREEN RENDER ==========');
+  console.log('[NewDoseScreen] Current screenStep:', doseCalculator.screenStep);
+  console.log('[NewDoseScreen] User:', user?.uid || 'No user');
+  console.log('[NewDoseScreen] isScreenActive:', isScreenActive);
+  
   // Ensure intro screen is shown on initial load
   useEffect(() => {
-    console.log('[NewDoseScreen] Initial setup, ensuring intro screen is shown');
+    console.log('[NewDoseScreen] ========== INITIAL SETUP EFFECT ==========');
+    console.log('[NewDoseScreen] Ensuring intro screen is shown on initial load');
+    console.log('[NewDoseScreen] Current screenStep before force set:', doseCalculator.screenStep);
     // Force screenStep to 'intro' on first render
     doseCalculator.setScreenStep('intro');
+    console.log('[NewDoseScreen] ✅ Forced screenStep to "intro"');
   }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked

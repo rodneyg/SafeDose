@@ -85,6 +85,10 @@ export default function UserTypeSegmentation() {
 
   const handleComplete = useCallback(async () => {
     try {
+      console.log('[UserType] ========== ONBOARDING COMPLETION START ==========');
+      console.log('[UserType] Current answers:', answers);
+      console.log('[UserType] Current user:', user?.uid || 'No user');
+      
       const profile: UserProfile = {
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
@@ -93,15 +97,17 @@ export default function UserTypeSegmentation() {
         userId: user?.uid,
       };
 
-      console.log('[UserType] Starting profile save and completion...');
+      console.log('[UserType] Created profile object:', profile);
+      console.log('[UserType] Starting profile save...');
       
       // Ensure profile is saved before navigation
       await saveProfile(profile);
+      console.log('[UserType] ✅ Profile save completed');
       
-      // CRITICAL: Set onboarding completion flag - this was missing!
+      // CRITICAL: Set onboarding completion flag
+      console.log('[UserType] Setting onboarding completion flag...');
       await AsyncStorage.setItem('onboardingComplete', 'true');
-      
-      console.log('[UserType] Profile saved and onboarding marked complete');
+      console.log('[UserType] ✅ Onboarding completion flag set');
       
       // Log completion
       logAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETE, {
@@ -110,28 +116,34 @@ export default function UserTypeSegmentation() {
         isCosmeticUse: profile.isCosmeticUse,
         skipped_personal_use: answers.isPersonalUse === null
       });
+      console.log('[UserType] ✅ Analytics event logged');
       
       // Add a small delay to ensure profile is fully persisted before navigation
+      console.log('[UserType] Adding 100ms delay for persistence...');
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Check AsyncStorage state before navigation
+      console.log('[UserType] Checking AsyncStorage state before navigation...');
       const [onboardingComplete, storedProfile] = await Promise.all([
         AsyncStorage.getItem('onboardingComplete'),
         AsyncStorage.getItem('userProfile')
       ]);
       
-      console.log('[UserType] Pre-navigation state check:', {
+      console.log('[UserType] Pre-navigation AsyncStorage state:', {
         onboardingComplete,
         storedProfile: storedProfile ? 'exists' : 'null',
-        storedProfileLength: storedProfile?.length
+        storedProfileLength: storedProfile?.length,
+        parsedProfile: storedProfile ? JSON.parse(storedProfile) : null
       });
       
       // Navigate to root and let index.tsx routing logic determine the proper destination
-      // This ensures the app's main routing logic handles the completed state properly
-      console.log('[UserType] Navigating to root for proper routing...');
+      console.log('[UserType] 🚀 NAVIGATING TO ROOT - calling router.replace("/")');
+      console.log('[UserType] ========== HANDING OFF TO INDEX.TSX ==========');
       router.replace('/');
     } catch (error) {
-      console.error('Error saving user profile:', error);
+      console.error('[UserType] ❌ ERROR during completion:', error);
+      console.error('[UserType] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.log('[UserType] 🚀 FALLBACK NAVIGATION - calling router.replace("/")');
       // Fallback navigation to root
       router.replace('/');
     }

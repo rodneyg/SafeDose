@@ -20,11 +20,20 @@ interface IntroScreenProps {
 }
 
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
+  console.log('[IntroScreen] ========== INTRO SCREEN RENDER ==========');
+  
   const { user, auth, logout } = useAuth();
   const { disclaimerText } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  console.log('[IntroScreen] Component props and state:', {
+    user: user?.uid || 'No user',
+    disclaimerText: disclaimerText ? 'exists' : 'null',
+    usageData: usageData ? 'exists' : 'null',
+    isProfileMenuOpen
+  });
 
   // Set up Google authentication
   const [request, response, promptAsync] = Google.useAuthRequest({

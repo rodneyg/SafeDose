@@ -3,6 +3,8 @@ import { Camera, History, Chrome as Home, Book, MessageCircle } from 'lucide-rea
 import { StyleSheet } from 'react-native';
 
 export default function TabLayout() {
+  console.log('[TabLayout] ========== TAB LAYOUT RENDER ==========');
+  console.log('[TabLayout] Rendering tab layout with initialRouteName: new-dose');
 
   return (
     <Tabs
