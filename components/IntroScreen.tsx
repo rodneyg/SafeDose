@@ -462,8 +462,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'center', 
     gap: 8, // Reduced gap for compact design
-    width: 120, // Fixed width to make buttons square-ish
-    height: 120, // Fixed height to match width for square shape
+    width: 100, // Reduced width for slightly smaller buttons
+    height: 100, // Reduced height to match width for square shape
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 16, // Slightly larger border radius for better appearance
@@ -476,8 +476,8 @@ const styles = StyleSheet.create({
   buttonMobile: { 
     paddingVertical: 18, 
     paddingHorizontal: 18,
-    width: 140, // Slightly larger for mobile
-    height: 140,
+    width: 120, // Reduced size for mobile (was 140)
+    height: 120,
   },
   primaryButton: {
     backgroundColor: '#007AFF', 
