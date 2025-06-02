@@ -641,7 +641,7 @@ export default function NewDoseScreen() {
           onRequestClose={() => setIsProfileMenuVisible(false)}
         >
           <Pressable style={styles.profileMenuOverlay} onPress={() => setIsProfileMenuVisible(false)}>
-            <View style={styles.profileMenu}>
+            <Pressable style={styles.profileMenu} onPress={(event) => event.stopPropagation()}>
               {user?.displayName && <Text style={styles.menuTextName}>{user.displayName}</Text>}
               {user?.email && <Text style={styles.menuTextEmail}>{user.email}</Text>}
               <TouchableOpacity onPress={async () => {
