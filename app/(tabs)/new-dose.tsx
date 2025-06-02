@@ -83,17 +83,33 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  // Ultra-aggressive web-specific keyboard event handling to prevent layout enlargement and scrolling
+  // Dynamic height adjustment using visual viewport API to handle keyboard properly
   useEffect(() => {
+    const updateHeight = () => {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      console.log('[ViewportHeight] Updating height to:', viewportHeight);
+      
+      // Update container elements
+      const containers = document.querySelectorAll('[data-container="main"]');
+      containers.forEach(container => {
+        container.style.height = `${viewportHeight}px`;
+        container.style.maxHeight = `${viewportHeight}px`;
+      });
+      
+      // Update body and HTML with dynamic height
+      document.body.style.height = `${viewportHeight}px`;
+      document.body.style.maxHeight = `${viewportHeight}px`;
+      document.documentElement.style.height = `${viewportHeight}px`;
+      document.documentElement.style.maxHeight = `${viewportHeight}px`;
+    };
+
     const lockBody = () => {
       console.log('[WebKeyboard] Applying aggressive body lock');
       if (typeof document !== 'undefined') {
-        // Ultra-aggressive layout locking to prevent any viewport changes
+        // Ultra-aggressive layout locking to prevent any viewport changes (except height)
         document.body.style.overflow = 'hidden';
         document.body.style.width = '100vw';
         document.body.style.maxWidth = '100vw';
-        document.body.style.height = '100vh'; // Use fixed height to fit viewport
-        document.body.style.maxHeight = '100vh'; // Ensure content doesn't exceed viewport
         document.body.style.position = 'fixed';
         document.body.style.top = '0';
         document.body.style.left = '0';
@@ -105,10 +121,11 @@ export default function NewDoseScreen() {
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.width = '100vw';
         document.documentElement.style.maxWidth = '100vw';
-        document.documentElement.style.height = '100vh'; // Use fixed height to fit viewport
-        document.documentElement.style.maxHeight = '100vh'; // Ensure content doesn't exceed viewport
         document.documentElement.style.webkitTextSizeAdjust = 'none';
         document.documentElement.style.transform = 'none';
+        
+        // Apply dynamic height
+        updateHeight();
       }
     };
     
@@ -117,11 +134,8 @@ export default function NewDoseScreen() {
         document.body.style.transform = `scale(${1 / window.visualViewport.scale})`;
         document.body.style.transformOrigin = 'top left';
       }
-      // Use fixed height for stable viewport dimensions
-      if (window.visualViewport?.height) {
-        document.body.style.height = `${window.visualViewport.height}px`;
-        document.body.style.maxHeight = `${window.visualViewport.height}px`;
-      }
+      // Use dynamic height based on visual viewport
+      updateHeight();
     };
     
     const preventZoomOnNumericInput = (event: any) => {
@@ -153,15 +167,16 @@ export default function NewDoseScreen() {
         setTimeout(lockBody, 100);
       });
       
-      // Re-lock on resize events and enforce viewport
+      // Re-lock on resize events and enforce viewport with dynamic height
       window.addEventListener('resize', () => {
         lockBody();
         enforceViewport();
       });
       
-      // Add visual viewport listener for better keyboard handling
+      // Add visual viewport listener for better keyboard handling with dynamic height
       if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', enforceViewport);
+        window.visualViewport.addEventListener('resize', updateHeight);
+        window.visualViewport.addEventListener('scroll', updateHeight);
       }
       
       // Prevent double-tap zoom
@@ -196,7 +211,8 @@ export default function NewDoseScreen() {
           enforceViewport();
         });
         if (window.visualViewport) {
-          window.visualViewport.removeEventListener('resize', enforceViewport);
+          window.visualViewport.removeEventListener('resize', updateHeight);
+          window.visualViewport.removeEventListener('scroll', updateHeight);
         }
         window.removeEventListener('touchend', preventDoubleTapZoom);
         window.removeEventListener('touchstart', preventMultiTouchScale);
@@ -742,7 +758,7 @@ export default function NewDoseScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       {/* Main container with overflow constraints to prevent dragging issues */}
-      <View style={[styles.container, keyboardVisible && { height: screenHeight }]}>
+      <View style={[styles.container, keyboardVisible && { height: screenHeight }]} data-container="main">
         <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
@@ -913,8 +929,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Prevent horizontal overflow
     maxWidth: '100vw', // Constrain to viewport width
     width: '100vw',
-    height: '100vh', // Use fixed height to fit viewport
-    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     position: 'fixed',
     top: 0,
     left: 0,
@@ -926,8 +940,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     width: '100vw',
-    height: '100vh', // Use fixed height to fit viewport exactly
-    maxHeight: '100vh', // Ensure content doesn't exceed viewport
     overflow: 'hidden',
     maxWidth: '100vw',
     backgroundColor: '#F2F2F7',

@@ -72,8 +72,6 @@
     overflow: hidden !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: 100vh !important; /* Use fixed height to fit viewport */
-    max-height: 100vh !important; /* Ensure content doesn't exceed viewport */
     margin: 0 !important;
     padding: 0 !important;
     -webkit-text-size-adjust: none !important; /* Prevent font scaling */

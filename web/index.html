@@ -12,8 +12,6 @@
       overflow: hidden !important;
       width: 100vw !important;
       max-width: 100vw !important;
-      height: 100vh !important;
-      max-height: 100vh !important; /* Ensure content doesn't exceed viewport */
       margin: 0 !important;
       padding: 0 !important;
       position: relative;
@@ -40,8 +38,6 @@
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
-      height: 100vh !important;
-      max-height: 100vh !important; /* Ensure content doesn't exceed viewport */
       overflow: hidden !important;
       max-width: 100vw !important;
       /* Ensure no transforms or scaling */
@@ -69,13 +65,28 @@
         viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover, interactive-widget=resizes-content');
       }
       
-      // Aggressive body and html locking
+      // Dynamic height adjustment using visual viewport API
+      const updateHeight = () => {
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        console.log('[ViewportHeight] HTML updating height to:', viewportHeight);
+        
+        document.body.style.height = `${viewportHeight}px`;
+        document.body.style.maxHeight = `${viewportHeight}px`;
+        document.documentElement.style.height = `${viewportHeight}px`;
+        document.documentElement.style.maxHeight = `${viewportHeight}px`;
+        
+        const root = document.getElementById('root');
+        if (root) {
+          root.style.height = `${viewportHeight}px`;
+          root.style.maxHeight = `${viewportHeight}px`;
+        }
+      };
+      
+      // Aggressive body and html locking with dynamic height
       const lockLayout = () => {
         document.body.style.overflow = 'hidden';
         document.body.style.width = '100vw';
         document.body.style.maxWidth = '100vw';
-        document.body.style.height = '100vh';
-        document.body.style.maxHeight = '100vh';
         document.body.style.position = 'fixed';
         document.body.style.top = '0';
         document.body.style.left = '0';
@@ -87,17 +98,24 @@
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.width = '100vw';
         document.documentElement.style.maxWidth = '100vw';
-        document.documentElement.style.height = '100vh';
-        document.documentElement.style.maxHeight = '100vh';
         document.documentElement.style.webkitTextSizeAdjust = 'none';
         document.documentElement.style.transform = 'none';
+        
+        // Apply dynamic height
+        updateHeight();
       };
       
       // Initial lock
       lockLayout();
       
-      // Re-lock on window resize
-      window.addEventListener('resize', lockLayout);
+      // Re-lock on window resize and visual viewport changes
+      window.addEventListener('resize', updateHeight);
+      
+      // Add visual viewport listeners for dynamic height adjustment
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updateHeight);
+        window.visualViewport.addEventListener('scroll', updateHeight);
+      }
       
       // Disable zoom on double tap
       let lastTouchEnd = 0;
