@@ -7,6 +7,7 @@ module.exports = {
       // Disable type checking during transformation for speed,
       // type checking was done in a previous step anyway.
       isolatedModules: true,
+      babelConfig: true, // Tell ts-jest to use babel.config.js
     }],
   },
   moduleNameMapper: {

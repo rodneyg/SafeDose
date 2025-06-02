@@ -21,7 +21,7 @@ interface IntroScreenProps {
 export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
   console.log('[IntroScreen] ========== INTRO SCREEN RENDER ==========');
   
-  const { user, auth, logout } = useAuth();
+  const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
@@ -248,9 +248,18 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         )}
         
         {/* Show loading state if profile is still loading */}
-        {isLoading && (
+        {isLoading && !isSigningOut && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading your profile...</Text>
+          </View>
+        )}
+
+        {/* Show signing out message */}
+        {isSigningOut && (
+          <View style={styles.signingOutContainer}>
+            <Text style={styles.signingOutText}>
+              Signed out successfully. You will be signed in anonymously shortly.
+            </Text>
           </View>
         )}
         
@@ -263,8 +272,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           />
         )}
         
-        {/* Main content section - only show when not loading */}
-        {!isLoading && (
+        {/* Main content section - only show when not loading and not signing out */}
+        {!isLoading && !isSigningOut && (
           <View style={styles.content}>
             {/* App icon and welcome message */}
             <View style={styles.welcomeContainer}>
@@ -310,8 +319,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         )}
         
-        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading */}
-        {!isLoading && (
+        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading and not signing out */}
+        {!isLoading && !isSigningOut && (
           <View style={styles.bottomSection}>
             {/* Usage Status Card - shows scans remaining and upgrade options together */}
             <View style={styles.usageStatusCard}>
@@ -451,6 +460,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  // Signing out state
+  signingOutContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)', // Slight overlay to indicate change
+  },
+  signingOutText: {
+    fontSize: 16,
+    color: '#333', // Darker text for better readability
+    textAlign: 'center',
+    paddingHorizontal: 30, // Ensure text doesn't touch edges
   },
   // Invisible overlay to capture taps outside the menu
   menuOverlay: {
