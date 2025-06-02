@@ -364,12 +364,9 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
               )}
             </View>
             
-            {/* Sign-In section - appears for anonymous users or when signed out */}
+            {/* Sign-In button - appears for anonymous users or when signed out */}
             {(user?.isAnonymous || !user) && (
-              <View style={styles.authSection}>
-                <Text style={styles.authPromptText}>
-                  {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
-                </Text>
+              <View style={styles.signInContainer}>
                 <TouchableOpacity 
                   style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
                   onPress={toggleProfileMenu}>
@@ -497,16 +494,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start', // Changed from center to flex-start for better control
-    paddingTop: 40, // Add top padding for breathing room
+    paddingTop: 20, // Reduced from 40 to 20 to move components up
     padding: 16,
   },
   // Welcome section
   welcomeContainer: {
     alignItems: 'center',
-    marginBottom: 30, // Reduced from 40 to 30 to create more space for content below
+    marginBottom: 20, // Reduced from 30 to 20 to move components up
   },
   icon: { 
-    marginBottom: 8,
+    marginBottom: 15, // Changed from 8 to 15px as requested (10-20px range)
   },
   text: { 
     fontSize: 18,
@@ -638,24 +635,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 16, // Reduced from 18 to 16 for tighter line height
   },
-  // Authentication section for anonymous users
-  authSection: {
+  // Sign-In container for anonymous users (simplified)
+  signInContainer: {
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 12, // Reduced from 16 to 12 for more compact layout
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
     position: 'relative',
-  },
-  authPromptText: {
-    fontSize: 13, // Reduced from 14 for more compact layout
-    color: '#64748b',
-    textAlign: 'center',
-    marginBottom: 10, // Reduced from 12 for more compact layout
-    lineHeight: 18, // Reduced from 20 for more compact layout
   },
   signInButton: {
     flexDirection: 'row',
@@ -686,8 +669,8 @@ const styles = StyleSheet.create({
   authMenu: {
     position: 'absolute',
     bottom: 55, // Position above the sign-in button
-    left: 16,
-    right: 16,
+    left: '50%',
+    transform: [{ translateX: -90 }], // Center the menu
     backgroundColor: '#ffffff',
     borderRadius: 10,
     paddingVertical: 8,
