@@ -180,20 +180,28 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
-    console.log('[IntroScreen] Logout button pressed');
+    console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
+    console.log('[IntroScreen] Closing profile menu and initiating logout...');
     setIsProfileMenuOpen(false);
     try {
+      console.log('[IntroScreen] Calling logout function...');
       await logout();
-      console.log('Logged out successfully');
+      console.log('[IntroScreen] ✅ Logout completed successfully');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('[IntroScreen] ❌ Logout error:', error);
     }
   }, [logout]);
   
   const toggleProfileMenu = useCallback(() => {
+    console.log('[IntroScreen] ========== PROFILE MENU TOGGLE ==========');
+    console.log('[IntroScreen] Current isProfileMenuOpen:', isProfileMenuOpen);
     // Always toggle the profile menu, regardless of authentication status
-    setIsProfileMenuOpen(prevState => !prevState);
-  }, []);
+    setIsProfileMenuOpen(prevState => {
+      const newState = !prevState;
+      console.log('[IntroScreen] Setting isProfileMenuOpen to:', newState);
+      return newState;
+    });
+  }, [isProfileMenuOpen]);
 
   // For React Native, we'll close the menu manually in button handlers
   // instead of using web-specific tap outside detection
@@ -683,7 +691,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 6,
+    zIndex: 10, // Ensure menu appears above the overlay
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
@@ -745,7 +754,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 6,
+    zIndex: 10, // Ensure menu appears above the overlay
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
