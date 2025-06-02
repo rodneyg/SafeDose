@@ -311,7 +311,13 @@ export default function NewDoseScreen() {
     }
 
     console.log('[Process] Scan successful, transitioning to manual entry');
-    resetFullForm('dose');
+    // Clear calculation-related state without resetting the scan results
+    setCalculatedVolume(null);
+    setRecommendedMarking(null);
+    setCalculationError(null);
+    setFormError(null);
+    setShowVolumeErrorModal(false);
+    setVolumeErrorValue(null);
     setScreenStep('manualEntry');
     setManualStep('dose');
   };
