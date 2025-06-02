@@ -374,28 +374,15 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                   {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
                 </Text>
                 
-                {/* Primary sign in options - always visible */}
-                <View style={styles.signInOptionsContainer}>
-                  <TouchableOpacity 
-                    style={[styles.primarySignInButton, isMobileWeb && styles.primarySignInButtonMobile]} 
-                    onPress={handleSignInPress}
-                    accessibilityRole="button"
-                    accessibilityLabel="Sign in with Google"
-                    accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
-                    <LogIn color="#ffffff" size={16} />
-                    <Text style={styles.primarySignInButtonText}>Sign In with Google</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.secondarySignInButton, isMobileWeb && styles.secondarySignInButtonMobile]} 
-                    onPress={() => router.push('/login')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Sign in with email"
-                    accessibilityHint="Go to the email sign in page to sign in with email and password">
-                    <Mail color="#10b981" size={16} />
-                    <Text style={styles.secondarySignInButtonText}>Sign In with Email</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity 
+                  style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
+                  onPress={handleSignInPress}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign in with Google"
+                  accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
+                  <LogIn color="#10b981" size={16} />
+                  <Text style={styles.signInButtonText}>Sign In with Google</Text>
+                </TouchableOpacity>
               </View>
             )}
             
@@ -668,56 +655,28 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 20,
   },
-  signInOptionsContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  primarySignInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#10b981',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  primarySignInButtonMobile: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-  },
-  primarySignInButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 8,
-    color: '#ffffff',
-  },
-  secondarySignInButton: {
+  signInButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#10b981',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 2,
   },
-  secondarySignInButtonMobile: {
-    paddingVertical: 14,
+  signInButtonMobile: {
+    paddingVertical: 12,
     paddingHorizontal: 24,
   },
-  secondarySignInButtonText: {
-    fontSize: 15,
+  signInButtonText: {
+    fontSize: 14,
     fontWeight: '500',
     marginLeft: 8,
     color: '#10b981',
