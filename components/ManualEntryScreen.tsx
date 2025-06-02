@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
@@ -170,6 +170,45 @@ export default function ManualEntryScreen({
     return result;
   };
 
+  // Create a handler for next button press
+  const handleNextButtonPress = useCallback(() => {
+    try {
+      console.log('[ManualEntry] Next button pressed for step:', manualStep);
+      
+      // If the current step is not valid, do nothing
+      if (!isCurrentStepValid()) return;
+
+      // Navigate directly to the next step without confirmation
+      if (manualStep === 'dose') {
+        handleNextDose();
+      } else if (manualStep === 'medicationSource') {
+        handleNextMedicationSource();
+      } else if (manualStep === 'concentrationInput') {
+        handleNextConcentrationInput();
+      } else if (manualStep === 'totalAmountInput') {
+        handleNextTotalAmountInput();
+      } else if (manualStep === 'reconstitution') {
+        handleNextReconstitution();
+      } else if (manualStep === 'syringe') {
+        handleCalculateFinal();
+      } else if (manualStep === 'preDoseConfirmation') {
+        handleNextPreDoseConfirmation();
+      }
+    } catch (error) {
+      console.error('Error in next button handler:', error);
+    }
+  }, [
+    manualStep,
+    isCurrentStepValid,
+    handleNextDose,
+    handleNextMedicationSource,
+    handleNextConcentrationInput,
+    handleNextTotalAmountInput,
+    handleNextReconstitution,
+    handleCalculateFinal,
+    handleNextPreDoseConfirmation
+  ]);
+
   let currentStepComponent;
   let progress = 0;
 
@@ -304,7 +343,17 @@ export default function ManualEntryScreen({
 
   return (
     <>
-      <ScrollView style={styles.manualEntryContainer}>
+      <ScrollView 
+        style={styles.manualEntryContainer}
+        contentContainerStyle={styles.scrollViewContent}
+        scrollEnabled={true}
+        bounces={false}
+        alwaysBounceHorizontal={false}
+        directionalLockEnabled={true}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="always"
+      >
         <CustomProgressBar progress={progress} />
         <View style={styles.formWrapper}>
           {currentStepComponent}
@@ -324,43 +373,7 @@ export default function ManualEntryScreen({
                   !isCurrentStepValid() && styles.disabledButton,
                   isMobileWeb && styles.nextButtonMobile
                 ]}
-                onPress={useCallback(() => {
-                  try {
-                    console.log('[ManualEntry] Next button pressed for step:', manualStep);
-                    
-                    // If the current step is not valid, do nothing
-                    if (!isCurrentStepValid()) return;
-
-                    // Navigate directly to the next step without confirmation
-                    if (manualStep === 'dose') {
-                      handleNextDose();
-                    } else if (manualStep === 'medicationSource') {
-                      handleNextMedicationSource();
-                    } else if (manualStep === 'concentrationInput') {
-                      handleNextConcentrationInput();
-                    } else if (manualStep === 'totalAmountInput') {
-                      handleNextTotalAmountInput();
-                    } else if (manualStep === 'reconstitution') {
-                      handleNextReconstitution();
-                    } else if (manualStep === 'syringe') {
-                      handleCalculateFinal();
-                    } else if (manualStep === 'preDoseConfirmation') {
-                      handleNextPreDoseConfirmation();
-                    }
-                  } catch (error) {
-                    console.error('Error in next button handler:', error);
-                  }
-                }, [
-                  manualStep,
-                  isCurrentStepValid,
-                  handleNextDose,
-                  handleNextMedicationSource,
-                  handleNextConcentrationInput,
-                  handleNextTotalAmountInput,
-                  handleNextReconstitution,
-                  handleCalculateFinal,
-                  handleNextPreDoseConfirmation
-                ])}
+                onPress={handleNextButtonPress}
                 disabled={!isCurrentStepValid()}
                 accessibilityRole="button"
                 accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : manualStep === 'preDoseConfirmation' ? "Proceed to result" : "Next step"}
@@ -379,10 +392,35 @@ export default function ManualEntryScreen({
 }
 
 const styles = StyleSheet.create({
-  manualEntryContainer: { flex: 1 },
-  formWrapper: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 20 },
+  manualEntryContainer: { 
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden'
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%'
+  },
+  formWrapper: { 
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    paddingBottom: 20,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden'
+  },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
+  buttonContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    width: '100%', 
+    maxWidth: '100%',
+    marginTop: 20, 
+    gap: 10,
+    overflow: 'hidden'
+  },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },
   nextButton: { backgroundColor: '#007AFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, width: '45%', minHeight: 50 },

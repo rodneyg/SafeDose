@@ -36,6 +36,54 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] User:', user?.uid || 'No user');
   console.log('[NewDoseScreen] isScreenActive:', isScreenActive);
   
+  // Add useEffect to enforce viewport constraints for mobile web
+  useEffect(() => {
+    const lockViewport = () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.width = '100vw';
+        document.body.style.maxWidth = '100vw';
+        document.body.style.overflowX = 'hidden';
+        
+        // Prevent zoom on iOS Safari/Chrome
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no');
+        }
+      }
+    };
+    
+    lockViewport();
+    
+    // Re-apply on window resize
+    window.addEventListener('resize', lockViewport);
+    
+    // Add touch event listeners to prevent zoom gestures
+    const preventZoom = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+    
+    const preventGestureStart = (e: Event) => {
+      e.preventDefault();
+    };
+    
+    if (typeof document !== 'undefined') {
+      document.addEventListener('gesturestart', preventGestureStart);
+      document.addEventListener('touchmove', preventZoom, { passive: false });
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', lockViewport);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('gesturestart', preventGestureStart);
+        document.removeEventListener('touchmove', preventZoom);
+      }
+    };
+  }, []);
+
   // Ensure intro screen is shown on initial load
   useEffect(() => {
     console.log('[NewDoseScreen] ========== INITIAL SETUP EFFECT ==========');
@@ -723,7 +771,13 @@ export default function NewDoseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F2F2F7',
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden'
+  },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },

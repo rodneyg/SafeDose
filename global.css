@@ -208,3 +208,39 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* iOS Mobile Web Zoom and Scroll Prevention */
+@layer base {
+  html, body {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: none;
+    -ms-text-size-adjust: none;
+    text-size-adjust: none;
+    touch-action: manipulation;
+  }
+  
+  /* Prevent zoom on input focus for iOS */
+  input[type="text"], 
+  input[type="number"], 
+  input[type="email"], 
+  input[type="password"], 
+  textarea, 
+  select {
+    font-size: 16px !important;
+    -webkit-user-select: auto;
+  }
+  
+  /* Prevent zoom gestures */
+  * {
+    touch-action: manipulation;
+  }
+  
+  /* Ensure viewport constraints on containers */
+  #root {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
