@@ -15,14 +15,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const logout = async () => {
     try {
+      setIsSigningOut(true);
       await signOut(auth);
       logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
       console.log('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
+      setIsSigningOut(false);
       throw error;
     }
   };
@@ -32,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        setIsSigningOut(false);
         
         // Set user properties for analytics
         setAnalyticsUserProperties({
@@ -39,16 +43,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Note: plan_type will be set when we have user plan data
         });
       } else {
-        // Automatically sign in anonymously if there's no user
-        signInAnonymously(auth)
-          .then(() => console.log('Signed in anonymously successfully'))
-          .catch((error) => console.error('Error signing in anonymously:', error));
+        setUser(null);
+        // If we're not in the middle of signing out, automatically sign in anonymously
+        if (!isSigningOut) {
+          signInAnonymously(auth)
+            .then(() => console.log('Signed in anonymously successfully'))
+            .catch((error) => console.error('Error signing in anonymously:', error));
+        } else {
+          // User has completed sign out, wait a moment to show they're signed out
+          // then sign them back in anonymously for app continuity
+          setTimeout(() => {
+            setIsSigningOut(false);
+            signInAnonymously(auth)
+              .then(() => console.log('Signed in anonymously after logout'))
+              .catch((error) => console.error('Error signing in anonymously after logout:', error));
+          }, 2000); // 2 second delay to show the sign out actually happened
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isSigningOut]);
 
   if (loading) {
     return <ActivityIndicator size="large" />;
