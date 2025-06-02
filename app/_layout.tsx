@@ -7,7 +7,10 @@ import { analytics } from '../lib/firebase';
 import "../global.css";
 
 export default function RootLayout() {
+  console.log('[RootLayout] ========== ROOT LAYOUT RENDER ==========');
+  
   useEffect(() => {
+    console.log('[RootLayout] Root layout effect running - hiding splash screen');
     SplashScreen.hideAsync();
     
     // Initialize Firebase Analytics
@@ -18,6 +21,7 @@ export default function RootLayout() {
     }
   }, []);
   
+  console.log('[RootLayout] Rendering providers and slot');
   return (
     <AuthProvider>
       <UserProfileProvider>

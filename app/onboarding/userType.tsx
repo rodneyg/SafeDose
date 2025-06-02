@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import Animated, { FadeIn, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Check, X, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileAnswers, UserProfile } from '@/types/userProfile';
@@ -84,6 +85,10 @@ export default function UserTypeSegmentation() {
 
   const handleComplete = useCallback(async () => {
     try {
+      console.log('[UserType] ========== ONBOARDING COMPLETION START ==========');
+      console.log('[UserType] Current answers:', answers);
+      console.log('[UserType] Current user:', user?.uid || 'No user');
+      
       const profile: UserProfile = {
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
@@ -92,7 +97,17 @@ export default function UserTypeSegmentation() {
         userId: user?.uid,
       };
 
+      console.log('[UserType] Created profile object:', profile);
+      console.log('[UserType] Starting profile save...');
+      
+      // Ensure profile is saved before navigation
       await saveProfile(profile);
+      console.log('[UserType] ✅ Profile save completed');
+      
+      // CRITICAL: Set onboarding completion flag
+      console.log('[UserType] Setting onboarding completion flag...');
+      await AsyncStorage.setItem('onboardingComplete', 'true');
+      console.log('[UserType] ✅ Onboarding completion flag set');
       
       // Log completion
       logAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETE, {
@@ -101,12 +116,36 @@ export default function UserTypeSegmentation() {
         isCosmeticUse: profile.isCosmeticUse,
         skipped_personal_use: answers.isPersonalUse === null
       });
+      console.log('[UserType] ✅ Analytics event logged');
       
+      // Add a small delay to ensure profile is fully persisted before navigation
+      console.log('[UserType] Adding 100ms delay for persistence...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check AsyncStorage state before navigation
+      console.log('[UserType] Checking AsyncStorage state before navigation...');
+      const [onboardingComplete, storedProfile] = await Promise.all([
+        AsyncStorage.getItem('onboardingComplete'),
+        AsyncStorage.getItem('userProfile')
+      ]);
+      
+      console.log('[UserType] Pre-navigation AsyncStorage state:', {
+        onboardingComplete,
+        storedProfile: storedProfile ? 'exists' : 'null',
+        storedProfileLength: storedProfile?.length,
+        parsedProfile: storedProfile ? JSON.parse(storedProfile) : null
+      });
+      
+      // Navigate directly to intro screen instead of relying on index.tsx routing
+      console.log('[UserType] 🚀 NAVIGATING DIRECTLY TO INTRO - calling router.replace("/(tabs)/new-dose")');
+      console.log('[UserType] ========== BYPASSING INDEX.TSX ROUTING ==========');
       router.replace('/(tabs)/new-dose');
     } catch (error) {
-      console.error('Error saving user profile:', error);
-      // Fallback navigation
-      router.replace('/(tabs)/new-dose');
+      console.error('[UserType] ❌ ERROR during completion:', error);
+      console.error('[UserType] Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.log('[UserType] 🚀 FALLBACK NAVIGATION - calling router.replace("/")');
+      // Fallback navigation to root
+      router.replace('/');
     }
   }, [answers, saveProfile, router, user?.uid]);
 
