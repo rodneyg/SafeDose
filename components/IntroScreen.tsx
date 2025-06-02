@@ -419,11 +419,14 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+    overflow: 'hidden', // Prevent SafeAreaView from being draggable
   },
   container: {
     flex: 1,
     flexDirection: 'column',
     overflow: 'hidden', // Prevent content from overflowing screen bounds
+    height: '100%', // Ensure container height is constrained
+    maxHeight: '100%', // Additional constraint to prevent overflow
   },
   // Debug overlay for development
   debugOverlay: {

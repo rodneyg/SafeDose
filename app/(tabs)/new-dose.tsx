@@ -723,7 +723,13 @@ export default function NewDoseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F2F2F7',
+    overflow: 'hidden', // Prevent container content from being draggable
+    height: '100%', // Ensure full height constraint
+    maxHeight: '100vh', // Web-specific constraint to prevent dragging beyond viewport
+  },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
