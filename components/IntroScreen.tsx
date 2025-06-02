@@ -180,7 +180,6 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
-    console.log('[IntroScreen] handleLogoutPress CALLED!');
     console.log('[IntroScreen] Logout button pressed');
     setIsProfileMenuOpen(false);
     try {
