@@ -26,6 +26,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   console.log('[IntroScreen] Detailed component state:', {
     user: {
@@ -181,12 +182,20 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] Logout button pressed');
-    setIsProfileMenuOpen(false);
+    setIsLoggingOut(true);
     try {
       await logout();
       console.log('Logged out successfully');
+      
+      // Add a small delay to ensure user sees the logout feedback
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Close profile menu after successful logout
+      setIsProfileMenuOpen(false);
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   }, [logout]);
   
@@ -400,9 +409,12 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                     )}
                     <TouchableOpacity 
                       style={styles.logoutButton}
-                      onPress={handleLogoutPress}>
+                      onPress={handleLogoutPress}
+                      disabled={isLoggingOut}>
                       <LogOut color="#ef4444" size={16} />
-                      <Text style={styles.logoutText}>Sign Out</Text>
+                      <Text style={styles.logoutText}>
+                        {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}

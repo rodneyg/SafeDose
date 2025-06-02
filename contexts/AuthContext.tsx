@@ -18,11 +18,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log('[AuthContext] Starting logout process...');
       await signOut(auth);
       logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
-      console.log('Signed out successfully');
+      console.log('[AuthContext] Signed out successfully');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('[AuthContext] Error signing out:', error);
       throw error;
     }
   };
@@ -30,6 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Subscribe to auth state changes on the single `auth` instance
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('[AuthContext] Auth state changed:', {
+        hasUser: !!firebaseUser,
+        isAnonymous: firebaseUser?.isAnonymous,
+        uid: firebaseUser?.uid,
+        email: firebaseUser?.email
+      });
+      
       if (firebaseUser) {
         setUser(firebaseUser);
         
@@ -39,10 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Note: plan_type will be set when we have user plan data
         });
       } else {
+        console.log('[AuthContext] No user detected, signing in anonymously...');
         // Automatically sign in anonymously if there's no user
         signInAnonymously(auth)
-          .then(() => console.log('Signed in anonymously successfully'))
-          .catch((error) => console.error('Error signing in anonymously:', error));
+          .then(() => console.log('[AuthContext] Signed in anonymously successfully'))
+          .catch((error) => console.error('[AuthContext] Error signing in anonymously:', error));
       }
       setLoading(false);
     });
