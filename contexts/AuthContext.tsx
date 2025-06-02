@@ -31,11 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     // Subscribe to auth state changes on the single `auth` instance
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsSigningOut(false);
+        
+        // Clear any pending timeout if user signs in
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         
         // Set user properties for analytics
         setAnalyticsUserProperties({
@@ -52,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           // User has completed sign out, wait a moment to show they're signed out
           // then sign them back in anonymously for app continuity
-          setTimeout(() => {
+          timeoutId = setTimeout(() => {
             setIsSigningOut(false);
             signInAnonymously(auth)
               .then(() => console.log('Signed in anonymously after logout'))
@@ -63,7 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [isSigningOut]);
 
   if (loading) {
