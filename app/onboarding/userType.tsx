@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Check, X, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -356,6 +356,9 @@ export default function UserTypeSegmentation() {
                 entering={FadeInRight.duration(300)}
               />
             </View>
+            <Text style={styles.progressLabel}>
+              {Math.round(getProgressWidth())}% Complete
+            </Text>
           </View>
         </Animated.View>
 
@@ -413,11 +416,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 24,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
     alignItems: 'center',
   },
   title: {
@@ -432,7 +435,7 @@ const styles = StyleSheet.create({
     color: '#6B6B6B',
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   progressContainer: {
     width: '100%',
@@ -450,9 +453,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     borderRadius: 3,
   },
+  progressLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginTop: 6,
+  },
   stepContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   stepTitle: {
     fontSize: 24,
@@ -466,7 +475,7 @@ const styles = StyleSheet.create({
     color: '#6B6B6B',
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: 24,
     maxWidth: '85%',
   },
   optionsContainer: {
@@ -476,11 +485,11 @@ const styles = StyleSheet.create({
   optionCard: {
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     borderWidth: 2,
     borderColor: 'transparent',
     alignItems: 'center',
-    minHeight: 120,
+    minHeight: 100,
     justifyContent: 'center',
   },
   optionCardSelected: {
@@ -502,7 +511,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B6B6B',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
+    paddingHorizontal: 8,
   },
   skipButton: {
     marginTop: 24,
@@ -518,7 +528,8 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   footer: {
-    padding: 24,
+    padding: 20,
+    paddingTop: 24,
     alignItems: 'center',
     gap: 16,
   },
@@ -567,10 +578,11 @@ const styles = StyleSheet.create({
     color: '#A1A1AA',
   },
   privacyText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: '90%',
+    marginBottom: 8,
   },
 });
