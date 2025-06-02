@@ -23,15 +23,39 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   console.log('[IntroScreen] ========== INTRO SCREEN RENDER ==========');
   
   const { user, auth, logout } = useAuth();
-  const { disclaimerText } = useUserProfile();
+  const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  console.log('[IntroScreen] Component props and state:', {
-    user: user?.uid || 'No user',
-    disclaimerText: disclaimerText ? 'exists' : 'null',
-    usageData: usageData ? 'exists' : 'null',
+  console.log('[IntroScreen] Detailed component state:', {
+    user: {
+      uid: user?.uid || 'No user',
+      isAnonymous: user?.isAnonymous,
+      displayName: user?.displayName || 'No display name',
+      email: user?.email || 'No email'
+    },
+    profile: {
+      exists: !!profile,
+      isLoading,
+      profileData: profile ? {
+        isLicensedProfessional: profile.isLicensedProfessional,
+        isPersonalUse: profile.isPersonalUse,
+        isCosmeticUse: profile.isCosmeticUse,
+        dateCreated: profile.dateCreated
+      } : null
+    },
+    disclaimerText: {
+      exists: !!disclaimerText,
+      length: disclaimerText?.length || 0,
+      preview: disclaimerText ? disclaimerText.substring(0, 50) + '...' : 'null'
+    },
+    usageData: {
+      exists: !!usageData,
+      scansUsed: usageData?.scansUsed || 'undefined',
+      limit: usageData?.limit || 'undefined',
+      plan: usageData?.plan || 'undefined'
+    },
     isProfileMenuOpen
   });
 
@@ -70,7 +94,15 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   // Log component mount to help debug visibility issues
   useEffect(() => {
+    console.log('[IntroScreen] ========== COMPONENT LIFECYCLE ==========');
     console.log('[IntroScreen] Component mounted');
+    console.log('[IntroScreen] Initial data state:', {
+      userLoaded: !!user,
+      profileLoading: isLoading,
+      profileLoaded: !!profile,
+      disclaimerLoaded: !!disclaimerText,
+      usageDataLoaded: !!usageData
+    });
     
     // Force log to make sure this component actually renders
     console.log('[IntroScreen] Currently visible, screenStep should be "intro"');
@@ -79,6 +111,54 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       console.log('[IntroScreen] Component unmounted');
     };
   }, []);
+
+  // Log data changes to track when things become available
+  useEffect(() => {
+    console.log('[IntroScreen] ========== DATA CHANGE TRACKING ==========');
+    console.log('[IntroScreen] Profile data changed:', {
+      isLoading,
+      profile: profile ? {
+        loaded: true,
+        type: typeof profile,
+        keys: Object.keys(profile)
+      } : { loaded: false },
+      disclaimerText: disclaimerText ? {
+        loaded: true,
+        length: disclaimerText.length,
+        type: typeof disclaimerText
+      } : { loaded: false }
+    });
+  }, [profile, isLoading, disclaimerText]);
+
+  useEffect(() => {
+    console.log('[IntroScreen] ========== USAGE DATA CHANGE TRACKING ==========');
+    console.log('[IntroScreen] Usage data changed:', {
+      usageData: usageData ? {
+        loaded: true,
+        scansUsed: usageData.scansUsed,
+        limit: usageData.limit,
+        plan: usageData.plan,
+        type: typeof usageData
+      } : { loaded: false }
+    });
+  }, [usageData]);
+
+  // Check for potential loading issues
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.warn('[IntroScreen] ⚠️  Profile still loading after 5 seconds - potential issue');
+      }
+      if (!profile && !isLoading) {
+        console.warn('[IntroScreen] ⚠️  No profile loaded and not loading - potential data issue');
+      }
+      if (!usageData) {
+        console.warn('[IntroScreen] ⚠️  No usage data loaded - potential data issue');
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
+  }, [isLoading, profile, usageData]);
 
   // Use memoized handlers to ensure stable references across renders
   const handleSignInPress = useCallback(() => {
@@ -177,6 +257,22 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   return (
     <SafeAreaView style={styles.safeArea}>
       <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+        {/* Debug info overlay (only in development) */}
+        {__DEV__ && (
+          <View style={styles.debugOverlay}>
+            <Text style={styles.debugText}>
+              Debug: Profile={profile ? '✓' : '✗'} Loading={isLoading ? '✓' : '✗'} Usage={usageData ? '✓' : '✗'}
+            </Text>
+          </View>
+        )}
+        
+        {/* Show loading state if profile is still loading */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading your profile...</Text>
+          </View>
+        )}
+        
         {/* Invisible overlay to close menu when tapping outside */}
         {isProfileMenuOpen && (
           <TouchableOpacity 
@@ -186,149 +282,153 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           />
         )}
         
-        {/* Main content section */}
-        <View style={styles.content}>
-          {/* App icon and welcome message */}
-          <View style={styles.welcomeContainer}>
-            <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-            
-            {/* Dynamic welcome message based on authentication status */}
-            {user && !user.isAnonymous && user.displayName ? (
-              <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
-            ) : (
-              <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-            )}
-          </View>
-          
-          {/* Main action buttons grouped together (Law of Proximity) */}
-          <View style={styles.actionButtonsContainer}>
-            {/* Primary action */}
-            <TouchableOpacity 
-              style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
-              onPress={handleScanPress}>
-              <CameraIcon color={'#fff'} size={20} />
-              <Text style={styles.buttonText}>Scan Items</Text>
-            </TouchableOpacity>
-            
-            {/* Secondary action */}
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
-              onPress={handleManualEntryPress}
-            >
-              <Pill color={'#fff'} size={20} />
-              <Text style={styles.buttonText}>Enter Details Manually</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Disclaimer with Info icon */}
-          <View style={styles.disclaimerContainer}>
-            <View style={styles.disclaimerIconContainer}>
-              <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
-              <Text style={styles.disclaimerText}>
-                {disclaimerText}
-              </Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Bottom section with usage info, authentication and upgrade options */}
-        <View style={styles.bottomSection}>
-          {/* Usage Status Card - shows scans remaining and upgrade options together */}
-          <View style={styles.usageStatusCard}>
-            {/* Scans remaining display */}
-            <View style={styles.usageInfoRow}>
-              <Text style={styles.scanCreditsText}>
-                🎟️ {usageData.limit - usageData.scansUsed} scans remaining
-              </Text>
+        {/* Main content section - only show when not loading */}
+        {!isLoading && (
+          <View style={styles.content}>
+            {/* App icon and welcome message */}
+            <View style={styles.welcomeContainer}>
+              <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
               
-              {/* Premium Badge (only for plus users) */}
-              {usageData.plan === 'plus' && (
-                <View style={styles.premiumBadgeContainer}>
-                  <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
-                </View>
+              {/* Dynamic welcome message based on authentication status */}
+              {user && !user.isAnonymous && user.displayName ? (
+                <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
+              ) : (
+                <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
               )}
             </View>
             
-            {/* Upgrade button - appears right below scans for free users */}
-            {(usageData.plan === 'free') && (
+            {/* Main action buttons grouped together (Law of Proximity) */}
+            <View style={styles.actionButtonsContainer}>
+              {/* Primary action */}
               <TouchableOpacity 
-                style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-                onPress={handleUpgradePress}>
-                <CreditCard color={'#f59e0b'} size={16} />
-                <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
-              </TouchableOpacity>
-            )}
-            
-            {/* Low scans warning for free users */}
-            {(usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
-              <Text style={styles.lowScansWarning}>
-                ⚠️ Running low on scans. Upgrade to continue calculating doses.
-              </Text>
-            )}
-          </View>
-          
-          {/* Sign-In section - appears for anonymous users */}
-          {user?.isAnonymous && (
-            <View style={styles.authSection}>
-              <Text style={styles.authPromptText}>
-                Sign in to save calculations and get unlimited scans
-              </Text>
-              <TouchableOpacity 
-                style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-                onPress={toggleProfileMenu}>
-                <LogIn color="#10b981" size={16} />
-                <Text style={styles.signInButtonText}>Sign In</Text>
+                style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
+                onPress={handleScanPress}>
+                <CameraIcon color={'#fff'} size={20} />
+                <Text style={styles.buttonText}>Scan Items</Text>
               </TouchableOpacity>
               
-              {/* Profile dropdown menu positioned above button */}
-              {isProfileMenuOpen && (
-                <View style={styles.authMenu}>
-                  <TouchableOpacity 
-                    style={styles.authMenuItem}
-                    onPress={() => {
-                      setIsProfileMenuOpen(false);
-                      handleSignInPress();
-                    }}>
-                    <LogIn color="#10b981" size={16} />
-                    <Text style={styles.authMenuText}>Sign In with Google</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              {/* Secondary action */}
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
+                onPress={handleManualEntryPress}
+              >
+                <Pill color={'#fff'} size={20} />
+                <Text style={styles.buttonText}>Enter Details Manually</Text>
+              </TouchableOpacity>
             </View>
-          )}
-          
-          {/* Profile section - appears for logged-in users */}
-          {user && !user.isAnonymous && (
-            <View style={styles.profileSection}>
-              <TouchableOpacity 
-                style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-                onPress={toggleProfileMenu}>
-                <User color="#3b82f6" size={16} />
-                <Text style={styles.profileButtonText}>
-                  {user.email ? user.email.split('@')[0] : 'Profile'}
+            
+            {/* Disclaimer with Info icon - show default if disclaimerText is not available */}
+            <View style={styles.disclaimerContainer}>
+              <View style={styles.disclaimerIconContainer}>
+                <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
+                <Text style={styles.disclaimerText}>
+                  {disclaimerText || 'Always consult a licensed healthcare professional before administering any medication.'}
                 </Text>
-              </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+        
+        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading */}
+        {!isLoading && (
+          <View style={styles.bottomSection}>
+            {/* Usage Status Card - shows scans remaining and upgrade options together */}
+            <View style={styles.usageStatusCard}>
+              {/* Scans remaining display - show default if usageData is not available */}
+              <View style={styles.usageInfoRow}>
+                <Text style={styles.scanCreditsText}>
+                  🎟️ {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining
+                </Text>
+                
+                {/* Premium Badge (only for plus users) */}
+                {usageData?.plan === 'plus' && (
+                  <View style={styles.premiumBadgeContainer}>
+                    <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
+                  </View>
+                )}
+              </View>
               
-              {/* Profile dropdown menu */}
-              {isProfileMenuOpen && (
-                <View style={styles.profileMenu}>
-                  {user?.email && (
-                    <View style={styles.profileMenuItem}>
-                      <Mail color="#64748b" size={16} />
-                      <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity 
-                    style={styles.logoutButton}
-                    onPress={handleLogoutPress}>
-                    <LogOut color="#ef4444" size={16} />
-                    <Text style={styles.logoutText}>Sign Out</Text>
-                  </TouchableOpacity>
-                </View>
+              {/* Upgrade button - appears right below scans for free users */}
+              {(!usageData || usageData.plan === 'free') && (
+                <TouchableOpacity 
+                  style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
+                  onPress={handleUpgradePress}>
+                  <CreditCard color={'#f59e0b'} size={16} />
+                  <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
+                </TouchableOpacity>
+              )}
+              
+              {/* Low scans warning for free users */}
+              {usageData && (usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
+                <Text style={styles.lowScansWarning}>
+                  ⚠️ Running low on scans. Upgrade to continue calculating doses.
+                </Text>
               )}
             </View>
-          )}
-        </View>
+            
+            {/* Sign-In section - appears for anonymous users */}
+            {user?.isAnonymous && (
+              <View style={styles.authSection}>
+                <Text style={styles.authPromptText}>
+                  Sign in to save calculations and get unlimited scans
+                </Text>
+                <TouchableOpacity 
+                  style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
+                  onPress={toggleProfileMenu}>
+                  <LogIn color="#10b981" size={16} />
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                </TouchableOpacity>
+                
+                {/* Profile dropdown menu positioned above button */}
+                {isProfileMenuOpen && (
+                  <View style={styles.authMenu}>
+                    <TouchableOpacity 
+                      style={styles.authMenuItem}
+                      onPress={() => {
+                        setIsProfileMenuOpen(false);
+                        handleSignInPress();
+                      }}>
+                      <LogIn color="#10b981" size={16} />
+                      <Text style={styles.authMenuText}>Sign In with Google</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+            
+            {/* Profile section - appears for logged-in users */}
+            {user && !user.isAnonymous && (
+              <View style={styles.profileSection}>
+                <TouchableOpacity 
+                  style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+                  onPress={toggleProfileMenu}>
+                  <User color="#3b82f6" size={16} />
+                  <Text style={styles.profileButtonText}>
+                    {user.email ? user.email.split('@')[0] : 'Profile'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Profile dropdown menu */}
+                {isProfileMenuOpen && (
+                  <View style={styles.profileMenu}>
+                    {user?.email && (
+                      <View style={styles.profileMenuItem}>
+                        <Mail color="#64748b" size={16} />
+                        <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity 
+                      style={styles.logoutButton}
+                      onPress={handleLogoutPress}>
+                      <LogOut color="#ef4444" size={16} />
+                      <Text style={styles.logoutText}>Sign Out</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </Animated.View>
     </SafeAreaView>
   );
@@ -342,6 +442,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
+  },
+  // Debug overlay for development
+  debugOverlay: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 0, 0.8)',
+    padding: 8,
+    borderRadius: 4,
+    zIndex: 1000,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#000',
+    textAlign: 'center',
+  },
+  // Loading state
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   // Invisible overlay to capture taps outside the menu
   menuOverlay: {
