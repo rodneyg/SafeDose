@@ -132,56 +132,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         />
       )}
       
-      {/* Profile Control - Fixed position in top-right (Fitts's Law) */}
-      <View style={styles.profileButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
-          onPress={toggleProfileMenu}>
-          {user?.isAnonymous 
-            ? <LogIn color="#10b981" size={18} />
-            : <User color="#3b82f6" size={18} />
-          }
-          <Text style={styles.profileText}>
-            {user?.isAnonymous 
-              ? 'Sign In' 
-              : user.email ? user.email.split('@')[0] : 'Profile'}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Profile dropdown menu */}
-        {isProfileMenuOpen && (
-          <View style={styles.profileMenu}>
-            {user?.isAnonymous ? (
-              // Menu for anonymous users
-              <TouchableOpacity 
-                style={styles.signInButton}
-                onPress={() => {
-                  setIsProfileMenuOpen(false);
-                  handleSignInPress();
-                }}>
-                <LogIn color="#10b981" size={16} />
-                <Text style={styles.signInText}>Sign In</Text>
-              </TouchableOpacity>
-            ) : (
-              // Menu for logged-in users
-              <>
-                {user?.email && (
-                  <View style={styles.profileMenuItem}>
-                    <Mail color="#64748b" size={16} />
-                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
-                  </View>
-                )}
-                <TouchableOpacity 
-                  style={styles.logoutButton}
-                  onPress={handleLogoutPress}>
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.logoutText}>Sign Out</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-      </View>
+
 
       {/* App icon and welcome message */}
       <View style={styles.welcomeContainer}>
@@ -236,6 +187,69 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Bottom Auth Section */}
+      <View style={styles.bottomSection}>
+        {user?.isAnonymous ? (
+          // Auth section for anonymous users
+          <View style={styles.authSection}>
+            <Text style={styles.authPromptText}>
+              Sign in to save calculations and get unlimited scans
+            </Text>
+            <TouchableOpacity 
+              style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
+              onPress={toggleProfileMenu}>
+              <LogIn color="#10b981" size={18} />
+              <Text style={styles.signInText}>Sign In</Text>
+            </TouchableOpacity>
+            
+            {/* Auth dropdown menu */}
+            {isProfileMenuOpen && (
+              <View style={styles.authMenu}>
+                <TouchableOpacity 
+                  style={styles.signInMenuItem}
+                  onPress={() => {
+                    setIsProfileMenuOpen(false);
+                    handleSignInPress();
+                  }}>
+                  <LogIn color="#10b981" size={16} />
+                  <Text style={styles.signInMenuText}>Sign In with Google</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        ) : (
+          // Profile section for signed-in users
+          <View style={styles.profileSection}>
+            <TouchableOpacity 
+              style={[styles.profileButton, isMobileWeb && styles.profileButtonMobile]} 
+              onPress={toggleProfileMenu}>
+              <User color="#3b82f6" size={18} />
+              <Text style={styles.profileText}>
+                {user.email ? user.email.split('@')[0] : 'Profile'}
+              </Text>
+            </TouchableOpacity>
+            
+            {/* Profile dropdown menu */}
+            {isProfileMenuOpen && (
+              <View style={styles.profileMenu}>
+                {user?.email && (
+                  <View style={styles.profileMenuItem}>
+                    <Mail color="#64748b" size={16} />
+                    <Text style={styles.profileMenuEmail}>{user.email}</Text>
+                  </View>
+                )}
+                <TouchableOpacity 
+                  style={styles.logoutButton}
+                  onPress={handleLogoutPress}>
+                  <LogOut color="#ef4444" size={16} />
+                  <Text style={styles.logoutText}>Sign Out</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
     </Animated.View>
   );
 }
@@ -256,57 +270,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 5, // Below profile menu but above everything else
-  },
-  // Profile button styles (Fitts's Law)
-  profileButtonContainer: {
-    position: 'absolute',
-    top: -30, // Adjusted to ensure adequate spacing from header elements like premium badge
-    right: 16,
-    zIndex: 10, // Ensure it's above other elements
-  },
-  profileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8fafc',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20, // Pill shape
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  profileButtonMobile: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  profileText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
-    color: '#334155',
-  },
-  // Profile menu dropdown
-  profileMenu: {
-    position: 'absolute',
-    top: 46,
-    right: 0,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   profileMenuItem: {
     flexDirection: 'row',
@@ -399,6 +362,135 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Bottom section for auth UI
+  bottomSection: {
+    position: 'absolute',
+    bottom: 80, // Above the upgrade button
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  // Auth section for anonymous users
+  authSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  authPromptText: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  // Profile section for signed-in users
+  profileSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  // Sign In button (green border, pill shape)
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25, // Pill shape
+    borderWidth: 2,
+    borderColor: '#10b981', // Green border
+    minWidth: 120,
+  },
+  signInButtonMobile: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  signInText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+    color: '#10b981',
+  },
+  // Profile button for signed-in users
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25, // Pill shape
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    minWidth: 120,
+  },
+  profileButtonMobile: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  profileText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#334155',
+  },
+  // Auth menu dropdown for anonymous users
+  authMenu: {
+    position: 'absolute',
+    bottom: 60, // Above the button
+    left: '50%',
+    marginLeft: -90, // Half of minWidth to center
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    zIndex: 15,
+  },
+  signInMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  signInMenuText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
+  },
+  // Profile menu dropdown for signed-in users
+  profileMenu: {
+    position: 'absolute',
+    bottom: 60, // Above the button
+    left: '50%',
+    marginLeft: -90, // Half of minWidth to center
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    zIndex: 15,
   },
   // Disclaimer styles
   disclaimerContainer: { 
