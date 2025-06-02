@@ -114,7 +114,8 @@ export default function ImagePreviewModal({
   if (!visible) return null;
 
   const screenDimensions = Dimensions.get('window');
-  const imageHeight = Math.min(screenDimensions.height * 0.5, 300);
+  // More conservative image height calculation to prevent overflow
+  const imageHeight = Math.min(screenDimensions.height * 0.35, 250);
 
   return (
     <Modal
@@ -127,7 +128,11 @@ export default function ImagePreviewModal({
         <View style={styles.modal}>
           <Text style={styles.title}>Review Your Scan</Text>
           
-          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.scrollContainer} 
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
             {imageUri && (
               <View style={[styles.imageContainer, { height: imageHeight }]}>
                 <Image 
@@ -190,8 +195,9 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '90%',
     maxWidth: 500,
-    maxHeight: '90%',
+    maxHeight: '85%',
     alignItems: 'center',
+    overflow: 'hidden', // Prevent content overflow
   },
   title: {
     fontSize: 20,
@@ -202,7 +208,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '70%',
+    overflow: 'scroll', // Ensure proper scrolling behavior
   },
   imageContainer: {
     width: '100%',

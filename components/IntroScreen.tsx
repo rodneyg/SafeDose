@@ -423,6 +423,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
+    overflow: 'hidden', // Prevent content from overflowing screen bounds
   },
   // Debug overlay for development
   debugOverlay: {
@@ -468,6 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start', // Changed from center to flex-start for better control
     paddingTop: 40, // Add top padding for breathing room
     padding: 16,
+    overflow: 'hidden', // Prevent content overflow
   },
   // Welcome section
   welcomeContainer: {
@@ -554,6 +556,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
     alignItems: 'center',
     gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
+    overflow: 'hidden', // Prevent bottom section content from overflowing
+    maxHeight: '40%', // Limit bottom section height to prevent taking over the screen
   },
   // Usage Status Card - combines scans remaining with upgrade
   usageStatusCard: {
@@ -569,6 +573,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08, // Reduced shadow opacity
     shadowRadius: 3, // Reduced shadow radius
     elevation: 2, // Reduced elevation
+    overflow: 'hidden', // Prevent card content from overflowing
   },
   usageInfoRow: {
     flexDirection: 'row',
@@ -613,6 +618,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     position: 'relative',
+    overflow: 'hidden', // Prevent auth section content from overflowing
   },
   authPromptText: {
     fontSize: 13, // Reduced from 14 for more compact layout
@@ -663,6 +669,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    maxHeight: 200, // Limit menu height to prevent overflow
+    overflow: 'hidden', // Prevent menu content from overflowing
   },
   authMenuItem: {
     flexDirection: 'row',
@@ -712,12 +720,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 46, // Position above the profile button
     left: '50%',
-    transform: [{ translateX: -90 }], // Center the menu
+    marginLeft: -90, // Use marginLeft instead of transform for better compatibility
     backgroundColor: '#ffffff',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 4,
     minWidth: 180,
+    maxWidth: 220, // Limit max width to prevent overflow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -725,6 +734,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    maxHeight: 200, // Limit menu height to prevent overflow
+    overflow: 'hidden', // Prevent menu content from overflowing
   },
   profileMenuItem: {
     flexDirection: 'row',

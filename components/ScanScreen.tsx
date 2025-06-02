@@ -208,7 +208,14 @@ export default function ScanScreen({
         {webCameraStream && (
           <video
             ref={videoRef}
-            style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ 
+              position: 'absolute', 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              maxWidth: '100vw',
+              maxHeight: '100vh'
+            }}
             playsInline
             autoPlay
           />
@@ -384,8 +391,23 @@ const styles = StyleSheet.create({
   tryCameraAgainButton: { backgroundColor: '#FF9500', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '80%', minHeight: 50 },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },
-  scanContainer: { flex: 1, backgroundColor: '#000' },
-  overlayBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 20, paddingTop: 15, alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+  scanContainer: { 
+    flex: 1, 
+    backgroundColor: '#000',
+    overflow: 'hidden', // Prevent content from extending beyond bounds
+  },
+  overlayBottom: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    paddingBottom: 20, 
+    paddingTop: 15, 
+    alignItems: 'center', 
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    maxHeight: '50%', // Prevent overlay from taking up too much screen space
+    overflow: 'hidden', // Ensure content doesn't overflow
+  },
   bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 12 },
   manualEntryButtonScan: { paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 12, minWidth: 80 },
   backButtonScan: { paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 12, minWidth: 80 },
