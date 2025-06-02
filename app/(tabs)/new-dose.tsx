@@ -719,7 +719,7 @@ export default function NewDoseScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
-  header: { marginTop: 100, marginBottom: 30, paddingHorizontal: 16 },
+  header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },

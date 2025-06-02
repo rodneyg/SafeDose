@@ -472,10 +472,10 @@ const styles = StyleSheet.create({
   // Welcome section
   welcomeContainer: {
     alignItems: 'center',
-    marginBottom: 40, // Increased from 24 to 40 for better spacing
+    marginBottom: 30, // Reduced from 40 to 30 to create more space for content below
   },
   icon: { 
-    marginBottom: 12,
+    marginBottom: 8,
   },
   text: { 
     fontSize: 18,
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   actionButtonsContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 32, // Increased from 24 to 32 for better spacing
+    marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
   },
   button: { 
     flexDirection: 'row', 
