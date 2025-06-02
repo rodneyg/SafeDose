@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Keyboard, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Keyboard, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -86,6 +86,10 @@ export default function NewDoseScreen() {
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
     console.log('[NewDoseScreen] Setting screen step to:', step);
+    
+    // Dismiss keyboard before navigation to prevent layout issues when moving to other screens
+    // This prevents the "loose" behavior observed when navigating to the home page
+    Keyboard.dismiss();
     
     // Track navigation from intro to other screens
     if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
@@ -255,8 +259,10 @@ export default function NewDoseScreen() {
             left: 0,
             right: 0,
             // Prevent tab bar from being affected by keyboard - stabilizes positioning during navigation
-            transform: keyboardVisible ? [{ translateY: 0 }] : undefined,
-            zIndex: keyboardVisible ? 999 : undefined,
+            // Fix tab bar positioning to ensure it remains static and doesn't contribute to overflow
+            overflow: 'hidden', // Lock tab bar to bottom of screen
+            transform: undefined, // Remove any transforms that could cause layout shifts
+            zIndex: keyboardVisible ? 999 : 1000, // Ensure proper layering
           },
         });
       }
@@ -607,9 +613,15 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
-    // Main container with overflow constraints to prevent dragging issues
-    <View style={[styles.container, keyboardVisible && { height: screenHeight }]}>
-      <View style={styles.header}>
+    // KeyboardAvoidingView wrapper to handle keyboard appearance and prevent layout shifts
+    <KeyboardAvoidingView 
+      style={styles.keyboardContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      {/* Main container with overflow constraints to prevent dragging issues */}
+      <View style={[styles.container, keyboardVisible && { height: screenHeight }]}>
+        <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
         {screenStep !== 'intro' && (
@@ -768,11 +780,18 @@ export default function NewDoseScreen() {
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
       )}
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    // KeyboardAvoidingView container to prevent layout shifts when keyboard appears
+    overflow: 'hidden', // Prevent keyboard container from being draggable
+    position: 'relative', // Ensure proper positioning
+  },
   container: { 
     flex: 1, 
     backgroundColor: '#F2F2F7',

@@ -316,6 +316,10 @@ export default function ManualEntryScreen({
         bounces={false}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        // Additional overflow constraints to ensure content doesn't exceed screen bounds when keyboard is up
+        alwaysBounceHorizontal={false}
+        alwaysBounceVertical={false}
+        directionalLockEnabled={true}
       >
         <CustomProgressBar progress={progress} />
         <View style={styles.formWrapper}>
@@ -325,7 +329,11 @@ export default function ManualEntryScreen({
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
                 style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
-                onPress={handleBack}
+                onPress={() => {
+                  // Dismiss keyboard before navigation to prevent layout issues
+                  Keyboard.dismiss();
+                  handleBack();
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Go back to previous step">
                 <Text style={styles.buttonText}>Back</Text>
@@ -339,6 +347,9 @@ export default function ManualEntryScreen({
                 onPress={useCallback(() => {
                   try {
                     console.log('[ManualEntry] Next button pressed for step:', manualStep);
+                    
+                    // Dismiss keyboard before navigation to prevent layout issues
+                    Keyboard.dismiss();
                     
                     // If the current step is not valid, do nothing
                     if (!isCurrentStepValid()) return;
@@ -396,17 +407,21 @@ const styles = StyleSheet.create({
     // Overflow constraints to prevent layout dragging during keyboard interaction
     overflow: 'hidden', // Prevent keyboard container from being draggable
     position: 'relative', // Ensure proper positioning
+    maxHeight: '100%', // Ensure container doesn't exceed screen height
+    maxWidth: '100%', // Ensure container doesn't exceed screen width
   },
   manualEntryContainer: { 
     flex: 1,
     // Additional overflow constraints to prevent content from exceeding bounds
     overflow: 'hidden', // Prevent content from being draggable beyond bounds
     maxHeight: '100%', // Ensure container doesn't exceed screen height
+    maxWidth: '100%', // Ensure container doesn't exceed screen width
   },
   scrollContent: {
     flexGrow: 1,
     // Prevent scroll content overflow that could cause dragging issues
     overflow: 'hidden', // Prevent scroll content overflow
+    maxWidth: '100%', // Constrain content to container width
   },
   formWrapper: { 
     alignItems: 'center', 
@@ -416,9 +431,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Prevent form content from overflowing
     maxWidth: '100%', // Ensure form doesn't exceed container width
     position: 'relative', // Ensure proper positioning during keyboard events
+    width: '100%', // Ensure full width constraint
   },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
+  buttonContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    width: '100%', 
+    maxWidth: 600, 
+    marginTop: 20, 
+    gap: 10,
+    // Ensure button container doesn't contribute to overflow
+    overflow: 'hidden',
+    position: 'relative',
+  },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
   backButtonMobile: { paddingVertical: 14, minHeight: 55 },
   nextButton: { backgroundColor: '#007AFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, width: '45%', minHeight: 50 },
