@@ -551,34 +551,34 @@ const styles = StyleSheet.create({
   // Bottom section containing usage, auth and upgrade elements
   bottomSection: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
     alignItems: 'center',
-    gap: 20, // Increased from 16 to 20 for better spacing between elements
+    gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
   },
   // Usage Status Card - combines scans remaining with upgrade
   usageStatusCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12, // Reduced from 16 to 12 for more compact design
+    padding: 12, // Reduced from 16 to 12 for smaller footprint
     width: '100%',
     maxWidth: 320,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for more compact look
+    shadowOpacity: 0.08, // Reduced shadow opacity
+    shadowRadius: 3, // Reduced shadow radius
+    elevation: 2, // Reduced elevation
   },
   usageInfoRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8, // Reduced from 12 to 8 for more compact layout
   },
   scanCreditsText: { 
     color: '#333333', 
-    fontSize: 14, 
+    fontSize: 13, // Reduced from 14 to 13 for smaller text
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -595,12 +595,12 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
   lowScansWarning: {
-    fontSize: 13,
+    fontSize: 12, // Reduced from 13 to 12 for more compact layout
     color: '#d97706',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 6, // Reduced from 8 to 6 for tighter spacing
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 16, // Reduced from 18 to 16 for tighter line height
   },
   // Authentication section for anonymous users
   authSection: {
@@ -759,20 +759,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fef3c7',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: 8, // Reduced from 10 to 8 for more compact button
+    paddingHorizontal: 14, // Reduced from 16 to 14 for more compact button
+    borderRadius: 8, // Reduced from 10 to 8 for more compact design
     borderWidth: 1,
     borderColor: '#f59e0b',
     width: '100%',
   },
   upgradeButtonMobile: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
+    paddingVertical: 9, // Reduced from 12 to 9 for mobile
+    paddingHorizontal: 16, // Reduced from 18 to 16 for mobile
   },
   upgradeText: {
     color: '#92400e',
-    fontSize: 14,
+    fontSize: 13, // Reduced from 14 to 13 for smaller text
     fontWeight: '600',
     marginLeft: 6,
   },
