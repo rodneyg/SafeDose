@@ -30,6 +30,11 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         value={solutionVolume}
         onChangeText={setSolutionVolume}
         keyboardType="numeric"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        onSubmitEditing={() => {
+          // Prevent any layout shifts when submit is pressed
+        }}
       />
       <Text style={styles.helperText}>
         This volume is needed to calculate the concentration of the medication.
@@ -39,7 +44,15 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  container: { 
+    backgroundColor: '#FFFFFF', 
+    padding: 16, 
+    borderRadius: 8, 
+    width: '100%', 
+    maxWidth: 600, 
+    marginBottom: 20,
+    overflow: 'hidden', // Prevent container content from overflowing
+  },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6, textAlign: 'center' },
   labelBold: { fontSize: 15, fontWeight: '600', color: '#000000', marginTop: 12, marginBottom: 8, textAlign: 'center' },

@@ -240,7 +240,16 @@ export default function FinalResultDisplay({
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  container: { 
+    backgroundColor: '#FFFFFF', 
+    padding: 16, 
+    borderRadius: 8, 
+    width: '100%', 
+    maxWidth: 600, 
+    marginBottom: 20,
+    overflow: 'hidden', // Prevent container content from overflowing
+    maxHeight: '100%', // Ensure container doesn't exceed screen height
+  },
   instructionCard: { padding: 16, borderRadius: 12, borderWidth: 2, marginBottom: 16, width: '100%' },
   instructionTitle: { fontSize: 18, fontWeight: 'bold', color: '#065F46', textAlign: 'center', marginBottom: 12 },
   instructionText: { fontSize: 15, color: '#065F46', textAlign: 'center', marginBottom: 8 },

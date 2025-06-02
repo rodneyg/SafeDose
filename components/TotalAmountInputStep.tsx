@@ -52,6 +52,11 @@ export default function TotalAmountInputStep({
         keyboardType="numeric"
         placeholder="e.g., 50"
         placeholderTextColor="#9ca3af"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        onSubmitEditing={() => {
+          // Prevent any layout shifts when submit is pressed
+        }}
       />
       {totalAmountHint && <Text style={[styles.helperHint, styles.warningHint]}>{totalAmountHint}</Text>}
       <Text style={styles.helperText}>
@@ -63,7 +68,15 @@ export default function TotalAmountInputStep({
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  container: { 
+    backgroundColor: '#FFFFFF', 
+    padding: 16, 
+    borderRadius: 8, 
+    width: '100%', 
+    maxWidth: 600, 
+    marginBottom: 20,
+    overflow: 'hidden', // Prevent container content from overflowing
+  },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
   input: { backgroundColor: '#FFFFFF', color: '#000000', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 6, fontSize: 15, borderWidth: 1, borderColor: '#E5E5EA', marginBottom: 10, width: '100%' },

@@ -208,7 +208,16 @@ export default function NewDoseScreen() {
       const parent = navigation.getParent();
       if (parent?.setOptions) {
         parent.setOptions({
-          tabBarStyle: screenStep === 'scan' ? { display: 'none' } : undefined,
+          tabBarStyle: screenStep === 'scan' ? { display: 'none' } : {
+            backgroundColor: '#FFFFFF',
+            borderTopWidth: 1,
+            borderTopColor: '#E5E5EA',
+            height: 49,
+            position: 'absolute', // Ensure tab bar stays in place and doesn't cause layout shifts
+            bottom: 0,
+            left: 0,
+            right: 0,
+          },
         });
       }
     }

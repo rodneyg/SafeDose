@@ -379,8 +379,18 @@ export default function ManualEntryScreen({
 }
 
 const styles = StyleSheet.create({
-  manualEntryContainer: { flex: 1 },
-  formWrapper: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 20 },
+  manualEntryContainer: { 
+    flex: 1,
+    overflow: 'hidden', // Prevent content from being draggable beyond bounds
+    maxHeight: '100%', // Ensure container doesn't exceed screen height
+  },
+  formWrapper: { 
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    paddingBottom: 20,
+    overflow: 'hidden', // Prevent form content from overflowing
+    maxWidth: '100%', // Ensure form doesn't exceed container width
+  },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
