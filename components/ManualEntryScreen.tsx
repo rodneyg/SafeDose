@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
 import CustomProgressBar from '../components/CustomProgressBar';
@@ -303,8 +303,19 @@ export default function ManualEntryScreen({
   }
 
   return (
-    <>
-      <ScrollView style={styles.manualEntryContainer}>
+    <KeyboardAvoidingView 
+      style={styles.keyboardContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <ScrollView 
+        style={styles.manualEntryContainer}
+        contentContainerStyle={styles.scrollContent}
+        scrollEnabled={true}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <CustomProgressBar progress={progress} />
         <View style={styles.formWrapper}>
           {currentStepComponent}
@@ -374,15 +385,24 @@ export default function ManualEntryScreen({
           )}
         </View>
       </ScrollView>
-    </>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    overflow: 'hidden', // Prevent keyboard container from being draggable
+    position: 'relative', // Ensure proper positioning
+  },
   manualEntryContainer: { 
     flex: 1,
     overflow: 'hidden', // Prevent content from being draggable beyond bounds
     maxHeight: '100%', // Ensure container doesn't exceed screen height
+  },
+  scrollContent: {
+    flexGrow: 1,
+    overflow: 'hidden', // Prevent scroll content overflow
   },
   formWrapper: { 
     alignItems: 'center', 
@@ -390,6 +410,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     overflow: 'hidden', // Prevent form content from overflowing
     maxWidth: '100%', // Ensure form doesn't exceed container width
+    position: 'relative', // Ensure proper positioning during keyboard events
   },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', maxWidth: 600, marginTop: 20, gap: 10 },

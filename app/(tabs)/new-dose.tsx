@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Keyboard, Dimensions } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -27,6 +27,8 @@ export default function NewDoseScreen() {
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   const feedbackStorage = useFeedbackStorage();
@@ -44,6 +46,40 @@ export default function NewDoseScreen() {
     // Force screenStep to 'intro' on first render
     doseCalculator.setScreenStep('intro');
     console.log('[NewDoseScreen] ✅ Forced screenStep to "intro"');
+  }, []);
+  
+  // Keyboard event listeners to track keyboard state and prevent layout dragging
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
+      console.log('[Keyboard] Will show, height:', e.endCoordinates.height);
+      setKeyboardVisible(true);
+      setScreenHeight(Dimensions.get('window').height - e.endCoordinates.height);
+    });
+
+    const keyboardWillHide = Keyboard.addListener('keyboardWillHide', () => {
+      console.log('[Keyboard] Will hide');
+      setKeyboardVisible(false);
+      setScreenHeight(Dimensions.get('window').height);
+    });
+
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', (e) => {
+      console.log('[Keyboard] Did show, height:', e.endCoordinates.height);
+      setKeyboardVisible(true);
+      setScreenHeight(Dimensions.get('window').height - e.endCoordinates.height);
+    });
+
+    const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+      console.log('[Keyboard] Did hide');
+      setKeyboardVisible(false);
+      setScreenHeight(Dimensions.get('window').height);
+    });
+
+    return () => {
+      keyboardWillShow?.remove();
+      keyboardWillHide?.remove();
+      keyboardDidShow?.remove();
+      keyboardDidHide?.remove();
+    };
   }, []);
   
   // Special override for setScreenStep to ensure navigation state is tracked
@@ -217,11 +253,14 @@ export default function NewDoseScreen() {
             bottom: 0,
             left: 0,
             right: 0,
+            // Prevent tab bar from being affected by keyboard
+            transform: keyboardVisible ? [{ translateY: 0 }] : undefined,
+            zIndex: keyboardVisible ? 999 : undefined,
           },
         });
       }
     }
-  }, [screenStep, navigation]);
+  }, [screenStep, navigation, keyboardVisible]);
 
   useEffect(() => {
     if (isMobileWeb && screenStep === 'scan') {
@@ -567,7 +606,7 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, keyboardVisible && { height: screenHeight }]}>
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}

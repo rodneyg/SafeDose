@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 
 type Props = {
   solutionVolume: string;
@@ -33,7 +33,8 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         returnKeyType="done"
         blurOnSubmit={true}
         onSubmitEditing={() => {
-          // Prevent any layout shifts when submit is pressed
+          // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          Keyboard.dismiss();
         }}
       />
       <Text style={styles.helperText}>

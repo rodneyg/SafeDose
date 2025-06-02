@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 
 type Props = {
   dose: string;
@@ -43,7 +43,8 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
         returnKeyType="done"
         blurOnSubmit={true}
         onSubmitEditing={() => {
-          // Prevent any layout shifts when submit is pressed
+          // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          Keyboard.dismiss();
         }}
       />
       <Text style={styles.label}>Unit:</Text>

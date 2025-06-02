@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import { getCompatibleConcentrationUnits } from '../lib/doseUtils';
 
 type Props = {
@@ -52,7 +52,8 @@ export default function ConcentrationInputStep({
         returnKeyType="done"
         blurOnSubmit={true}
         onSubmitEditing={() => {
-          // Prevent any layout shifts when submit is pressed
+          // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          Keyboard.dismiss();
         }}
       />
       {concentrationHint && <Text style={styles.helperHint}>{concentrationHint}</Text>}

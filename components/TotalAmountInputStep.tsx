@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard } from 'react-native';
 
 type Props = {
   totalAmount: string;
@@ -55,7 +55,8 @@ export default function TotalAmountInputStep({
         returnKeyType="done"
         blurOnSubmit={true}
         onSubmitEditing={() => {
-          // Prevent any layout shifts when submit is pressed
+          // Dismiss keyboard and prevent any layout shifts when submit is pressed
+          Keyboard.dismiss();
         }}
       />
       {totalAmountHint && <Text style={[styles.helperHint, styles.warningHint]}>{totalAmountHint}</Text>}
