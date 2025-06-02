@@ -788,17 +788,18 @@ export default function NewDoseScreen() {
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    // KeyboardAvoidingView container to prevent layout shifts when keyboard appears
-    overflow: 'hidden', // Prevent keyboard container from being draggable
-    position: 'relative', // Ensure proper positioning
+    overflow: 'hidden', // Prevent horizontal overflow
+    maxWidth: '100%', // Constrain to viewport width
+    width: '100%',
   },
   container: { 
     flex: 1, 
     backgroundColor: '#F2F2F7',
-    // Overflow constraints to prevent unexpected scrolling and layout dragging
-    overflow: 'hidden', // Prevent container content from being draggable
-    height: '100%', // Ensure full height constraint
-    maxHeight: '100vh', // Web-specific constraint to prevent dragging beyond viewport
+    overflow: 'hidden', // Reinforce no horizontal overflow
+    maxWidth: '100%', // Ensure container stays within viewport
+    width: '100%',
+    height: '100%',
+    maxHeight: '100vh',
   },
   header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },

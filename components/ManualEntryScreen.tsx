@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
 import CustomProgressBar from '../components/CustomProgressBar';
@@ -310,15 +310,13 @@ export default function ManualEntryScreen({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView 
-        style={styles.manualEntryContainer}
-        contentContainerStyle={styles.scrollContent}
+        style={[styles.manualEntryContainer, { flex: 1, overflow: 'hidden', maxWidth: '100%', width: '100%' }]}
+        contentContainerStyle={[styles.scrollContent, { overflow: 'hidden', maxWidth: '100%' }]}
         scrollEnabled={true}
         bounces={false}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        // Additional overflow constraints to ensure content doesn't exceed screen bounds when keyboard is up
         alwaysBounceHorizontal={false}
-        alwaysBounceVertical={false}
         directionalLockEnabled={true}
       >
         <CustomProgressBar progress={progress} />
@@ -404,34 +402,28 @@ export default function ManualEntryScreen({
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    // Overflow constraints to prevent layout dragging during keyboard interaction
-    overflow: 'hidden', // Prevent keyboard container from being draggable
-    position: 'relative', // Ensure proper positioning
-    maxHeight: '100%', // Ensure container doesn't exceed screen height
-    maxWidth: '100%', // Ensure container doesn't exceed screen width
+    overflow: 'hidden',
+    maxWidth: '100%',
+    width: '100%',
   },
   manualEntryContainer: { 
     flex: 1,
-    // Additional overflow constraints to prevent content from exceeding bounds
-    overflow: 'hidden', // Prevent content from being draggable beyond bounds
-    maxHeight: '100%', // Ensure container doesn't exceed screen height
-    maxWidth: '100%', // Ensure container doesn't exceed screen width
+    overflow: 'hidden',
+    maxWidth: '100%',
+    width: '100%',
   },
   scrollContent: {
     flexGrow: 1,
-    // Prevent scroll content overflow that could cause dragging issues
-    overflow: 'hidden', // Prevent scroll content overflow
-    maxWidth: '100%', // Constrain content to container width
+    overflow: 'hidden',
+    maxWidth: '100%',
   },
   formWrapper: { 
     alignItems: 'center', 
     paddingHorizontal: 16, 
     paddingBottom: 20,
-    // Form content overflow constraints to maintain layout stability
-    overflow: 'hidden', // Prevent form content from overflowing
-    maxWidth: '100%', // Ensure form doesn't exceed container width
-    position: 'relative', // Ensure proper positioning during keyboard events
-    width: '100%', // Ensure full width constraint
+    overflow: 'hidden',
+    maxWidth: '100%',
+    width: '100%',
   },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 
