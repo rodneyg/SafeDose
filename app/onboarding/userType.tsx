@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Check, X, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
