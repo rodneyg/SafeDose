@@ -408,8 +408,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     maxWidth: '100vw',
     width: '100vw',
-    height: '100vh',
-    maxHeight: '100vh',
+    minHeight: '100vh', // Use minHeight to allow content expansion
     position: 'relative',
   },
   manualEntryContainer: { 
@@ -417,8 +416,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     maxWidth: '100vw',
     width: '100vw',
-    height: '100%',
-    maxHeight: '100vh',
+    minHeight: '100%', // Use minHeight to allow content expansion
     position: 'relative',
   },
   scrollContent: {

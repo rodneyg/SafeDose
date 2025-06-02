@@ -92,8 +92,7 @@ export default function NewDoseScreen() {
         document.body.style.overflow = 'hidden';
         document.body.style.width = '100vw';
         document.body.style.maxWidth = '100vw';
-        document.body.style.height = '100vh';
-        document.body.style.maxHeight = '100vh';
+        document.body.style.minHeight = '100vh'; // Use minHeight to allow content expansion
         document.body.style.position = 'fixed';
         document.body.style.top = '0';
         document.body.style.left = '0';
@@ -105,10 +104,20 @@ export default function NewDoseScreen() {
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.width = '100vw';
         document.documentElement.style.maxWidth = '100vw';
-        document.documentElement.style.height = '100vh';
-        document.documentElement.style.maxHeight = '100vh';
+        document.documentElement.style.minHeight = '100vh'; // Use minHeight to allow content expansion
         document.documentElement.style.webkitTextSizeAdjust = 'none';
         document.documentElement.style.transform = 'none';
+      }
+    };
+    
+    const enforceViewport = () => {
+      if (window.visualViewport?.scale !== 1) {
+        document.body.style.transform = `scale(${1 / window.visualViewport.scale})`;
+        document.body.style.transformOrigin = 'top left';
+      }
+      // Use minHeight for dynamic viewport adjustment
+      if (window.visualViewport?.height) {
+        document.body.style.minHeight = `${window.visualViewport.height}px`;
       }
     };
     
@@ -141,8 +150,16 @@ export default function NewDoseScreen() {
         setTimeout(lockBody, 100);
       });
       
-      // Re-lock on resize events
-      window.addEventListener('resize', lockBody);
+      // Re-lock on resize events and enforce viewport
+      window.addEventListener('resize', () => {
+        lockBody();
+        enforceViewport();
+      });
+      
+      // Add visual viewport listener for better keyboard handling
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', enforceViewport);
+      }
       
       // Prevent double-tap zoom
       let lastTouchEnd = 0;
@@ -171,7 +188,13 @@ export default function NewDoseScreen() {
         window.removeEventListener('focusout', () => {
           setTimeout(lockBody, 100);
         });
-        window.removeEventListener('resize', lockBody);
+        window.removeEventListener('resize', () => {
+          lockBody();
+          enforceViewport();
+        });
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', enforceViewport);
+        }
         window.removeEventListener('touchend', preventDoubleTapZoom);
         window.removeEventListener('touchstart', preventMultiTouchScale);
         window.removeEventListener('touchmove', preventMultiTouchScale);
@@ -887,8 +910,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Prevent horizontal overflow
     maxWidth: '100vw', // Constrain to viewport width
     width: '100vw',
-    height: '100vh',
-    maxHeight: '100vh',
+    minHeight: '100vh', // Use minHeight instead of fixed height
     position: 'fixed',
     top: 0,
     left: 0,
@@ -900,10 +922,9 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     width: '100vw',
-    height: '100vh',
+    minHeight: '100vh', // Use minHeight to allow content to expand
     overflow: 'hidden',
     maxWidth: '100vw',
-    maxHeight: '100vh',
     backgroundColor: '#F2F2F7',
     /* Ensure no transforms or scaling can occur */
     transform: 'none',
