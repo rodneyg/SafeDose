@@ -39,5 +39,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
+    height: 49, // Reduced from default (~84px) to make more room for content
   },
 });

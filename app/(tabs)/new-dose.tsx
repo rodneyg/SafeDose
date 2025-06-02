@@ -556,23 +556,25 @@ export default function NewDoseScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
-        <Text style={styles.subtitle}>
-          {screenStep === 'intro' && 'Welcome'}
-          {screenStep === 'scan' && 'Scan Syringe & Vial'}
-          {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
-          {screenStep === 'manualEntry' && (
-            `${
-              manualStep === 'dose' ? 'Enter Dose' :
-              manualStep === 'medicationSource' ? 'Select Medication Type' :
-              manualStep === 'concentrationInput' ? 'Enter Concentration' :
-              manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
-              manualStep === 'reconstitution' ? 'Reconstitution' :
-              manualStep === 'syringe' ? 'Select Syringe' :
-              manualStep === 'preDoseConfirmation' ? 'Pre-Dose Safety Review' :
-              'Calculation Result'
-            }`
-          )}
-        </Text>
+        {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
+        {screenStep !== 'intro' && (
+          <Text style={styles.subtitle}>
+            {screenStep === 'scan' && 'Scan Syringe & Vial'}
+            {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
+            {screenStep === 'manualEntry' && (
+              `${
+                manualStep === 'dose' ? 'Enter Dose' :
+                manualStep === 'medicationSource' ? 'Select Medication Type' :
+                manualStep === 'concentrationInput' ? 'Enter Concentration' :
+                manualStep === 'totalAmountInput' ? 'Enter Total Amount' :
+                manualStep === 'reconstitution' ? 'Reconstitution' :
+                manualStep === 'syringe' ? 'Select Syringe' :
+                manualStep === 'preDoseConfirmation' ? 'Pre-Dose Safety Review' :
+                'Calculation Result'
+              }`
+            )}
+          </Text>
+        )}
         
         {/* Recovery button that only shows if state health is recovering */}
         {doseCalculator.stateHealth === 'recovering' && (
@@ -717,7 +719,7 @@ export default function NewDoseScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
-  header: { marginTop: 80, marginBottom: 20, paddingHorizontal: 16 },
+  header: { marginTop: 70, marginBottom: 20, paddingHorizontal: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
