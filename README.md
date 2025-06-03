@@ -19,14 +19,7 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ## 🚀 Hosted Version
 
-A hosted version of SafeDose is **coming soon**.  
-It will include:
-- Built-in OCR for vials and syringes
-- Secure cloud processing
-- Instant dose visualization
-- Preloaded medications and syringe presets
-
-Stay tuned at [TBD)
+A hosted version of SafeDose: https://app.safedoseai.com/
 
 ---
 
