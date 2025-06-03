@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
-import { insulinVolumes, standardVolumes, MAX_FILE_SIZE } from '../lib/utils';
+import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
 import { CameraView } from 'expo-camera';
 
 interface CameraRef {
@@ -70,7 +70,8 @@ export async function captureAndProcessImage({
     let base64Image: string | undefined;
     let mimeType: string = '';
 
-    if (isMobileWeb) {
+    if (isWeb) {
+      // For any web platform (mobile or desktop), use web camera stream if available, otherwise file input
       // First check if we have an active web camera stream
       if (webCameraStream && webCameraStream.active) {
         console.log('[Capture] Using active web camera stream');
@@ -90,7 +91,7 @@ export async function captureAndProcessImage({
       
       // If we don't have a stream or stream capture failed, use file input
       if (!base64Image) {
-        console.log('[Capture] Mobile web detected, using file input');
+        console.log('[Capture] Web platform detected, using file input');
 
         // Clean up any existing file inputs first
         const existingInputs = document.querySelectorAll('input[type="file"]');

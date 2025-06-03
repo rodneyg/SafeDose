@@ -489,22 +489,31 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     lastActionTimestamp.current = Date.now();
   }, [substanceName, doseValue, unit, calculatedVolume]);
 
-  const handleFeedbackComplete = useCallback(() => {
+  const handleFeedbackComplete = useCallback(async () => {
     if (!feedbackContext) return;
+    
+    const nextAction = feedbackContext.nextAction;
     
     // Clear feedback context
     setFeedbackContext(null);
     
     // Navigate to the intended destination
-    if (feedbackContext.nextAction === 'new_dose') {
+    if (nextAction === 'new_dose') {
       resetFullForm('dose');
       setScreenStep('intro');
-    } else {
-      setScreenStep('scan');
+    } else if (nextAction === 'scan_again') {
+      // Check scan limits before allowing scan again
+      const canProceed = await checkUsageLimit();
+      if (canProceed) {
+        setScreenStep('scan');
+      } else {
+        // If no scans remaining, go back to intro screen
+        setScreenStep('intro');
+      }
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit]);
 
   const handleCapture = useCallback(async () => {
     try {
