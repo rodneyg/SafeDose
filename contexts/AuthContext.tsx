@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/lib/firebase'; // Initialized auth instance
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const isSigningOutRef = useRef(false);
 
   const logout = async () => {
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
@@ -31,11 +33,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('[AuthContext] Setting isSigningOut to true...');
       setIsSigningOut(true);
-      console.log('[AuthContext] isSigningOut state updated to true');
+      isSigningOutRef.current = true;
+      console.log('[AuthContext] isSigningOut state and ref updated to true');
       
       console.log('[AuthContext] Calling Firebase signOut...');
       await signOut(auth);
       console.log('[AuthContext] Firebase signOut completed successfully');
+      
+      console.log('[AuthContext] Clearing user state...');
+      setUser(null);
+      console.log('[AuthContext] User state cleared');
+      
+      console.log('[AuthContext] Clearing cached data...');
+      try {
+        // Clear any cached user data from local storage (web)
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const keysToRemove = ['userProfile', 'usage', 'preferences'];
+          keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`[AuthContext] Cleared localStorage key: ${key}`);
+          });
+        }
+        
+        // Clear any cached user data from AsyncStorage (React Native)
+        const asyncKeysToRemove = ['userProfile', 'usage', 'preferences', 'onboardingComplete'];
+        await Promise.all(
+          asyncKeysToRemove.map(async (key) => {
+            try {
+              await AsyncStorage.removeItem(key);
+              console.log(`[AuthContext] Cleared AsyncStorage key: ${key}`);
+            } catch (error) {
+              console.warn(`[AuthContext] Error clearing AsyncStorage key ${key}:`, error);
+            }
+          })
+        );
+      } catch (storageError) {
+        console.warn('[AuthContext] Error clearing cached data:', storageError);
+      }
+      console.log('[AuthContext] Cached data cleared');
       
       console.log('[AuthContext] Logging analytics event...');
       logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
@@ -51,9 +86,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
+      isSigningOutRef.current = false;
       throw error;
     }
   };
+
+  // Sync ref with state to ensure consistency
+  useEffect(() => {
+    isSigningOutRef.current = isSigningOut;
+  }, [isSigningOut]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -68,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: firebaseUser.displayName
       } : 'null');
       console.log('[AuthContext] Current isSigningOut state:', isSigningOut);
+      console.log('[AuthContext] Current isSigningOut ref:', isSigningOutRef.current);
       console.log('[AuthContext] Previous user state:', user ? {
         uid: user.uid,
         isAnonymous: user.isAnonymous,
@@ -80,7 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(firebaseUser);
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
-        console.log('[AuthContext] isSigningOut state cleared');
+        isSigningOutRef.current = false;
+        console.log('[AuthContext] isSigningOut state and ref cleared');
         
         // Clear any pending timeout if user signs in
         if (timeoutId) {
@@ -101,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] User state set to null');
         
         // If we're not in the middle of signing out, automatically sign in anonymously
-        if (!isSigningOut) {
+        if (!isSigningOutRef.current) {
           console.log('[AuthContext] Not signing out - signing in anonymously immediately');
           signInAnonymously(auth)
             .then(() => {
@@ -121,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           timeoutId = setTimeout(() => {
             console.log('[AuthContext] Timeout reached - resetting sign out state and signing in anonymously');
             setIsSigningOut(false);
+            isSigningOutRef.current = false;
             signInAnonymously(auth)
               .then(() => {
                 console.log('[AuthContext] ✅ Signed in anonymously after logout');
@@ -146,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timeoutId);
       }
     };
-  }, [isSigningOut]);
+  }, []); // Remove isSigningOut dependency to prevent auth listener recreation
 
   if (loading) {
     return <ActivityIndicator size="large" />;
