@@ -74,19 +74,41 @@ export default function IntroScreen({
   }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
+    console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
+    console.log('[IntroScreen] Current user state:', user ? {
+      uid: user.uid,
+      isAnonymous: user.isAnonymous,
+      displayName: user.displayName,
+      email: user.email
+    } : 'No user');
+    console.log('[IntroScreen] Alert availability check:', typeof Alert?.alert);
+    console.log('[IntroScreen] Platform info:', { isMobileWeb });
+    
     try {
+      console.log('[IntroScreen] Showing confirmation dialog...');
       Alert.alert(
         'Sign Out',
         'Are you sure you want to sign out?',
         [
-          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Cancel', 
+            style: 'cancel',
+            onPress: () => {
+              console.log('[IntroScreen] User cancelled logout');
+            }
+          },
           {
             text: 'Sign Out',
             style: 'destructive',
             onPress: async () => {
+              console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
+              console.log('[IntroScreen] User confirmed logout, initiating...');
               try {
+                console.log('[IntroScreen] Calling logout function...');
                 await logout();
+                console.log('[IntroScreen] ✅ Logout completed successfully');
               } catch (e) {
+                console.error('[IntroScreen] ❌ Logout error:', e);
                 Alert.alert('Sign Out Failed', 'Please try again.');
               }
             },
@@ -94,11 +116,28 @@ export default function IntroScreen({
         ],
         { cancelable: true },
       );
-    } catch {
+      console.log('[IntroScreen] Alert.alert() called successfully');
+    } catch (error) {
+      console.error('[IntroScreen] ❌ Error showing alert dialog:', error);
+      console.log('[IntroScreen] Alert failed, attempting direct logout confirmation...');
       /* Fallback for web */
-      if (confirm?.('Sign out?')) await logout();
+      try {
+        const confirmed = confirm?.('Sign out?');
+        console.log('[IntroScreen] Fallback confirmation result:', confirmed);
+        if (confirmed) {
+          console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
+          console.log('[IntroScreen] User confirmed logout via fallback, initiating...');
+          console.log('[IntroScreen] Calling logout function...');
+          await logout();
+          console.log('[IntroScreen] ✅ Logout completed successfully');
+        } else {
+          console.log('[IntroScreen] User cancelled logout via fallback');
+        }
+      } catch (e) {
+        console.error('[IntroScreen] ❌ Fallback logout error:', e);
+      }
     }
-  }, [logout]);
+  }, [logout, user, isMobileWeb]);
 
   /* Dev helper: auto-login if TEST_LOGIN flag set */
   useEffect(() => {
@@ -259,6 +298,7 @@ export default function IntroScreen({
                       isMobileWeb && styles.signOutButtonMobile,
                     ]}
                     onPress={handleLogoutPress}
+                    testID="sign-out-button"
                     accessibilityRole="button"
                     accessibilityLabel="Sign out"
                     accessibilityHint="Sign out of your account"
