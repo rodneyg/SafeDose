@@ -154,6 +154,8 @@ export default function ManualEntryScreen({
   };
 
   // Function to check if current step is valid
+  // Centralizes validation logic to prevent progression with incomplete/invalid data
+  // Each step has specific validation requirements based on the medical calculation workflow
   const isCurrentStepValid = (): boolean => {
     let result = false;
     switch (manualStep) {
@@ -171,31 +173,59 @@ export default function ManualEntryScreen({
   };
 
   // Create a handler for next button press
+  // This function orchestrates the step-by-step validation and navigation flow
+  // ensuring users can only proceed when current step data is valid
   const handleNextButtonPress = useCallback(() => {
     try {
-      console.log('[ManualEntry] Next button pressed for step:', manualStep);
+      console.log('[ManualEntryScreen] ========== STEP NAVIGATION ==========');
+      console.log('[ManualEntryScreen] Next button pressed for step:', manualStep);
+      console.log('[ManualEntryScreen] Current form state:', {
+        dose,
+        unit,
+        substanceName,
+        medicationInputType,
+        concentrationAmount,
+        concentrationUnit,
+        totalAmount,
+        syringeType: manualSyringe?.type,
+        syringeVolume: manualSyringe?.volume
+      });
       
       // If the current step is not valid, do nothing
-      if (!isCurrentStepValid()) return;
+      const isValid = isCurrentStepValid();
+      console.log('[ManualEntryScreen] Step validation result:', isValid);
+      if (!isValid) {
+        console.log('[ManualEntryScreen] Step invalid, preventing navigation');
+        return;
+      }
 
       // Navigate directly to the next step without confirmation
+      console.log('[ManualEntryScreen] Navigating from step:', manualStep);
       if (manualStep === 'dose') {
+        console.log('[ManualEntryScreen] → Calling handleNextDose()');
         handleNextDose();
       } else if (manualStep === 'medicationSource') {
+        console.log('[ManualEntryScreen] → Calling handleNextMedicationSource()');
         handleNextMedicationSource();
       } else if (manualStep === 'concentrationInput') {
+        console.log('[ManualEntryScreen] → Calling handleNextConcentrationInput()');
         handleNextConcentrationInput();
       } else if (manualStep === 'totalAmountInput') {
+        console.log('[ManualEntryScreen] → Calling handleNextTotalAmountInput()');
         handleNextTotalAmountInput();
       } else if (manualStep === 'reconstitution') {
+        console.log('[ManualEntryScreen] → Calling handleNextReconstitution()');
         handleNextReconstitution();
       } else if (manualStep === 'syringe') {
+        console.log('[ManualEntryScreen] → Calling handleCalculateFinal()');
         handleCalculateFinal();
       } else if (manualStep === 'preDoseConfirmation') {
+        console.log('[ManualEntryScreen] → Calling handleNextPreDoseConfirmation()');
         handleNextPreDoseConfirmation();
       }
+      console.log('[ManualEntryScreen] ✅ Navigation action completed');
     } catch (error) {
-      console.error('Error in next button handler:', error);
+      console.error('[ManualEntryScreen] ❌ Error in next button handler:', error);
     }
   }, [
     manualStep,

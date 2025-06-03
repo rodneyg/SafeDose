@@ -1,492 +1,284 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera as CameraIcon, Pill, Syringe, LogIn, LogOut, CreditCard, Info, User, Mail } from 'lucide-react-native';
+import {
+  Camera as CameraIcon,
+  Pill,
+  Syringe,
+  LogIn,
+  LogOut,
+  Info,
+  User,
+} from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
-// Import auth-related dependencies for Sign In functionality
+
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import Constants from 'expo-constants'; // For accessing env variables from app.config.js
+import Constants from 'expo-constants'; // env variables from app.config.js
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
-  resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
+  resetFullForm: (
+    startStep?:
+      | 'dose'
+      | 'medicationSource'
+      | 'concentrationInput'
+      | 'totalAmountInput'
+      | 'reconstitution'
+      | 'syringe'
+      | 'finalResult',
+  ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
 }
 
-export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatingFromIntro }: IntroScreenProps) {
-  console.log('[IntroScreen] ========== INTRO SCREEN RENDER ==========');
-  
+export default function IntroScreen({
+  setScreenStep,
+  resetFullForm,
+  setNavigatingFromIntro,
+}: IntroScreenProps) {
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
 
-  console.log('[IntroScreen] Detailed component state:', {
-    user: {
-      uid: user?.uid || 'No user',
-      isAnonymous: user?.isAnonymous,
-      displayName: user?.displayName || 'No display name',
-      email: user?.email || 'No email'
-    },
-    profile: {
-      exists: !!profile,
-      isLoading,
-      profileData: profile ? {
-        isLicensedProfessional: profile.isLicensedProfessional,
-        isPersonalUse: profile.isPersonalUse,
-        isCosmeticUse: profile.isCosmeticUse,
-        dateCreated: profile.dateCreated
-      } : null
-    },
-    disclaimerText: {
-      exists: !!disclaimerText,
-      length: disclaimerText?.length || 0,
-      preview: disclaimerText ? disclaimerText.substring(0, 50) + '...' : 'null'
-    },
-    usageData: {
-      exists: !!usageData,
-      scansUsed: usageData?.scansUsed || 'undefined',
-      limit: usageData?.limit || 'undefined',
-      plan: usageData?.plan || 'undefined'
-    }
-  });
-
-  // Log component mount to help debug visibility issues
+  /* =========================================================================
+     LOGGING  (remove or guard with __DEV__ as needed)
+  ========================================================================= */
   useEffect(() => {
-    console.log('[IntroScreen] ========== COMPONENT LIFECYCLE ==========');
-    console.log('[IntroScreen] Component mounted');
-    console.log('[IntroScreen] Initial data state:', {
-      userLoaded: !!user,
-      profileLoading: isLoading,
-      profileLoaded: !!profile,
-      disclaimerLoaded: !!disclaimerText,
-      usageDataLoaded: !!usageData
-    });
-    
-    // Force log to make sure this component actually renders
-    console.log('[IntroScreen] Currently visible, screenStep should be "intro"');
-    
-    return () => {
-      console.log('[IntroScreen] Component unmounted');
-    };
+    console.log('[IntroScreen] mounted');
+    return () => console.log('[IntroScreen] unmounted');
   }, []);
 
-  // Log data changes to track when things become available
-  useEffect(() => {
-    console.log('[IntroScreen] ========== DATA CHANGE TRACKING ==========');
-    console.log('[IntroScreen] Profile data changed:', {
-      isLoading,
-      profile: profile ? {
-        loaded: true,
-        type: typeof profile,
-        keys: Object.keys(profile)
-      } : { loaded: false },
-      disclaimerText: disclaimerText ? {
-        loaded: true,
-        length: disclaimerText.length,
-        type: typeof disclaimerText
-      } : { loaded: false }
-    });
-  }, [profile, isLoading, disclaimerText]);
-
-  useEffect(() => {
-    console.log('[IntroScreen] ========== USAGE DATA CHANGE TRACKING ==========');
-    console.log('[IntroScreen] Usage data changed:', {
-      usageData: usageData ? {
-        loaded: true,
-        scansUsed: usageData.scansUsed,
-        limit: usageData.limit,
-        plan: usageData.plan,
-        type: typeof usageData
-      } : { loaded: false }
-    });
-  }, [usageData]);
-
-  // Check for potential loading issues
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (isLoading) {
-        console.warn('[IntroScreen] ⚠️  Profile still loading after 5 seconds - potential issue');
-      }
-      if (!profile && !isLoading) {
-        console.warn('[IntroScreen] ⚠️  No profile loaded and not loading - potential data issue');
-      }
-      if (!usageData) {
-        console.warn('[IntroScreen] ⚠️  No usage data loaded - potential data issue');
-      }
-    }, 5000);
-
-    return () => clearTimeout(timeoutId);
-  }, [isLoading, profile, usageData]);
-
-  // Use memoized handlers to ensure stable references across renders
+  /* =========================================================================
+     HANDLERS
+  ========================================================================= */
   const handleSignInPress = useCallback(() => {
-    console.log('[IntroScreen] Sign In button pressed');
     const provider = new GoogleAuthProvider();
-    
-    // Set custom parameters for better UX
-    provider.setCustomParameters({
-      prompt: 'select_account'
-    });
-    
-    console.log('[IntroScreen] Initiating Google Sign-In...');
-    
-    // Use Firebase popup sign-in method for authentication
+    provider.setCustomParameters({ prompt: 'select_account' });
+
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log('Google Sign-In successful', result.user);
-        if (user?.isAnonymous) {
-          // The anonymous account will be automatically linked to the signed-in account
-          console.log('Linked anonymous account with Google');
-        } else {
-          console.log('Signed in with Google');
-        }
-        // Give the authentication state time to update
-        setTimeout(() => {
-          console.log('Authentication successful, auth state should have updated');
-        }, 100);
+        console.log('Google Sign-In OK:', result.user.uid);
       })
       .catch((error) => {
-        console.error('Google sign-in error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        
-        // Log additional context for debugging
-        if (error.code === 'auth/popup-blocked') {
-          console.error('Popup was blocked - user needs to allow popups for this site');
-        } else if (error.code === 'auth/popup-closed-by-user') {
-          console.error('User closed the popup before completing sign-in');
-        } else if (error.code === 'auth/operation-not-allowed') {
-          console.error('Google Sign-In is not enabled in Firebase Console');
-        } else if (error.code === 'auth/unauthorized-domain') {
-          console.error('Domain is not authorized in Firebase Console');
-        } else {
-          console.error('Unknown Google Sign-In error:', error);
-        }
+        console.error('Google Sign-In error:', error.code, error.message);
       });
-  }, [auth, user]);
+  }, [auth]);
 
   const handleUpgradePress = useCallback(() => {
-    console.log('[IntroScreen] Upgrade button pressed');
-    // Navigate to pricing page for upgrade options
     router.push('/pricing');
   }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
-    console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
-    console.log('[IntroScreen] Current user state:', user ? {
-      uid: user.uid,
-      isAnonymous: user.isAnonymous,
-      displayName: user.displayName,
-      email: user.email
-    } : 'No user');
-    console.log('[IntroScreen] Current isSigningOut state:', isSigningOut);
-    console.log('[IntroScreen] Alert availability check:', typeof Alert);
-    console.log('[IntroScreen] Alert.alert function check:', typeof Alert?.alert);
-    console.log('[IntroScreen] Platform info:', { isMobileWeb });
-    console.log('[IntroScreen] Showing confirmation dialog...');
-    
     try {
-      // Verify Alert is available before using it
-      if (typeof Alert === 'undefined' || typeof Alert.alert !== 'function') {
-        throw new Error('Alert.alert is not available on this platform');
-      }
-      
-      // Show confirmation dialog
       Alert.alert(
         'Sign Out',
-        'Are you sure you want to sign out? You can always sign back in to access your saved calculations.',
+        'Are you sure you want to sign out?',
         [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => {
-              console.log('[IntroScreen] User cancelled logout');
-            },
-          },
+          { text: 'Cancel', style: 'cancel' },
           {
             text: 'Sign Out',
             style: 'destructive',
             onPress: async () => {
-              console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
-              console.log('[IntroScreen] User confirmed logout, initiating...');
               try {
-                console.log('[IntroScreen] Calling logout function...');
                 await logout();
-                console.log('[IntroScreen] ✅ Logout completed successfully');
-              } catch (error) {
-                console.error('[IntroScreen] ❌ Logout error:', error);
-                console.error('[IntroScreen] Error details:', {
-                  message: error?.message || 'Unknown error',
-                  code: error?.code || 'No error code',
-                  stack: error?.stack || 'No stack trace'
-                });
-                Alert.alert(
-                  'Sign Out Failed',
-                  'There was an error signing out. Please try again.',
-                  [{ text: 'OK', onPress: () => console.log('[IntroScreen] Error dialog dismissed') }]
-                );
+              } catch (e) {
+                Alert.alert('Sign Out Failed', 'Please try again.');
               }
             },
           },
         ],
-        {
-          onDismiss: () => {
-            console.log('[IntroScreen] Alert dialog was dismissed without selection');
-          }
-        }
+        { cancelable: true },
       );
-      console.log('[IntroScreen] Alert.alert() called successfully');
-    } catch (alertError) {
-      console.error('[IntroScreen] ❌ Error showing alert dialog:', alertError);
-      console.log('[IntroScreen] Alert failed, attempting direct logout confirmation...');
-      
-      // Fallback: Direct logout for web platform where Alert might not work properly
-      const confirmLogout = confirm ? confirm('Are you sure you want to sign out?') : true;
-      console.log('[IntroScreen] Fallback confirmation result:', confirmLogout);
-      
-      if (confirmLogout) {
-        try {
-          console.log('[IntroScreen] Fallback: Calling logout function directly...');
-          await logout();
-          console.log('[IntroScreen] ✅ Fallback logout completed successfully');
-        } catch (directLogoutError) {
-          console.error('[IntroScreen] ❌ Fallback logout error:', directLogoutError);
-        }
-      } else {
-        console.log('[IntroScreen] Fallback: User cancelled logout');
-      }
+    } catch {
+      /* Fallback for web */
+      if (confirm?.('Sign out?')) await logout();
     }
-  }, [logout, user, isSigningOut]);
+  }, [logout]);
 
-  // For React Native, we'll close the menu manually in button handlers
-  // instead of using web-specific tap outside detection
-
-  // Check if the auto-login flag is enabled
+  /* Dev helper: auto-login if TEST_LOGIN flag set */
   useEffect(() => {
-    // Read TEST_LOGIN environment variable from app.config.js
-    const testLogin = Constants.expoConfig?.extra?.TEST_LOGIN === true;
-    if (testLogin && user?.isAnonymous) {
-      console.log('[IntroScreen] Auto-login triggered by REACT_APP_TEST_LOGIN flag');
-      // Automatically trigger login for testing purposes when flag is set
-      handleSignInPress();
-    }
+    const auto = Constants.expoConfig?.extra?.TEST_LOGIN === true;
+    if (auto && user?.isAnonymous) handleSignInPress();
   }, [user, handleSignInPress]);
 
+  /* =========================================================================
+     NAV HANDLERS
+  ========================================================================= */
   const handleScanPress = useCallback(() => {
-    console.log('[IntroScreen] Scan button pressed');
-    // Mark that we're navigating from intro screen
-    if (setNavigatingFromIntro) {
-      console.log('[IntroScreen] Setting navigatingFromIntro to true');
-      setNavigatingFromIntro(true);
-    }
-    // Navigate directly to scan without resetting the form
-    console.log('[IntroScreen] Calling setScreenStep("scan")');
+    setNavigatingFromIntro?.(true);
     setScreenStep('scan');
   }, [setScreenStep, setNavigatingFromIntro]);
-  
+
   const handleManualEntryPress = useCallback(() => {
-    console.log('[IntroScreen] Manual entry button pressed');
-    // Mark that we're navigating from intro screen
-    if (setNavigatingFromIntro) {
-      console.log('[IntroScreen] Setting navigatingFromIntro to true');
-      setNavigatingFromIntro(true);
-    }
-    // Ensure we have clean form state before starting manual entry
-    console.log('[IntroScreen] Calling resetFullForm("dose")');
+    setNavigatingFromIntro?.(true);
     resetFullForm('dose');
-    console.log('[IntroScreen] Calling setScreenStep("manualEntry")');
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
-  
+
+  /* =========================================================================
+     RENDER
+  ========================================================================= */
   return (
     <SafeAreaView style={styles.safeArea}>
       <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
-        {/* Debug info overlay (only in development) */}
         {__DEV__ && (
           <View style={styles.debugOverlay}>
             <Text style={styles.debugText}>
-              Debug: Profile={profile ? '✓' : '✗'} Loading={isLoading ? '✓' : '✗'} Usage={usageData ? '✓' : '✗'}
+              Profile {profile ? '✓' : '✗'} | Loading {isLoading ? '✓' : '✗'} | Usage{' '}
+              {usageData ? '✓' : '✗'}
             </Text>
           </View>
         )}
-        
-        {/* Show loading state if profile is still loading */}
+
         {isLoading && !isSigningOut && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading your profile...</Text>
+            <Text style={styles.loadingText}>Loading your profile…</Text>
           </View>
         )}
 
-        {/* Show signing out message with better visual feedback */}
         {isSigningOut && (
           <View style={styles.signingOutContainer}>
             <View style={styles.signingOutCard}>
               <Text style={styles.signingOutTitle}>Signing Out</Text>
               <Text style={styles.signingOutText}>
-                You've been signed out successfully. We'll sign you in anonymously in a moment to continue using the app.
+                You've been signed out. We'll sign you in anonymously shortly.
               </Text>
             </View>
           </View>
         )}
-        
-        {/* Main content section - only show when not loading and not signing out */}
+
         {!isLoading && !isSigningOut && (
-          <View style={styles.content}>
-            {/* App icon and welcome message */}
-            <View style={styles.welcomeContainer}>
-              <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-              
-              {/* Dynamic welcome message based on authentication status */}
-              {user && !user.isAnonymous && user.displayName ? (
-                <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
-              ) : (
-                <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
-              )}
-            </View>
-            
-            {/* Main action buttons grouped together (Law of Proximity) */}
-            <View style={styles.actionButtonsContainer}>
-              {/* Primary action */}
-              <TouchableOpacity 
-                style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]} 
-                onPress={handleScanPress}>
-                <CameraIcon color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Scan Items</Text>
-              </TouchableOpacity>
-              
-              {/* Secondary action */}
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton, isMobileWeb && styles.buttonMobile]}
-                onPress={handleManualEntryPress}
-              >
-                <Pill color={'#fff'} size={20} />
-                <Text style={styles.buttonText}>Enter Details Manually</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {/* Disclaimer with Info icon - show default if disclaimerText is not available */}
-            <View style={styles.disclaimerContainer}>
-              <View style={styles.disclaimerIconContainer}>
-                <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
-                <Text style={styles.disclaimerText}>
-                  {disclaimerText || 'Always consult a licensed healthcare professional before administering any medication.'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-        
-        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading and not signing out */}
-        {!isLoading && !isSigningOut && (
-          <View style={styles.bottomSection}>
-            {/* Usage Status Card - shows scans remaining and upgrade options together */}
-            <View style={styles.usageStatusCard}>
-              {/* Scans remaining display - show default if usageData is not available */}
-              <View style={styles.usageInfoRow}>
-                <Text style={styles.scanCreditsText}>
-                  🎟️ {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining
-                </Text>
-                
-                {/* Premium Badge (only for plus users) */}
-                {usageData?.plan === 'plus' && (
-                  <View style={styles.premiumBadgeContainer}>
-                    <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
-                  </View>
+          <>
+            {/* ===================== MAIN CONTENT ===================== */}
+            <View style={styles.content}>
+              <View style={styles.welcomeContainer}>
+                <Syringe color="#6ee7b7" size={64} style={styles.icon} />
+                {user && !user.isAnonymous && user.displayName ? (
+                  <Text style={styles.welcomeText}>
+                    Hello, {user.displayName.split(' ')[0]}!
+                  </Text>
+                ) : (
+                  <Text style={styles.welcomeText}>Ready to get started?</Text>
                 )}
               </View>
-              
-              {/* Upgrade button - appears right below scans for free users */}
-              {(!usageData || usageData.plan === 'free') && (
-                <TouchableOpacity 
-                  style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-                  onPress={handleUpgradePress}>
-                  <CreditCard color={'#f59e0b'} size={16} />
-                  <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
+
+              <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.button, styles.primaryButton, isMobileWeb && styles.buttonMobile]}
+                  onPress={handleScanPress}
+                >
+                  <CameraIcon color="#fff" size={20} />
+                  <Text style={styles.buttonText}>Scan</Text>
                 </TouchableOpacity>
-              )}
-              
-              {/* Low scans warning for free users */}
-              {usageData && (usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
-                <Text style={styles.lowScansWarning}>
-                  ⚠️ Running low on scans. Upgrade to continue calculating doses.
-                </Text>
-              )}
-            </View>
-            
-            {/* Sign-In section - appears for anonymous users or when signed out */}
-            {(user?.isAnonymous || !user) && (
-              <View style={styles.authSection}>
-                <Text style={styles.authPromptText}>
-                  {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
-                </Text>
-                
-                <TouchableOpacity 
-                  style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-                  onPress={handleSignInPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign in with Google"
-                  accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
-                  <LogIn color="#10b981" size={16} />
-                  <Text style={styles.signInButtonText}>Sign In with Google</Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.secondaryButton,
+                    isMobileWeb && styles.buttonMobile,
+                  ]}
+                  onPress={handleManualEntryPress}
+                >
+                  <Pill color="#fff" size={20} />
+                  <Text style={styles.buttonText}>Manual</Text>
                 </TouchableOpacity>
               </View>
-            )}
-            
-            {/* Profile section - appears for logged-in users */}
-            {user && !user.isAnonymous && (
-              <View style={styles.profileSection}>
-                {console.log('[IntroScreen] Rendering profile section for authenticated user:', {
-                  uid: user.uid,
-                  displayName: user.displayName,
-                  email: user.email
-                })}
-                
-                {/* User info display */}
-                <View style={styles.userInfoContainer}>
-                  <View style={styles.userInfoRow}>
-                    <User color="#3b82f6" size={18} />
-                    <View style={styles.userInfoText}>
-                      <Text style={styles.userDisplayName}>
-                        {user.displayName || user.email?.split('@')[0] || 'User'}
-                      </Text>
-                      {user.email && (
-                        <Text style={styles.userEmail}>{user.email}</Text>
-                      )}
+
+              <View style={styles.scanStatusContainer}>
+                <Text style={styles.scanStatusText}>
+                  You have{' '}
+                  {usageData ? usageData.limit - usageData.scansUsed : 3} scans remaining.{' '}
+                  {(!usageData || usageData.plan === 'free') && (
+                    <Text style={styles.upgradeLink} onPress={handleUpgradePress}>
+                      Upgrade
+                    </Text>
+                  )}
+                </Text>
+              </View>
+
+              <View style={styles.disclaimerContainer}>
+                <View style={styles.disclaimerIconContainer}>
+                  <Info color="#856404" size={14} style={styles.disclaimerIcon} />
+                  <Text style={styles.disclaimerText}>
+                    {disclaimerText ||
+                      'Always consult a licensed healthcare professional before administering any medication.'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ===================== AUTH / PROFILE ===================== */}
+            <View style={styles.bottomSection}>
+              {(user?.isAnonymous || !user) && (
+                <View style={styles.authSection}>
+                  <Text style={styles.authPromptText}>
+                    {!user
+                      ? 'Signed out successfully. Sign in to save calculations and get unlimited scans'
+                      : 'Sign in to save calculations and get unlimited scans'}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]}
+                    onPress={handleSignInPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign in with Google"
+                    accessibilityHint="Sign in to save calculations and get unlimited scans"
+                  >
+                    <LogIn color="#10b981" size={16} />
+                    <Text style={styles.signInButtonText}>Sign In with Google</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {user && !user.isAnonymous && (
+                <View style={styles.profileSection}>
+                  <View style={styles.userInfoContainer}>
+                    <View style={styles.userInfoRow}>
+                      <User color="#3b82f6" size={18} />
+                      <View style={styles.userInfoText}>
+                        <Text style={styles.userDisplayName}>
+                          {user.displayName ||
+                            user.email?.split('@')[0] ||
+                            'User'}
+                        </Text>
+                        {user.email && (
+                          <Text style={styles.userEmail}>{user.email}</Text>
+                        )}
+                      </View>
                     </View>
                   </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.signOutButton,
+                      isMobileWeb && styles.signOutButtonMobile,
+                    ]}
+                    onPress={handleLogoutPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign out"
+                    accessibilityHint="Sign out of your account"
+                  >
+                    <LogOut color="#ef4444" size={16} />
+                    <Text style={styles.signOutButtonText}>Sign Out</Text>
+                  </TouchableOpacity>
                 </View>
-                
-                {/* Sign out button - always visible for better discoverability */}
-                <TouchableOpacity 
-                  style={[styles.signOutButton, isMobileWeb && styles.signOutButtonMobile]} 
-                  onPress={() => {
-                    console.log('[IntroScreen] Sign out button onPress triggered');
-                    console.log('[IntroScreen] About to call handleLogoutPress');
-                    handleLogoutPress();
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign out"
-                  accessibilityHint="Sign out of your account. You will be asked to confirm this action."
-                  testID="sign-out-button">
-                  <LogOut color="#ef4444" size={16} />
-                  <Text style={styles.signOutButtonText}>Sign Out</Text>
-                </TouchableOpacity>
-                {console.log('[IntroScreen] Sign out button rendered successfully')}
-              </View>
-            )}
-          </View>
+              )}
+            </View>
+          </>
         )}
       </Animated.View>
     </SafeAreaView>
   );
 }
 
+/* =========================================================================
+   STYLES
+========================================================================= */
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -494,15 +286,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    flexDirection: 'column',
   },
-  // Debug overlay for development
+
+  /* Debug */
   debugOverlay: {
     position: 'absolute',
     top: 10,
     left: 10,
     right: 10,
-    backgroundColor: 'rgba(255, 255, 0, 0.8)',
+    backgroundColor: 'rgba(255,255,0,0.8)',
     padding: 8,
     borderRadius: 4,
     zIndex: 1000,
@@ -512,7 +304,8 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
   },
-  // Loading state
+
+  /* Loading / signing-out */
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -522,9 +315,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
   },
-  // Signing out state
   signingOutContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -533,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   signingOutCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 24,
     maxWidth: 320,
@@ -560,74 +351,95 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  // Main content section
+
+  /* Main content */
   content: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start', // Changed from center to flex-start for better control
-    paddingTop: 40, // Add top padding for breathing room
+    paddingTop: 20,
     padding: 16,
   },
-  // Welcome section
   welcomeContainer: {
     alignItems: 'center',
-    marginBottom: 30, // Reduced from 40 to 30 to create more space for content below
+    marginBottom: 20,
   },
-  icon: { 
-    marginBottom: 8,
+  icon: {
+    marginBottom: 15,
   },
-  text: { 
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000', 
-    textAlign: 'center', 
-    paddingHorizontal: 16,
+  welcomeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+    textAlign: 'center',
   },
-  // Action buttons group (Law of Proximity)
+
+  /* Action buttons */
   actionButtonsContainer: {
-    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
+    marginBottom: 24,
+    gap: 20,
   },
-  button: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 10,
-    width: '80%',
-    marginBottom: 20, // Increased from 12 to 20 for better spacing
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+  button: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: 100,
+    height: 100,
+    padding: 16,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
   },
-  buttonMobile: { 
-    paddingVertical: 16, 
-    paddingHorizontal: 28, 
+  buttonMobile: {
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    width: 120,
+    height: 120,
   },
   primaryButton: {
-    backgroundColor: '#007AFF', 
+    backgroundColor: '#007AFF',
   },
   secondaryButton: {
     backgroundColor: '#6366f1',
   },
-  buttonText: { 
-    color: '#ffffff', 
-    fontSize: 16, 
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  // Disclaimer styles
-  disclaimerContainer: { 
-    backgroundColor: '#FFF3CD', 
+
+  /* Scan status */
+  scanStatusContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  scanStatusText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  upgradeLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+
+  /* Disclaimer */
+  disclaimerContainer: {
+    backgroundColor: '#FFF3CD',
     padding: 10,
-    borderRadius: 8, 
-    marginBottom: 32, // Increased from 16 to 32 to create better visual separation from bottom section
-    width: '90%', 
+    borderRadius: 8,
+    marginBottom: 32,
+    width: '90%',
     maxWidth: 500,
     borderLeftWidth: 3,
     borderLeftColor: '#856404',
@@ -640,68 +452,21 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginTop: 3,
   },
-  disclaimerText: { 
-    fontSize: 11, 
-    color: '#856404', 
-    textAlign: 'left',
+  disclaimerText: {
+    fontSize: 11,
+    color: '#856404',
     fontStyle: 'italic',
     flex: 1,
   },
-  // Bottom section containing usage, auth and upgrade elements
+
+  /* Bottom / auth */
   bottomSection: {
     paddingHorizontal: 16,
-    paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
+    paddingBottom: 16,
     alignItems: 'center',
-    gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
+    gap: 16,
   },
-  // Usage Status Card - combines scans remaining with upgrade
-  usageStatusCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12, // Reduced from 16 to 12 for more compact design
-    padding: 12, // Reduced from 16 to 12 for smaller footprint
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for more compact look
-    shadowOpacity: 0.08, // Reduced shadow opacity
-    shadowRadius: 3, // Reduced shadow radius
-    elevation: 2, // Reduced elevation
-  },
-  usageInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8, // Reduced from 12 to 8 for more compact layout
-  },
-  scanCreditsText: { 
-    color: '#333333', 
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  premiumBadgeContainer: { 
-    backgroundColor: '#FFD700', 
-    borderRadius: 8, 
-    padding: 4, 
-    marginLeft: 8,
-    shadowColor: '#FFC107',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
-  lowScansWarning: {
-    fontSize: 12, // Reduced from 13 to 12 for more compact layout
-    color: '#d97706',
-    textAlign: 'center',
-    marginTop: 6, // Reduced from 8 to 6 for tighter spacing
-    fontStyle: 'italic',
-    lineHeight: 16, // Reduced from 18 to 16 for tighter line height
-  },
-  // Authentication section for anonymous users
+
   authSection: {
     alignItems: 'center',
     backgroundColor: '#f8fafc',
@@ -719,11 +484,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 20,
   },
+
   signInButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -745,7 +511,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#10b981',
   },
-  // Profile section for logged-in users
+
   profileSection: {
     alignItems: 'center',
     backgroundColor: '#f8fafc',
@@ -765,7 +531,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -788,7 +554,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -810,28 +576,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
-  },
-  // Upgrade button
-  upgradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fef3c7',
-    paddingVertical: 8, // Reduced from 10 to 8 for more compact button
-    paddingHorizontal: 14, // Reduced from 16 to 14 for more compact button
-    borderRadius: 8, // Reduced from 10 to 8 for more compact design
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-    width: '100%',
-  },
-  upgradeButtonMobile: {
-    paddingVertical: 9, // Reduced from 12 to 9 for mobile
-    paddingHorizontal: 16, // Reduced from 18 to 16 for mobile
-  },
-  upgradeText: {
-    color: '#92400e',
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    marginLeft: 6,
   },
 });
