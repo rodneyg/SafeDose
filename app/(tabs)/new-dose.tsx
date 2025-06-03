@@ -263,7 +263,7 @@ export default function NewDoseScreen() {
   }, [screenStep, navigation]);
 
   useEffect(() => {
-    if (isMobileWeb && screenStep === 'scan') {
+    if (isWeb && screenStep === 'scan') {
       // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
       if (permissionStatus === 'undetermined' || 
           (permissionStatus === 'granted' && !webCameraStreamRef.current)) {
