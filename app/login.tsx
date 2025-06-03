@@ -1,48 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { signInWithEmailAndPassword, GoogleAuthProvider, linkWithCredential, EmailAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 export default function LoginScreen() {
   const { user, auth } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-
-  const handleEmailSignIn = async () => {
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
-    }
-
-    logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'email' });
-
-    try {
-      if (user?.isAnonymous) {
-        // Link anonymous account to email
-        const credential = EmailAuthProvider.credential(email, password);
-        await linkWithCredential(user, credential);
-        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'email' });
-        console.log('Linked anonymous account with email');
-      } else {
-        // Sign in with email
-        await signInWithEmailAndPassword(auth, email, password);
-        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'email' });
-        console.log('Signed in with email');
-      }
-      router.replace('/(tabs)/new-dose');
-    } catch (err: any) {
-      logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
-        method: 'email', 
-        error: err.message 
-      });
-      setError(err.message || 'Failed to sign in with email');
-      console.error('Email sign-in error:', err);
-    }
-  };
 
   const handleGoogleSignIn = () => {
     const provider = new GoogleAuthProvider();
@@ -76,25 +42,6 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Sign In</Text>
       {error && <Text style={styles.error}>{error}</Text>}
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
-      <TouchableOpacity style={styles.button} onPress={handleEmailSignIn}>
-        <Text style={styles.buttonText}>Sign In with Email</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleGoogleSignIn}>
         <Text style={styles.buttonText}>Sign In with Google</Text>
       </TouchableOpacity>
@@ -121,15 +68,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     marginBottom: 20,
-  },
-  input: {
-    width: '80%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   button: {
     width: '80%',
