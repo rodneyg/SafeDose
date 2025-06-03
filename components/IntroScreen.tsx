@@ -127,6 +127,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   }, [isLoading, profile, usageData]);
 
   // Use memoized handlers to ensure stable references across renders
+  // This prevents unnecessary re-renders of child components and maintains
+  // optimal performance in the authentication flow
   const handleSignInPress = useCallback(() => {
     console.log('[IntroScreen] Sign In button pressed');
     const provider = new GoogleAuthProvider();
@@ -207,6 +209,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   // instead of using web-specific tap outside detection
 
   // Check if the auto-login flag is enabled
+  // Development feature: automatically trigger Google sign-in when TEST_LOGIN flag is set
+  // This streamlines the development workflow by bypassing manual authentication steps
   useEffect(() => {
     // Read TEST_LOGIN environment variable from app.config.js
     const testLogin = Constants.expoConfig?.extra?.TEST_LOGIN === true;

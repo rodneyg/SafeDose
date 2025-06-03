@@ -154,6 +154,8 @@ export default function ManualEntryScreen({
   };
 
   // Function to check if current step is valid
+  // Centralizes validation logic to prevent progression with incomplete/invalid data
+  // Each step has specific validation requirements based on the medical calculation workflow
   const isCurrentStepValid = (): boolean => {
     let result = false;
     switch (manualStep) {
@@ -171,6 +173,8 @@ export default function ManualEntryScreen({
   };
 
   // Create a handler for next button press
+  // This function orchestrates the step-by-step validation and navigation flow
+  // ensuring users can only proceed when current step data is valid
   const handleNextButtonPress = useCallback(() => {
     try {
       console.log('[ManualEntryScreen] ========== STEP NAVIGATION ==========');

@@ -8,7 +8,9 @@ import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
-// Helper function to get scan limit based on plan and user type
+// Helper function to determine scan limits based on user plan and authentication status
+// Business logic: Anonymous users get minimal scans to encourage sign-up,
+// while authenticated users get progressively more scans based on their subscription tier
 const getLimitForPlan = (plan: string, isAnonymous: boolean) => {
   if (isAnonymous) return 3; // Anonymous users
   if (plan === 'plus') return 50; // Plus plan
@@ -46,6 +48,8 @@ export function useUsageTracking() {
   };
 
   // Retry logic with exponential backoff
+  // This pattern helps handle transient network issues and Firestore rate limiting
+  // by progressively increasing delay between retry attempts
   const retryOperation = async <T>(operation: () => Promise<T>, retries: number, backoff: number): Promise<T> => {
     try {
       return await operation();
@@ -186,6 +190,8 @@ export function useUsageTracking() {
             console.log('Added lastReset to user document:', data);
           } else {
             // Monthly reset logic
+            // Automatically reset usage counters at the beginning of each calendar month
+            // This ensures users get their full monthly allowance regardless of when they signed up
             const now = new Date();
             const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastReset = new Date(data.lastReset).toISOString();
