@@ -132,7 +132,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     console.log('[IntroScreen] Sign In button pressed');
     const provider = new GoogleAuthProvider();
     
-    // Set custom parameters for better UX
+    // Configure Google Auth provider to always show account selection
+    // This improves UX by letting users choose which Google account to use
     provider.setCustomParameters({
       prompt: 'select_account'
     });
@@ -144,7 +145,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
       .then((result) => {
         console.log('Google Sign-In successful', result.user);
         if (user?.isAnonymous) {
-          // The anonymous account will be automatically linked to the signed-in account
+          // Firebase automatically links anonymous accounts with the signed-in account
+          // This preserves any existing data/calculations from the anonymous session
           console.log('Linked anonymous account with Google');
         } else {
           console.log('Signed in with Google');
@@ -225,7 +227,8 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
   // For React Native, we'll close the menu manually in button handlers
   // instead of using web-specific tap outside detection
 
-  // Check if the auto-login flag is enabled
+  // Auto-login for testing: Automatically sign in anonymous users when TEST_LOGIN flag is enabled
+  // This is used in development/testing environments to streamline the testing process
   useEffect(() => {
     // Read TEST_LOGIN environment variable from app.config.js
     const testLogin = Constants.expoConfig?.extra?.TEST_LOGIN === true;
@@ -394,6 +397,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         )}
         
         {/* Profile Dropdown Modal */}
+        {/* Modal positioned absolutely in top-right corner to align with profile icon */}
         {user && !user.isAnonymous && (
           <Modal
             visible={showProfileDropdown}
@@ -447,6 +451,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         )}
 
         {/* Simplified bottom section - show sign-in bubble for anonymous users */}
+        {/* This provides a clean, non-intrusive way for anonymous users to sign in when ready */}
         {!isLoading && !isSigningOut && (user?.isAnonymous || !user) && (
           <View style={styles.bottomSection}>
             {/* Debug log: Track sign-in bubble rendering */}
