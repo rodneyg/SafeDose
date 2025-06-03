@@ -283,15 +283,16 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {/* Main content section - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.content}>
-            {/* App icon and welcome message */}
+            {/* App icon and title */}
             <View style={styles.welcomeContainer}>
               <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
+              <Text style={styles.title}>SafeDose</Text>
               
-              {/* Dynamic welcome message based on authentication status */}
+              {/* Concise welcome message */}
               {user && !user.isAnonymous && user.displayName ? (
-                <Text style={styles.text}>Welcome back, {user.displayName}. Ready to scan?</Text>
+                <Text style={styles.welcomeText}>Hello, {user.displayName.split(' ')[0]}!</Text>
               ) : (
-                <Text style={styles.text}>Welcome! Calculate your dose accurately.</Text>
+                <Text style={styles.welcomeText}>Ready to get started?</Text>
               )}
             </View>
             
@@ -315,6 +316,18 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
               </TouchableOpacity>
             </View>
             
+            {/* Scan status - simple text below action buttons */}
+            <View style={styles.scanStatusContainer}>
+              <Text style={styles.scanStatusText}>
+                You have {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining. {' '}
+                {(!usageData || usageData.plan === 'free') && (
+                  <Text style={styles.upgradeLink} onPress={handleUpgradePress}>
+                    Upgrade
+                  </Text>
+                )}
+              </Text>
+            </View>
+            
             {/* Disclaimer with Info icon - show default if disclaimerText is not available */}
             <View style={styles.disclaimerContainer}>
               <View style={styles.disclaimerIconContainer}>
@@ -327,42 +340,9 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </View>
         )}
         
-        {/* Bottom section with usage info, authentication and upgrade options - only show when not loading and not signing out */}
+        {/* Bottom section with authentication options - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.bottomSection}>
-            {/* Usage Status Card - shows scans remaining and upgrade options together */}
-            <View style={styles.usageStatusCard}>
-              {/* Scans remaining display - show default if usageData is not available */}
-              <View style={styles.usageInfoRow}>
-                <Text style={styles.scanCreditsText}>
-                  🎟️ {usageData ? (usageData.limit - usageData.scansUsed) : 3} scans remaining
-                </Text>
-                
-                {/* Premium Badge (only for plus users) */}
-                {usageData?.plan === 'plus' && (
-                  <View style={styles.premiumBadgeContainer}>
-                    <Text style={styles.premiumBadgeText}>Premium ⭐</Text>
-                  </View>
-                )}
-              </View>
-              
-              {/* Upgrade button - appears right below scans for free users */}
-              {(!usageData || usageData.plan === 'free') && (
-                <TouchableOpacity 
-                  style={[styles.upgradeButton, isMobileWeb && styles.upgradeButtonMobile]} 
-                  onPress={handleUpgradePress}>
-                  <CreditCard color={'#f59e0b'} size={16} />
-                  <Text style={styles.upgradeText}>Upgrade for More Scans</Text>
-                </TouchableOpacity>
-              )}
-              
-              {/* Low scans warning for free users */}
-              {usageData && (usageData.plan === 'free' && (usageData.limit - usageData.scansUsed) <= 1) && (
-                <Text style={styles.lowScansWarning}>
-                  ⚠️ Running low on scans. Upgrade to continue calculating doses.
-                </Text>
-              )}
-            </View>
             
             {/* Sign-In button - appears for anonymous users or when signed out */}
             {(user?.isAnonymous || !user) && (
@@ -505,6 +485,19 @@ const styles = StyleSheet.create({
   icon: { 
     marginBottom: 15, // Changed from 8 to 15px as requested (10-20px range)
   },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  welcomeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666666',
+    textAlign: 'center',
+  },
   text: { 
     fontSize: 18,
     fontWeight: '600',
@@ -555,6 +548,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  // Scan status section - simple text below action buttons
+  scanStatusContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  scanStatusText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  upgradeLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
   // Disclaimer styles
   disclaimerContainer: { 
     backgroundColor: '#FFF3CD', 
@@ -581,59 +591,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  // Bottom section containing usage, auth and upgrade elements
+  // Bottom section containing authentication elements
   bottomSection: {
     paddingHorizontal: 16,
     paddingBottom: 16, // Reduced from 20 to 16 for more compact layout
     alignItems: 'center',
     gap: 16, // Reduced from 20 to 16 for tighter spacing between elements
-  },
-  // Usage Status Card - combines scans remaining with upgrade
-  usageStatusCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12, // Reduced from 16 to 12 for more compact design
-    padding: 12, // Reduced from 16 to 12 for smaller footprint
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for more compact look
-    shadowOpacity: 0.08, // Reduced shadow opacity
-    shadowRadius: 3, // Reduced shadow radius
-    elevation: 2, // Reduced elevation
-  },
-  usageInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8, // Reduced from 12 to 8 for more compact layout
-  },
-  scanCreditsText: { 
-    color: '#333333', 
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  premiumBadgeContainer: { 
-    backgroundColor: '#FFD700', 
-    borderRadius: 8, 
-    padding: 4, 
-    marginLeft: 8,
-    shadowColor: '#FFC107',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  premiumBadgeText: { color: '#333333', fontSize: 12, fontWeight: 'bold' },
-  lowScansWarning: {
-    fontSize: 12, // Reduced from 13 to 12 for more compact layout
-    color: '#d97706',
-    textAlign: 'center',
-    marginTop: 6, // Reduced from 8 to 6 for tighter spacing
-    fontStyle: 'italic',
-    lineHeight: 16, // Reduced from 18 to 16 for tighter line height
   },
   // Sign-In container for anonymous users (simplified)
   signInContainer: {
@@ -773,28 +736,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
-  },
-  // Upgrade button
-  upgradeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fef3c7',
-    paddingVertical: 8, // Reduced from 10 to 8 for more compact button
-    paddingHorizontal: 14, // Reduced from 16 to 14 for more compact button
-    borderRadius: 8, // Reduced from 10 to 8 for more compact design
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-    width: '100%',
-  },
-  upgradeButtonMobile: {
-    paddingVertical: 9, // Reduced from 12 to 9 for mobile
-    paddingHorizontal: 16, // Reduced from 18 to 16 for mobile
-  },
-  upgradeText: {
-    color: '#92400e',
-    fontSize: 13, // Reduced from 14 to 13 for smaller text
-    fontWeight: '600',
-    marginLeft: 6,
   },
 });
