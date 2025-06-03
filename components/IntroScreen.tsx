@@ -246,6 +246,11 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     // Navigate directly to scan without resetting the form
     console.log('[IntroScreen] Calling setScreenStep("scan")');
     setScreenStep('scan');
+    
+    // Debug log: Verify navigation was successful
+    setTimeout(() => {
+      console.log('[IntroScreen] 🔍 POST-NAVIGATION DEBUG: Scan navigation completed');
+    }, 100);
   }, [setScreenStep, setNavigatingFromIntro]);
   
   const handleManualEntryPress = useCallback(() => {
@@ -260,6 +265,11 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
     resetFullForm('dose');
     console.log('[IntroScreen] Calling setScreenStep("manualEntry")');
     setScreenStep('manualEntry');
+    
+    // Debug log: Verify navigation was successful
+    setTimeout(() => {
+      console.log('[IntroScreen] 📝 POST-NAVIGATION DEBUG: Manual entry navigation completed');
+    }, 100);
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
   
   return (
@@ -296,6 +306,16 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {/* Main content section - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.content}>
+            {/* Debug log: Track what UI elements are being rendered */}
+            {console.log('[IntroScreen] 🎨 RENDER DEBUG: Main content rendering with conditions:', {
+              isLoading,
+              isSigningOut,
+              userExists: !!user,
+              userIsAnonymous: user?.isAnonymous,
+              profileExists: !!profile,
+              usageDataExists: !!usageData,
+              scansRemaining: usageData ? (usageData.limit - usageData.scansUsed) : 'unknown'
+            }) || null}
             {/* New Header with App Title and Profile Icon */}
             <View style={styles.header}>
               {/* App Title - centered */}
@@ -429,6 +449,13 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {/* Simplified bottom section - show sign-in bubble for anonymous users */}
         {!isLoading && !isSigningOut && (user?.isAnonymous || !user) && (
           <View style={styles.bottomSection}>
+            {/* Debug log: Track sign-in bubble rendering */}
+            {console.log('[IntroScreen] 🔑 SIGN-IN BUBBLE DEBUG: Rendering sign-in bubble for anonymous user:', {
+              userExists: !!user,
+              userIsAnonymous: user?.isAnonymous,
+              userDisplayName: user?.displayName || 'None',
+              userEmail: user?.email || 'None'
+            }) || null}
             <TouchableOpacity 
               style={[styles.signInBubble, isMobileWeb && styles.signInBubbleMobile]} 
               onPress={handleSignInPress}

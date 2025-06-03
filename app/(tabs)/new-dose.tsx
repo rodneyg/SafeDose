@@ -97,13 +97,20 @@ export default function NewDoseScreen() {
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
     console.log('[NewDoseScreen] Setting screen step to:', step);
+    console.log('[NewDoseScreen] 🔄 SCREEN STEP DEBUG: Transition from', doseCalculator.screenStep, 'to', step);
     
     // Track navigation from intro to other screens
     if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
       setNavigatingFromIntro(true);
+      console.log('[NewDoseScreen] 🚀 NAVIGATION DEBUG: User navigating from intro screen to', step);
     }
     
     doseCalculator.setScreenStep(step);
+    
+    // Debug log: Verify step change was successful
+    setTimeout(() => {
+      console.log('[NewDoseScreen] ✅ SCREEN STEP CONFIRMATION: Step change completed, current step should be:', step);
+    }, 50);
   }, [doseCalculator, setNavigatingFromIntro]);
   
   // Handle screen focus events to ensure state is properly initialized after navigation
