@@ -234,18 +234,34 @@ export function calculateDose({
   );
   console.log('[Calculate] Nearest marking:', nearestMarking);
 
+  // Set recommended marking to the exact calculated value instead of nearest marking
+  recommendedMarking = markingScaleValue.toString();
+  console.log('[Calculate] Set recommended marking to exact value:', markingScaleValue);
+
+  // Provide guidance when exact dose falls between standard markings
   let precisionMessage = null;
   if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
     const unitLabel = manualSyringe.type === 'Insulin' ? 'units' : 'ml';
-    precisionMessage = `Calculated dose is ${markingScaleValue.toFixed(2)} ${unitLabel}. Nearest mark is ${nearestMarking} ${unitLabel}.`;
+    const exactValue = markingScaleValue.toFixed(2);
+    const nearestValue = nearestMarking.toString();
+    
+    // Find the two markings that the exact value falls between
+    const sortedMarkings = markings.sort((a, b) => a - b);
+    const lowerMark = sortedMarkings.filter(m => m <= markingScaleValue).pop();
+    const upperMark = sortedMarkings.find(m => m > markingScaleValue);
+    
+    if (lowerMark !== undefined && upperMark !== undefined) {
+      precisionMessage = `Draw to ${exactValue} ${unitLabel}, which is between the ${lowerMark} ${unitLabel} and ${upperMark} ${unitLabel} marks.`;
+    } else if (markingScaleValue < markings[0]) {
+      precisionMessage = `Draw to ${exactValue} ${unitLabel}, which is below the first marking at ${markings[0]} ${unitLabel}.`;
+    } else {
+      precisionMessage = `Draw to ${exactValue} ${unitLabel}, which is above the ${nearestValue} ${unitLabel} mark.`;
+    }
   }
-
-  recommendedMarking = nearestMarking.toString();
-  console.log('[Calculate] Set recommended marking:', nearestMarking);
 
   if (precisionMessage) {
     calculationError = precisionMessage;
-    console.log('[Calculate] Precision message:', precisionMessage);
+    console.log('[Calculate] Precision guidance:', precisionMessage);
   }
 
   return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };

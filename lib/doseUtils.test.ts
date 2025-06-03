@@ -127,3 +127,69 @@ describe('calculateDose with volume thresholds', () => {
   });
 
 });
+
+describe('calculateDose precision guidance', () => {
+  const mockSyringeStandard: ManualSyringe = { type: 'Standard', volume: '1 ml' };
+  
+  const baseParams: Parameters<typeof calculateDose>[0] = {
+    doseValue: 10,
+    unit: 'mg',
+    concentration: 40, // mg/ml -> results in 0.25mL volume
+    concentrationUnit: 'mg/ml',
+    manualSyringe: mockSyringeStandard,
+    totalAmount: 100,
+    solutionVolume: '10',
+  };
+
+  it('should return exact calculated volume as recommendedMarking instead of nearest marking', () => {
+    const result = calculateDose({
+      ...baseParams,
+      doseValue: 10, // mg
+      concentration: 40, // mg/ml -> results in 0.25 mL
+    });
+    
+    expect(result.calculatedVolume).toBe(0.25);
+    // Should return exact volume, not nearest marking (0.2)
+    expect(result.recommendedMarking).toBe('0.25');
+  });
+
+  it('should provide guidance when exact dose falls between markings', () => {
+    const result = calculateDose({
+      ...baseParams,
+      doseValue: 10, // mg  
+      concentration: 40, // mg/ml -> results in 0.25 mL (between 0.2 and 0.3)
+    });
+    
+    expect(result.calculatedVolume).toBe(0.25);
+    expect(result.recommendedMarking).toBe('0.25');
+    expect(result.calculationError).toContain('Draw to 0.25 ml');
+    expect(result.calculationError).toContain('between the 0.2 ml and 0.3 ml marks');
+  });
+
+  it('should handle exact dose that matches a standard marking', () => {
+    const result = calculateDose({
+      ...baseParams,
+      doseValue: 8, // mg
+      concentration: 40, // mg/ml -> results in 0.2 mL (exact match)
+    });
+    
+    expect(result.calculatedVolume).toBe(0.2);
+    expect(result.recommendedMarking).toBe('0.2');
+    // Should not have precision message when exact match
+    expect(result.calculationError).toBeNull();
+  });
+
+  it('should provide guidance for dose below first marking', () => {
+    const result = calculateDose({
+      ...baseParams,
+      doseValue: 2, // mg
+      concentration: 40, // mg/ml -> results in 0.05 mL (below first 0.1 mark)
+    });
+    
+    expect(result.calculatedVolume).toBe(0.05);
+    expect(result.recommendedMarking).toBe('0.05');
+    expect(result.calculationError).toContain('Draw to 0.05 ml');
+    expect(result.calculationError).toContain('below the first marking');
+  });
+
+});
