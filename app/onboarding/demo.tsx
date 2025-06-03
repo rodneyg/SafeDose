@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { scaleFont } from '../../lib/responsive';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight } from 'lucide-react-native';
@@ -54,7 +55,7 @@ export default function Demo() {
               />
               <View style={styles.imageOverlay}>
                 {Platform.OS === "web" ? (
-                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>📷</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: scaleFont(24) }}>📷</Text>
                 ) : (
                   <Camera size={48} color="#FFFFFF" />
                 )}
@@ -94,7 +95,7 @@ export default function Demo() {
             <View style={styles.successContainer}>
               <View style={styles.successCircle}>
                 {Platform.OS === "web" ? (
-                  <Text style={{ color: '#FFFFFF', fontSize: 24 }}>✔</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: scaleFont(24) }}>✔</Text>
                 ) : (
                   <Check size={48} color="#FFFFFF" />
                 )}
@@ -146,13 +147,13 @@ export default function Demo() {
           </Text>
           {step === 2 ? (
             Platform.OS === "web" ? (
-              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>✔</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: scaleFont(20) }}>✔</Text>
             ) : (
               <Check size={20} color="#FFFFFF" />
             )
           ) : (
             Platform.OS === "web" ? (
-              <Text style={{ color: '#FFFFFF', fontSize: 20 }}>→</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: scaleFont(20) }}>→</Text>
             ) : (
               <ArrowRight size={20} color="#FFFFFF" />
             )
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 34,
+    fontSize: scaleFont(34),
     fontWeight: '700',
     color: '#000000',
   },
@@ -205,14 +206,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepTitle: {
-    fontSize: 24,
+    fontSize: scaleFont(24),
     fontWeight: '600',
     color: '#000000',
     textAlign: 'center',
     marginBottom: 12,
   },
   stepDescription: {
-    fontSize: 17,
+    fontSize: scaleFont(17),
     color: '#6B6B6B',
     textAlign: 'center',
     maxWidth: '80%',
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doseText: {
-    fontSize: 32,
+    fontSize: scaleFont(32),
     fontWeight: '700',
     color: '#FFFFFF',
   },
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   doseLabel: {
-    fontSize: 17,
+    fontSize: scaleFont(17),
     color: '#007AFF',
     fontWeight: '500',
   },
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: scaleFont(17),
     fontWeight: '600',
   },
 });

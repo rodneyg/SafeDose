@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } from 'react-native';
+import { scaleFont } from '../../lib/responsive';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontSize: 32,
+    fontSize: scaleFont(32),
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -92,14 +93,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 48,
+    fontSize: scaleFont(48),
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 16,
   },
   description: {
-    fontSize: 20,
+    fontSize: scaleFont(20),
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     maxWidth: '80%',
@@ -121,11 +122,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: scaleFont(17),
     fontWeight: '600',
   },
   disclaimer: {
-    fontSize: 15,
+    fontSize: scaleFont(15),
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
   },

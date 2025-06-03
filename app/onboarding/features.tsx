@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList } from 'react-native';
+import { scaleFont } from '../../lib/responsive';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { Camera, History, MessageCircle, Book, ArrowRight, Check } from 'lucide-react-native';
@@ -128,13 +129,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 34,
+    fontSize: scaleFont(34),
     fontWeight: '700',
     color: '#000000',
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 17,
+    fontSize: scaleFont(17),
     color: '#6B6B6B',
     marginTop: 8,
     textAlign: 'center',
@@ -153,14 +154,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   featureTitle: {
-    fontSize: 24,
+    fontSize: scaleFont(24),
     fontWeight: '600',
     color: '#000000',
     textAlign: 'center',
     marginBottom: 12,
   },
   featureDescription: {
-    fontSize: 17,
+    fontSize: scaleFont(17),
     color: '#6B6B6B',
     textAlign: 'center',
     maxWidth: '80%',
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: scaleFont(17),
     fontWeight: '600',
   },
 });
