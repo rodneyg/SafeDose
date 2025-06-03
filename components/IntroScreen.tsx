@@ -179,38 +179,90 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
 
   const handleLogoutPress = useCallback(async () => {
     console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
+    console.log('[IntroScreen] Current user state:', user ? {
+      uid: user.uid,
+      isAnonymous: user.isAnonymous,
+      displayName: user.displayName,
+      email: user.email
+    } : 'No user');
+    console.log('[IntroScreen] Current isSigningOut state:', isSigningOut);
+    console.log('[IntroScreen] Alert availability check:', typeof Alert);
+    console.log('[IntroScreen] Alert.alert function check:', typeof Alert?.alert);
+    console.log('[IntroScreen] Platform info:', { isMobileWeb });
+    console.log('[IntroScreen] Showing confirmation dialog...');
     
-    // Show confirmation dialog
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out? You can always sign back in to access your saved calculations.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('[IntroScreen] User confirmed logout, initiating...');
-            try {
-              console.log('[IntroScreen] Calling logout function...');
-              await logout();
-              console.log('[IntroScreen] ✅ Logout completed successfully');
-            } catch (error) {
-              console.error('[IntroScreen] ❌ Logout error:', error);
-              Alert.alert(
-                'Sign Out Failed',
-                'There was an error signing out. Please try again.',
-                [{ text: 'OK' }]
-              );
-            }
+    try {
+      // Verify Alert is available before using it
+      if (typeof Alert === 'undefined' || typeof Alert.alert !== 'function') {
+        throw new Error('Alert.alert is not available on this platform');
+      }
+      
+      // Show confirmation dialog
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out? You can always sign back in to access your saved calculations.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => {
+              console.log('[IntroScreen] User cancelled logout');
+            },
           },
-        },
-      ]
-    );
-  }, [logout]);
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
+              console.log('[IntroScreen] User confirmed logout, initiating...');
+              try {
+                console.log('[IntroScreen] Calling logout function...');
+                await logout();
+                console.log('[IntroScreen] ✅ Logout completed successfully');
+              } catch (error) {
+                console.error('[IntroScreen] ❌ Logout error:', error);
+                console.error('[IntroScreen] Error details:', {
+                  message: error?.message || 'Unknown error',
+                  code: error?.code || 'No error code',
+                  stack: error?.stack || 'No stack trace'
+                });
+                Alert.alert(
+                  'Sign Out Failed',
+                  'There was an error signing out. Please try again.',
+                  [{ text: 'OK', onPress: () => console.log('[IntroScreen] Error dialog dismissed') }]
+                );
+              }
+            },
+          },
+        ],
+        {
+          onDismiss: () => {
+            console.log('[IntroScreen] Alert dialog was dismissed without selection');
+          }
+        }
+      );
+      console.log('[IntroScreen] Alert.alert() called successfully');
+    } catch (alertError) {
+      console.error('[IntroScreen] ❌ Error showing alert dialog:', alertError);
+      console.log('[IntroScreen] Alert failed, attempting direct logout confirmation...');
+      
+      // Fallback: Direct logout for web platform where Alert might not work properly
+      const confirmLogout = confirm ? confirm('Are you sure you want to sign out?') : true;
+      console.log('[IntroScreen] Fallback confirmation result:', confirmLogout);
+      
+      if (confirmLogout) {
+        try {
+          console.log('[IntroScreen] Fallback: Calling logout function directly...');
+          await logout();
+          console.log('[IntroScreen] ✅ Fallback logout completed successfully');
+        } catch (directLogoutError) {
+          console.error('[IntroScreen] ❌ Fallback logout error:', directLogoutError);
+        }
+      } else {
+        console.log('[IntroScreen] Fallback: User cancelled logout');
+      }
+    }
+  }, [logout, user, isSigningOut]);
 
   // For React Native, we'll close the menu manually in button handlers
   // instead of using web-specific tap outside detection
@@ -389,6 +441,12 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
             {/* Profile section - appears for logged-in users */}
             {user && !user.isAnonymous && (
               <View style={styles.profileSection}>
+                {console.log('[IntroScreen] Rendering profile section for authenticated user:', {
+                  uid: user.uid,
+                  displayName: user.displayName,
+                  email: user.email
+                })}
+                
                 {/* User info display */}
                 <View style={styles.userInfoContainer}>
                   <View style={styles.userInfoRow}>
@@ -407,13 +465,19 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
                 {/* Sign out button - always visible for better discoverability */}
                 <TouchableOpacity 
                   style={[styles.signOutButton, isMobileWeb && styles.signOutButtonMobile]} 
-                  onPress={handleLogoutPress}
+                  onPress={() => {
+                    console.log('[IntroScreen] Sign out button onPress triggered');
+                    console.log('[IntroScreen] About to call handleLogoutPress');
+                    handleLogoutPress();
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel="Sign out"
-                  accessibilityHint="Sign out of your account. You will be asked to confirm this action.">
+                  accessibilityHint="Sign out of your account. You will be asked to confirm this action."
+                  testID="sign-out-button">
                   <LogOut color="#ef4444" size={16} />
                   <Text style={styles.signOutButtonText}>Sign Out</Text>
                 </TouchableOpacity>
+                {console.log('[IntroScreen] Sign out button rendered successfully')}
               </View>
             )}
           </View>

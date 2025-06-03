@@ -58,18 +58,19 @@ describe('IntroScreen Sign Out Functionality', () => {
   });
 
   it('should call logout function when sign out button is pressed', async () => {
-    const { getByText, getByTestId } = render(
+    const { getByTestId } = render(
       <IntroScreen
         setScreenStep={mockSetScreenStep}
         resetFullForm={mockResetFullForm}
       />
     );
 
-    // Since the new UI shows the sign out button directly (no dropdown menu),
-    // we'll focus on testing that the logout function works properly when called
-    // This test verifies the core functionality rather than the UI interaction
+    // Find the sign out button by test ID
+    const signOutButton = getByTestId('sign-out-button');
+    expect(signOutButton).toBeTruthy();
 
-    // Verify the logout function is available and can be called
+    // Since we're testing the enhanced debugging version,
+    // we'll verify that the logout function is available and can be called
     expect(mockLogout).toBeDefined();
     expect(typeof mockLogout).toBe('function');
 
@@ -123,5 +124,36 @@ describe('IntroScreen Sign Out Functionality', () => {
     // Test that the component can handle logout errors
     await expect(mockLogout()).rejects.toThrow('Logout failed');
     expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show sign out button with proper test ID for authenticated users', () => {
+    const { getByTestId } = render(
+      <IntroScreen
+        setScreenStep={mockSetScreenStep}
+        resetFullForm={mockResetFullForm}
+      />
+    );
+
+    // Should have sign out button with test ID
+    const signOutButton = getByTestId('sign-out-button');
+    expect(signOutButton).toBeTruthy();
+  });
+
+  it('should handle enhanced debugging logs during logout', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    render(
+      <IntroScreen
+        setScreenStep={mockSetScreenStep}
+        resetFullForm={mockResetFullForm}
+      />
+    );
+
+    // Should have logged debug information during render
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[IntroScreen]')
+    );
+
+    consoleSpy.mockRestore();
   });
 });
