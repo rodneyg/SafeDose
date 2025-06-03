@@ -262,11 +262,75 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, navigation]);
 
+  // Define requestWebCameraPermission before the useEffect that uses it
+  const requestWebCameraPermission = useCallback(async () => {
+    if (!isWeb) return;
+    
+    try {
+      // Release any existing stream first to avoid multiple active streams
+      if (webCameraStreamRef.current) {
+        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+        webCameraStreamRef.current = null;
+      }
+      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("getUserMedia not supported in this browser");
+        setPermissionStatus('denied');
+        setMobileWebPermissionDenied(true);
+        return;
+      }
+      
+      console.log("[WebCamera] Requesting camera permission");
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "environment" // Prefer back camera on mobile web
+        } 
+      });
+      
+      // Permission granted - we got a stream
+      console.log("[WebCamera] Camera permission granted");
+      setPermissionStatus('granted');
+      setMobileWebPermissionDenied(false);
+      
+      // Store the stream for later use instead of stopping it
+      webCameraStreamRef.current = stream;
+      
+      // Check if torch is supported
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities();
+        const torchSupported = !!(capabilities as any).torch;
+        setWebFlashlightSupported(torchSupported);
+        console.log("[WebCamera] Torch support:", torchSupported);
+      }
+    } catch (error: any) {
+      console.error("[WebCamera] Error requesting camera permission:", error);
+      
+      // Handle specific error types
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        console.warn("[WebCamera] Camera permission denied by user");
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        console.warn("[WebCamera] No camera device found");
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        console.warn("[WebCamera] Camera is in use by another application");
+      }
+      
+      setPermissionStatus('denied');
+      setMobileWebPermissionDenied(true);
+    }
+  }, [isWeb]);
+
   useEffect(() => {
     if (isWeb && screenStep === 'scan') {
       // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
+      console.log("[WebCamera] Scan screen active, checking camera state", { 
+        permissionStatus, 
+        hasStream: !!webCameraStreamRef.current 
+      });
+      
       if (permissionStatus === 'undetermined' || 
           (permissionStatus === 'granted' && !webCameraStreamRef.current)) {
+        console.log("[WebCamera] Requesting camera permission/stream");
         requestWebCameraPermission();
       }
     }
@@ -277,7 +341,7 @@ export default function NewDoseScreen() {
       webCameraStreamRef.current.getTracks().forEach(track => track.stop());
       webCameraStreamRef.current = null;
     }
-  }, [screenStep]);
+  }, [screenStep, permissionStatus, isWeb, requestWebCameraPermission]);
 
   // Add enhanced logging for isProcessing state changes
   useEffect(() => {
@@ -465,63 +529,6 @@ export default function NewDoseScreen() {
     }
   };
 
-  const requestWebCameraPermission = async () => {
-    if (!isWeb) return;
-    
-    try {
-      // Release any existing stream first to avoid multiple active streams
-      if (webCameraStreamRef.current) {
-        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
-        webCameraStreamRef.current = null;
-      }
-      
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.warn("getUserMedia not supported in this browser");
-        setPermissionStatus('denied');
-        setMobileWebPermissionDenied(true);
-        return;
-      }
-      
-      console.log("[WebCamera] Requesting camera permission");
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "environment" // Prefer back camera on mobile web
-        } 
-      });
-      
-      // Permission granted - we got a stream
-      console.log("[WebCamera] Camera permission granted");
-      setPermissionStatus('granted');
-      setMobileWebPermissionDenied(false);
-      
-      // Store the stream for later use instead of stopping it
-      webCameraStreamRef.current = stream;
-      
-      // Check if torch is supported
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        const capabilities = videoTrack.getCapabilities();
-        const torchSupported = !!capabilities.torch;
-        setWebFlashlightSupported(torchSupported);
-        console.log("[WebCamera] Torch support:", torchSupported);
-      }
-    } catch (error) {
-      console.error("[WebCamera] Error requesting camera permission:", error);
-      
-      // Handle specific error types
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        console.warn("[WebCamera] Camera permission denied by user");
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        console.warn("[WebCamera] No camera device found");
-      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        console.warn("[WebCamera] Camera is in use by another application");
-      }
-      
-      setPermissionStatus('denied');
-      setMobileWebPermissionDenied(true);
-    }
-  };
-
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
     
@@ -534,7 +541,7 @@ export default function NewDoseScreen() {
 
       // Check if torch capability is supported
       const capabilities = videoTrack.getCapabilities();
-      if (!capabilities.torch) {
+      if (!(capabilities as any).torch) {
         console.warn("[WebFlashlight] Torch not supported on this device");
         return;
       }
@@ -543,7 +550,7 @@ export default function NewDoseScreen() {
       console.log(`[WebFlashlight] Setting torch to: ${newFlashlightState}`);
       
       await videoTrack.applyConstraints({
-        advanced: [{ torch: newFlashlightState }]
+        advanced: [{ torch: newFlashlightState } as any]
       });
       
       setWebFlashlightEnabled(newFlashlightState);
@@ -585,10 +592,14 @@ export default function NewDoseScreen() {
       notes
     );
     
+    // Clear any scan errors before navigating
+    setScanError(null);
     handleFeedbackComplete();
   }, [feedbackContext, feedbackStorage, handleFeedbackComplete]);
 
   const handleFeedbackSkip = useCallback(() => {
+    // Clear any scan errors before navigating 
+    setScanError(null);
     handleFeedbackComplete();
   }, [handleFeedbackComplete]);
 

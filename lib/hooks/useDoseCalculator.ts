@@ -502,12 +502,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       resetFullForm('dose');
       setScreenStep('intro');
     } else if (nextAction === 'scan_again') {
+      console.log('[useDoseCalculator] Scan again requested');
       // Check scan limits before allowing scan again
       const canProceed = await checkUsageLimit();
       if (canProceed) {
+        console.log('[useDoseCalculator] Navigating to scan screen');
         setScreenStep('scan');
       } else {
         // If no scans remaining, go back to intro screen
+        console.log('[useDoseCalculator] Scan limit reached, going to intro');
         setScreenStep('intro');
       }
     }
