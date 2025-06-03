@@ -298,12 +298,7 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           <View style={styles.content}>
             {/* New Header with App Title and Profile Icon */}
             <View style={styles.header}>
-              {/* Optional syringe icon in header - smaller and more subtle */}
-              <View style={styles.headerLeft}>
-                <Syringe color={'#6ee7b7'} size={24} style={styles.headerIcon} />
-              </View>
-              
-              {/* App Title */}
+              {/* App Title - centered */}
               <Text style={styles.appTitle}>SafeDose</Text>
               
               {/* Profile Icon (top right) - only show for authenticated users */}
@@ -366,11 +361,14 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
               </TouchableOpacity>
             </View>
             
-            {/* Smaller, less prominent disclaimer */}
+            {/* Disclaimer with Info icon - show default if disclaimerText is not available */}
             <View style={styles.disclaimerContainer}>
-              <Text style={styles.disclaimerText}>
-                {disclaimerText || 'Always consult a licensed healthcare professional before administering any medication.'}
-              </Text>
+              <View style={styles.disclaimerIconContainer}>
+                <Info color={'#856404'} size={14} style={styles.disclaimerIcon} />
+                <Text style={styles.disclaimerText}>
+                  {disclaimerText || 'Always consult a licensed healthcare professional before administering any medication.'}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -428,24 +426,18 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
           </Modal>
         )}
 
-        {/* Simplified bottom section - only show sign-in for anonymous users */}
+        {/* Simplified bottom section - show sign-in bubble for anonymous users */}
         {!isLoading && !isSigningOut && (user?.isAnonymous || !user) && (
           <View style={styles.bottomSection}>
-            <View style={styles.authSection}>
-              <Text style={styles.authPromptText}>
-                {!user ? 'Signed out successfully. Sign in to save calculations and get unlimited scans' : 'Sign in to save calculations and get unlimited scans'}
-              </Text>
-              
-              <TouchableOpacity 
-                style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]} 
-                onPress={handleSignInPress}
-                accessibilityRole="button"
-                accessibilityLabel="Sign in with Google"
-                accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
-                <LogIn color="#10b981" size={16} />
-                <Text style={styles.signInButtonText}>Sign In with Google</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={[styles.signInBubble, isMobileWeb && styles.signInBubbleMobile]} 
+              onPress={handleSignInPress}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in with Google"
+              accessibilityHint="Sign in using your Google account to save calculations and get unlimited scans">
+              <LogIn color="#10b981" size={16} />
+              <Text style={styles.signInBubbleText}>Sign In</Text>
+            </TouchableOpacity>
           </View>
         )}
       </Animated.View>
@@ -537,24 +529,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 4,
     marginBottom: 12,
-  },
-  headerLeft: {
-    width: 32, // Reserve space for icon on left
-  },
-  headerIcon: {
-    // Small, subtle syringe icon in header
+    position: 'relative', // For absolute positioning of profile icon
   },
   appTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: '#000000',
     textAlign: 'center',
-    flex: 1,
   },
   profileIconContainer: {
+    position: 'absolute',
+    right: 4,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -641,18 +629,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
-  // Disclaimer styles - smaller and less prominent
+  // Disclaimer styles
   disclaimerContainer: { 
-    marginTop: 'auto', // Push to bottom of content area
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    backgroundColor: '#FFF3CD', 
+    padding: 10,
+    borderRadius: 8, 
+    marginBottom: 32, // Increased from 16 to 32 to create better visual separation from bottom section
+    width: '90%', 
+    maxWidth: 500,
+    borderLeftWidth: 3,
+    borderLeftColor: '#856404',
+    alignSelf: 'center', // Center the disclaimer
+  },
+  disclaimerIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  disclaimerIcon: {
+    marginRight: 8,
+    marginTop: 3,
   },
   disclaimerText: { 
-    fontSize: 10, 
-    color: '#999999', 
-    textAlign: 'center',
+    fontSize: 11, 
+    color: '#856404', 
+    textAlign: 'left',
     fontStyle: 'italic',
-    lineHeight: 14,
+    flex: 1,
   },
   // Profile dropdown styles
   profileDropdownOverlay: {
@@ -716,53 +718,36 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
-  // Bottom section containing authentication for anonymous users only
+  // Bottom section containing simple sign-in bubble for anonymous users
   bottomSection: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     alignItems: 'center',
   },
-  // Authentication section for anonymous users
-  authSection: {
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  authPromptText: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  signInButton: {
+  // Simple sign-in bubble for anonymous users
+  signInBubble: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#10b981',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  signInButtonMobile: {
-    paddingVertical: 12,
+  signInBubbleMobile: {
+    paddingVertical: 14,
     paddingHorizontal: 24,
   },
-  signInButtonText: {
+  signInBubbleText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 8,
     color: '#10b981',
   },
