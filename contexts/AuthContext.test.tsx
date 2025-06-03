@@ -140,14 +140,18 @@ describe('AuthContext Sign Out Functionality', () => {
   it('should call analytics event on logout', async () => {
     mockSignOut.mockResolvedValue();
     
-    // Simulate calling the logout function
+    // Simulate calling the logout function with enhanced debugging
     const logout = async () => {
+      console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
       try {
+        console.log('[AuthContext] Setting isSigningOut to true...');
+        console.log('[AuthContext] Calling Firebase signOut...');
         await mockSignOut();
+        console.log('[AuthContext] Logging analytics event...');
         mockLogAnalyticsEvent('logout');
-        console.log('Signed out successfully');
+        console.log('[AuthContext] ✅ Signed out successfully - logout function complete');
       } catch (error) {
-        console.error('Error signing out:', error);
+        console.error('[AuthContext] ❌ Error signing out:', error);
         throw error;
       }
     };
@@ -159,27 +163,47 @@ describe('AuthContext Sign Out Functionality', () => {
   });
 
   it('should handle logout errors gracefully', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
     const mockError = new Error('Sign out failed');
     mockSignOut.mockRejectedValueOnce(mockError);
 
-    // Simulate calling the logout function with error
+    // Simulate calling the logout function with enhanced error handling
     const logout = async () => {
       let isSigningOut = true;
+      console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
       try {
+        console.log('[AuthContext] Setting isSigningOut to true...');
+        console.log('[AuthContext] Calling Firebase signOut...');
         await mockSignOut();
+        console.log('[AuthContext] Logging analytics event...');
         mockLogAnalyticsEvent('logout');
-        console.log('Signed out successfully');
+        console.log('[AuthContext] ✅ Signed out successfully - logout function complete');
       } catch (error) {
-        console.error('Error signing out:', error);
+        console.error('[AuthContext] ❌ Error signing out:', error);
+        console.error('[AuthContext] Error details:', {
+          message: error?.message || 'Unknown error',
+          code: error?.code || 'No error code',
+          name: error?.name || 'Unknown error type'
+        });
+        console.log('[AuthContext] Resetting isSigningOut to false due to error');
         isSigningOut = false;
         throw error;
       }
     };
 
     await expect(logout()).rejects.toThrow('Sign out failed');
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error signing out:', mockError);
+    expect(consoleSpy).toHaveBeenCalledWith('[AuthContext] ❌ Error signing out:', mockError);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[AuthContext] Error details:', 
+      expect.objectContaining({
+        message: 'Sign out failed',
+        code: 'No error code',
+        name: 'Error'
+      })
+    );
     
-    consoleErrorSpy.mockRestore();
+    consoleSpy.mockRestore();
+    consoleLogSpy.mockRestore();
   });
 });
