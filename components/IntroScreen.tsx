@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Camera as CameraIcon,
@@ -19,6 +19,7 @@ import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
+import ConfirmationModal from './ConfirmationModal';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -44,6 +45,10 @@ export default function IntroScreen({
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const router = useRouter();
+
+  // State for logout functionality
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -74,6 +79,8 @@ export default function IntroScreen({
   }, [router]);
 
   const handleLogoutPress = useCallback(async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
     console.log('[IntroScreen] ========== LOGOUT BUTTON PRESSED ==========');
     console.log('[IntroScreen] Current user state:', user ? {
       uid: user.uid,
@@ -81,63 +88,86 @@ export default function IntroScreen({
       displayName: user.displayName,
       email: user.email
     } : 'No user');
-    console.log('[IntroScreen] Alert availability check:', typeof Alert?.alert);
-    console.log('[IntroScreen] Platform info:', { isMobileWeb });
+    console.log('[IntroScreen] Platform info:', { 
+      platform: Platform.OS,
+      isMobileWeb 
+    });
     
     try {
-      console.log('[IntroScreen] Showing confirmation dialog...');
-      Alert.alert(
-        'Sign Out',
-        'Are you sure you want to sign out?',
-        [
-          { 
-            text: 'Cancel', 
-            style: 'cancel',
-            onPress: () => {
-              console.log('[IntroScreen] User cancelled logout');
-            }
-          },
-          {
-            text: 'Sign Out',
-            style: 'destructive',
-            onPress: async () => {
-              console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
-              console.log('[IntroScreen] User confirmed logout, initiating...');
-              try {
-                console.log('[IntroScreen] Calling logout function...');
-                await logout();
-                console.log('[IntroScreen] ✅ Logout completed successfully');
-              } catch (e) {
-                console.error('[IntroScreen] ❌ Logout error:', e);
-                Alert.alert('Sign Out Failed', 'Please try again.');
+      if (Platform.OS === 'web') {
+        console.log('[IntroScreen] Using web confirmation modal');
+        setShowWebLogoutModal(true);
+      } else {
+        console.log('[IntroScreen] Using native Alert.alert');
+        Alert.alert(
+          'Sign Out',
+          'Are you sure you want to sign out?',
+          [
+            { 
+              text: 'Cancel', 
+              style: 'cancel',
+              onPress: () => {
+                console.log('[IntroScreen] Alert cancelled');
+                setIsLoggingOut(false);
               }
             },
-          },
-        ],
-        { cancelable: true },
-      );
-      console.log('[IntroScreen] Alert.alert() called successfully');
-    } catch (error) {
-      console.error('[IntroScreen] ❌ Error showing alert dialog:', error);
-      console.log('[IntroScreen] Alert failed, attempting direct logout confirmation...');
-      /* Fallback for web */
-      try {
-        const confirmed = confirm?.('Sign out?');
-        console.log('[IntroScreen] Fallback confirmation result:', confirmed);
-        if (confirmed) {
-          console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
-          console.log('[IntroScreen] User confirmed logout via fallback, initiating...');
-          console.log('[IntroScreen] Calling logout function...');
-          await logout();
-          console.log('[IntroScreen] ✅ Logout completed successfully');
-        } else {
-          console.log('[IntroScreen] User cancelled logout via fallback');
-        }
-      } catch (e) {
-        console.error('[IntroScreen] ❌ Fallback logout error:', e);
+            {
+              text: 'Sign Out',
+              style: 'destructive',
+              onPress: async () => {
+                console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
+                console.log('[IntroScreen] Alert Sign Out confirmed');
+                try {
+                  await logout();
+                  console.log('[IntroScreen] Logout completed successfully');
+                } catch (e) {
+                  console.error('[IntroScreen] Logout failed:', e);
+                  Alert.alert('Sign Out Failed', 'Please try again.');
+                } finally {
+                  setIsLoggingOut(false);
+                }
+              },
+            },
+          ],
+          { 
+            cancelable: true, 
+            onDismiss: () => {
+              console.log('[IntroScreen] Alert dismissed');
+              setIsLoggingOut(false);
+            }
+          }
+        );
+        console.log('[IntroScreen] Alert.alert() called successfully');
       }
+    } catch (error) {
+      console.error('[IntroScreen] Dialog error:', error);
+      setIsLoggingOut(false);
     }
-  }, [logout, user, isMobileWeb]);
+  }, [logout, user, isLoggingOut, isMobileWeb]);
+
+  // Handler for web logout modal confirmation
+  const handleWebLogoutConfirm = useCallback(async () => {
+    console.log('[IntroScreen] ========== USER CONFIRMED LOGOUT ==========');
+    console.log('[IntroScreen] Web modal confirm accepted');
+    setShowWebLogoutModal(false);
+    try {
+      await logout();
+      console.log('[IntroScreen] Logout completed successfully');
+    } catch (e) {
+      console.error('[IntroScreen] Logout failed:', e);
+      // Note: We can't use Alert.alert here on web, so we'll just log the error
+      console.error('[IntroScreen] Web logout error - user may need to refresh');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout]);
+
+  // Handler for web logout modal cancellation
+  const handleWebLogoutCancel = useCallback(() => {
+    console.log('[IntroScreen] Web modal confirm cancelled');
+    setShowWebLogoutModal(false);
+    setIsLoggingOut(false);
+  }, []);
 
   /* Dev helper: auto-login if TEST_LOGIN flag set */
   useEffect(() => {
@@ -296,20 +326,35 @@ export default function IntroScreen({
                     style={[
                       styles.signOutButton,
                       isMobileWeb && styles.signOutButtonMobile,
+                      isLoggingOut && styles.signOutButtonDisabled,
                     ]}
                     onPress={handleLogoutPress}
+                    disabled={isLoggingOut}
                     testID="sign-out-button"
                     accessibilityRole="button"
                     accessibilityLabel="Sign out"
                     accessibilityHint="Sign out of your account"
                   >
                     <LogOut color="#ef4444" size={16} />
-                    <Text style={styles.signOutButtonText}>Sign Out</Text>
+                    <Text style={styles.signOutButtonText}>
+                      {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           </>
+        )}
+
+        {/* Web Logout Confirmation Modal */}
+        {Platform.OS === 'web' && (
+          <ConfirmationModal
+            visible={showWebLogoutModal}
+            title="Sign Out"
+            message="Are you sure you want to sign out?"
+            onConfirm={handleWebLogoutConfirm}
+            onCancel={handleWebLogoutCancel}
+          />
         )}
       </Animated.View>
     </SafeAreaView>
@@ -610,6 +655,9 @@ const styles = StyleSheet.create({
   signOutButtonMobile: {
     paddingVertical: 12,
     paddingHorizontal: 20,
+  },
+  signOutButtonDisabled: {
+    opacity: 0.5,
   },
   signOutButtonText: {
     fontSize: 15,
