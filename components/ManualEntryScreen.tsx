@@ -385,11 +385,11 @@ export default function ManualEntryScreen({
         keyboardShouldPersistTaps="always"
       >
         <CustomProgressBar progress={progress} />
-        <View style={styles.formWrapper}>
+        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
           {currentStepComponent}
           {formError && <Text style={styles.errorText}>{formError}</Text>}
           {manualStep !== 'finalResult' && (
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
               <TouchableOpacity 
                 style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
                 onPress={handleBack}
@@ -441,6 +441,10 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     overflow: 'hidden'
   },
+  formWrapperMobile: {
+    paddingHorizontal: 12, // Reduced padding for small screens
+    paddingBottom: 16, // Tighter bottom padding
+  },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 
     flexDirection: 'row', 
@@ -451,10 +455,23 @@ const styles = StyleSheet.create({
     gap: 10,
     overflow: 'hidden'
   },
+  buttonContainerMobile: {
+    marginTop: 16, // Reduced top margin for small screens
+    gap: 8, // Smaller gap between buttons
+  },
   backButton: { backgroundColor: '#8E8E93', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center', width: '45%', minHeight: 50 },
-  backButtonMobile: { paddingVertical: 14, minHeight: 55 },
+  backButtonMobile: { 
+    paddingVertical: 10, // Reduced padding for small screens
+    paddingHorizontal: 16, // Reduced horizontal padding
+    minHeight: 48, // Smaller minimum height but still accessible
+  },
   nextButton: { backgroundColor: '#007AFF', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, width: '45%', minHeight: 50 },
-  nextButtonMobile: { paddingVertical: 14, minHeight: 55 },
+  nextButtonMobile: { 
+    paddingVertical: 10, // Reduced padding for small screens
+    paddingHorizontal: 16, // Reduced horizontal padding
+    minHeight: 48, // Smaller minimum height but still accessible
+    gap: 6, // Smaller gap between text and icon
+  },
   disabledButton: { backgroundColor: '#C7C7CC' },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
 });

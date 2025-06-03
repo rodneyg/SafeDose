@@ -233,9 +233,9 @@ export default function IntroScreen({
         {!isLoading && !isSigningOut && (
           <>
             {/* ===================== MAIN CONTENT ===================== */}
-            <View style={styles.content}>
-              <View style={styles.welcomeContainer}>
-                <Syringe color="#6ee7b7" size={64} style={styles.icon} />
+            <View style={[styles.content, isMobileWeb && styles.contentMobile]}>
+              <View style={[styles.welcomeContainer, isMobileWeb && styles.welcomeContainerMobile]}>
+                <Syringe color="#6ee7b7" size={64} style={[styles.icon, isMobileWeb && styles.iconMobile]} />
                 {user && !user.isAnonymous && user.displayName ? (
                   <Text style={styles.welcomeText}>
                     Hello, {user.displayName.split(' ')[0]}!
@@ -245,7 +245,7 @@ export default function IntroScreen({
                 )}
               </View>
 
-              <View style={styles.actionButtonsContainer}>
+              <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
                 {(() => {
                   const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
                   const isOutOfScans = scansRemaining <= 0;
@@ -466,12 +466,22 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     padding: 16,
   },
+  contentMobile: {
+    paddingTop: 16, // Reduced top padding for small screens
+    padding: 12, // Reduced general padding
+  },
   welcomeContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
+  welcomeContainerMobile: {
+    marginBottom: 16, // Reduced margin for small screens
+  },
   icon: {
     marginBottom: 15,
+  },
+  iconMobile: {
+    marginBottom: 10, // Smaller margin for small screens
   },
   welcomeText: {
     fontSize: 16,
@@ -487,6 +497,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
     gap: 20,
+  },
+  actionButtonsContainerMobile: {
+    marginBottom: 20, // Reduced margin for small screens
+    gap: 16, // Smaller gap between buttons
   },
   button: {
     flexDirection: 'column',
@@ -504,10 +518,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonMobile: {
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    width: 120,
-    height: 120,
+    paddingVertical: 12, // Reduced padding for small screens
+    paddingHorizontal: 12, // Reduced padding for small screens
+    width: 90, // Smaller width for small screens
+    height: 90, // Smaller height for small screens
+    gap: 6, // Smaller gap between icon and text
   },
   primaryButton: {
     backgroundColor: '#007AFF',

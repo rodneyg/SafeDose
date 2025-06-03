@@ -65,15 +65,15 @@ export default function PostDoseFeedbackScreen({
   const nextActionText = context.nextAction === 'new_dose' ? 'new dose' : 'scan again';
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>How did this dose feel?</Text>
-        <Text style={styles.subtitle}>
+    <ScrollView contentContainerStyle={[styles.container, isMobileWeb && styles.containerMobile]}>
+      <View style={[styles.headerContainer, isMobileWeb && styles.headerContainerMobile]}>
+        <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>How did this dose feel?</Text>
+        <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
           Optional feedback to help track your experience
         </Text>
       </View>
 
-      <View style={styles.feedbackOptions}>
+      <View style={[styles.feedbackOptions, isMobileWeb && styles.feedbackOptionsMobile]}>
         {(['great', 'mild_side_effects', 'something_wrong'] as FeedbackType[]).map((feedbackType) => (
           <TouchableOpacity
             key={feedbackType}
@@ -152,9 +152,15 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f9fafb',
   },
+  containerMobile: {
+    padding: 16, // Reduced padding for small screens
+  },
   headerContainer: {
     alignItems: 'center',
     marginBottom: 30,
+  },
+  headerContainerMobile: {
+    marginBottom: 20, // Reduced margin for small screens
   },
   title: {
     fontSize: 24,
@@ -163,13 +169,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
+  titleMobile: {
+    fontSize: 20, // Smaller title for small screens
+    marginBottom: 6, // Reduced margin
+  },
   subtitle: {
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
   },
+  subtitleMobile: {
+    fontSize: 14, // Smaller subtitle for small screens
+  },
   feedbackOptions: {
     marginBottom: 20,
+  },
+  feedbackOptionsMobile: {
+    marginBottom: 16, // Reduced margin for small screens
   },
   feedbackOption: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { isMobileWeb } from '../lib/utils';
 
 type Props = {
   totalAmount: string;
@@ -39,11 +40,11 @@ export default function TotalAmountInputStep({
   }, [totalAmount, dose, unit, setTotalAmountHint]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Step 3: Enter Total Amount</Text>
+    <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Enter Total Amount</Text>
       <Text style={styles.label}>Total Amount in Vial ({unit === 'mcg' ? 'mg' : unit}):</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={totalAmount}
         onChangeText={(text) => {
           setTotalAmount(text);
@@ -64,9 +65,22 @@ export default function TotalAmountInputStep({
 
 const styles = StyleSheet.create({
   container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  containerMobile: {
+    padding: 12, // Reduced padding for small screens
+    marginBottom: 16, // Reduced margin for tighter layout
+  },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
+  titleMobile: {
+    fontSize: 16, // Smaller title font for small screens
+    marginBottom: 12, // Reduced margin
+  },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
   input: { backgroundColor: '#FFFFFF', color: '#000000', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 6, fontSize: 15, borderWidth: 1, borderColor: '#E5E5EA', marginBottom: 10, width: '100%' },
+  inputMobile: {
+    paddingVertical: 8, // Reduced vertical padding for small screens
+    paddingHorizontal: 12, // Reduced horizontal padding
+    marginBottom: 8, // Tighter spacing
+  },
   helperHint: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, marginBottom: 8, fontStyle: 'italic' },
   warningHint: { color: '#B45309', backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: 8, borderRadius: 4 },
   helperText: { fontSize: 12, color: '#8E8E93', textAlign: 'center', marginTop: 4, marginBottom: 10 },
