@@ -152,7 +152,7 @@ export function calculateDose({
   }
 
   if (!markingsString) {
-    calculationError = `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`;
+    calculationError = `Markings unavailable for ${manualSyringe.type} ${String(manualSyringe.volume)} syringe.`;
     console.log('[Calculate] Error: Invalid syringe option or volume for type');
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
@@ -218,7 +218,7 @@ export function calculateDose({
     }
   }
 
-  const maxVolume = parseFloat(manualSyringe.volume.replace(/[^0-9.]/g, ''));
+  const maxVolume = parseFloat(String(manualSyringe.volume).replace(/[^0-9.]/g, ''));
   if (calculatedVolume > maxVolume) {
     calculationError = `Required volume (${calculatedVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`;
     console.log('[Calculate] Error: Volume exceeds capacity');
