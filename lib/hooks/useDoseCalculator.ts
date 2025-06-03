@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -27,7 +27,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [dose, setDose] = useState<string>('');
   const [unit, setUnit] = useState<'mg' | 'mcg' | 'units' | 'mL'>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
-  const [medicationInputType, setMedicationInputType] = useState<string>('totalAmount');
+  const [medicationInputType, setMedicationInputType] = useState<'concentration' | 'totalAmount' | null>('totalAmount');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -490,15 +490,18 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [substanceName, doseValue, unit, calculatedVolume]);
 
   const handleFeedbackComplete = useCallback(async () => {
+    console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
     if (!feedbackContext) return;
     
     const nextAction = feedbackContext.nextAction;
+    console.log('[useDoseCalculator] Next action:', nextAction);
     
     // Clear feedback context
     setFeedbackContext(null);
     
     // Navigate to the intended destination
     if (nextAction === 'new_dose') {
+      console.log('[useDoseCalculator] Navigating to new dose (intro)');
       resetFullForm('dose');
       setScreenStep('intro');
     } else if (nextAction === 'scan_again') {
@@ -506,13 +509,18 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Check scan limits before allowing scan again
       const canProceed = await checkUsageLimit();
       if (canProceed) {
-        console.log('[useDoseCalculator] Navigating to scan screen');
-        setScreenStep('scan');
+        console.log('[useDoseCalculator] ✅ Navigating to scan screen with camera reset flag');
+        // Add a small delay to ensure state is clean before navigation
+        setTimeout(() => {
+          setScreenStep('scan');
+        }, 100);
       } else {
         // If no scans remaining, go back to intro screen
-        console.log('[useDoseCalculator] Scan limit reached, going to intro');
+        console.log('[useDoseCalculator] ❌ Scan limit reached, going to intro');
         setScreenStep('intro');
       }
+    } else {
+      console.log('[useDoseCalculator] ⚠️ Unknown next action:', nextAction);
     }
     
     lastActionTimestamp.current = Date.now();

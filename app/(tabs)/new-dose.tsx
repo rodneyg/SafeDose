@@ -19,6 +19,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+
 export default function NewDoseScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
@@ -215,6 +217,7 @@ export default function NewDoseScreen() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [webFlashlightEnabled, setWebFlashlightEnabled] = useState(false);
   const [webFlashlightSupported, setWebFlashlightSupported] = useState(false);
+  const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
 
@@ -320,7 +323,42 @@ export default function NewDoseScreen() {
     }
   }, [isWeb]);
 
+  // Track screen transitions to detect feedback -> scan transitions
   useEffect(() => {
+    console.log('[NewDoseScreen] Screen transition:', lastScreenStep, '->', screenStep);
+    
+    // Force camera re-initialization when returning to scan from feedback
+    if (lastScreenStep === 'postDoseFeedback' && screenStep === 'scan' && isWeb) {
+      console.log('[NewDoseScreen] 🔄 Detected feedback -> scan transition, forcing camera reset');
+      
+      // Clean up any existing stream
+      if (webCameraStreamRef.current) {
+        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+        webCameraStreamRef.current = null;
+      }
+      
+      // Reset permission status to force fresh camera request
+      setPermissionStatus('undetermined');
+      setMobileWebPermissionDenied(false);
+      
+      // Small delay to ensure cleanup completes before re-requesting
+      setTimeout(() => {
+        console.log('[NewDoseScreen] 📸 Requesting fresh camera permission after reset');
+        requestWebCameraPermission();
+      }, 200);
+    }
+    
+    setLastScreenStep(screenStep);
+  }, [screenStep, lastScreenStep, isWeb, requestWebCameraPermission]);
+
+  useEffect(() => {
+    console.log("[WebCamera] Camera useEffect triggered", { 
+      screenStep, 
+      permissionStatus, 
+      hasStream: !!webCameraStreamRef.current,
+      isWeb 
+    });
+    
     if (isWeb && screenStep === 'scan') {
       // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
       console.log("[WebCamera] Scan screen active, checking camera state", { 
@@ -332,12 +370,14 @@ export default function NewDoseScreen() {
           (permissionStatus === 'granted' && !webCameraStreamRef.current)) {
         console.log("[WebCamera] Requesting camera permission/stream");
         requestWebCameraPermission();
+      } else {
+        console.log("[WebCamera] Not requesting camera - permissionStatus:", permissionStatus, "hasStream:", !!webCameraStreamRef.current);
       }
     }
     
     // Clean up camera stream when navigating away from scan screen
     if (screenStep !== 'scan' && webCameraStreamRef.current) {
-      console.log("[WebCamera] Cleaning up camera stream on screen change");
+      console.log("[WebCamera] Cleaning up camera stream on screen change from", screenStep);
       webCameraStreamRef.current.getTracks().forEach(track => track.stop());
       webCameraStreamRef.current = null;
     }
@@ -584,6 +624,7 @@ export default function NewDoseScreen() {
 
   // Feedback handlers
   const handleFeedbackSubmit = useCallback(async (feedbackType: any, notes?: string) => {
+    console.log('[NewDoseScreen] handleFeedbackSubmit called', { feedbackType, feedbackContext });
     if (!feedbackContext) return;
     
     await feedbackStorage.submitFeedback(
@@ -594,12 +635,15 @@ export default function NewDoseScreen() {
     
     // Clear any scan errors before navigating
     setScanError(null);
+    console.log('[NewDoseScreen] About to call handleFeedbackComplete');
     handleFeedbackComplete();
   }, [feedbackContext, feedbackStorage, handleFeedbackComplete]);
 
   const handleFeedbackSkip = useCallback(() => {
+    console.log('[NewDoseScreen] handleFeedbackSkip called', { feedbackContext });
     // Clear any scan errors before navigating 
     setScanError(null);
+    console.log('[NewDoseScreen] About to call handleFeedbackComplete');
     handleFeedbackComplete();
   }, [handleFeedbackComplete]);
 
