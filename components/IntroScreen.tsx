@@ -287,10 +287,9 @@ export default function IntroScreen({ setScreenStep, resetFullForm, setNavigatin
         {/* Main content section - only show when not loading and not signing out */}
         {!isLoading && !isSigningOut && (
           <View style={styles.content}>
-            {/* App icon and title */}
+            {/* App icon and welcome message */}
             <View style={styles.welcomeContainer}>
               <Syringe color={'#6ee7b7'} size={64} style={styles.icon} />
-              <Text style={styles.title}>SafeDose</Text>
               
               {/* Concise welcome message */}
               {user && !user.isAnonymous && user.displayName ? (
@@ -489,13 +488,6 @@ const styles = StyleSheet.create({
   icon: { 
     marginBottom: 15, // Changed from 8 to 15px as requested (10-20px range)
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
   welcomeText: {
     fontSize: 16,
     fontWeight: '500',
@@ -512,11 +504,10 @@ const styles = StyleSheet.create({
   // Action buttons group (Law of Proximity)
   actionButtonsContainer: {
     flexDirection: 'row', // Changed from column to row for side-by-side layout
-    width: '100%',
-    justifyContent: 'space-evenly', // Distribute buttons evenly
+    justifyContent: 'center', // Center the buttons
     alignItems: 'center',
     marginBottom: 24, // Reduced from 32 to 24 to create more space for content below
-    paddingHorizontal: 20, // Add horizontal padding for better spacing
+    gap: 20, // Fixed 20px gap between buttons
   },
   button: { 
     flexDirection: 'column', // Changed to column to stack icon and text vertically
