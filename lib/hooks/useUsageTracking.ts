@@ -142,11 +142,25 @@ export function useUsageTracking() {
   }, [user, isOnline]);
 
   const checkUsageLimit = async () => {
-    if (!user) return false;
+    console.log('[useUsageTracking] ========== CHECKING USAGE LIMIT ==========');
+    console.log('[useUsageTracking] Checking usage limit:', {
+      user: user ? user.uid : 'No user',
+      isOnline,
+      currentUsage: usageData.scansUsed,
+      limit: usageData.limit,
+      plan: usageData.plan
+    });
+    
+    if (!user) {
+      console.log('[useUsageTracking] No user found, denying access');
+      return false;
+    }
 
     if (!isOnline) {
-      console.log('Checking cached usage limit due to offline status');
-      return usageData.scansUsed < usageData.limit;
+      console.log('[useUsageTracking] Checking cached usage limit due to offline status');
+      const hasScansRemaining = usageData.scansUsed < usageData.limit;
+      console.log('[useUsageTracking] Offline limit check result:', hasScansRemaining);
+      return hasScansRemaining;
     }
 
     try {
@@ -198,8 +212,17 @@ export function useUsageTracking() {
   };
 
   const incrementScansUsed = async () => {
+    console.log('[useUsageTracking] ========== INCREMENTING SCAN USAGE ==========');
+    console.log('[useUsageTracking] Attempting to increment scans used:', {
+      user: user ? user.uid : 'No user',
+      isOnline,
+      currentScansUsed: usageData.scansUsed,
+      limit: usageData.limit,
+      plan: usageData.plan
+    });
+    
     if (!user || !isOnline) {
-      console.log('Skipping scan increment: user not authenticated or offline');
+      console.log('[useUsageTracking] Skipping scan increment: user not authenticated or offline');
       return;
     }
 
@@ -209,21 +232,26 @@ export function useUsageTracking() {
         // Ensure document exists before incrementing
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
+          console.log('[useUsageTracking] User document does not exist, creating new one');
           const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
           await setDoc(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
-          console.log('Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
+          console.log('[useUsageTracking] Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
         }
+        
+        console.log('[useUsageTracking] Updating Firestore document with increment');
         await updateDoc(userDocRef, { scansUsed: increment(1) });
+        
         setUsageData((prev) => {
           const newData = { ...prev, scansUsed: prev.scansUsed + 1 };
+          console.log('[useUsageTracking] Updated local usage data:', newData);
           saveCachedUsage(newData);
           return newData;
         });
-        console.log('Incremented scans used');
+        console.log('[useUsageTracking] ✅ Successfully incremented scans used');
       };
       await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
     } catch (error) {
-      console.error('Error incrementing scans:', error);
+      console.error('[useUsageTracking] ❌ Error incrementing scans:', error);
     }
   };
 
