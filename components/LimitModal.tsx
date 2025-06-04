@@ -15,6 +15,12 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
 
+  React.useEffect(() => {
+    if (visible) {
+      logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_VIEW);
+    }
+  }, [visible]);
+
   const handleSignIn = () => {
     console.log('[LimitModal] Sign In button pressed');
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'sign_in' });
