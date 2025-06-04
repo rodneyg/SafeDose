@@ -47,8 +47,9 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
       {recommendedMarking && (
         <>
           <View style={[styles.recommendedMark, { left: recommendedPosition - 2 }]} />
-          <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 30) }]}>
-            Draw to here
+          <View style={[styles.precisionIndicator, { left: recommendedPosition - 1 }]} />
+          <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 35) }]}>
+            Draw to {recommendedValue.toFixed(2)} {unit}
           </Text>
         </>
       )}
@@ -64,6 +65,7 @@ const styles = StyleSheet.create({
   markingLabel: { position: 'absolute', top: 65, fontSize: 10 },
   unitLabel: { position: 'absolute', left: 270, top: 65, fontSize: 12, color: '#000', fontWeight: 'bold' },
   recommendedMark: { position: 'absolute', top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 },
-  recommendedText: { position: 'absolute', top: 85, fontSize: 12, color: '#FF0000', fontWeight: 'bold' },
+  precisionIndicator: { position: 'absolute', top: 18, width: 2, height: 64, backgroundColor: '#FFD700', zIndex: 2 },
+  recommendedText: { position: 'absolute', top: 85, fontSize: 10, color: '#FF0000', fontWeight: 'bold' },
   noMarkingsText: { position: 'absolute', top: 65, width: '100%', textAlign: 'center', fontSize: 12, color: '#991B1B', fontWeight: 'bold' },
 });

@@ -124,22 +124,22 @@ export default function FinalResultDisplay({
         </View>
       )}
       {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+        <View style={[styles.instructionCard, calculationError && !calculationError.includes('Draw to') ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
+            {calculationError && !calculationError.includes('Draw to') ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
-            Draw up to the {recommendedMarking} mark
+            Draw to {parseFloat(recommendedMarking).toFixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
           </Text>
           <Text style={styles.instructionNote}>
             ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(2)} ml)
+              (Exact calculated volume: {calculatedVolume.toFixed(3)} ml)
             </Text>
           )}
           {calculatedConcentration !== null && calculatedConcentration !== undefined && (
@@ -148,7 +148,9 @@ export default function FinalResultDisplay({
             </Text>
           )}
           {calculationError && (
-            <Text style={styles.warningText}>{calculationError}</Text>
+            <Text style={calculationError.includes('Draw to') ? styles.guidanceText : styles.warningText}>
+              {calculationError}
+            </Text>
           )}
           <View style={styles.illustrationContainer}>
             <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
@@ -247,6 +249,7 @@ const styles = StyleSheet.create({
   instructionTextLarge: { fontSize: 24, fontWeight: 'bold', color: '#065F46', textAlign: 'center', marginVertical: 10, paddingVertical: 8, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 6 },
   instructionNote: { fontSize: 13, color: '#065F46', textAlign: 'center', marginTop: 4, fontStyle: 'italic' },
   warningText: { fontSize: 13, color: '#92400E', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center' },
+  guidanceText: { fontSize: 13, color: '#065F46', textAlign: 'center', marginTop: 10, paddingHorizontal: 10, backgroundColor: 'rgba(16, 185, 129, 0.1)', paddingVertical: 6, borderRadius: 6, width: '90%', alignSelf: 'center', fontWeight: '500' },
   illustrationContainer: { marginTop: 20, alignItems: 'center' },
   disclaimerContainer: { 
     backgroundColor: '#FFF3CD', 
