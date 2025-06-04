@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
@@ -11,6 +11,7 @@ import ReconstitutionStep from '../components/ReconstitutionStep';
 import SyringeStep from '../components/SyringeStep';
 import PreDoseConfirmationStep from '../components/PreDoseConfirmationStep';
 import FinalResultDisplay from '../components/FinalResultDisplay';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -109,6 +110,9 @@ export default function ManualEntryScreen({
   validateDoseInput,
   validateConcentrationInput,
 }: ManualEntryScreenProps) {
+  useEffect(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
+  }, []);
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));

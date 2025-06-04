@@ -23,6 +23,9 @@ export const ANALYTICS_EVENTS = {
   ONBOARDING_STEP_COMPLETE: 'onboarding_step_complete',
   ONBOARDING_STEP_SKIP: 'onboarding_step_skip',
   ONBOARDING_COMPLETE: 'onboarding_complete',
+  // Manual entry events
+  MANUAL_ENTRY_STARTED: 'manual_entry_started',
+  MANUAL_ENTRY_COMPLETED: 'manual_entry_completed',
 } as const;
 
 // User property names

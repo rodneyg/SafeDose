@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -403,9 +404,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
   }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
 
-  const handleNextPreDoseConfirmation = useCallback(() => {
+const handleNextPreDoseConfirmation = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleNextPreDoseConfirmation called');
+      logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
       lastActionTimestamp.current = Date.now();

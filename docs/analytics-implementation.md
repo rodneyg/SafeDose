@@ -29,6 +29,10 @@ The following custom events are tracked:
 - **scan_failure**: Logged on scan failure with reason
 - **reach_scan_limit**: Logged when user hits scan limit
 
+### Manual Entry Events
+- **manual_entry_started**: Logged when the manual entry screen is opened
+- **manual_entry_completed**: Logged when the user finishes the manual entry process
+
 ### User Interaction Events
 - **limit_modal_action**: Logged for limit modal interactions (sign_in, upgrade, cancel)
 - **error_occurred**: Logged for critical errors with type and message
