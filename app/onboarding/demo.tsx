@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isMobileWeb } from '../../lib/utils';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -43,7 +44,7 @@ export default function Demo() {
             entering={FadeInRight.duration(500)} 
             style={[styles.stepContainer, { width: width - 48 }]}
           >
-            <View style={styles.imageContainer}>
+            <View style={[styles.imageContainer, isMobileWeb && styles.imageContainerMobile]}>
               <Image 
                 source={{ 
                   uri: imageError ? FALLBACK_IMAGE : 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426'
@@ -290,5 +291,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+  },
+  // Mobile-specific styles
+  imageContainerMobile: {
+    height: 200, // Reduced from 300px to prevent overflow on small screens
+    marginBottom: 20, // Reduced margin for tighter layout
   },
 });

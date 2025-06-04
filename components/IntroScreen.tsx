@@ -309,8 +309,8 @@ export default function IntroScreen({
                 <View style={styles.authSection}>
                   <Text style={styles.authPromptText}>
                     {!user
-                      ? 'Signed out successfully. Sign in to save calculations and get unlimited scans'
-                      : 'Sign in to save calculations and get unlimited scans'}
+                      ? 'Signed out successfully. Sign in to get more scans'
+                      : 'Sign in to get more scans'}
                   </Text>
 
                   <TouchableOpacity
@@ -318,7 +318,7 @@ export default function IntroScreen({
                     onPress={handleSignInPress}
                     accessibilityRole="button"
                     accessibilityLabel="Sign in with Google"
-                    accessibilityHint="Sign in to save calculations and get unlimited scans"
+                    accessibilityHint="Sign in to get more scans"
                   >
                     <LogIn color="#10b981" size={16} />
                     <Text style={styles.signInButtonText}>Sign In with Google</Text>
