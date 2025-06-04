@@ -34,6 +34,7 @@ module.exports = {
   },
   extra: {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    SENTRY_DSN: process.env.SENTRY_DSN,
     // Legacy Stripe keys for backward compatibility
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     // New Stripe configuration with feature flag support

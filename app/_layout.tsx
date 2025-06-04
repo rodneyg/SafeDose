@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { analytics } from '../lib/firebase';
+import { initSentry } from '../lib/sentry';
 import "../global.css";
 
 export default function RootLayout() {
@@ -12,6 +13,9 @@ export default function RootLayout() {
   useEffect(() => {
     console.log('[RootLayout] Root layout effect running - hiding splash screen');
     SplashScreen.hideAsync();
+    
+    // Initialize Sentry first
+    initSentry();
     
     // Initialize Firebase Analytics
     if (analytics) {

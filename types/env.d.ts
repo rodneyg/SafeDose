@@ -4,6 +4,7 @@ declare module 'expo-constants' {
       expoConfig: {
         extra: {
           OPENAI_API_KEY: string;
+          SENTRY_DSN: string;
           STRIPE_PUBLISHABLE_KEY: string;
           STRIPE_MODE: string;
           STRIPE_TEST_PUBLISHABLE_KEY: string;
