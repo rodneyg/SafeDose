@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   // Mobile-specific styles
   imageContainerMobile: {
-    height: 120, // Much smaller for iPhone SE and small screens
+    height: 200, // Optimized for mobile screens
     marginBottom: 16, // Reduced margin for tighter layout
   },
   stepTitleMobile: {
