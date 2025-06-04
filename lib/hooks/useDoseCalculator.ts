@@ -48,6 +48,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
   const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
+  const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -139,12 +140,22 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Store previous step to detect potential navigation loops
       const prevStep = screenStep;
       
+      // Track last action type when transitioning from intro to action screens
+      if (prevStep === 'intro' && step === 'manualEntry') {
+        setLastActionType('manual');
+        console.log('[useDoseCalculator] Tracked manual entry action');
+      } else if (prevStep === 'intro' && step === 'scan') {
+        setLastActionType('scan');
+        console.log('[useDoseCalculator] Tracked scan action');
+      }
+      
       // Actually update the screen step
       setScreenStep(step);
       
       // Ensure we properly track when the intro screen gets set
       if (step === 'intro') {
         console.log('[useDoseCalculator] Intro screen set explicitly');
+        // Don't clear lastActionType when going back to intro - preserve it for "New Dose" logic
       }
       
       // Log potentially problematic navigation transitions for debugging
@@ -475,7 +486,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     resetFullForm('dose');
   }, [resetFullForm]);
 
-  const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again') => {
+  const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     setFeedbackContext({
       nextAction,
       doseInfo: {
@@ -500,22 +511,48 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setFeedbackContext(null);
     
     // Navigate to the intended destination
-    if (nextAction === 'new_dose') {
-      console.log('[useDoseCalculator] Navigating to new dose (intro)');
+    if (nextAction === 'start_over') {
+      console.log('[useDoseCalculator] Start over - navigating to intro and clearing state');
       resetFullForm('dose');
+      setLastActionType(null); // Clear the last action type
       setScreenStep('intro');
+    } else if (nextAction === 'new_dose') {
+      console.log('[useDoseCalculator] New dose - repeating last action type:', lastActionType);
+      // Reset form but preserve the last action type for tracking
+      resetFullForm('dose');
+      
+      if (lastActionType === 'scan') {
+        // Check scan limits before allowing scan again
+        const canProceed = await checkUsageLimit();
+        if (canProceed) {
+          console.log('[useDoseCalculator] ✅ Repeating scan action');
+          // Add a small delay to ensure state is clean before navigation
+          setTimeout(() => {
+            setScreenStep('scan');
+          }, 100);
+        } else {
+          // If no scans remaining, go back to intro screen
+          console.log('[useDoseCalculator] ❌ Scan limit reached, going to intro');
+          setScreenStep('intro');
+        }
+      } else if (lastActionType === 'manual') {
+        console.log('[useDoseCalculator] ✅ Repeating manual entry action');
+        setScreenStep('manualEntry');
+      } else {
+        // Fallback to intro if no last action type is set
+        console.log('[useDoseCalculator] No last action type set, defaulting to intro');
+        setScreenStep('intro');
+      }
     } else if (nextAction === 'scan_again') {
-      console.log('[useDoseCalculator] Scan again requested');
-      // Check scan limits before allowing scan again
+      console.log('[useDoseCalculator] Scan again requested (legacy action)');
+      // This maintains backward compatibility but shouldn't be used in the new UI
       const canProceed = await checkUsageLimit();
       if (canProceed) {
         console.log('[useDoseCalculator] ✅ Navigating to scan screen with camera reset flag');
-        // Add a small delay to ensure state is clean before navigation
         setTimeout(() => {
           setScreenStep('scan');
         }, 100);
       } else {
-        // If no scans remaining, go back to intro screen
         console.log('[useDoseCalculator] ❌ Scan limit reached, going to intro');
         setScreenStep('intro');
       }
@@ -642,6 +679,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     stateHealth,
     validateDoseInput,
     validateConcentrationInput,
+    // Last action tracking
+    lastActionType,
     // New state and handlers
     showVolumeErrorModal,
     volumeErrorValue,
