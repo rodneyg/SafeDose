@@ -4,6 +4,7 @@ import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
+import { captureException, addBreadcrumb } from "../lib/sentry";
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
@@ -96,6 +97,19 @@ export default function PricingPage() {
       const priceId = selectedPlan.priceId;
       console.log("Using priceId:", priceId);
 
+      // Add Sentry breadcrumb for upgrade attempt
+      addBreadcrumb({
+        message: 'User initiated upgrade process',
+        category: 'upgrade',
+        level: 'info',
+        data: {
+          plan_id: selectedPlan.id,
+          plan_name: selectedPlan.name,
+          price: selectedPlan.price,
+          stripe_mode: stripeConfig.mode
+        }
+      });
+
       // Debug: show payload
       console.log(`Calling ${API_BASE_URL}/api/create-checkout-session with:`, {
         priceId,
@@ -168,6 +182,16 @@ export default function PricingPage() {
       }
     } catch (error: any) {
       console.error("Checkout error caught:", error);
+      
+      // Capture network failure with Sentry
+      captureException(error, {
+        context: 'network_failure_checkout',
+        error_type: 'network_error',
+        api_endpoint: '/api/create-checkout-session',
+        selected_plan: selectedPlan.id,
+        stripe_mode: stripeConfig.mode
+      });
+      
       setErrorMessage(error.message || "Unable to initiate checkout. Please try again.");
       logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
         plan: selectedPlan.id,

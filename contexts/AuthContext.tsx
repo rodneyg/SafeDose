@@ -4,6 +4,7 @@ import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/lib/firebase'; // Initialized auth instance
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
+import { setUser as setSentryUser, captureException, addBreadcrumb } from '@/lib/sentry';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +23,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
+    
+    // Add Sentry breadcrumb for logout attempt
+    addBreadcrumb({
+      message: 'User logout initiated',
+      category: 'auth',
+      level: 'info',
+    });
+    
     console.log('[AuthContext] Current user before logout:', user ? {
       uid: user.uid,
       isAnonymous: user.isAnonymous,
@@ -42,6 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[AuthContext] Clearing user state...');
       setUser(null);
+      
+      // Clear Sentry user context
+      setSentryUser(null);
       console.log('[AuthContext] User state cleared');
       
       console.log('[AuthContext] Clearing cached data...');
@@ -69,12 +81,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       } catch (storageError) {
         console.warn('[AuthContext] Error clearing cached data:', storageError);
+        // Capture storage errors with Sentry
+        captureException(storageError, {
+          context: 'logout_clear_cache',
+          user_id: user?.uid
+        });
       }
       console.log('[AuthContext] Cached data cleared');
       
       console.log('[AuthContext] Logging analytics event...');
       logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
       console.log('[AuthContext] Analytics event logged successfully');
+      
+      // Add Sentry breadcrumb for successful logout
+      addBreadcrumb({
+        message: 'User logout completed successfully',
+        category: 'auth',
+        level: 'info',
+      });
       
       console.log('[AuthContext] ✅ Signed out successfully - logout function complete');
     } catch (error) {
@@ -84,6 +108,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         code: error?.code || 'No error code',
         name: error?.name || 'Unknown error type'
       });
+      
+      // Capture Firebase auth errors with Sentry
+      captureException(error, {
+        context: 'firebase_auth_logout',
+        user_id: user?.uid,
+        error_code: error?.code,
+        error_type: 'firebase_auth_error'
+      });
+      
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
       isSigningOutRef.current = false;
@@ -138,6 +171,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Note: plan_type will be set when we have user plan data
         });
         console.log('[AuthContext] Analytics user properties set');
+        
+        // Set Sentry user context (without PII)
+        setSentryUser({
+          id: firebaseUser.uid,
+          // Don't include email or other PII for privacy
+          planTier: 'unknown' // Will be updated when we get plan data
+        });
+        
+        // Add Sentry breadcrumb for successful authentication
+        addBreadcrumb({
+          message: firebaseUser.isAnonymous ? 'Anonymous user authenticated' : 'User authenticated',
+          category: 'auth',
+          level: 'info',
+          data: {
+            is_anonymous: firebaseUser.isAnonymous,
+            auth_method: firebaseUser.isAnonymous ? 'anonymous' : 'authenticated'
+          }
+        });
+        
       } else {
         console.log('[AuthContext] No user found - setting user to null');
         setUser(null);
@@ -149,12 +201,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           signInAnonymously(auth)
             .then(() => {
               console.log('[AuthContext] ✅ Signed in anonymously successfully');
+              addBreadcrumb({
+                message: 'Anonymous sign-in successful',
+                category: 'auth',
+                level: 'info',
+              });
             })
             .catch((error) => {
               console.error('[AuthContext] ❌ Error signing in anonymously:', error);
               console.error('[AuthContext] Anonymous sign-in error details:', {
                 message: error?.message || 'Unknown error',
                 code: error?.code || 'No error code'
+              });
+              
+              // Capture Firebase auth errors with Sentry
+              captureException(error, {
+                context: 'firebase_auth_anonymous_signin',
+                error_code: error?.code,
+                error_type: 'firebase_auth_error',
+                retry_attempt: 'initial'
               });
             });
         } else {
@@ -168,12 +233,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             signInAnonymously(auth)
               .then(() => {
                 console.log('[AuthContext] ✅ Signed in anonymously after logout');
+                addBreadcrumb({
+                  message: 'Anonymous sign-in successful after logout',
+                  category: 'auth',
+                  level: 'info',
+                });
               })
               .catch((error) => {
                 console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
                 console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
                   message: error?.message || 'Unknown error',
                   code: error?.code || 'No error code'
+                });
+                
+                // Capture Firebase auth errors with Sentry
+                captureException(error, {
+                  context: 'firebase_auth_anonymous_signin_after_logout',
+                  error_code: error?.code,
+                  error_type: 'firebase_auth_error',
+                  retry_attempt: 'post_logout'
                 });
               });
           }, 2000); // 2 second delay to show the sign out actually happened

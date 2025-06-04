@@ -18,6 +18,7 @@ import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { addBreadcrumb } from '../../lib/sentry';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 
@@ -100,13 +101,25 @@ export default function NewDoseScreen() {
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
     console.log('[NewDoseScreen] Setting screen step to:', step);
     
+    // Add Sentry breadcrumb for navigation between core screens
+    addBreadcrumb({
+      message: `Navigation: ${doseCalculator.screenStep} → ${step}`,
+      category: 'navigation',
+      level: 'info',
+      data: {
+        from_screen: doseCalculator.screenStep,
+        to_screen: step,
+        user_authenticated: !user?.isAnonymous
+      }
+    });
+    
     // Track navigation from intro to other screens
     if (doseCalculator.screenStep === 'intro' && step !== 'intro') {
       setNavigatingFromIntro(true);
     }
     
     doseCalculator.setScreenStep(step);
-  }, [doseCalculator, setNavigatingFromIntro]);
+  }, [doseCalculator, setNavigatingFromIntro, user]);
   
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
