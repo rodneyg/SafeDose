@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, Home } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
@@ -19,6 +19,7 @@ type Props = {
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
+  handleGoHome: () => void;
   isMobileWeb: boolean;
 };
 
@@ -36,6 +37,7 @@ export default function FinalResultDisplay({
   handleStartOver,
   setScreenStep,
   handleGoToFeedback,
+  handleGoHome,
   isMobileWeb,
 }: Props) {
   const { disclaimerText } = useUserProfile();
@@ -91,6 +93,23 @@ export default function FinalResultDisplay({
   });
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Header with Home button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.homeButton}
+          onPress={handleGoHome}
+          accessibilityRole="button"
+          accessibilityLabel="Go to home screen"
+        >
+          <Home color="#007AFF" size={24} />
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>SafeDose</Text>
+          <Text style={styles.headerSubtitle}>Calculation Result</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+      
       {calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
@@ -230,11 +249,11 @@ export default function FinalResultDisplay({
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('new_dose')}>
           <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>New Dose</Text>
+          <Text style={styles.buttonText}>New Manual Dose</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('scan_again')}>
           <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Scan Again</Text>
+          <Text style={styles.buttonText}>New Scan</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -243,6 +262,37 @@ export default function FinalResultDisplay({
 
 const styles = StyleSheet.create({
   container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  // Header styles
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  homeButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginTop: 2,
+  },
+  headerSpacer: {
+    width: 40, // Same width as home button to center the title
+  },
   instructionCard: { padding: 16, borderRadius: 12, borderWidth: 2, marginBottom: 16, width: '100%' },
   instructionTitle: { fontSize: 18, fontWeight: 'bold', color: '#065F46', textAlign: 'center', marginBottom: 12 },
   instructionText: { fontSize: 15, color: '#065F46', textAlign: 'center', marginBottom: 8 },

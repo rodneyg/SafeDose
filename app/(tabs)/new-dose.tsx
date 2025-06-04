@@ -782,6 +782,7 @@ export default function NewDoseScreen() {
           handleNextPreDoseConfirmation={handleNextPreDoseConfirmation}
           handleBack={handleBack}
           handleStartOver={handleStartOver}
+          handleGoHome={handleGoHome}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
           validateDoseInput={validateDoseInput}
