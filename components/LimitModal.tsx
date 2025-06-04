@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
+import { captureMessage } from '../lib/sentry';
 
 interface LimitModalProps {
   visible: boolean;
@@ -12,11 +13,51 @@ interface LimitModalProps {
 
 export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose }: LimitModalProps) {
   const router = useRouter();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const modalShownTimeRef = useRef<number | null>(null);
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
 
+  // Track upgrade prompt timeout
+  useEffect(() => {
+    if (visible) {
+      modalShownTimeRef.current = Date.now();
+      
+      // Set 30-second timeout to track if user doesn't take action
+      timeoutRef.current = setTimeout(() => {
+        captureMessage('Upgrade prompt triggered with no user action after 30s', 'info', {
+          modal_type: 'limit_modal',
+          user_type: isAnonymous ? 'anonymous' : 'authenticated',
+          is_premium: isPremium,
+          timeout_duration: 30000
+        });
+      }, 30000);
+    } else {
+      // Clean up timeout if modal is closed
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      modalShownTimeRef.current = null;
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [visible, isAnonymous, isPremium]);
+
   const handleSignIn = () => {
     console.log('[LimitModal] Sign In button pressed');
+    
+    // Clear timeout since user took action
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'sign_in' });
     router.push('/login');
     onClose();
@@ -24,6 +65,13 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
 
   const handleUpgrade = () => {
     console.log('[LimitModal] Upgrade button pressed');
+    
+    // Clear timeout since user took action
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade' });
     router.push('/pricing');
     onClose();
@@ -31,6 +79,13 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
 
   const handleCancel = () => {
     console.log('[LimitModal] Cancel button pressed');
+    
+    // Clear timeout since user took action
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'cancel' });
     onClose();
   };

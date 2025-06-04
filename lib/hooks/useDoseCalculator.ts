@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -419,12 +420,24 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.log('[useDoseCalculator] handleNextPreDoseConfirmation called');
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
+      
+      // Log manual entry completion for Sentry tracking
+      logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED, {
+        substance_name: substanceName,
+        dose_value: doseValue,
+        dose_unit: unit,
+        medication_input_type: medicationInputType,
+        syringe_type: manualSyringe.type,
+        syringe_volume: manualSyringe.volume,
+        calculated_volume: calculatedVolume
+      });
+      
       lastActionTimestamp.current = Date.now();
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleNextPreDoseConfirmation:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, []);
+  }, [substanceName, doseValue, unit, medicationInputType, manualSyringe, calculatedVolume]);
 
   const handleCloseVolumeErrorModal = useCallback(() => {
     setShowVolumeErrorModal(false);
@@ -496,6 +509,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         calculatedVolume,
       },
     });
+    
+    // Log scan flow completion for Sentry tracking
+    logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FLOW_COMPLETED, {
+      substance_name: substanceName,
+      dose_value: doseValue,
+      dose_unit: unit,
+      calculated_volume: calculatedVolume,
+      next_action: nextAction
+    });
+    
     setScreenStep('postDoseFeedback');
     lastActionTimestamp.current = Date.now();
   }, [substanceName, doseValue, unit, calculatedVolume]);

@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
 import { CameraView } from 'expo-camera';
+import { captureException, addBreadcrumb } from './sentry';
 
 interface CameraRef {
   takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
@@ -51,9 +52,28 @@ export async function captureAndProcessImage({
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
 
-  const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
+  // Add Sentry breadcrumb for scan attempt
+  addBreadcrumb({
+    message: 'Scan attempt initiated',
+    category: 'scan',
+    level: 'info',
+    data: {
+      platform: isWeb ? 'web' : 'native',
+      isMobileWeb,
+      hasWebCameraStream: !!webCameraStream
+    }
+  });
+
+  const apiKey = (Constants as any).expoConfig?.extra?.OPENAI_API_KEY;
   if (!apiKey) {
     console.error('[Capture] OpenAI API key missing');
+    
+    // Capture configuration error with Sentry
+    captureException(new Error('OpenAI API key missing'), {
+      context: 'scan_config_error',
+      error_type: 'configuration_error'
+    });
+    
     Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
     setScanError('OpenAI configuration error');
     setIsProcessing(false); // Ensure isProcessing is reset on this error path
@@ -346,9 +366,32 @@ export async function captureAndProcessImage({
       console.log('[Process] Added captured image data to result');
     }
 
+    // Add Sentry breadcrumb for successful scan
+    addBreadcrumb({
+      message: 'Scan completed successfully',
+      category: 'scan',
+      level: 'info',
+      data: {
+        platform: isWeb ? 'web' : 'native',
+        syringe_type: result.syringe?.type,
+        substance_detected: result.vial?.substance ? 'yes' : 'no',
+        concentration_detected: result.vial?.concentration ? 'yes' : 'no'
+      }
+    });
+
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
+    
+    // Capture scan/image analysis failure with Sentry
+    captureException(error, {
+      context: 'scan_image_analysis_failure',
+      error_type: 'scan_processing_error',
+      platform: isWeb ? 'web' : 'native',
+      isMobileWeb,
+      hasWebCameraStream: !!webCameraStream
+    });
+    
     let message = 'An unexpected error occurred during scanning';
     if (error instanceof Error) {
       if (error.message.includes('format is not recognized')) {
