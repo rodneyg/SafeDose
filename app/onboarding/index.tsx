@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } 
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
+import { isMobileWeb } from '../../lib/utils';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -31,29 +32,29 @@ export default function Welcome() {
       />
       <View style={styles.overlay} />
       
-      <View style={styles.content}>
+      <View style={[styles.content, isMobileWeb && styles.contentMobile]}>
         <Animated.View entering={FadeIn.delay(300).duration(800)} style={styles.logoContainer}>
-          <Text style={styles.logo}>SafeDose</Text>
+          <Text style={[styles.logo, isMobileWeb && styles.logoMobile]}>SafeDose</Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.mainContent}>
-          <Text style={styles.title}>Medication{'\n'}Made Simple</Text>
-          <Text style={styles.description}>
+          <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Medication{'\n'}Made Simple</Text>
+          <Text style={[styles.description, isMobileWeb && styles.descriptionMobile]}>
             Let's try it together with a quick demo
           </Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(900).duration(800)} style={styles.footer}>
+        <Animated.View entering={FadeInUp.delay(900).duration(800)} style={[styles.footer, isMobileWeb && styles.footerMobile]}>
           <TouchableOpacity 
-            style={styles.button} 
+            style={[styles.button, isMobileWeb && styles.buttonMobile]} 
             onPress={handleStart}
             accessibilityRole="button"
             accessibilityLabel="Start demo"
             accessibilityHint="Begins the SafeDose app demonstration">
-            <Text style={styles.buttonText}>Try Now</Text>
-            <ArrowRight size={20} color="#FFFFFF" />
+            <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
+            <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.disclaimer}>No account needed</Text>
+          <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed</Text>
         </Animated.View>
       </View>
     </View>
@@ -128,5 +129,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
+  },
+  // Mobile-specific styles
+  contentMobile: {
+    paddingHorizontal: 16,
+    paddingTop: 40,
+  },
+  logoMobile: {
+    fontSize: 28,
+  },
+  titleMobile: {
+    fontSize: 36,
+    marginBottom: 12,
+  },
+  descriptionMobile: {
+    fontSize: 18,
+    lineHeight: 24,
+    maxWidth: '90%',
+  },
+  footerMobile: {
+    gap: 12,
+    paddingBottom: 20,
+  },
+  buttonMobile: {
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    minHeight: 48,
+  },
+  buttonTextMobile: {
+    fontSize: 16,
+  },
+  disclaimerMobile: {
+    fontSize: 14,
   },
 });
