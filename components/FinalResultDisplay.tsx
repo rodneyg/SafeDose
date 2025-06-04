@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
@@ -18,7 +18,8 @@ type Props = {
   concentration?: number | null; // Add concentration prop for breakdown display
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
-  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again') => void;
+  handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
+  lastActionType: 'manual' | 'scan' | null;
   isMobileWeb: boolean;
 };
 
@@ -36,6 +37,7 @@ export default function FinalResultDisplay({
   handleStartOver,
   setScreenStep,
   handleGoToFeedback,
+  lastActionType,
   isMobileWeb,
 }: Props) {
   const { disclaimerText } = useUserProfile();
@@ -228,13 +230,19 @@ export default function FinalResultDisplay({
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('new_dose')}>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: '#6B7280' }, isMobileWeb && styles.actionButtonMobile]} 
+          onPress={() => handleGoToFeedback('start_over')}
+        >
+          <RotateCcw color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>Start Over</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} 
+          onPress={() => handleGoToFeedback('new_dose')}
+        >
           <Plus color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>New Dose</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3b82f6' }, isMobileWeb && styles.actionButtonMobile]} onPress={() => handleGoToFeedback('scan_again')}>
-          <CameraIcon color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Scan Again</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

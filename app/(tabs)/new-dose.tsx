@@ -207,6 +207,8 @@ export default function NewDoseScreen() {
     handleFeedbackComplete,
     validateDoseInput,
     validateConcentrationInput,
+    // Last action tracking
+    lastActionType,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -784,6 +786,7 @@ export default function NewDoseScreen() {
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
         />

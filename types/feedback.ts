@@ -15,7 +15,7 @@ export interface DoseFeedback {
 }
 
 export interface FeedbackContextType {
-  nextAction: 'new_dose' | 'scan_again';
+  nextAction: 'new_dose' | 'scan_again' | 'start_over';
   doseInfo: {
     substanceName: string;
     doseValue: number | null;
