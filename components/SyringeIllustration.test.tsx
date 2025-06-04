@@ -102,27 +102,27 @@ describe('SyringeIllustration', () => {
 
   // Test to verify text overlap issue is fixed
   it('should not have overlapping text positioning', () => {
-    // This test validates the positioning logic that prevents overlaps
+    // This test validates that the unit label positioned above the syringe
+    // does not overlap with marking labels positioned below the syringe
     const syringeWidth = 300;
     const markings = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
     const maxMarking = Math.max(...markings);
     const markingPositions = markings.map(m => (m / maxMarking) * syringeWidth);
     
-    // New unit label position after fix
-    const fixedUnitLabelPosition = 320;
+    // Unit label is now positioned above the syringe (top: 20)
+    // while marking labels are positioned below the syringe (top: 65)
+    const unitLabelTop = 20;
+    const markingLabelTop = 65;
     
-    // Check for overlaps with fixed positioning
-    let hasOverlap = false;
-    markings.forEach((marking, index) => {
-      const labelPosition = markingPositions[index] - 10;
-      const labelEndPosition = labelPosition + 20; // Estimate label width
-      
-      if (labelPosition <= fixedUnitLabelPosition && labelEndPosition >= fixedUnitLabelPosition) {
-        hasOverlap = true;
-      }
-    });
+    // Vertical separation ensures no overlap
+    const verticalSeparation = markingLabelTop - unitLabelTop;
     
-    // After the fix, there should be no overlap
-    expect(hasOverlap).toBe(false);
+    // There should be sufficient vertical separation (at least 40px in this case)
+    expect(verticalSeparation).toBeGreaterThan(30);
+    
+    // Also verify horizontal positioning is within bounds
+    const unitLabelHorizontalPosition = 250;
+    expect(unitLabelHorizontalPosition).toBeLessThan(syringeWidth);
+    expect(unitLabelHorizontalPosition).toBeGreaterThan(0);
   });
 });

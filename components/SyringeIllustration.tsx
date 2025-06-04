@@ -58,12 +58,12 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
 }
 
 const styles = StyleSheet.create({
-  container: { width: 340, height: 100, position: 'relative' },
+  container: { width: 300, height: 100, position: 'relative' },
   syringeBody: { position: 'absolute', left: 0, top: 40, width: 300, height: 20, backgroundColor: '#E0E0E0', borderRadius: 10 },
   syringeLine: { position: 'absolute', left: 0, top: 50, width: 300, height: 2, backgroundColor: '#000' },
   marking: { position: 'absolute', top: 40, width: 1, height: 20, backgroundColor: '#000' },
   markingLabel: { position: 'absolute', top: 65, fontSize: 10 },
-  unitLabel: { position: 'absolute', left: 320, top: 65, fontSize: 12, color: '#000', fontWeight: 'bold' },
+  unitLabel: { position: 'absolute', left: 250, top: 20, fontSize: 12, color: '#000', fontWeight: 'bold' },
   recommendedMark: { position: 'absolute', top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 },
   precisionIndicator: { position: 'absolute', top: 18, width: 2, height: 64, backgroundColor: '#FFD700', zIndex: 2 },
   recommendedText: { position: 'absolute', top: 85, fontSize: 10, color: '#FF0000', fontWeight: 'bold' },
