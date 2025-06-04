@@ -22,6 +22,8 @@ The following custom events are tracked:
 - **initiate_upgrade**: Logged when user starts upgrade process
 - **upgrade_success**: Logged on successful plan upgrade
 - **upgrade_failure**: Logged on upgrade failure with error details
+- **cancel_subscription**: Logged when a user cancels their plan
+- **downgrade_plan**: Logged when a user downgrades to a lower tier
 
 ### Scan Usage Events
 - **scan_attempt**: Logged when user attempts a scan
