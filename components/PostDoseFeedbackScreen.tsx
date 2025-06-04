@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet } from 'react-native';
 import { ChevronRight, X, CheckCircle } from 'lucide-react-native';
 import { FeedbackType, FeedbackContextType } from '../types/feedback';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface PostDoseFeedbackScreenProps {
   context: FeedbackContextType;
@@ -32,9 +33,17 @@ export default function PostDoseFeedbackScreen({
 
   const handleSubmit = useCallback(() => {
     if (selectedFeedback) {
+      logAnalyticsEvent(ANALYTICS_EVENTS.FEEDBACK_SUBMITTED, {
+        feedbackType: selectedFeedback,
+      });
       onSubmit(selectedFeedback, notes.trim() || undefined);
     }
   }, [selectedFeedback, notes, onSubmit]);
+
+  const handleSkip = useCallback(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.FEEDBACK_SKIPPED);
+    onSkip();
+  }, [onSkip]);
 
   const getFeedbackEmoji = (type: FeedbackType) => {
     switch (type) {
@@ -120,7 +129,7 @@ export default function PostDoseFeedbackScreen({
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
           style={[styles.skipButton, isMobileWeb && styles.skipButtonMobile]}
-          onPress={onSkip}
+          onPress={handleSkip}
         >
           <X color="#6b7280" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.skipButtonText}>Skip & continue to {nextActionText}</Text>

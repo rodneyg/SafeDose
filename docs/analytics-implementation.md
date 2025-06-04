@@ -33,6 +33,10 @@ The following custom events are tracked:
 - **limit_modal_action**: Logged for limit modal interactions (sign_in, upgrade, cancel)
 - **error_occurred**: Logged for critical errors with type and message
 
+### Feedback Events
+- **feedback_submitted**: Logged when post-dose feedback is submitted
+- **feedback_skipped**: Logged when the feedback step is skipped
+
 ## User Properties
 
 The following user properties are set and maintained:
