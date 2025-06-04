@@ -30,6 +30,7 @@ The following custom events are tracked:
 - **reach_scan_limit**: Logged when user hits scan limit
 
 ### User Interaction Events
+- **limit_modal_view**: Logged when the limit modal is displayed
 - **limit_modal_action**: Logged for limit modal interactions (sign_in, upgrade, cancel)
 - **error_occurred**: Logged for critical errors with type and message
 
