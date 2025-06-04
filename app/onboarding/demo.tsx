@@ -61,8 +61,8 @@ export default function Demo() {
                 )}
               </View>
             </View>
-            <Text style={styles.stepTitle}>Smart Recognition</Text>
-            <Text style={styles.stepDescription}>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Smart Recognition</Text>
+            <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
               Point your camera at your medication and syringe. Our AI will guide you through the process.
             </Text>
           </Animated.View>
@@ -80,8 +80,8 @@ export default function Demo() {
               <View style={styles.doseLine} />
               <Text style={styles.doseLabel}>Recommended Dose</Text>
             </View>
-            <Text style={styles.stepTitle}>Real-time Guidance</Text>
-            <Text style={styles.stepDescription}>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Real-time Guidance</Text>
+            <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
               Get precise measurements and instant verification of your medication dose.
             </Text>
           </Animated.View>
@@ -100,8 +100,8 @@ export default function Demo() {
                   <Check size={48} color="#FFFFFF" />
                 )}
               </View>
-              <Text style={styles.stepTitle}>Ready to Start</Text>
-              <Text style={styles.stepDescription}>
+              <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Ready to Start</Text>
+              <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
                 Let's prepare your first dose together with real-time guidance.
               </Text>
             </View>
@@ -115,7 +115,7 @@ export default function Demo() {
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <Text style={styles.headerTitle}>How It Works</Text>
+        <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>How It Works</Text>
       </Animated.View>
 
       <View style={styles.content}>
@@ -294,7 +294,19 @@ const styles = StyleSheet.create({
   },
   // Mobile-specific styles
   imageContainerMobile: {
-    height: 200, // Reduced from 300px to prevent overflow on small screens
-    marginBottom: 20, // Reduced margin for tighter layout
+    height: 120, // Much smaller for iPhone SE and small screens
+    marginBottom: 16, // Reduced margin for tighter layout
+  },
+  stepTitleMobile: {
+    fontSize: 20, // Smaller title on mobile
+    marginBottom: 8,
+  },
+  stepDescriptionMobile: {
+    fontSize: 15, // Smaller description text on mobile
+    lineHeight: 20,
+    maxWidth: '90%',
+  },
+  headerTitleMobile: {
+    fontSize: 28, // Smaller header on mobile
   },
 });
