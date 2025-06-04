@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { Camera, History, MessageCircle, Book, ArrowRight, Check } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isMobileWeb } from '../../lib/utils';
 
 const features = [
   {
@@ -61,8 +61,8 @@ export default function Features() {
         <View style={styles.featureIcon}>
           <Icon size={32} color="#007AFF" />
         </View>
-        <Text style={styles.featureTitle}>{item.title}</Text>
-        <Text style={styles.featureDescription}>{item.description}</Text>
+        <Text style={[styles.featureTitle, isMobileWeb && styles.featureTitleMobile]}>{item.title}</Text>
+        <Text style={[styles.featureDescription, isMobileWeb && styles.featureDescriptionMobile]}>{item.description}</Text>
       </Animated.View>
     );
   }, [width]);
@@ -70,8 +70,8 @@ export default function Features() {
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <Text style={styles.headerTitle}>Key Features</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>Key Features</Text>
+        <Text style={[styles.headerSubtitle, isMobileWeb && styles.headerSubtitleMobile]}>
           Discover what SafeDose can do for you
         </Text>
       </Animated.View>
@@ -199,5 +199,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+  },
+  // Mobile-specific styles
+  headerTitleMobile: {
+    fontSize: 28, // Smaller header on mobile
+  },
+  headerSubtitleMobile: {
+    fontSize: 15, // Smaller subtitle on mobile
+  },
+  featureTitleMobile: {
+    fontSize: 20, // Smaller feature title on mobile
+    marginBottom: 8,
+  },
+  featureDescriptionMobile: {
+    fontSize: 15, // Smaller feature description on mobile
+    lineHeight: 20,
+    maxWidth: '90%',
   },
 });

@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isMobileWeb } from '../../lib/utils';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -43,7 +44,7 @@ export default function Demo() {
             entering={FadeInRight.duration(500)} 
             style={[styles.stepContainer, { width: width - 48 }]}
           >
-            <View style={styles.imageContainer}>
+            <View style={[styles.imageContainer, isMobileWeb && styles.imageContainerMobile]}>
               <Image 
                 source={{ 
                   uri: imageError ? FALLBACK_IMAGE : 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426'
@@ -60,8 +61,8 @@ export default function Demo() {
                 )}
               </View>
             </View>
-            <Text style={styles.stepTitle}>Smart Recognition</Text>
-            <Text style={styles.stepDescription}>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Smart Recognition</Text>
+            <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
               Point your camera at your medication and syringe. Our AI will guide you through the process.
             </Text>
           </Animated.View>
@@ -79,8 +80,8 @@ export default function Demo() {
               <View style={styles.doseLine} />
               <Text style={styles.doseLabel}>Recommended Dose</Text>
             </View>
-            <Text style={styles.stepTitle}>Real-time Guidance</Text>
-            <Text style={styles.stepDescription}>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Real-time Guidance</Text>
+            <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
               Get precise measurements and instant verification of your medication dose.
             </Text>
           </Animated.View>
@@ -99,8 +100,8 @@ export default function Demo() {
                   <Check size={48} color="#FFFFFF" />
                 )}
               </View>
-              <Text style={styles.stepTitle}>Ready to Start</Text>
-              <Text style={styles.stepDescription}>
+              <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Ready to Start</Text>
+              <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
                 Let's prepare your first dose together with real-time guidance.
               </Text>
             </View>
@@ -114,7 +115,7 @@ export default function Demo() {
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <Text style={styles.headerTitle}>How It Works</Text>
+        <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>How It Works</Text>
       </Animated.View>
 
       <View style={styles.content}>
@@ -290,5 +291,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+  },
+  // Mobile-specific styles
+  imageContainerMobile: {
+    height: 200, // Optimized for mobile screens
+    marginBottom: 16, // Reduced margin for tighter layout
+  },
+  stepTitleMobile: {
+    fontSize: 20, // Smaller title on mobile
+    marginBottom: 8,
+  },
+  stepDescriptionMobile: {
+    fontSize: 15, // Smaller description text on mobile
+    lineHeight: 20,
+    maxWidth: '90%',
+  },
+  headerTitleMobile: {
+    fontSize: 28, // Smaller header on mobile
   },
 });

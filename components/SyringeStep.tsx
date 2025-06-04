@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { insulinVolumes, standardVolumes, syringeOptions } from '../lib/utils';
+import { insulinVolumes, standardVolumes, syringeOptions, isMobileWeb } from '../lib/utils';
 
 type Props = {
   manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
@@ -120,15 +120,16 @@ export default function SyringeStep({
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Step 3: Syringe Details</Text>
+    <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Syringe Details</Text>
       <Text style={styles.label}>Syringe Type:</Text>
-      <View style={styles.presetContainer}>
+      <View style={[styles.presetContainer, isMobileWeb && styles.presetContainerMobile]}>
         <TouchableOpacity
           style={[
             styles.optionButton, 
             manualSyringe.type === 'Insulin' && styles.selectedOption,
-            !hasValidInsulinOptions && styles.disabledOption
+            !hasValidInsulinOptions && styles.disabledOption,
+            isMobileWeb && styles.optionButtonMobile,
           ]}
           onPress={() => {
             if (!hasValidInsulinOptions) {
@@ -149,7 +150,8 @@ export default function SyringeStep({
           style={[
             styles.optionButton, 
             manualSyringe.type === 'Standard' && styles.selectedOption,
-            !hasValidStandardOptions && styles.disabledOption
+            !hasValidStandardOptions && styles.disabledOption,
+            isMobileWeb && styles.optionButtonMobile,
           ]}
           onPress={() => {
             if (!hasValidStandardOptions) {
@@ -193,10 +195,27 @@ export default function SyringeStep({
 
 const styles = StyleSheet.create({
   container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
+  containerMobile: {
+    padding: 12, // Reduced padding for small screens
+    marginBottom: 16, // Reduced margin for tighter layout
+  },
   title: { fontSize: 18, fontWeight: '600', color: '#000000', marginBottom: 16, textAlign: 'center' },
+  titleMobile: {
+    fontSize: 16, // Smaller title font for small screens
+    marginBottom: 12, // Reduced margin
+  },
   label: { fontSize: 14, color: '#000000', marginTop: 10, marginBottom: 6 },
   presetContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 4, marginBottom: 8, width: '100%' },
+  presetContainerMobile: {
+    gap: 6, // Smaller gap between buttons for small screens
+    marginBottom: 6, // Tighter margin
+  },
   optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5 },
+  optionButtonMobile: {
+    paddingVertical: 8, // Reduced vertical padding for small screens
+    paddingHorizontal: 10, // Reduced horizontal padding
+    marginHorizontal: 3, // Smaller margins between buttons
+  },
   selectedOption: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   disabledOption: { backgroundColor: '#D1D1D6', borderColor: 'transparent', opacity: 0.6 },
   buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
