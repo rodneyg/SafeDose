@@ -58,7 +58,7 @@ describe('Scan Limit Handling', () => {
       const isOutOfScans = scansRemaining <= 0;
       
       const buttonText = isOutOfScans 
-        ? 'Out of scans – upgrade to get more!' 
+        ? 'Upgrade' 
         : 'Scan';
       
       expect(buttonText).toBe('Scan');
@@ -70,10 +70,10 @@ describe('Scan Limit Handling', () => {
       const isOutOfScans = scansRemaining <= 0;
       
       const buttonText = isOutOfScans 
-        ? 'Out of scans – upgrade to get more!' 
+        ? 'Upgrade' 
         : 'Scan';
       
-      expect(buttonText).toBe('Out of scans – upgrade to get more!');
+      expect(buttonText).toBe('Upgrade');
     });
   });
 

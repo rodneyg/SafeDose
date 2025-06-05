@@ -261,7 +261,7 @@ export default function IntroScreen({
                     >
                       <CameraIcon color="#fff" size={20} />
                       <Text style={styles.buttonText}>
-                        {isOutOfScans ? 'Out of scans – upgrade to get more!' : 'Scan'}
+                        {isOutOfScans ? 'Upgrade' : 'Scan'}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -282,8 +282,13 @@ export default function IntroScreen({
 
               <View style={styles.scanStatusContainer}>
                 <Text style={styles.scanStatusText}>
-                  You have{' '}
-                  {usageData ? usageData.limit - usageData.scansUsed : 3} scans remaining.{' '}
+                  {(() => {
+                    const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
+                    if (scansRemaining <= 0) {
+                      return "You've used all your scans";
+                    }
+                    return `You have ${scansRemaining} scans remaining.`;
+                  })()}{' '}
                   {(!usageData || usageData.plan === 'free') && (
                     <Text style={styles.upgradeLink} onPress={handleUpgradePress}>
                       Upgrade
