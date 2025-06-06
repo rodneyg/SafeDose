@@ -13,6 +13,7 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated';
 import { X, Shield, Clock, Star } from 'lucide-react-native';
+import { useUserProfile } from '../contexts/UserProfileContext';
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
@@ -23,6 +24,41 @@ const stripePromise = stripeConfig.publishableKey
 const API_BASE_URL = "https://app.safedoseai.com";
 
 export default function PricingPage() {
+  // Get user profile for personalization
+  const { profile } = useUserProfile();
+  
+  // Personalized content based on onboarding data
+  const getPersonalizedHeadline = () => {
+    if (profile?.isLicensedProfessional) {
+      return "Streamline Your Practice";
+    } else if (profile?.isPersonalUse) {
+      return "Take Control of Your Health";
+    } else {
+      return "Unlock Your Full Potential";
+    }
+  };
+
+  const getPersonalizedFeatures = () => {
+    if (profile?.isLicensedProfessional) {
+      return [
+        { icon: Shield, text: "Professional-grade accuracy" },
+        { icon: Clock, text: "Save time on calculations" },
+        { icon: Star, text: "FDA-compliant verification" },
+      ];
+    } else if (profile?.isPersonalUse) {
+      return [
+        { icon: Shield, text: "Safe medication tracking" },
+        { icon: Clock, text: "Quick dosage checks" },
+        { icon: Star, text: "Peace of mind" },
+      ];
+    } else {
+      return [
+        { icon: Star, text: "AI-powered medication scanning" },
+        { icon: Clock, text: "Instant dosage calculations" },
+        { icon: Shield, text: "FDA-approved safety checks" },
+      ];
+    }
+  };
   const pricingPlansData = [
     {
       id: 'weekly',
@@ -287,23 +323,17 @@ export default function PricingPage() {
           <Animated.View style={[styles.iconContainer, animatedHeaderIconStyle]}>
             <Shield size={48} color="#8B5CF6" />
           </Animated.View>
-          <Text style={styles.headline}>Unlock Your Full Potential</Text>
+          <Text style={styles.headline}>{getPersonalizedHeadline()}</Text>
         </View>
 
         {/* Feature list */}
         <View style={styles.featureSection}>
-          <View style={styles.featureItem}>
-            <Star size={20} color="#8B5CF6" />
-            <Text style={styles.featureText}>AI-powered medication scanning</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Clock size={20} color="#8B5CF6" />
-            <Text style={styles.featureText}>Instant dosage calculations</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Shield size={20} color="#8B5CF6" />
-            <Text style={styles.featureText}>FDA-approved safety checks</Text>
-          </View>
+          {getPersonalizedFeatures().map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <feature.icon size={20} color="#8B5CF6" />
+              <Text style={styles.featureText}>{feature.text}</Text>
+            </View>
+          ))}
         </View>
 
         {/* Plan cards - compact vertical stack */}
@@ -421,9 +451,9 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44, // Increased for better touch target
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -507,7 +537,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     position: 'relative',
-    maxHeight: '40%', // 40% of screen height max
+    minHeight: 140, // Ensure minimum height
+    maxHeight: 180, // Keep cards compact for mobile
   },
   selectedPlanCard: {
     borderColor: '#8B5CF6',
@@ -640,6 +671,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
     overflow: 'hidden',
+    minHeight: 56, // Ensure touch target is at least 44pt (iOS) / 48dp (Android)
     shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
