@@ -1,9 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import stripeConfig from "../lib/stripeConfig";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withSequence, 
+  withTiming,
+  withSpring
+} from 'react-native-reanimated';
+import { X, Shield, Clock, Star } from 'lucide-react-native';
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
@@ -16,36 +25,40 @@ const API_BASE_URL = "https://app.safedoseai.com";
 export default function PricingPage() {
   const pricingPlansData = [
     {
-      id: 'monthly',
-      name: "Monthly Plan",
-      price: 20,
-      priceSuffix: "/month",
-      subtext: "Billed monthly. Cancel anytime.",
+      id: 'weekly',
+      name: "Weekly",
+      price: 6.99,
+      originalPrice: 9.99,
+      priceSuffix: "/week",
+      subtext: "Perfect for trying out",
       priceId: stripeConfig.priceId, // Existing one
       features: [
-        { name: "50 AI scans/month", available: true },
+        { name: "12 AI scans/week", available: true },
         { name: "Unlimited manual calculations", available: true },
         { name: "Faster scans", available: true },
-        { name: "No mid-session limits", available: true },
       ],
-      badgeText: "Most Popular",
-      isDefault: true,
+      badgeText: "30% OFF",
+      isDefault: false,
+      hasTrial: true,
     },
     {
       id: 'yearly',
-      name: "Yearly Plan",
+      name: "Yearly",
       price: 149.99,
+      originalPrice: 240,
       priceSuffix: "/year",
-      subtext: "SAVE 38%",
+      subtext: "Best value - save 38%",
       priceId: 'price_yearly_placeholder',
       features: [
-        { name: "600 AI scans/year", available: true }, // Or "50 AI scans/month"
+        { name: "600 AI scans/year", available: true },
         { name: "Unlimited manual calculations", available: true },
         { name: "Faster scans", available: true },
         { name: "No mid-session limits", available: true },
+        { name: "Priority support", available: true },
       ],
       badgeText: "SAVE 38%",
-      isDefault: false,
+      isDefault: true,
+      hasTrial: false,
     },
   ];
 
@@ -53,6 +66,17 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showCloseDelay, setShowCloseDelay] = useState(false);
+  const [closeDelayCount, setCloseDelayCount] = useState(8);
+  
+  // Animation values
+  const headerIconScale = useSharedValue(1);
+  const shimmerOpacity = useSharedValue(0.5);
+  const closeButtonOpacity = useSharedValue(0);
+  
+  // Get screen dimensions for responsive design
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const isMobile = screenWidth < 768;
 
   // Log view_pricing_page event when component mounts
   useEffect(() => {
@@ -60,7 +84,47 @@ export default function PricingPage() {
     console.warn(
       "TODO: Replace placeholder Stripe Price IDs ('price_yearly_placeholder') in pricingPlansData with actual Price IDs from your Stripe dashboard."
     );
+    
+    // Start header icon animation (pulse every 2 seconds)
+    headerIconScale.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 300 }),
+        withTiming(1, { duration: 300 })
+      ),
+      -1,
+      false
+    );
+    
+    // Start shimmer animation
+    shimmerOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1000 }),
+        withTiming(0.5, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+    
+    // Show close button after 8 seconds
+    const closeTimer = setTimeout(() => {
+      setShowCloseDelay(true);
+      closeButtonOpacity.value = withSpring(1);
+    }, 8000);
+    
+    return () => {
+      clearTimeout(closeTimer);
+    };
   }, []);
+  
+  // Close delay countdown
+  useEffect(() => {
+    if (showCloseDelay && closeDelayCount > 0) {
+      const timer = setTimeout(() => {
+        setCloseDelayCount(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCloseDelay, closeDelayCount]);
 
   const initiateStripeCheckout = async () => {
     console.log(`initiateStripeCheckout called for ${selectedPlan.name}`);
@@ -160,7 +224,7 @@ export default function PricingPage() {
       console.log("redirectToCheckout result:", result);
       if (result?.error) {
         console.error("Stripe redirectToCheckout error:", result.error);
-        setErrorMessage(result.error.message);
+        setErrorMessage(result.error.message || "An error occurred");
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
           plan: selectedPlan.id,
           error: result.error.message
@@ -181,262 +245,434 @@ export default function PricingPage() {
   const handleCancel = () => {
     router.back();
   };
+  
+  // Animated styles
+  const animatedHeaderIconStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: headerIconScale.value }],
+    };
+  });
+  
+  const animatedShimmerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: shimmerOpacity.value,
+    };
+  });
+  
+  const animatedCloseButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: closeButtonOpacity.value,
+    };
+  });
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContentContainer}>
-      <Text style={styles.title}>Choose Your Plan</Text>
-
-      {pricingPlansData.map((plan) => (
-        <TouchableOpacity
-          key={plan.id}
-          style={[
-            styles.planCard,
-            plan.id === selectedPlan.id && styles.selectedPlanCard, // Placeholder style
-          ]}
-          onPress={() => setSelectedPlan(plan)}
-        >
-          {plan.badgeText && (
-            <View style={[
-              styles.badgeContainer,
-              plan.badgeText === "Most Popular" ? styles.mostPopularBadge : styles.discountBadge
-            ]}>
-              <Text style={styles.badgeText}>{plan.badgeText}</Text>
-            </View>
+    <View style={styles.container}>
+      {/* Close button with delay */}
+      <Animated.View style={[styles.closeButtonContainer, animatedCloseButtonStyle]}>
+        <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
+          <X size={24} color="#666" />
+          {closeDelayCount > 0 && (
+            <Text style={styles.closeDelayText}>{closeDelayCount}</Text>
           )}
-          <Text style={styles.planName}>{plan.name}</Text>
-          <View style={styles.priceContainer}>
-            <Text style={styles.planPrice}>${plan.price.toFixed(2)}</Text>
-            <Text style={styles.planPriceSuffix}>{plan.priceSuffix}</Text>
-          </View>
-          <Text style={styles.planSubtext}>{plan.subtext}</Text>
-
-          <View style={styles.featureList}>
-            {plan.features.map((feature) => (
-              <View key={feature.name} style={styles.featureItem}>
-                <Text style={styles.featureText}>• {feature.name}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={styles.selectionIndicatorContainer}>
-            <Text style={[
-              styles.selectionIndicator,
-              plan.id === selectedPlan.id && styles.selectedIndicatorText
-            ]}>
-              {plan.id === selectedPlan.id ? "✓ Selected" : "Select"}
-            </Text>
-          </View>
         </TouchableOpacity>
-      ))}
+      </Animated.View>
 
-      {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      ) : null}
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header with animated icon */}
+        <View style={styles.header}>
+          <Animated.View style={[styles.iconContainer, animatedHeaderIconStyle]}>
+            <Shield size={48} color="#8B5CF6" />
+          </Animated.View>
+          <Text style={styles.headline}>Unlock Your Full Potential</Text>
+        </View>
 
-      <View style={styles.buttonContainer}>
+        {/* Feature list */}
+        <View style={styles.featureSection}>
+          <View style={styles.featureItem}>
+            <Star size={20} color="#8B5CF6" />
+            <Text style={styles.featureText}>AI-powered medication scanning</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Clock size={20} color="#8B5CF6" />
+            <Text style={styles.featureText}>Instant dosage calculations</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Shield size={20} color="#8B5CF6" />
+            <Text style={styles.featureText}>FDA-approved safety checks</Text>
+          </View>
+        </View>
+
+        {/* Plan cards - compact vertical stack */}
+        <View style={styles.planContainer}>
+          {pricingPlansData.map((plan) => (
+            <TouchableOpacity
+              key={plan.id}
+              style={[
+                styles.planCard,
+                plan.id === selectedPlan.id && styles.selectedPlanCard,
+              ]}
+              onPress={() => setSelectedPlan(plan)}
+            >
+              {plan.badgeText && (
+                <View style={[
+                  styles.badge,
+                  plan.isDefault ? styles.mostPopularBadge : styles.discountBadge
+                ]}>
+                  <Text style={styles.badgeText}>{plan.badgeText}</Text>
+                </View>
+              )}
+              
+              <View style={styles.planHeader}>
+                <Text style={styles.planName}>{plan.name}</Text>
+                <View style={styles.priceSection}>
+                  {plan.originalPrice && (
+                    <Text style={styles.originalPrice}>${plan.originalPrice}</Text>
+                  )}
+                  <Text style={styles.planPrice}>${plan.price.toFixed(2)}</Text>
+                  <Text style={styles.priceSuffix}>{plan.priceSuffix}</Text>
+                </View>
+                <Text style={styles.planSubtext}>{plan.subtext}</Text>
+              </View>
+
+              <View style={styles.featureList}>
+                {plan.features.slice(0, 3).map((feature, index) => (
+                  <Text key={index} style={styles.compactFeature}>
+                    ✓ {feature.name}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.selectionIndicator}>
+                <Text style={[
+                  styles.selectionText,
+                  plan.id === selectedPlan.id && styles.selectedText
+                ]}>
+                  {plan.id === selectedPlan.id ? "✓ Selected" : "Select"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
+        {/* Spacer to push footer to bottom on scroll */}
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      {/* Sticky CTA Footer */}
+      <View style={styles.stickyFooter}>
+        {/* Reassurance text */}
+        <Text style={styles.reassuranceText}>
+          {selectedPlan.hasTrial 
+            ? "✨ No payment now • 7-day free trial" 
+            : "🛡️ Cancel anytime • App Store secured"
+          }
+        </Text>
+        
+        {/* Main CTA Button with shimmer */}
         <TouchableOpacity 
-          style={styles.upgradeButton} 
+          style={styles.ctaButton} 
           onPress={initiateStripeCheckout}
           disabled={isLoading}
         >
-          <Text style={styles.buttonText}>
-            {isLoading ? "Processing..." : "Try Free Now"}
+          <Animated.View style={[styles.shimmerOverlay, animatedShimmerStyle]} />
+          <Text style={styles.ctaButtonText}>
+            {isLoading ? "Processing..." : "🙌 Continue"}
           </Text>
         </TouchableOpacity>
-        
-        {selectedPlan.id === 'monthly' && (
-          <Text style={styles.ctaSubtext}>1 week free trial, then $20/month</Text>
-        )}
 
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
+        {/* Footer links */}
+        <View style={styles.footerLinks}>
+          <TouchableOpacity>
+            <Text style={styles.footerLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerSeparator}>•</Text>
+          <TouchableOpacity>
+            <Text style={styles.footerLink}>Terms</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerSeparator}>•</Text>
+          <TouchableOpacity>
+            <Text style={styles.footerLink}>Restore</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#F8FAFC',
   },
-  scrollViewContentContainer: {
-    padding: 24,
-    alignItems: 'center',
-    flexGrow: 1, // Ensures content expands if shorter than screen
-  },
-  // container style is now applied to scrollViewContentContainer or scrollView itself
-  // We might not need a separate 'container' style anymore, or it can be merged/adjusted.
-  // For now, let's assume padding and alignItems are for the content within ScrollView.
-  title: {
-    fontSize: 20, // text-xl equivalent (~20px)
-    fontWeight: '600', // font-semibold
-    color: '#000000',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  planCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: 32, // Keep horizontal padding
-    paddingVertical: 24, // Reduced vertical padding
-    width: '100%',
-    maxWidth: 400,
-    marginBottom: 16, // Reduced margin bottom
-    alignItems: 'center',
-    // Add soft shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
-  },
-  selectedPlanCard: {
-    borderColor: '#8B5CF6',
-    borderWidth: 2,
-    elevation: 10, // Increased elevation for selected card
-    shadowOpacity: 0.25, // Slightly stronger shadow
-    shadowRadius: 10,
-  },
-  badgeContainer: {
+  
+  // Close button
+  closeButtonContainer: {
     position: 'absolute',
-    top: 12, // Adjusted for better visual placement
-    right: 12, // Adjusted for better visual placement
-    paddingHorizontal: 10, // Increased padding
-    paddingVertical: 5, // Increased padding
-    borderRadius: 16, // More rounded
-    zIndex: 1,
-    elevation: 5, // Ensure badge is above card content slightly
+    top: 50,
+    right: 16,
+    zIndex: 100,
   },
-  badgeText: {
-    color: '#FFFFFF',
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  closeDelayText: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#8B5CF6',
+    color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
-  },
-  // Specific badge styles
-  mostPopularBadge: {
-    backgroundColor: '#8B5CF6', // brand color
-  },
-  discountBadge: {
-    backgroundColor: '#10B981', // A green color for discounts/savings
-  },
-  planName: {
-    fontSize: 22, // Slightly larger
-    fontWeight: '600',
-    color: '#1F2937', // Darker gray
-    marginBottom: 8,
     textAlign: 'center',
+    lineHeight: 20,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline', // Align text baselines
-    marginBottom: 8,
-    justifyContent: 'center',
+
+  scrollView: {
+    flex: 1,
   },
-  planPrice: {
-    fontSize: 40, // Larger for emphasis
-    fontWeight: 'bold',
-    color: '#000000',
+  scrollViewContent: {
+    paddingTop: 80,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
-  planPriceSuffix: {
-    fontSize: 18, // Slightly larger
-    fontWeight: '500',
-    color: '#4B5563', // Medium gray
-    marginLeft: 5, // Adjusted spacing
-    // marginBottom: 5, // Removed, baseline alignment handles this
+
+  // Header section
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  planSubtext: {
-    fontSize: 14,
-    color: '#4B5563', // Medium gray
-    marginBottom: 20, // Increased spacing before features
-    textAlign: 'center',
-  },
-  featureList: {
-    width: '100%',
+  iconContainer: {
     marginBottom: 16,
+  },
+  headline: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    textAlign: 'center',
+    lineHeight: 34,
+  },
+
+  // Feature section
+  featureSection: {
+    marginBottom: 32,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    paddingHorizontal: 8,
   },
   featureText: {
-    fontSize: 16, // text-base
-    fontWeight: '500',
-    color: '#374151', // Slightly darker gray for feature text
-  },
-  selectionIndicatorContainer: {
-    flexDirection: 'row', // To allow icon and text if needed
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20, // Increased spacing
-    paddingVertical: 10, // Add some padding
-    // backgroundColor: '#F3F4F6', // Optional: very light background for this section
-    borderRadius: 12,
-    width: '80%', // Take some width
-  },
-  selectionIndicator: { // For "Select" text
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280', // Default gray for "Select"
+    color: '#4B5563',
+    marginLeft: 12,
+    fontWeight: '500',
   },
-  selectedIndicatorText: { // For "✓ Selected" text
-    color: '#8B5CF6', // Brand color for selected state
+
+  // Plan cards
+  planContainer: {
+    gap: 12,
+    marginBottom: 32,
+  },
+  planCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    position: 'relative',
+    maxHeight: '40%', // 40% of screen height max
+  },
+  selectedPlanCard: {
+    borderColor: '#8B5CF6',
+    backgroundColor: '#F9FAFB',
+    shadowOpacity: 0.15,
+    elevation: 8,
+  },
+
+  // Badge
+  badge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  mostPopularBadge: {
+    backgroundColor: '#8B5CF6',
+  },
+  discountBadge: {
+    backgroundColor: '#10B981',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
-  errorText: {
-    color: 'red',
+
+  // Plan content
+  planHeader: {
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  planName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  priceSection: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 4,
+  },
+  originalPrice: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    textDecorationLine: 'line-through',
+    marginRight: 8,
+  },
+  planPrice: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  priceSuffix: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  planSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
     textAlign: 'center',
   },
-  buttonContainer: {
-    width: '100%',
-    maxWidth: 400,
-    gap: 12,
+
+  // Compact features
+  featureList: {
+    marginBottom: 16,
   },
-  upgradeButton: {
-    backgroundColor: '#8B5CF6', // brand color from tailwind config
-    paddingVertical: 16, // Increased padding
-    borderRadius: 16, // More rounded for modern look
+  compactFeature: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+
+  // Selection indicator
+  selectionIndicator: {
+    alignItems: 'center',
+  },
+  selectionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  selectedText: {
+    color: '#8B5CF6',
+  },
+
+  // Error message
+  errorText: {
+    color: '#EF4444',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+
+  // Sticky footer
+  stickyFooter: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  
+  reassuranceText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+
+  // CTA Button
+  ctaButton: {
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 12,
-    // Add subtle elevation/shadow for hover effect
+    position: 'relative',
+    overflow: 'hidden',
     shadowColor: '#8B5CF6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 8,
   },
-  cancelButton: {
-    backgroundColor: 'transparent', // Outline style
-    borderWidth: 1,
-    borderColor: '#8E8E93',
-    paddingVertical: 16,
-    borderRadius: 16, // Match primary button
+  shimmerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
+  // Footer links
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButtonText: {
-    color: '#8E8E93', // Lighter text for outline button
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  ctaSubtext: {
+  footerLink: {
     fontSize: 12,
-    color: '#555555', // Dark gray for readability
-    textAlign: 'center',
-    marginTop: 8, // Spacing from the main CTA button
-    marginBottom: 8, // Spacing before the cancel button if visible
+    color: '#6B7280',
+  },
+  footerSeparator: {
+    fontSize: 12,
+    color: '#D1D5DB',
+    marginHorizontal: 8,
   },
 });
