@@ -28,6 +28,8 @@ export const ANALYTICS_EVENTS = {
   ONBOARDING_COMPLETE: 'onboarding_complete',
   FEEDBACK_SUBMITTED: 'feedback_submitted',
   FEEDBACK_SKIPPED: 'feedback_skipped',
+  MANUAL_ENTRY_STARTED: 'manual_entry_started',
+  MANUAL_ENTRY_COMPLETED: 'manual_entry_completed',
 } as const;
 
 // User property names

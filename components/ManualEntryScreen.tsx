@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 import { isMobileWeb } from '../lib/utils';
 import CustomProgressBar from '../components/CustomProgressBar';
 import DoseInputStep from '../components/DoseInputStep';
@@ -111,6 +112,10 @@ export default function ManualEntryScreen({
   validateDoseInput,
   validateConcentrationInput,
 }: ManualEntryScreenProps) {
+  useEffect(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
+  }, []); // Empty dependency array ensures this runs only on mount
+
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));
