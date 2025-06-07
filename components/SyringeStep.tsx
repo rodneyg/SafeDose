@@ -141,14 +141,24 @@ export default function SyringeStep({
     return { type: 'Standard', volume: '3 ml' };
   };
 
-  // Set valid defaults when component mounts or if current syringe is invalid or context changes
+  // Set smart defaults when component mounts or when dose context changes
   useEffect(() => {
-    if (!isValidSyringeOption) {
+    // Only run smart defaults if we have dose context to work with
+    if (doseValue !== undefined && doseValue !== null && unit) {
+      const validSyringe = findValidSyringe();
+      // Only update if the suggested syringe is different from current selection
+      if (validSyringe.type !== manualSyringe.type || validSyringe.volume !== manualSyringe.volume) {
+        setManualSyringe(validSyringe);
+        setSyringeHint('Auto-selected best matching syringe for this dose');
+      }
+    }
+    // Also handle case where current syringe is completely invalid (no markings)
+    else if (!isValidSyringeOption) {
       const validSyringe = findValidSyringe();
       setManualSyringe(validSyringe);
-      setSyringeHint('Auto-selected best matching syringe');
+      setSyringeHint('Auto-selected valid syringe');
     }
-  }, [doseValue, unit, medicationInputType, concentrationUnit, isValidSyringeOption]);
+  }, [doseValue, unit, medicationInputType, concentrationUnit]);
 
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
