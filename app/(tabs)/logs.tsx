@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Trash2, Calendar, Pill } from 'lucide-react-native';
+import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { DoseLog } from '../../types/doseLog';
 
@@ -24,6 +25,13 @@ export default function LogsScreen() {
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
+
+  // Reload logs when tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadLogs();
+    }, [loadLogs])
+  );
 
   const handleDeleteLog = useCallback((log: DoseLog) => {
     Alert.alert(
