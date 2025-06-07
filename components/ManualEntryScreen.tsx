@@ -329,6 +329,7 @@ export default function ManualEntryScreen({
           concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
           unit={unit}
           concentrationUnit={concentrationUnit}
+          medicationInputType={medicationInputType}
         />
       );
       progress = 3 / 3;
