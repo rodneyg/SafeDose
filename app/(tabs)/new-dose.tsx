@@ -100,14 +100,16 @@ export default function NewDoseScreen() {
     if (prefillConcentration && prefillUnit) {
       console.log('[NewDoseScreen] Found prefill data from reconstitution planner:', { prefillConcentration, prefillUnit });
       
-      // Set up the dose calculator with prefilled concentration data using the doseCalculator object
+      // Reset form first, then set prefilled data
+      doseCalculator.resetFullForm('dose');
+      
+      // Set up the dose calculator with prefilled concentration data
       doseCalculator.setConcentrationAmount(prefillConcentration);
       doseCalculator.setConcentrationUnit(prefillUnit as any);
       doseCalculator.setMedicationInputType('concentration');
       doseCalculator.setConcentrationHint('From reconstitution planner');
       
       // Go directly to manual entry with concentration already filled
-      doseCalculator.resetFullForm('dose');
       doseCalculator.setScreenStep('manualEntry');
       console.log('[NewDoseScreen] ✅ Set up with prefilled concentration data');
     } else {
