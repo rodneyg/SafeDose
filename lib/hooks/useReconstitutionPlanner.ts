@@ -158,11 +158,11 @@ export function useReconstitutionPlanner() {
     // Validate BAC water amount is reasonable (between 0.1 mL and 20 mL)
     if (result) {
       if (result.bacWaterToAdd < 0.1) {
-        setError('Target dose is too low - would require less than 0.1 mL of BAC water');
+        setError('Target dose is too high for this vial size - would require less than 0.1 mL of BAC water. Try a smaller dose or larger injection volume.');
         return false;
       }
       if (result.bacWaterToAdd > 20) {
-        setError('Target dose is too high - would require more than 20 mL of BAC water');
+        setError('Target dose is too low for this vial size - would require more than 20 mL of BAC water. Try a larger dose or smaller injection volume.');
         return false;
       }
     }

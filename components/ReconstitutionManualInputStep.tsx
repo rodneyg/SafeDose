@@ -36,6 +36,9 @@ export default function ReconstitutionManualInputStep({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Plan Your Reconstitution</Text>
+      <Text style={styles.subtitle}>
+        Tell us your target dose and we'll calculate how much BAC water to add to your vial.
+      </Text>
       
       {/* Error message */}
       {error && (
@@ -155,7 +158,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
     marginBottom: 24,
+    paddingHorizontal: 16,
+    lineHeight: 20,
   },
   errorContainer: {
     backgroundColor: '#FEF2F2',
