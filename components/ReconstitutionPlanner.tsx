@@ -25,9 +25,9 @@ export default function ReconstitutionPlanner() {
     inputMethod,
     peptideAmount,
     peptideUnit,
-    bacWater,
     targetDose,
     targetDoseUnit,
+    preferredVolume,
     scannedPeptideAmount,
     isProcessing,
     error,
@@ -36,7 +36,7 @@ export default function ReconstitutionPlanner() {
     setInputMethod,
     setPeptideAmount,
     setPeptideUnit,
-    setBacWater,
+    setPreferredVolume,
     setTargetDose,
     setTargetDoseUnit,
     setScannedPeptideAmount,
@@ -144,7 +144,7 @@ export default function ReconstitutionPlanner() {
         return !!inputMethod;
       case 'manualInput':
         const peptideValue = peptideAmount || scannedPeptideAmount;
-        return !!peptideValue && !!bacWater && !!targetDose;
+        return !!peptideValue && !!targetDose && !!preferredVolume;
       case 'scanLabel':
         return false; // Handled by scan flow
       case 'output':
@@ -197,12 +197,12 @@ export default function ReconstitutionPlanner() {
             onChangePeptideAmount={setPeptideAmount}
             peptideUnit={peptideUnit}
             onChangePeptideUnit={setPeptideUnit}
-            bacWater={bacWater}
-            onChangeBacWater={setBacWater}
             targetDose={targetDose}
             onChangeTargetDose={setTargetDose}
             targetDoseUnit={targetDoseUnit}
             onChangeTargetDoseUnit={setTargetDoseUnit}
+            preferredVolume={preferredVolume}
+            onChangePreferredVolume={setPreferredVolume}
             scannedPeptideAmount={scannedPeptideAmount}
             error={error}
           />
@@ -225,9 +225,9 @@ export default function ReconstitutionPlanner() {
             result={result}
             peptideAmount={peptideAmount || scannedPeptideAmount || ''}
             peptideUnit={peptideUnit}
-            bacWater={bacWater}
             targetDose={targetDose}
             targetDoseUnit={targetDoseUnit}
+            preferredVolume={preferredVolume}
             onUseDoseCalculator={handleUseDoseCalculator}
             onStartOver={reset}
           />

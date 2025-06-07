@@ -6,12 +6,12 @@ interface Props {
   onChangePeptideAmount: (amount: string) => void;
   peptideUnit: 'mg' | 'mcg';
   onChangePeptideUnit: (unit: 'mg' | 'mcg') => void;
-  bacWater: string;
-  onChangeBacWater: (water: string) => void;
   targetDose: string;
   onChangeTargetDose: (dose: string) => void;
   targetDoseUnit: 'mg' | 'mcg';
   onChangeTargetDoseUnit: (unit: 'mg' | 'mcg') => void;
+  preferredVolume: string;
+  onChangePreferredVolume: (volume: string) => void;
   scannedPeptideAmount: string | null;
   error: string | null;
 }
@@ -21,12 +21,12 @@ export default function ReconstitutionManualInputStep({
   onChangePeptideAmount,
   peptideUnit,
   onChangePeptideUnit,
-  bacWater,
-  onChangeBacWater,
   targetDose,
   onChangeTargetDose,
   targetDoseUnit,
   onChangeTargetDoseUnit,
+  preferredVolume,
+  onChangePreferredVolume,
   scannedPeptideAmount,
   error,
 }: Props) {
@@ -35,7 +35,7 @@ export default function ReconstitutionManualInputStep({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Enter Reconstitution Details</Text>
+      <Text style={styles.title}>Plan Your Reconstitution</Text>
       
       {/* Error message */}
       {error && (
@@ -43,6 +43,63 @@ export default function ReconstitutionManualInputStep({
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
+
+      {/* Target Dose */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>What dose do you want per injection?</Text>
+        <View style={styles.inputWithUnit}>
+          <TextInput
+            style={[styles.input, styles.inputWithUnitInput]}
+            placeholder="250"
+            placeholderTextColor="#9CA3AF"
+            value={targetDose}
+            onChangeText={onChangeTargetDose}
+            keyboardType="numeric"
+          />
+          <View style={styles.unitSelector}>
+            <TouchableOpacity
+              style={[styles.unitButton, targetDoseUnit === 'mg' && styles.unitButtonSelected]}
+              onPress={() => onChangeTargetDoseUnit('mg')}
+            >
+              <Text style={[styles.unitButtonText, targetDoseUnit === 'mg' && styles.unitButtonTextSelected]}>
+                mg
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.unitButton, targetDoseUnit === 'mcg' && styles.unitButtonSelected]}
+              onPress={() => onChangeTargetDoseUnit('mcg')}
+            >
+              <Text style={[styles.unitButtonText, targetDoseUnit === 'mcg' && styles.unitButtonTextSelected]}>
+                mcg
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={styles.helpText}>
+          Common doses: 250mcg, 500mcg, 1mg, 2.5mg
+        </Text>
+      </View>
+
+      {/* Preferred Volume */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Preferred injection volume (optional)</Text>
+        <View style={styles.inputWithUnit}>
+          <TextInput
+            style={[styles.input, styles.inputWithUnitInput]}
+            placeholder="0.1"
+            placeholderTextColor="#9CA3AF"
+            value={preferredVolume}
+            onChangeText={onChangePreferredVolume}
+            keyboardType="numeric"
+          />
+          <View style={styles.unitLabel}>
+            <Text style={styles.unitLabelText}>mL</Text>
+          </View>
+        </View>
+        <Text style={styles.helpText}>
+          Defaults to 0.1mL. Typical range: 0.05mL - 0.5mL
+        </Text>
+      </View>
 
       {/* Peptide Amount */}
       <View style={styles.inputGroup}>
@@ -81,60 +138,9 @@ export default function ReconstitutionManualInputStep({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-
-      {/* BAC Water Amount */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>How much BAC water will you add?</Text>
-        <View style={styles.inputWithUnit}>
-          <TextInput
-            style={[styles.input, styles.inputWithUnitInput]}
-            placeholder="2"
-            placeholderTextColor="#9CA3AF"
-            value={bacWater}
-            onChangeText={onChangeBacWater}
-            keyboardType="numeric"
-          />
-          <View style={styles.unitLabel}>
-            <Text style={styles.unitLabelText}>mL</Text>
-          </View>
-        </View>
         <Text style={styles.helpText}>
-          Common amounts: 1 mL, 2 mL, 3 mL
+          Common vial sizes: 2mg, 5mg, 10mg
         </Text>
-      </View>
-
-      {/* Target Dose */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>What's your desired dose per injection?</Text>
-        <View style={styles.inputWithUnit}>
-          <TextInput
-            style={[styles.input, styles.inputWithUnitInput]}
-            placeholder="250"
-            placeholderTextColor="#9CA3AF"
-            value={targetDose}
-            onChangeText={onChangeTargetDose}
-            keyboardType="numeric"
-          />
-          <View style={styles.unitSelector}>
-            <TouchableOpacity
-              style={[styles.unitButton, targetDoseUnit === 'mg' && styles.unitButtonSelected]}
-              onPress={() => onChangeTargetDoseUnit('mg')}
-            >
-              <Text style={[styles.unitButtonText, targetDoseUnit === 'mg' && styles.unitButtonTextSelected]}>
-                mg
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.unitButton, targetDoseUnit === 'mcg' && styles.unitButtonSelected]}
-              onPress={() => onChangeTargetDoseUnit('mcg')}
-            >
-              <Text style={[styles.unitButtonText, targetDoseUnit === 'mcg' && styles.unitButtonTextSelected]}>
-                mcg
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </View>
     </View>
   );

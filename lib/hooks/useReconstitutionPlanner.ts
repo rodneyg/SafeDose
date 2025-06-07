@@ -2,13 +2,14 @@ import { useState, useCallback, useMemo } from 'react';
 
 export interface ReconstitutionPlannerParams {
   peptideAmountMg: number;
-  bacWaterMl: number;
   targetDoseMg: number;
+  preferredVolumeMl: number;
 }
 
 export interface ReconstitutionPlannerResult {
+  bacWaterToAdd: number; // mL
   concentration: number; // mg/mL
-  drawVolume: number; // mL
+  injectionVolume: number; // mL (actual volume needed per dose)
 }
 
 export interface ReconstitutionState {
@@ -16,9 +17,9 @@ export interface ReconstitutionState {
   inputMethod: 'manual' | 'scan' | null;
   peptideAmount: string;
   peptideUnit: 'mg' | 'mcg';
-  bacWater: string;
   targetDose: string;
   targetDoseUnit: 'mg' | 'mcg';
+  preferredVolume: string; // New field for preferred injection volume
   scannedPeptideAmount: string | null;
   isProcessing: boolean;
   error: string | null;
@@ -30,9 +31,9 @@ export function useReconstitutionPlanner() {
     inputMethod: null,
     peptideAmount: '',
     peptideUnit: 'mg',
-    bacWater: '',
     targetDose: '',
     targetDoseUnit: 'mcg',
+    preferredVolume: '0.1', // Default to 0.1mL
     scannedPeptideAmount: null,
     isProcessing: false,
     error: null,
@@ -63,6 +64,10 @@ export function useReconstitutionPlanner() {
     setState(prev => ({ ...prev, bacWater: water, error: null }));
   }, []);
 
+  const setPreferredVolume = useCallback((volume: string) => {
+    setState(prev => ({ ...prev, preferredVolume: volume, error: null }));
+  }, []);
+
   const setTargetDose = useCallback((dose: string) => {
     setState(prev => ({ ...prev, targetDose: dose, error: null }));
   }, []);
@@ -85,17 +90,21 @@ export function useReconstitutionPlanner() {
 
   // Calculate reconstitution values
   const calculateReconstitution = useCallback((params: ReconstitutionPlannerParams): ReconstitutionPlannerResult => {
-    const { peptideAmountMg, bacWaterMl, targetDoseMg } = params;
+    const { peptideAmountMg, targetDoseMg, preferredVolumeMl } = params;
 
-    // Calculate concentration: peptide amount (mg) / total volume (mL)
-    const concentration = peptideAmountMg / bacWaterMl;
+    // Calculate required concentration: target dose (mg) / preferred volume (mL)
+    const requiredConcentration = targetDoseMg / preferredVolumeMl;
 
-    // Calculate draw volume: target dose (mg) / concentration (mg/mL)
-    const drawVolume = targetDoseMg / concentration;
+    // Calculate BAC water to add: peptide amount (mg) / required concentration (mg/mL)
+    const bacWaterToAdd = peptideAmountMg / requiredConcentration;
+
+    // Actual injection volume will be the preferred volume (since we calculated concentration to achieve this)
+    const injectionVolume = preferredVolumeMl;
 
     return {
-      concentration,
-      drawVolume,
+      bacWaterToAdd,
+      concentration: requiredConcentration,
+      injectionVolume,
     };
   }, []);
 
@@ -103,10 +112,10 @@ export function useReconstitutionPlanner() {
   const result = useMemo(() => {
     try {
       const peptideAmountValue = parseFloat(state.peptideAmount || state.scannedPeptideAmount || '0');
-      const bacWaterValue = parseFloat(state.bacWater);
       const targetDoseValue = parseFloat(state.targetDose);
+      const preferredVolumeValue = parseFloat(state.preferredVolume);
 
-      if (!peptideAmountValue || !bacWaterValue || !targetDoseValue) {
+      if (!peptideAmountValue || !targetDoseValue || !preferredVolumeValue) {
         return null;
       }
 
@@ -118,26 +127,21 @@ export function useReconstitutionPlanner() {
 
       return calculateReconstitution({
         peptideAmountMg,
-        bacWaterMl: bacWaterValue,
         targetDoseMg,
+        preferredVolumeMl: preferredVolumeValue,
       });
     } catch {
       return null;
     }
-  }, [state.peptideAmount, state.scannedPeptideAmount, state.peptideUnit, state.bacWater, state.targetDose, state.targetDoseUnit, calculateReconstitution]);
+  }, [state.peptideAmount, state.scannedPeptideAmount, state.peptideUnit, state.targetDose, state.targetDoseUnit, state.preferredVolume, calculateReconstitution]);
 
   const validateInputs = useCallback(() => {
     const peptideAmountValue = parseFloat(state.peptideAmount || state.scannedPeptideAmount || '0');
-    const bacWaterValue = parseFloat(state.bacWater);
     const targetDoseValue = parseFloat(state.targetDose);
+    const preferredVolumeValue = parseFloat(state.preferredVolume);
 
     if (!peptideAmountValue || peptideAmountValue <= 0) {
       setError('Please enter a valid peptide amount greater than 0');
-      return false;
-    }
-
-    if (!bacWaterValue || bacWaterValue <= 0) {
-      setError('Please enter a valid BAC water amount greater than 0');
       return false;
     }
 
@@ -146,20 +150,25 @@ export function useReconstitutionPlanner() {
       return false;
     }
 
-    // Validate draw volume is reasonable (between 0.001 mL and 5 mL)
+    if (!preferredVolumeValue || preferredVolumeValue <= 0) {
+      setError('Please enter a valid preferred volume greater than 0');
+      return false;
+    }
+
+    // Validate BAC water amount is reasonable (between 0.1 mL and 20 mL)
     if (result) {
-      if (result.drawVolume < 0.001) {
-        setError('Target dose is too small - draw volume would be less than 0.001 mL');
+      if (result.bacWaterToAdd < 0.1) {
+        setError('Target dose is too low - would require less than 0.1 mL of BAC water');
         return false;
       }
-      if (result.drawVolume > 5) {
-        setError('Target dose is too large - draw volume would exceed 5 mL');
+      if (result.bacWaterToAdd > 20) {
+        setError('Target dose is too high - would require more than 20 mL of BAC water');
         return false;
       }
     }
 
     return true;
-  }, [state.peptideAmount, state.scannedPeptideAmount, state.bacWater, state.targetDose, result, setError]);
+  }, [state.peptideAmount, state.scannedPeptideAmount, state.targetDose, state.preferredVolume, result, setError]);
 
   const proceedToOutput = useCallback(() => {
     if (validateInputs()) {
@@ -173,9 +182,9 @@ export function useReconstitutionPlanner() {
       inputMethod: null,
       peptideAmount: '',
       peptideUnit: 'mg',
-      bacWater: '',
       targetDose: '',
       targetDoseUnit: 'mcg',
+      preferredVolume: '0.1',
       scannedPeptideAmount: null,
       isProcessing: false,
       error: null,
@@ -190,6 +199,7 @@ export function useReconstitutionPlanner() {
     setPeptideAmount,
     setPeptideUnit,
     setBacWater,
+    setPreferredVolume,
     setTargetDose,
     setTargetDoseUnit,
     setScannedPeptideAmount,

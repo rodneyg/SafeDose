@@ -7,9 +7,9 @@ interface Props {
   result: ReconstitutionPlannerResult;
   peptideAmount: string;
   peptideUnit: 'mg' | 'mcg';
-  bacWater: string;
   targetDose: string;
   targetDoseUnit: 'mg' | 'mcg';
+  preferredVolume: string;
   onUseDoseCalculator: () => void;
   onStartOver: () => void;
 }
@@ -18,9 +18,9 @@ export default function ReconstitutionOutputStep({
   result,
   peptideAmount,
   peptideUnit,
-  bacWater,
   targetDose,
   targetDoseUnit,
+  preferredVolume,
   onUseDoseCalculator,
   onStartOver,
 }: Props) {
@@ -32,34 +32,41 @@ export default function ReconstitutionOutputStep({
       <View style={styles.summaryCard}>
         <Text style={styles.cardTitle}>Your Inputs</Text>
         <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Peptide amount:</Text>
-          <Text style={styles.summaryValue}>{peptideAmount} {peptideUnit}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>BAC water:</Text>
-          <Text style={styles.summaryValue}>{bacWater} mL</Text>
-        </View>
-        <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Target dose:</Text>
           <Text style={styles.summaryValue}>{targetDose} {targetDoseUnit}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Preferred volume:</Text>
+          <Text style={styles.summaryValue}>{preferredVolume} mL</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Peptide amount:</Text>
+          <Text style={styles.summaryValue}>{peptideAmount} {peptideUnit}</Text>
         </View>
       </View>
 
       {/* Results */}
       <View style={styles.resultsCard}>
-        <Text style={styles.cardTitle}>Results</Text>
+        <Text style={styles.cardTitle}>Reconstitution Instructions</Text>
         
         <View style={styles.resultItem}>
-          <Text style={styles.resultLabel}>Your concentration:</Text>
+          <Text style={styles.resultLabel}>Add this much BAC water:</Text>
+          <Text style={[styles.resultValue, styles.primaryResult]}>
+            {result.bacWaterToAdd.toFixed(2)} mL
+          </Text>
+        </View>
+
+        <View style={styles.resultItem}>
+          <Text style={styles.resultLabel}>This gives you a concentration of:</Text>
           <Text style={styles.resultValue}>
             {result.concentration.toFixed(3)} mg/mL
           </Text>
         </View>
 
         <View style={styles.resultItem}>
-          <Text style={styles.resultLabel}>To get {targetDose} {targetDoseUnit}, draw:</Text>
-          <Text style={[styles.resultValue, styles.primaryResult]}>
-            {result.drawVolume.toFixed(3)} mL
+          <Text style={styles.resultLabel}>Each {targetDose} {targetDoseUnit} dose will require:</Text>
+          <Text style={styles.resultValue}>
+            {result.injectionVolume.toFixed(3)} mL
           </Text>
         </View>
 
@@ -67,7 +74,7 @@ export default function ReconstitutionOutputStep({
         <View style={styles.visualGuide}>
           <Syringe color="#007AFF" size={24} />
           <Text style={styles.visualText}>
-            Draw {result.drawVolume.toFixed(3)} mL from your reconstituted solution
+            Add {result.bacWaterToAdd.toFixed(2)} mL of BAC water to your {peptideAmount} {peptideUnit} vial
           </Text>
         </View>
       </View>
