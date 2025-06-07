@@ -40,16 +40,11 @@ export default function SyringeStep({
 
   // Function to find a valid syringe based on the current selection and context
   const findValidSyringe = (): { type: 'Insulin' | 'Standard'; volume: string } => {
-    // First, check if the current selection is valid
-    if (isValidSyringeOption) {
-      return manualSyringe;
-    }
-
     // Determine smart defaults based on available context
     let suggestedType: 'Insulin' | 'Standard' = 'Standard';
     let suggestedVolume = '3 ml'; // Default to standard 3ml
 
-    // Use dose and concentration if available
+    // Use dose and concentration if available - prioritize smart defaults when context is available
     if (doseValue !== undefined && doseValue !== null && 
         unit) {
       
@@ -108,6 +103,10 @@ export default function SyringeStep({
         suggestedType = 'Standard';
         suggestedVolume = '3 ml';
       }
+    }
+    // If no dose context available, check if current selection is valid and return it
+    else if (isValidSyringeOption) {
+      return manualSyringe;
     }
 
     // Verify the suggested syringe has valid markings
