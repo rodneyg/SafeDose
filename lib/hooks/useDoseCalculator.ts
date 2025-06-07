@@ -245,14 +245,22 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       }
 
       setConcentration(numericConcentration);
-      setManualStep('totalAmountInput');
+      
+      // If total amount is already set (e.g., from reconstitution planner), skip total amount input
+      if (totalAmount && totalAmount.trim() !== '' && totalAmountHint?.includes('reconstitution planner')) {
+        console.log('[useDoseCalculator] Total amount already prefilled, skipping to syringe');
+        setManualStep('syringe');
+      } else {
+        setManualStep('totalAmountInput');
+      }
+      
       setFormError(null);
       lastActionTimestamp.current = Date.now();
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleNextConcentrationInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [concentrationAmount, concentrationUnit, unit]);
+  }, [concentrationAmount, concentrationUnit, unit, totalAmount, totalAmountHint]);
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {

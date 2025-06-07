@@ -87,6 +87,8 @@ export default function NewDoseScreen() {
   useEffect(() => {
     const prefillConcentration = searchParams.prefillConcentration as string;
     const prefillUnit = searchParams.prefillUnit as string;
+    const prefillTotalAmount = searchParams.prefillTotalAmount as string;
+    const prefillTotalUnit = searchParams.prefillTotalUnit as string;
     
     // Reset the applied flag when params change
     if (!prefillConcentration || !prefillUnit) {
@@ -95,7 +97,7 @@ export default function NewDoseScreen() {
     
     // Only apply prefill if we have data, haven't applied it yet, and doseCalculator is on the intro screen
     if (prefillConcentration && prefillUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
-      console.log('[NewDoseScreen] Applying prefilled concentration data');
+      console.log('[NewDoseScreen] Applying prefilled data from reconstitution planner');
       prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled concentration data
@@ -104,13 +106,20 @@ export default function NewDoseScreen() {
       doseCalculator.setMedicationInputType('concentration');
       doseCalculator.setConcentrationHint('From reconstitution planner');
       
-      // Skip to concentration input step
-      doseCalculator.setManualStep('concentrationInput');
+      // Also prefill total amount if provided
+      if (prefillTotalAmount && prefillTotalUnit) {
+        doseCalculator.setTotalAmount(prefillTotalAmount);
+        doseCalculator.setTotalAmountHint('From reconstitution planner');
+        console.log('[NewDoseScreen] Prefilled total amount:', prefillTotalAmount, prefillTotalUnit);
+      }
+      
+      // Start from dose step instead of skipping it - user still needs to enter their dose
+      doseCalculator.setManualStep('dose');
       doseCalculator.setScreenStep('manualEntry');
       
-      console.log('[NewDoseScreen] ✅ Prefilled concentration data applied');
+      console.log('[NewDoseScreen] ✅ Prefilled data applied, starting from dose step');
     }
-  }, [searchParams.prefillConcentration, searchParams.prefillUnit, doseCalculator.screenStep]);
+  }, [searchParams.prefillConcentration, searchParams.prefillUnit, searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {

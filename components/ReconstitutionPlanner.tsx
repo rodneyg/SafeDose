@@ -118,9 +118,12 @@ export default function ReconstitutionPlanner() {
     if (!result) return;
 
     // Navigate to main dose calculator with prefilled values
-    // We'll pass the calculated concentration as a query parameter
+    // Pass both the calculated concentration and the total amount (peptide amount)
     const concentration = result.concentration.toFixed(3);
-    router.push(`/(tabs)/new-dose?prefillConcentration=${concentration}&prefillUnit=mg/ml`);
+    const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
+    const totalAmountUnit = peptideUnit;
+    
+    router.push(`/(tabs)/new-dose?prefillConcentration=${concentration}&prefillUnit=mg/ml&prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}`);
   };
 
   const getStepTitle = () => {
