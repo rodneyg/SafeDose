@@ -117,14 +117,14 @@ export default function ReconstitutionPlanner() {
   const handleUseDoseCalculator = () => {
     if (!result) return;
 
-    // Navigate to main dose calculator with prefilled values
-    const concentration = result.concentration.toFixed(3);
+    // Navigate to main dose calculator with prefilled values for total amount method
     const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
     const totalAmountUnit = peptideUnit;
-    const bacWaterVolume = result.bacWaterToAdd.toFixed(2);
+    const solutionVolume = result.bacWaterToAdd.toFixed(2); // Total solution volume (BAC water + negligible powder volume)
     const targetDoseValue = targetDose;
     
-    router.push(`/(tabs)/new-dose?prefillConcentration=${concentration}&prefillUnit=mg/ml&prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${bacWaterVolume}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
+    // Use total amount method instead of concentration method for proper syringe calculations
+    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
   };
 
   const getStepTitle = () => {
