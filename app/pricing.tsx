@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import stripeConfig from "../lib/stripeConfig";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
+import { useUserProfile } from "../contexts/UserProfileContext";
+import { CheckCircle, Shield, Zap, Clock } from "lucide-react-native";
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
@@ -13,41 +15,62 @@ const stripePromise = stripeConfig.publishableKey
 // Base URL for your API
 const API_BASE_URL = "https://app.safedoseai.com";
 
+// Get screen dimensions for responsive design
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 export default function PricingPage() {
+  const { profile } = useUserProfile();
+  
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Compact pricing plans optimized for App Store-style layout
   const pricingPlansData = [
     {
       id: 'monthly',
-      name: "Monthly Plan",
+      name: "Plus",
       price: 20,
+      originalPrice: 25,
       priceSuffix: "/month",
-      subtext: "Billed monthly. Cancel anytime.",
-      priceId: stripeConfig.priceId, // Existing one
-      features: [
-        { name: "50 AI scans/month", available: true },
-        { name: "Unlimited manual calculations", available: true },
-        { name: "Faster scans", available: true },
-        { name: "No mid-session limits", available: true },
-      ],
-      badgeText: "Most Popular",
+      subtext: "7-day free trial",
+      priceId: stripeConfig.priceId,
+      badgeText: "Popular",
       isDefault: true,
+      savings: 20,
     },
     {
       id: 'yearly',
-      name: "Yearly Plan",
+      name: "Pro",
       price: 149.99,
+      originalPrice: 240,
       priceSuffix: "/year",
-      subtext: "SAVE 38%",
+      subtext: "Save 38%",
       priceId: 'price_yearly_placeholder',
-      features: [
-        { name: "600 AI scans/year", available: true }, // Or "50 AI scans/month"
-        { name: "Unlimited manual calculations", available: true },
-        { name: "Faster scans", available: true },
-        { name: "No mid-session limits", available: true },
-      ],
-      badgeText: "SAVE 38%",
+      badgeText: "Best Value",
       isDefault: false,
+      savings: 38,
     },
   ];
+
+  // Key features for compact display
+  const keyFeatures = [
+    { icon: Zap, text: "50 AI scans/month", color: "#FF6B6B" },
+    { icon: CheckCircle, text: "Unlimited calculations", color: "#4ECDC4" },
+    { icon: Clock, text: "Priority processing", color: "#45B7D1" },
+    { icon: Shield, text: "No session limits", color: "#96CEB4" },
+  ];
+
+  // Dynamic headline based on user profile
+  const getPersonalizedHeadline = () => {
+    if (profile?.isLicensedProfessional) {
+      return "Professional Tools for Accurate Dosing";
+    } else if (profile?.isPersonalUse && !profile?.isCosmeticUse) {
+      return "Safe, Reliable Dose Calculations";
+    } else {
+      return "Precision Dosing Made Simple";
+    }
+  };
 
   const defaultPlan = pricingPlansData.find(plan => plan.isDefault) || pricingPlansData[0];
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
@@ -60,7 +83,40 @@ export default function PricingPage() {
     console.warn(
       "TODO: Replace placeholder Stripe Price IDs ('price_yearly_placeholder') in pricingPlansData with actual Price IDs from your Stripe dashboard."
     );
-  }, []);
+    
+    // Start entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Start pulse animation for icon
+    const pulseLoop = () => {
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]).start(() => pulseLoop());
+    };
+    
+    const pulseTimer = setTimeout(pulseLoop, 1000);
+    return () => clearTimeout(pulseTimer);
+  }, [fadeAnim, scaleAnim, pulseAnim]);
 
   const initiateStripeCheckout = async () => {
     console.log(`initiateStripeCheckout called for ${selectedPlan.name}`);
@@ -183,260 +239,371 @@ export default function PricingPage() {
   };
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContentContainer}>
-      <Text style={styles.title}>Choose Your Plan</Text>
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}
+    >
+      {/* App Icon with Pulse Animation */}
+      <Animated.View style={[styles.iconContainer, { transform: [{ scale: pulseAnim }] }]}>
+        <View style={styles.iconBackground}>
+          <Image 
+            source={require('../assets/images/icon.png')} 
+            style={styles.appIcon}
+            resizeMode="contain"
+          />
+        </View>
+      </Animated.View>
 
-      {pricingPlansData.map((plan) => (
-        <TouchableOpacity
-          key={plan.id}
-          style={[
-            styles.planCard,
-            plan.id === selectedPlan.id && styles.selectedPlanCard, // Placeholder style
-          ]}
-          onPress={() => setSelectedPlan(plan)}
-        >
-          {plan.badgeText && (
-            <View style={[
-              styles.badgeContainer,
-              plan.badgeText === "Most Popular" ? styles.mostPopularBadge : styles.discountBadge
-            ]}>
-              <Text style={styles.badgeText}>{plan.badgeText}</Text>
+      {/* Personalized Headline */}
+      <Text style={styles.headline}>{getPersonalizedHeadline()}</Text>
+      <Text style={styles.subheadline}>Upgrade to unlock premium features</Text>
+
+      {/* Key Features Grid */}
+      <View style={styles.featuresContainer}>
+        {keyFeatures.map((feature, index) => (
+          <View key={index} style={styles.featureItem}>
+            <View style={[styles.featureIcon, { backgroundColor: feature.color + '20' }]}>
+              <feature.icon size={screenHeight <= 667 ? 14 : 16} color={feature.color} />
             </View>
-          )}
-          <Text style={styles.planName}>{plan.name}</Text>
-          <View style={styles.priceContainer}>
-            <Text style={styles.planPrice}>${plan.price.toFixed(2)}</Text>
-            <Text style={styles.planPriceSuffix}>{plan.priceSuffix}</Text>
+            <Text style={styles.featureText}>{feature.text}</Text>
           </View>
-          <Text style={styles.planSubtext}>{plan.subtext}</Text>
+        ))}
+      </View>
 
-          <View style={styles.featureList}>
-            {plan.features.map((feature) => (
-              <View key={feature.name} style={styles.featureItem}>
-                <Text style={styles.featureText}>• {feature.name}</Text>
+      {/* Compact Plan Selection */}
+      <View style={styles.plansContainer}>
+        {pricingPlansData.map((plan) => (
+          <TouchableOpacity
+            key={plan.id}
+            style={[
+              styles.planBox,
+              plan.id === selectedPlan.id && styles.selectedPlanBox,
+            ]}
+            onPress={() => setSelectedPlan(plan)}
+            activeOpacity={0.8}
+          >
+            {plan.badgeText && plan.id === selectedPlan.id && (
+              <View style={styles.planBadge}>
+                <Text style={styles.badgeText}>{plan.badgeText}</Text>
               </View>
-            ))}
-          </View>
-          <View style={styles.selectionIndicatorContainer}>
-            <Text style={[
-              styles.selectionIndicator,
-              plan.id === selectedPlan.id && styles.selectedIndicatorText
-            ]}>
-              {plan.id === selectedPlan.id ? "✓ Selected" : "Select"}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+            )}
+            
+            <Text style={styles.planName}>{plan.name}</Text>
+            
+            <View style={styles.priceRow}>
+              {plan.originalPrice && (
+                <Text style={styles.originalPrice}>${plan.originalPrice}</Text>
+              )}
+              <Text style={styles.planPrice}>${plan.price}</Text>
+            </View>
+            
+            <Text style={styles.planPeriod}>{plan.priceSuffix}</Text>
+            <Text style={styles.planSubtext}>{plan.subtext}</Text>
+            
+            {plan.savings && (
+              <View style={styles.savingsContainer}>
+                <Text style={styles.savingsText}>Save {plan.savings}%</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
 
+      {/* Primary CTA */}
+      <TouchableOpacity 
+        style={styles.ctaButton} 
+        onPress={initiateStripeCheckout}
+        disabled={isLoading}
+        activeOpacity={0.9}
+      >
+        <Text style={styles.ctaButtonText}>
+          {isLoading ? "Processing..." : "Start Free Trial"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Trial Info */}
+      <Text style={styles.trialInfo}>
+        7-day free trial • Cancel anytime • No payment required today
+      </Text>
+
+      {/* Error Message */}
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.upgradeButton} 
-          onPress={initiateStripeCheckout}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>
-            {isLoading ? "Processing..." : "Try Free Now"}
-          </Text>
+      {/* Footer Actions */}
+      <View style={styles.footerActions}>
+        <TouchableOpacity onPress={handleCancel}>
+          <Text style={styles.footerLink}>Maybe Later</Text>
         </TouchableOpacity>
         
-        {selectedPlan.id === 'monthly' && (
-          <Text style={styles.ctaSubtext}>1 week free trial, then $20/month</Text>
-        )}
-
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+        <View style={styles.footerSeparator} />
+        
+        <TouchableOpacity>
+          <Text style={styles.footerLink}>Restore Purchase</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      {/* Privacy Links */}
+      <View style={styles.privacyLinks}>
+        <TouchableOpacity>
+          <Text style={styles.privacyText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <Text style={styles.privacySeparator}> • </Text>
+        <TouchableOpacity>
+          <Text style={styles.privacyText}>Terms of Service</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  scrollViewContentContainer: {
-    padding: 24,
-    alignItems: 'center',
-    flexGrow: 1, // Ensures content expands if shorter than screen
-  },
-  // container style is now applied to scrollViewContentContainer or scrollView itself
-  // We might not need a separate 'container' style anymore, or it can be merged/adjusted.
-  // For now, let's assume padding and alignItems are for the content within ScrollView.
-  title: {
-    fontSize: 20, // text-xl equivalent (~20px)
-    fontWeight: '600', // font-semibold
-    color: '#000000',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  planCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: 32, // Keep horizontal padding
-    paddingVertical: 24, // Reduced vertical padding
-    width: '100%',
-    maxWidth: 400,
-    marginBottom: 16, // Reduced margin bottom
+    paddingHorizontal: 24,
+    paddingTop: screenHeight <= 667 ? 20 : Math.max(50, screenHeight * 0.08), // Further reduced top padding for iPhone SE
+    paddingBottom: screenHeight <= 667 ? 10 : 30, // Further reduced bottom padding for iPhone SE
+    justifyContent: screenHeight <= 667 ? 'flex-start' : 'space-between', // Change layout strategy for small screens
     alignItems: 'center',
-    // Add soft shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
   },
-  selectedPlanCard: {
-    borderColor: '#8B5CF6',
-    borderWidth: 2,
-    elevation: 10, // Increased elevation for selected card
-    shadowOpacity: 0.25, // Slightly stronger shadow
-    shadowRadius: 10,
+
+  // App Icon Section
+  iconContainer: {
+    marginBottom: screenHeight <= 667 ? 8 : 20, // Further reduced margin for iPhone SE
   },
-  badgeContainer: {
-    position: 'absolute',
-    top: 12, // Adjusted for better visual placement
-    right: 12, // Adjusted for better visual placement
-    paddingHorizontal: 10, // Increased padding
-    paddingVertical: 5, // Increased padding
-    borderRadius: 16, // More rounded
-    zIndex: 1,
-    elevation: 5, // Ensure badge is above card content slightly
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  // Specific badge styles
-  mostPopularBadge: {
-    backgroundColor: '#8B5CF6', // brand color
-  },
-  discountBadge: {
-    backgroundColor: '#10B981', // A green color for discounts/savings
-  },
-  planName: {
-    fontSize: 22, // Slightly larger
-    fontWeight: '600',
-    color: '#1F2937', // Darker gray
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline', // Align text baselines
-    marginBottom: 8,
+  iconBackground: {
+    width: screenHeight <= 667 ? 64 : 80, // Smaller icon for iPhone SE
+    height: screenHeight <= 667 ? 64 : 80,
+    borderRadius: screenHeight <= 667 ? 16 : 20,
+    backgroundColor: '#F8F9FA',
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  planPrice: {
-    fontSize: 40, // Larger for emphasis
-    fontWeight: 'bold',
-    color: '#000000',
+  appIcon: {
+    width: screenHeight <= 667 ? 48 : 60, // Smaller icon for iPhone SE
+    height: screenHeight <= 667 ? 48 : 60,
   },
-  planPriceSuffix: {
-    fontSize: 18, // Slightly larger
-    fontWeight: '500',
-    color: '#4B5563', // Medium gray
-    marginLeft: 5, // Adjusted spacing
-    // marginBottom: 5, // Removed, baseline alignment handles this
-  },
-  planSubtext: {
-    fontSize: 14,
-    color: '#4B5563', // Medium gray
-    marginBottom: 20, // Increased spacing before features
+
+  // Headlines
+  headline: {
+    fontSize: screenHeight <= 667 ? 20 : 24, // Smaller font for iPhone SE
+    fontWeight: '700',
+    color: '#1A1A1A',
     textAlign: 'center',
+    marginBottom: 6, // Reduced margin
+    letterSpacing: -0.5,
   },
-  featureList: {
+  subheadline: {
+    fontSize: screenHeight <= 667 ? 14 : 16, // Smaller font for iPhone SE
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: screenHeight <= 667 ? 16 : 32, // Further reduced margin for iPhone SE
+    lineHeight: screenHeight <= 667 ? 18 : 22,
+  },
+
+  // Features Section
+  featuresContainer: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: screenHeight <= 667 ? 16 : 32, // Further reduced margin for iPhone SE
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: screenHeight <= 667 ? 6 : 12, // Further reduced margin for iPhone SE
+    paddingHorizontal: 8,
+  },
+  featureIcon: {
+    width: screenHeight <= 667 ? 28 : 32, // Smaller icons for iPhone SE
+    height: screenHeight <= 667 ? 28 : 32,
+    borderRadius: screenHeight <= 667 ? 14 : 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   featureText: {
-    fontSize: 16, // text-base
+    fontSize: screenHeight <= 667 ? 14 : 15, // Smaller font for iPhone SE
+    color: '#333333',
     fontWeight: '500',
-    color: '#374151', // Slightly darker gray for feature text
+    flex: 1,
   },
-  selectionIndicatorContainer: {
-    flexDirection: 'row', // To allow icon and text if needed
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20, // Increased spacing
-    paddingVertical: 10, // Add some padding
-    // backgroundColor: '#F3F4F6', // Optional: very light background for this section
-    borderRadius: 12,
-    width: '80%', // Take some width
-  },
-  selectionIndicator: { // For "Select" text
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280', // Default gray for "Select"
-  },
-  selectedIndicatorText: { // For "✓ Selected" text
-    color: '#8B5CF6', // Brand color for selected state
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  buttonContainer: {
+
+  // Plans Section  
+  plansContainer: {
+    flexDirection: 'row',
     width: '100%',
-    maxWidth: 400,
+    marginBottom: screenHeight <= 667 ? 12 : 24, // Further reduced margin for iPhone SE
     gap: 12,
   },
-  upgradeButton: {
-    backgroundColor: '#8B5CF6', // brand color from tailwind config
-    paddingVertical: 16, // Increased padding
-    borderRadius: 16, // More rounded for modern look
+  planBox: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    padding: screenHeight <= 667 ? 12 : 16, // Reduced padding for iPhone SE
     alignItems: 'center',
-    marginBottom: 12,
-    // Add subtle elevation/shadow for hover effect
-    shadowColor: '#8B5CF6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    borderWidth: 2,
+    borderColor: 'transparent',
+    position: 'relative',
+    minHeight: screenHeight <= 667 ? 110 : 140, // Reduced height for iPhone SE
+  },
+  selectedPlanBox: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#007AFF',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  planBadge: {
+    position: 'absolute',
+    top: -8,
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  planName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: '#999999',
+    textDecorationLine: 'line-through',
+    marginRight: 4,
+  },
+  planPrice: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  planPeriod: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  planSubtext: {
+    fontSize: 11,
+    color: '#007AFF',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  savingsContainer: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: '#34C759',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  savingsText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+
+  // CTA Button
+  ctaButton: {
+    width: '100%',
+    backgroundColor: '#007AFF',
+    paddingVertical: screenHeight <= 667 ? 14 : 16, // Slightly reduced padding for iPhone SE
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: screenHeight <= 667 ? 8 : 12, // Reduced margin for iPhone SE
+    marginTop: screenHeight <= 667 ? 8 : 0, // Add small top margin for iPhone SE
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
-  cancelButton: {
-    backgroundColor: 'transparent', // Outline style
-    borderWidth: 1,
-    borderColor: '#8E8E93',
-    paddingVertical: 16,
-    borderRadius: 16, // Match primary button
-    alignItems: 'center',
-  },
-  buttonText: {
+  ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
+    letterSpacing: -0.3,
   },
-  cancelButtonText: {
-    color: '#8E8E93', // Lighter text for outline button
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  ctaSubtext: {
-    fontSize: 12,
-    color: '#555555', // Dark gray for readability
+
+  // Trial Info
+  trialInfo: {
+    fontSize: screenHeight <= 667 ? 12 : 13, // Smaller font for iPhone SE
+    color: '#666666',
     textAlign: 'center',
-    marginTop: 8, // Spacing from the main CTA button
-    marginBottom: 8, // Spacing before the cancel button if visible
+    marginBottom: screenHeight <= 667 ? 12 : 20, // Reduced margin for iPhone SE
+    lineHeight: screenHeight <= 667 ? 16 : 18,
+  },
+
+  // Error
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+
+  // Footer
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenHeight <= 667 ? 8 : 16, // Reduced margin for iPhone SE
+  },
+  footerLink: {
+    color: '#007AFF',
+    fontSize: screenHeight <= 667 ? 14 : 15, // Smaller font for iPhone SE
+    fontWeight: '500',
+  },
+  footerSeparator: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#E5E5EA',
+    marginHorizontal: 16,
+  },
+
+  // Privacy
+  privacyLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: screenHeight <= 667 ? 10 : 0, // Add small bottom margin for iPhone SE
+  },
+  privacyText: {
+    color: '#8E8E93',
+    fontSize: 12,
+  },
+  privacySeparator: {
+    color: '#8E8E93',
+    fontSize: 12,
+  },
+
+  // Badge text (shared)
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
