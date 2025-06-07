@@ -34,9 +34,10 @@ export default function LogsScreen() {
   );
 
   const handleDeleteLog = useCallback((log: DoseLog) => {
+    const displayName = getDisplaySubstanceName(log.substanceName);
     Alert.alert(
       'Delete Log Entry',
-      `Are you sure you want to delete this dose log?\n\n${log.substanceName} - ${log.doseValue} ${log.unit}`,
+      `Are you sure you want to delete this dose log?\n\n${displayName} - ${log.doseValue} ${log.unit}`,
       [
         {
           text: 'Cancel',
@@ -87,6 +88,33 @@ export default function LogsScreen() {
     });
   };
 
+  const getDisplaySubstanceName = (substanceName: string) => {
+    if (!substanceName || substanceName.trim() === '' || substanceName.toLowerCase() === 'unknown') {
+      return 'Peptide Injection';
+    }
+    return substanceName;
+  };
+
+  const formatConcentration = (doseValue: number, unit: string, calculatedVolume: number) => {
+    if (unit === 'mL') {
+      return null; // No concentration for volume-based doses
+    }
+    
+    if (!calculatedVolume || calculatedVolume <= 0) {
+      return null; // Avoid division by zero
+    }
+    
+    const concentration = doseValue / calculatedVolume;
+    const concentrationUnit = unit === 'units' ? 'units/mL' : `${unit}/mL`;
+    
+    // Round to appropriate precision
+    const formattedConcentration = concentration < 1 
+      ? concentration.toFixed(3).replace(/\.?0+$/, '') 
+      : concentration.toFixed(1).replace(/\.?0+$/, '');
+    
+    return `${formattedConcentration} ${concentrationUnit}`;
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -119,50 +147,60 @@ export default function LogsScreen() {
           </View>
         ) : (
           <>
-            {logs.map((log, index) => (
-              <View key={log.id} style={[styles.logCard, index === 0 && styles.mostRecentCard]}>
-                <View style={styles.logHeader}>
-                  <View style={styles.logInfo}>
-                    <Text style={styles.substanceName}>{log.substanceName}</Text>
-                    <View style={styles.doseInfo}>
-                      <Text style={styles.doseAmount}>
-                        {log.doseValue} {log.unit}
-                      </Text>
-                      <Text style={styles.volumeAmount}>
-                        → {log.calculatedVolume} mL
+            {logs.map((log, index) => {
+              const concentration = formatConcentration(log.doseValue, log.unit, log.calculatedVolume);
+              return (
+                <View key={log.id} style={[styles.logCard, index === 0 && styles.mostRecentCard]}>
+                  <View style={styles.logHeader}>
+                    <View style={styles.logInfo}>
+                      <Text style={styles.substanceName}>{getDisplaySubstanceName(log.substanceName)}</Text>
+                      <View style={styles.doseInfo}>
+                        <Text style={styles.doseAmount}>
+                          {log.doseValue} {log.unit}
+                        </Text>
+                        <Text style={styles.volumeAmount}>
+                          → {log.calculatedVolume} mL
+                        </Text>
+                      </View>
+                      {concentration && (
+                        <View style={styles.concentrationInfo}>
+                          <Text style={styles.concentrationText}>
+                            Concentration: {concentration}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteLog(log)}
+                    >
+                      <Trash2 color="#F87171" size={20} />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={styles.logFooter}>
+                    <View style={styles.timeInfo}>
+                      <Calendar color="#8E8E93" size={14} />
+                      <Text style={styles.timeText}>
+                        {formatDate(log.timestamp)} at {formatTime(log.timestamp)}
                       </Text>
                     </View>
+                    {index === 0 && (
+                      <View style={styles.recentBadge}>
+                        <Text style={styles.recentBadgeText}>Most Recent</Text>
+                      </View>
+                    )}
                   </View>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteLog(log)}
-                  >
-                    <Trash2 color="#F87171" size={20} />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.logFooter}>
-                  <View style={styles.timeInfo}>
-                    <Calendar color="#8E8E93" size={14} />
-                    <Text style={styles.timeText}>
-                      {formatDate(log.timestamp)} at {formatTime(log.timestamp)}
-                    </Text>
-                  </View>
-                  {index === 0 && (
-                    <View style={styles.recentBadge}>
-                      <Text style={styles.recentBadgeText}>Most Recent</Text>
+
+                  {log.notes && (
+                    <View style={styles.notesContainer}>
+                      <Text style={styles.notesLabel}>Notes:</Text>
+                      <Text style={styles.notesText}>{log.notes}</Text>
                     </View>
                   )}
                 </View>
-
-                {log.notes && (
-                  <View style={styles.notesContainer}>
-                    <Text style={styles.notesLabel}>Notes:</Text>
-                    <Text style={styles.notesText}>{log.notes}</Text>
-                  </View>
-                )}
-              </View>
-            ))}
+              );
+            })}
           </>
         )}
       </ScrollView>
@@ -268,6 +306,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#10B981',
     fontWeight: '500',
+  },
+  concentrationInfo: {
+    marginTop: 4,
+  },
+  concentrationText: {
+    fontSize: 14,
+    color: '#6B6B6B',
+    fontStyle: 'italic',
   },
   deleteButton: {
     padding: 8,
