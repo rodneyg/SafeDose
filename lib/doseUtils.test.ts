@@ -193,3 +193,134 @@ describe('calculateDose precision guidance', () => {
   });
 
 });
+
+describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
+  const mockInsulinSyringe: ManualSyringe = { type: 'Insulin', volume: '1 ml' };
+  
+  it('should correctly calculate 30 units for 500mcg dose with 5mg peptide in 3mL solution', () => {
+    // This is the scenario reported by @rodneyg - should give 30 units as answer
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg',
+      concentration: null, // Will be calculated from totalAmount/solutionVolume
+      concentrationUnit: 'mg/ml',
+      totalAmount: 5, // mg - as reported
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    console.log('Correct scenario test result:', result);
+    
+    // The concentration should be 5mg/3mL = 1.667 mg/mL
+    expect(result.calculatedConcentration).toBeCloseTo(1.667, 3);
+    
+    // For 500mcg = 0.5mg dose: volume = 0.5mg / 1.667mg/mL = 0.3mL
+    expect(result.calculatedVolume).toBeCloseTo(0.3, 3);
+    
+    // Insulin syringe marking: 0.3mL * 100 = 30 units
+    expect(result.recommendedMarking).toBe('30');
+    
+    // Should not have any calculation error
+    expect(result.calculationError).toBeNull();
+  });
+  
+  it('should reproduce the "over 100 ML" issue with incorrect concentration calculation', () => {
+    // Scenario: User has very small amount of medication (0.5mg) and adds 3mL liquid
+    // This creates very low concentration leading to large volume requirements
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg',
+      concentration: null, // Will be calculated from totalAmount/solutionVolume
+      concentrationUnit: 'mg/ml',
+      totalAmount: 0.5, // mg - very small amount
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    console.log('Reproduction test result:', result);
+    
+    // The concentration should be 0.5mg/3mL = 0.167 mg/mL
+    // For 500mcg = 0.5mg dose: volume = 0.5mg / 0.167mg/mL = 3mL
+    // This exceeds 2mL threshold, so should get VOLUME_THRESHOLD_ERROR
+    expect(result.calculatedVolume).toBeCloseTo(3, 1);
+    expect(result.calculationError).toBe("VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.");
+  });
+  
+  it('should handle extremely low concentration leading to very large volumes', () => {
+    // Even worse scenario: very low concentration
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg',
+      concentration: 0.01, // mg/ml - very low concentration
+      concentrationUnit: 'mg/ml',
+      totalAmount: 1, // mg
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    // For 500mcg = 0.5mg dose with 0.01mg/mL concentration:
+    // volume = 0.5mg / 0.01mg/mL = 50mL
+    expect(result.calculatedVolume).toBe(50);
+    expect(result.calculationError).toBe("VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.");
+    
+    // When volume exceeds threshold, recommendedMarking should be null
+    expect(result.recommendedMarking).toBeNull();
+  });
+  
+  it('should provide reasonable results for normal 500mcg scenario', () => {
+    // Normal scenario: reasonable amount of medication
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg',
+      concentration: null, // Will be calculated
+      concentrationUnit: 'mg/ml',
+      totalAmount: 10, // mg - reasonable amount
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    // Concentration = 10mg/3mL = 3.33 mg/mL
+    // For 500mcg = 0.5mg dose: volume = 0.5mg / 3.33mg/mL ≈ 0.15mL
+    expect(result.calculatedVolume).toBeCloseTo(0.15, 2);
+    expect(result.recommendedMarking).toBe('15'); // 0.15mL * 100 for insulin
+    expect(result.calculationError).not.toBe("VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.");
+  });
+
+  it('should catch extremely low calculated concentrations and provide helpful error', () => {
+    // Scenario that would lead to very low concentration
+    const result = calculateDose({
+      doseValue: 500, // mcg  
+      unit: 'mcg',
+      concentration: null, // Will be calculated
+      concentrationUnit: 'mg/ml', 
+      totalAmount: 0.01, // mg - extremely small amount
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    // Concentration would be 0.01mg/3mL = 0.0033 mg/mL (< 0.01 threshold)
+    expect(result.calculationError).toContain('Calculated concentration');
+    expect(result.calculationError).toContain('extremely low');
+    expect(result.calculationError).toContain('Please verify');
+  });
+
+  it('should prevent unrealistic insulin markings for large volumes', () => {
+    // Scenario with volume that exceeds practical insulin syringe use but is under the general threshold
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg', 
+      concentration: 0.33, // mg/ml - low concentration
+      concentrationUnit: 'mg/ml',
+      totalAmount: 2, // mg
+      solutionVolume: '6', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    // Volume = 0.5mg / 0.33mg/mL ≈ 1.5mL
+    // This is > 1mL and < 2mL, so should get special insulin error
+    expect(result.calculatedVolume).toBeCloseTo(1.5, 1);
+    expect(result.calculationError).toContain('too large for practical use with an insulin syringe');
+    expect(result.recommendedMarking).toBeNull();
+  });
+
+});

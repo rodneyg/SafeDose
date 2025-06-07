@@ -128,6 +128,17 @@ export function calculateDose({
       calculatedConcentration = totalAmount / solVolume;
       concentration = calculatedConcentration;
       console.log(`[Calculate] Calculated concentration from totalAmount ${totalAmount} and solutionVolume ${solVolume}: ${concentration}`);
+      
+      // Validate calculated concentration is reasonable
+      if (concentrationUnit === 'mg/ml' && concentration < 0.01) {
+        calculationError = `Calculated concentration (${concentration.toFixed(4)} mg/ml) is extremely low. Please verify the total amount (${totalAmount} mg) and solution volume (${solutionVolume} ml) are correct.`;
+        console.log('[Calculate] Error: Calculated concentration is unreasonably low');
+        return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+      } else if (concentrationUnit === 'mcg/ml' && concentration < 1) {
+        calculationError = `Calculated concentration (${concentration.toFixed(4)} mcg/ml) is extremely low. Please verify the total amount (${totalAmount} mcg) and solution volume (${solutionVolume} ml) are correct.`;
+        console.log('[Calculate] Error: Calculated concentration is unreasonably low');
+        return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+      }
     }
   }
   
@@ -186,6 +197,14 @@ export function calculateDose({
   if (calculatedVolume !== null && (calculatedVolume < 0.005 || calculatedVolume > 2)) {
     calculationError = "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.";
     console.log('[Calculate] Error: Calculated volume is outside safe thresholds');
+    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  }
+
+  // Check for insulin syringe practical limits before other capacity checks
+  if (manualSyringe.type === 'Insulin' && calculatedVolume > 1) {
+    // For insulin syringes, volumes > 1mL result in markings > 100 units, which is unrealistic
+    calculationError = `Required volume (${calculatedVolume.toFixed(2)} ml) is too large for practical use with an insulin syringe. Consider using a standard syringe or checking your concentration calculation.`;
+    console.log('[Calculate] Error: Volume too large for insulin syringe practical use');
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
   }
 
