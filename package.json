@@ -12,7 +12,8 @@
     "build": "npx expo export --platform web --non-interactive",
     "lint": "expo lint",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "postinstall": "patch-package"
   },
   "vercel": {
     "projectRoot": "."
@@ -79,6 +80,7 @@
     "expo-cli": "^6.3.12",
     "jest": "^29.7.0",
     "jest-expo": "^53.0.5",
+    "patch-package": "^8.0.0",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.3.4",
     "typescript": "^5.3.3",
