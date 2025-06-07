@@ -7,7 +7,7 @@ index 59ea66e..a4ae1f6 100644
          return "auto";
      }
 -    else {
-+    else if (aspectRatio.ratio && Array.isArray(aspectRatio.ratio)) {
++    else if (aspectRatio.ratio && Array.isArray(aspectRatio.ratio) && aspectRatio.ratio.length >= 2) {
          if (aspectRatio.ratio[0] === aspectRatio.ratio[1]) {
              return 1;
          }
@@ -31,7 +31,7 @@ index bf095a5..23ef63b 100644
    if (aspectRatio.auto) {
      return "auto";
 -  } else {
-+  } else if (aspectRatio.ratio && Array.isArray(aspectRatio.ratio)) {
++  } else if (aspectRatio.ratio && Array.isArray(aspectRatio.ratio) && aspectRatio.ratio.length >= 2) {
      if (aspectRatio.ratio[0] === aspectRatio.ratio[1]) {
        return 1;
      } else {
