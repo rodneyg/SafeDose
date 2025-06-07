@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
+import { useDoseLogging } from './useDoseLogging';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -50,6 +51,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
   const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
+
+  // Initialize dose logging hook
+  const { logDose } = useDoseLogging();
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -495,6 +499,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
     if (!feedbackContext) return;
     
+    // Automatically log the completed dose
+    await logDose(feedbackContext.doseInfo);
+    console.log('[useDoseCalculator] Dose automatically logged');
+    
     const nextAction = feedbackContext.nextAction;
     console.log('[useDoseCalculator] Next action:', nextAction);
     
@@ -552,7 +560,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose]);
 
   const handleCapture = useCallback(async () => {
     try {
