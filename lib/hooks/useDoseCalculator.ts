@@ -275,11 +275,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         return;
       }
 
-      // Always go to reconstitution step when using totalAmount input mode 
-      // to ensure we get solutionVolume for calculating concentration
+      // Check if solution volume is already prefilled (e.g., from reconstitution planner)
       if (medicationInputType === 'totalAmount') {
-        setManualStep('reconstitution');
-        console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+        if (solutionVolume && solutionVolume.trim() !== '') {
+          console.log('[useDoseCalculator] Solution volume already prefilled, skipping reconstitution step');
+          setManualStep('syringe');
+        } else {
+          setManualStep('reconstitution');
+          console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+        }
       } else {
         setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
       }
@@ -289,7 +293,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextTotalAmountInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [totalAmount, medicationInputType]);
+  }, [totalAmount, medicationInputType, solutionVolume]);
 
   const handleNextReconstitution = useCallback(() => {
     try {

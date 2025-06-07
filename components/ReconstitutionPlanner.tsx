@@ -118,12 +118,13 @@ export default function ReconstitutionPlanner() {
     if (!result) return;
 
     // Navigate to main dose calculator with prefilled values
-    // Pass both the calculated concentration and the total amount (peptide amount)
     const concentration = result.concentration.toFixed(3);
     const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
     const totalAmountUnit = peptideUnit;
+    const bacWaterVolume = result.bacWaterToAdd.toFixed(2);
+    const targetDoseValue = targetDose;
     
-    router.push(`/(tabs)/new-dose?prefillConcentration=${concentration}&prefillUnit=mg/ml&prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}`);
+    router.push(`/(tabs)/new-dose?prefillConcentration=${concentration}&prefillUnit=mg/ml&prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${bacWaterVolume}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
   };
 
   const getStepTitle = () => {
