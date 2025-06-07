@@ -357,15 +357,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         }
       }
 
-      // Prepare total amount value
+      // Prepare total amount value - it should be in the same unit as the concentration unit
       let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
-      if (unit === 'mcg' && totalAmountValue && concentrationUnit === 'mg/ml') {
-        // Convert mcg dose to mg for comparison with mg/ml concentration
-        totalAmountValue /= 1000;
-      } else if (unit === 'mg' && totalAmountValue && concentrationUnit === 'mcg/ml') {
-        // Convert mg dose to mcg for comparison with mcg/ml concentration
-        totalAmountValue *= 1000;
-      }
 
       // Use the manualSyringe object directly, as it's already in the correct format
       const syringeObj = manualSyringe;

@@ -197,6 +197,33 @@ describe('calculateDose precision guidance', () => {
 describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
   const mockInsulinSyringe: ManualSyringe = { type: 'Insulin', volume: '1 ml' };
   
+  it('should correctly calculate 30 units for 500mcg dose with 5mg peptide in 3mL solution', () => {
+    // This is the scenario reported by @rodneyg - should give 30 units as answer
+    const result = calculateDose({
+      doseValue: 500, // mcg
+      unit: 'mcg',
+      concentration: null, // Will be calculated from totalAmount/solutionVolume
+      concentrationUnit: 'mg/ml',
+      totalAmount: 5, // mg - as reported
+      solutionVolume: '3', // mL
+      manualSyringe: mockInsulinSyringe
+    });
+    
+    console.log('Correct scenario test result:', result);
+    
+    // The concentration should be 5mg/3mL = 1.667 mg/mL
+    expect(result.calculatedConcentration).toBeCloseTo(1.667, 3);
+    
+    // For 500mcg = 0.5mg dose: volume = 0.5mg / 1.667mg/mL = 0.3mL
+    expect(result.calculatedVolume).toBeCloseTo(0.3, 3);
+    
+    // Insulin syringe marking: 0.3mL * 100 = 30 units
+    expect(result.recommendedMarking).toBe('30');
+    
+    // Should not have any calculation error
+    expect(result.calculationError).toBeNull();
+  });
+  
   it('should reproduce the "over 100 ML" issue with incorrect concentration calculation', () => {
     // Scenario: User has very small amount of medication (0.5mg) and adds 3mL liquid
     // This creates very low concentration leading to large volume requirements
