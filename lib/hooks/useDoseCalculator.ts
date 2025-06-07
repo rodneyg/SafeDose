@@ -92,7 +92,6 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [unit]);
 
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
-    console.log('[useDoseCalculator] Resetting form state', { startStep });
     lastActionTimestamp.current = Date.now();
 
     setDose('');
@@ -123,18 +122,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
     if (!isInitialized.current) {
       isInitialized.current = true;
-      console.log('[useDoseCalculator] Marked as initialized');
     }
   }, []);
 
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
-    console.log('[useDoseCalculator] Setting screen step to:', step);
     try {
       lastActionTimestamp.current = Date.now();
       
       // If we're navigating to a new screen, ensure we're properly initialized
       if ((step === 'scan' || step === 'manualEntry') && !isInitialized.current) {
-        console.log('[useDoseCalculator] Initializing state during navigation to:', step);
         isInitialized.current = true;
       }
       
@@ -144,25 +140,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Track last action type when transitioning from intro to action screens
       if (prevStep === 'intro' && step === 'manualEntry') {
         setLastActionType('manual');
-        console.log('[useDoseCalculator] Tracked manual entry action');
       } else if (prevStep === 'intro' && step === 'scan') {
         setLastActionType('scan');
-        console.log('[useDoseCalculator] Tracked scan action');
       }
       
       // Actually update the screen step
       setScreenStep(step);
-      
-      // Ensure we properly track when the intro screen gets set
-      if (step === 'intro') {
-        console.log('[useDoseCalculator] Intro screen set explicitly');
-        // Don't clear lastActionType when going back to intro - preserve it for "New Dose" logic
-      }
-      
-      // Log potentially problematic navigation transitions for debugging
-      if (prevStep === step && step !== 'intro') {
-        console.warn(`[useDoseCalculator] Redundant navigation to ${step}, could indicate an issue`);
-      }
       
       // Add loop detection - if we're constantly toggling between screens
       if (prevStep !== 'intro' && step === 'intro' && lastActionTimestamp.current - Date.now() < 300) {
@@ -179,12 +162,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   useEffect(() => {
     if (!isInitialized.current) {
-      console.log('[useDoseCalculator] Initial setup');
       resetFullForm('dose');
       
       // Ensure we start on intro screen
       setScreenStep('intro');
-      console.log('[useDoseCalculator] Initialization complete - screen set to intro');
     }
   }, [resetFullForm]);
 
@@ -216,7 +197,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       }
       
       setDoseValue(numericDose);
-      setMedicationInputType(null); // Set to null to trigger intelligent guessing
+      // Only reset medicationInputType if it's not already set to a meaningful value
+      if (medicationInputType !== 'concentration' && medicationInputType !== 'totalAmount') {
+        setMedicationInputType(null); // Set to null to trigger intelligent guessing
+      }
       setManualStep('medicationSource');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -261,14 +245,22 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       }
 
       setConcentration(numericConcentration);
-      setManualStep('totalAmountInput');
+      
+      // If total amount is already set (e.g., from reconstitution planner), skip total amount input
+      if (totalAmount && totalAmount.trim() !== '' && totalAmountHint?.includes('reconstitution planner')) {
+        console.log('[useDoseCalculator] Total amount already prefilled, skipping to syringe');
+        setManualStep('syringe');
+      } else {
+        setManualStep('totalAmountInput');
+      }
+      
       setFormError(null);
       lastActionTimestamp.current = Date.now();
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleNextConcentrationInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [concentrationAmount, concentrationUnit, unit]);
+  }, [concentrationAmount, concentrationUnit, unit, totalAmount, totalAmountHint]);
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {
@@ -283,11 +275,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         return;
       }
 
-      // Always go to reconstitution step when using totalAmount input mode 
-      // to ensure we get solutionVolume for calculating concentration
+      // Check if solution volume is already prefilled (e.g., from reconstitution planner)
       if (medicationInputType === 'totalAmount') {
-        setManualStep('reconstitution');
-        console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+        if (solutionVolume && solutionVolume.trim() !== '') {
+          console.log('[useDoseCalculator] Solution volume already prefilled, skipping reconstitution step');
+          setManualStep('syringe');
+        } else {
+          setManualStep('reconstitution');
+          console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
+        }
       } else {
         setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
       }
@@ -297,7 +293,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       console.error('[useDoseCalculator] Error in handleNextTotalAmountInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [totalAmount, medicationInputType]);
+  }, [totalAmount, medicationInputType, solutionVolume]);
 
   const handleNextReconstitution = useCallback(() => {
     try {

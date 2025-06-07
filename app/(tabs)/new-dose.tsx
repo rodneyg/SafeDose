@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
-import { useNavigation, useFocusEffect } from 'expo-router';
+import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
@@ -25,18 +25,15 @@ export default function NewDoseScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
+  const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
+  const prefillAppliedRef = useRef(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   const feedbackStorage = useFeedbackStorage();
-  
-  console.log('[NewDoseScreen] ========== NEW DOSE SCREEN RENDER ==========');
-  console.log('[NewDoseScreen] Current screenStep:', doseCalculator.screenStep);
-  console.log('[NewDoseScreen] User:', user?.uid || 'No user');
-  console.log('[NewDoseScreen] isScreenActive:', isScreenActive);
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -86,15 +83,49 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  // Ensure intro screen is shown on initial load
+  // Handle prefill data from reconstitution planner - runs after doseCalculator is initialized
   useEffect(() => {
-    console.log('[NewDoseScreen] ========== INITIAL SETUP EFFECT ==========');
-    console.log('[NewDoseScreen] Ensuring intro screen is shown on initial load');
-    console.log('[NewDoseScreen] Current screenStep before force set:', doseCalculator.screenStep);
-    // Force screenStep to 'intro' on first render
-    doseCalculator.setScreenStep('intro');
-    console.log('[NewDoseScreen] ✅ Forced screenStep to "intro"');
-  }, []);
+    const prefillTotalAmount = searchParams.prefillTotalAmount as string;
+    const prefillTotalUnit = searchParams.prefillTotalUnit as string;
+    const prefillSolutionVolume = searchParams.prefillSolutionVolume as string;
+    const prefillDose = searchParams.prefillDose as string;
+    const prefillDoseUnit = searchParams.prefillDoseUnit as string;
+    
+    // Reset the applied flag when params change
+    if (!prefillTotalAmount || !prefillTotalUnit) {
+      prefillAppliedRef.current = false;
+    }
+    
+    // Only apply prefill if we have total amount data, haven't applied it yet, and doseCalculator is on the intro screen
+    if (prefillTotalAmount && prefillTotalUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+      console.log('[NewDoseScreen] Applying prefilled total amount data from reconstitution planner');
+      prefillAppliedRef.current = true;
+      
+      // Set up the dose calculator with prefilled total amount data (not concentration)
+      doseCalculator.setTotalAmount(prefillTotalAmount);
+      doseCalculator.setMedicationInputType('totalAmount');
+      doseCalculator.setTotalAmountHint('From reconstitution planner');
+      
+      // Prefill solution volume if provided
+      if (prefillSolutionVolume) {
+        doseCalculator.setSolutionVolume(prefillSolutionVolume);
+        console.log('[NewDoseScreen] Prefilled solution volume:', prefillSolutionVolume);
+      }
+      
+      // Prefill dose if provided
+      if (prefillDose && prefillDoseUnit) {
+        doseCalculator.setDose(prefillDose);
+        doseCalculator.setUnit(prefillDoseUnit as any);
+        console.log('[NewDoseScreen] Prefilled dose:', prefillDose, prefillDoseUnit);
+      }
+      
+      // Start from dose step - user still needs to enter their dose
+      doseCalculator.setManualStep('dose');
+      doseCalculator.setScreenStep('manualEntry');
+      
+      console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
+    }
+  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {

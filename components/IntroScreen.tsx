@@ -280,6 +280,17 @@ export default function IntroScreen({
                 </TouchableOpacity>
               </View>
 
+              {/* Plan Reconstitution Link */}
+              <TouchableOpacity 
+                style={styles.reconstitutionLinkContainer}
+                onPress={() => router.push('/reconstitution')}
+                accessibilityRole="button"
+                accessibilityLabel="Plan Reconstitution"
+                accessibilityHint="Calculate how much bacteriostatic water to use and how much to draw"
+              >
+                <Text style={styles.reconstitutionLinkText}>Plan Reconstitution</Text>
+              </TouchableOpacity>
+
               <View style={styles.scanStatusContainer}>
                 <Text style={styles.scanStatusText}>
                   {(() => {
@@ -561,6 +572,21 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     textDecorationLine: 'underline',
     fontWeight: '500',
+  },
+
+  /* Reconstitution Link */
+  reconstitutionLinkContainer: {
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+  reconstitutionLinkText: {
+    fontSize: 14,
+    color: '#6B7280', // Muted gray color
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    fontWeight: '400',
   },
 
   /* Disclaimer */
