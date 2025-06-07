@@ -268,7 +268,7 @@ export default function PricingPage() {
         {keyFeatures.map((feature, index) => (
           <View key={index} style={styles.featureItem}>
             <View style={[styles.featureIcon, { backgroundColor: feature.color + '20' }]}>
-              <feature.icon size={16} color={feature.color} />
+              <feature.icon size={screenHeight <= 667 ? 14 : 16} color={feature.color} />
             </View>
             <Text style={styles.featureText}>{feature.text}</Text>
           </View>
@@ -368,20 +368,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 24,
-    paddingTop: Math.max(50, screenHeight * 0.08), // Dynamic top padding
-    paddingBottom: 30,
-    justifyContent: 'space-between',
+    paddingTop: screenHeight <= 667 ? 40 : Math.max(50, screenHeight * 0.08), // Reduced top padding for iPhone SE
+    paddingBottom: screenHeight <= 667 ? 20 : 30, // Reduced bottom padding for iPhone SE
+    justifyContent: screenHeight <= 667 ? 'flex-start' : 'space-between', // Change layout strategy for small screens
     alignItems: 'center',
   },
 
   // App Icon Section
   iconContainer: {
-    marginBottom: 20,
+    marginBottom: screenHeight <= 667 ? 12 : 20, // Reduced margin for iPhone SE
   },
   iconBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: screenHeight <= 667 ? 64 : 80, // Smaller icon for iPhone SE
+    height: screenHeight <= 667 ? 64 : 80,
+    borderRadius: screenHeight <= 667 ? 16 : 20,
     backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
@@ -392,48 +392,48 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   appIcon: {
-    width: 60,
-    height: 60,
+    width: screenHeight <= 667 ? 48 : 60, // Smaller icon for iPhone SE
+    height: screenHeight <= 667 ? 48 : 60,
   },
 
   // Headlines
   headline: {
-    fontSize: 24,
+    fontSize: screenHeight <= 667 ? 20 : 24, // Smaller font for iPhone SE
     fontWeight: '700',
     color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6, // Reduced margin
     letterSpacing: -0.5,
   },
   subheadline: {
-    fontSize: 16,
+    fontSize: screenHeight <= 667 ? 14 : 16, // Smaller font for iPhone SE
     color: '#666666',
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
+    marginBottom: screenHeight <= 667 ? 20 : 32, // Reduced margin for iPhone SE
+    lineHeight: screenHeight <= 667 ? 18 : 22,
   },
 
   // Features Section
   featuresContainer: {
     width: '100%',
-    marginBottom: 32,
+    marginBottom: screenHeight <= 667 ? 20 : 32, // Reduced margin for iPhone SE
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: screenHeight <= 667 ? 8 : 12, // Reduced margin for iPhone SE
     paddingHorizontal: 8,
   },
   featureIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: screenHeight <= 667 ? 28 : 32, // Smaller icons for iPhone SE
+    height: screenHeight <= 667 ? 28 : 32,
+    borderRadius: screenHeight <= 667 ? 14 : 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   featureText: {
-    fontSize: 15,
+    fontSize: screenHeight <= 667 ? 14 : 15, // Smaller font for iPhone SE
     color: '#333333',
     fontWeight: '500',
     flex: 1,
@@ -443,19 +443,19 @@ const styles = StyleSheet.create({
   plansContainer: {
     flexDirection: 'row',
     width: '100%',
-    marginBottom: 24,
+    marginBottom: screenHeight <= 667 ? 16 : 24, // Reduced margin for iPhone SE
     gap: 12,
   },
   planBox: {
     flex: 1,
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
-    padding: 16,
+    padding: screenHeight <= 667 ? 12 : 16, // Reduced padding for iPhone SE
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
     position: 'relative',
-    minHeight: 140,
+    minHeight: screenHeight <= 667 ? 110 : 140, // Reduced height for iPhone SE
   },
   selectedPlanBox: {
     backgroundColor: '#FFFFFF',
@@ -528,10 +528,11 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
     backgroundColor: '#007AFF',
-    paddingVertical: 16,
+    paddingVertical: screenHeight <= 667 ? 14 : 16, // Slightly reduced padding for iPhone SE
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: screenHeight <= 667 ? 8 : 12, // Reduced margin for iPhone SE
+    marginTop: screenHeight <= 667 ? 8 : 0, // Add small top margin for iPhone SE
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -547,11 +548,11 @@ const styles = StyleSheet.create({
 
   // Trial Info
   trialInfo: {
-    fontSize: 13,
+    fontSize: screenHeight <= 667 ? 12 : 13, // Smaller font for iPhone SE
     color: '#666666',
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 18,
+    marginBottom: screenHeight <= 667 ? 12 : 20, // Reduced margin for iPhone SE
+    lineHeight: screenHeight <= 667 ? 16 : 18,
   },
 
   // Error
@@ -567,11 +568,11 @@ const styles = StyleSheet.create({
   footerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: screenHeight <= 667 ? 8 : 16, // Reduced margin for iPhone SE
   },
   footerLink: {
     color: '#007AFF',
-    fontSize: 15,
+    fontSize: screenHeight <= 667 ? 14 : 15, // Smaller font for iPhone SE
     fontWeight: '500',
   },
   footerSeparator: {
@@ -586,6 +587,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: screenHeight <= 667 ? 10 : 0, // Add small bottom margin for iPhone SE
   },
   privacyText: {
     color: '#8E8E93',
