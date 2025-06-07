@@ -100,22 +100,22 @@ export default function NewDoseScreen() {
     if (prefillConcentration && prefillUnit) {
       console.log('[NewDoseScreen] Found prefill data from reconstitution planner:', { prefillConcentration, prefillUnit });
       
-      // Set up the dose calculator with prefilled concentration data
-      setConcentrationAmount(prefillConcentration);
-      setConcentrationUnit(prefillUnit as any);
-      setMedicationInputType('concentration');
-      setConcentrationHint('From reconstitution planner');
+      // Set up the dose calculator with prefilled concentration data using the doseCalculator object
+      doseCalculator.setConcentrationAmount(prefillConcentration);
+      doseCalculator.setConcentrationUnit(prefillUnit as any);
+      doseCalculator.setMedicationInputType('concentration');
+      doseCalculator.setConcentrationHint('From reconstitution planner');
       
       // Go directly to manual entry with concentration already filled
-      resetFullForm('dose');
-      setScreenStep('manualEntry');
+      doseCalculator.resetFullForm('dose');
+      doseCalculator.setScreenStep('manualEntry');
       console.log('[NewDoseScreen] ✅ Set up with prefilled concentration data');
     } else {
       // Force screenStep to 'intro' on first render
       doseCalculator.setScreenStep('intro');
       console.log('[NewDoseScreen] ✅ Forced screenStep to "intro"');
     }
-  }, [searchParams.prefillConcentration, searchParams.prefillUnit]);
+  }, [searchParams.prefillConcentration, searchParams.prefillUnit, doseCalculator]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
