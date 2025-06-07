@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getFirestore, collection, addDoc, query, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog } from '../../types/doseLog';
