@@ -368,15 +368,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 24,
-    paddingTop: screenHeight <= 667 ? 40 : Math.max(50, screenHeight * 0.08), // Reduced top padding for iPhone SE
-    paddingBottom: screenHeight <= 667 ? 20 : 30, // Reduced bottom padding for iPhone SE
+    paddingTop: screenHeight <= 667 ? 20 : Math.max(50, screenHeight * 0.08), // Further reduced top padding for iPhone SE
+    paddingBottom: screenHeight <= 667 ? 10 : 30, // Further reduced bottom padding for iPhone SE
     justifyContent: screenHeight <= 667 ? 'flex-start' : 'space-between', // Change layout strategy for small screens
     alignItems: 'center',
   },
 
   // App Icon Section
   iconContainer: {
-    marginBottom: screenHeight <= 667 ? 12 : 20, // Reduced margin for iPhone SE
+    marginBottom: screenHeight <= 667 ? 8 : 20, // Further reduced margin for iPhone SE
   },
   iconBackground: {
     width: screenHeight <= 667 ? 64 : 80, // Smaller icon for iPhone SE
@@ -409,19 +409,19 @@ const styles = StyleSheet.create({
     fontSize: screenHeight <= 667 ? 14 : 16, // Smaller font for iPhone SE
     color: '#666666',
     textAlign: 'center',
-    marginBottom: screenHeight <= 667 ? 20 : 32, // Reduced margin for iPhone SE
+    marginBottom: screenHeight <= 667 ? 16 : 32, // Further reduced margin for iPhone SE
     lineHeight: screenHeight <= 667 ? 18 : 22,
   },
 
   // Features Section
   featuresContainer: {
     width: '100%',
-    marginBottom: screenHeight <= 667 ? 20 : 32, // Reduced margin for iPhone SE
+    marginBottom: screenHeight <= 667 ? 16 : 32, // Further reduced margin for iPhone SE
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: screenHeight <= 667 ? 8 : 12, // Reduced margin for iPhone SE
+    marginBottom: screenHeight <= 667 ? 6 : 12, // Further reduced margin for iPhone SE
     paddingHorizontal: 8,
   },
   featureIcon: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   plansContainer: {
     flexDirection: 'row',
     width: '100%',
-    marginBottom: screenHeight <= 667 ? 16 : 24, // Reduced margin for iPhone SE
+    marginBottom: screenHeight <= 667 ? 12 : 24, // Further reduced margin for iPhone SE
     gap: 12,
   },
   planBox: {
