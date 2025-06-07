@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { CameraView, CameraPermissionStatus } from 'expo-camera';
+import { CameraView } from 'expo-camera';
 import { Camera, AlertCircle } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
 
@@ -44,7 +44,6 @@ export default function ReconstitutionScanStep({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Scan Vial Label</Text>
       <Text style={styles.subtitle}>
         Position your vial label clearly in the camera view and tap to capture
       </Text>

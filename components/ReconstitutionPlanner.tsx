@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { ArrowLeft, Camera, Edit3, Calculator, ArrowRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -12,12 +12,13 @@ import ReconstitutionInputMethodStep from './ReconstitutionInputMethodStep';
 import ReconstitutionManualInputStep from './ReconstitutionManualInputStep';
 import ReconstitutionScanStep from './ReconstitutionScanStep';
 import ReconstitutionOutputStep from './ReconstitutionOutputStep';
-import { isMobileWeb } from '../lib/utils';
+import { isMobileWeb, isWeb } from '../lib/utils';
 
 export default function ReconstitutionPlanner() {
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const webCameraStreamRef = useRef<MediaStream | null>(null);
 
   const {
@@ -51,6 +52,70 @@ export default function ReconstitutionPlanner() {
     dangerouslyAllowBrowser: true,
   });
 
+  // Web camera permission function
+  const requestWebCameraPermission = async () => {
+    try {
+      if (webCameraStreamRef.current) {
+        webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+        webCameraStreamRef.current = null;
+      }
+
+      console.log("[WebCamera] Requesting camera permission");
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      
+      console.log("[WebCamera] Camera permission granted");
+      setPermissionStatus('granted');
+      webCameraStreamRef.current = stream;
+      
+      return stream;
+    } catch (error: any) {
+      console.error("[WebCamera] Error requesting camera permission:", error);
+      if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') {
+        setPermissionStatus('denied');
+        console.warn("[WebCamera] Camera permission denied by user");
+      } else {
+        setPermissionStatus('denied');
+      }
+      throw error;
+    }
+  };
+
+  // Camera stream management for web platforms
+  useEffect(() => {
+    if (!isWeb) return;
+
+    // Clean up stream when step changes away from scan
+    if (step !== 'scanLabel' && webCameraStreamRef.current) {
+      console.log('[ReconstitutionPlanner] Cleaning up camera stream - step changed away from scan');
+      webCameraStreamRef.current.getTracks().forEach(track => track.stop());
+      webCameraStreamRef.current = null;
+      return;
+    }
+
+    // Request camera permission/stream when on scan step
+    if (step === 'scanLabel') {
+      console.log('[ReconstitutionPlanner] On scan step - checking camera state', {
+        permissionStatus, 
+        hasStream: !!webCameraStreamRef.current
+      });
+      
+      // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
+      if (permissionStatus === 'undetermined' || 
+          (permissionStatus === 'granted' && !webCameraStreamRef.current)) {
+        console.log("[WebCamera] Requesting camera permission/stream");
+        requestWebCameraPermission().catch(console.error);
+      } else {
+        console.log("[WebCamera] Not requesting camera - permissionStatus:", permissionStatus, "hasStream:", !!webCameraStreamRef.current);
+      }
+    }
+  }, [step, permissionStatus, isWeb]);
+
   const handleBack = () => {
     switch (step) {
       case 'manualInput':
@@ -79,7 +144,7 @@ export default function ReconstitutionPlanner() {
         setIsProcessing,
         setProcessingMessage: () => {}, // We handle processing state in the component
         setScanError: setError,
-        incrementScansUsed: () => {}, // This is a planning tool, not counted against scans
+        incrementScansUsed: async () => {}, // This is a planning tool, not counted against scans
       });
 
       if (result?.vial) {
