@@ -216,7 +216,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       }
       
       setDoseValue(numericDose);
-      setMedicationInputType(null); // Set to null to trigger intelligent guessing
+      // Only reset medicationInputType if it's not already set to a meaningful value
+      if (medicationInputType !== 'concentration' && medicationInputType !== 'totalAmount') {
+        setMedicationInputType(null); // Set to null to trigger intelligent guessing
+      }
       setManualStep('medicationSource');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
