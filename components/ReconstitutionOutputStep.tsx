@@ -36,7 +36,7 @@ export default function ReconstitutionOutputStep({
           <Text style={styles.summaryValue}>{targetDose} {targetDoseUnit}</Text>
         </View>
         <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Preferred volume:</Text>
+          <Text style={styles.summaryLabel}>Injection volume:</Text>
           <Text style={styles.summaryValue}>{preferredVolume} mL</Text>
         </View>
         <View style={styles.summaryRow}>
@@ -64,9 +64,9 @@ export default function ReconstitutionOutputStep({
         </View>
 
         <View style={styles.resultItem}>
-          <Text style={styles.resultLabel}>Each {targetDose} {targetDoseUnit} dose will require:</Text>
+          <Text style={styles.resultLabel}>To inject {targetDose} {targetDoseUnit}, draw:</Text>
           <Text style={styles.resultValue}>
-            {result.injectionVolume.toFixed(3)} mL
+            {result.injectionVolume.toFixed(3)} mL on your syringe
           </Text>
         </View>
 

@@ -85,7 +85,7 @@ export default function ReconstitutionManualInputStep({
 
       {/* Preferred Volume */}
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Preferred injection volume (optional)</Text>
+        <Text style={styles.label}>How much do you want to inject per dose?</Text>
         <View style={styles.inputWithUnit}>
           <TextInput
             style={[styles.input, styles.inputWithUnitInput]}
@@ -100,7 +100,7 @@ export default function ReconstitutionManualInputStep({
           </View>
         </View>
         <Text style={styles.helpText}>
-          Defaults to 0.1mL. Typical range: 0.05mL - 0.5mL
+          This helps us calculate how much BAC water to add so your dose is easy to measure on your syringe. Defaults to 0.1mL.
         </Text>
       </View>
 
