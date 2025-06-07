@@ -92,7 +92,6 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   }, [unit]);
 
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
-    console.log('[useDoseCalculator] Resetting form state', { startStep });
     lastActionTimestamp.current = Date.now();
 
     setDose('');
@@ -123,18 +122,15 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
     if (!isInitialized.current) {
       isInitialized.current = true;
-      console.log('[useDoseCalculator] Marked as initialized');
     }
   }, []);
 
   const safeSetScreenStep = useCallback((step: ScreenStep) => {
-    console.log('[useDoseCalculator] Setting screen step to:', step);
     try {
       lastActionTimestamp.current = Date.now();
       
       // If we're navigating to a new screen, ensure we're properly initialized
       if ((step === 'scan' || step === 'manualEntry') && !isInitialized.current) {
-        console.log('[useDoseCalculator] Initializing state during navigation to:', step);
         isInitialized.current = true;
       }
       
@@ -144,25 +140,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
       // Track last action type when transitioning from intro to action screens
       if (prevStep === 'intro' && step === 'manualEntry') {
         setLastActionType('manual');
-        console.log('[useDoseCalculator] Tracked manual entry action');
       } else if (prevStep === 'intro' && step === 'scan') {
         setLastActionType('scan');
-        console.log('[useDoseCalculator] Tracked scan action');
       }
       
       // Actually update the screen step
       setScreenStep(step);
-      
-      // Ensure we properly track when the intro screen gets set
-      if (step === 'intro') {
-        console.log('[useDoseCalculator] Intro screen set explicitly');
-        // Don't clear lastActionType when going back to intro - preserve it for "New Dose" logic
-      }
-      
-      // Log potentially problematic navigation transitions for debugging
-      if (prevStep === step && step !== 'intro') {
-        console.warn(`[useDoseCalculator] Redundant navigation to ${step}, could indicate an issue`);
-      }
       
       // Add loop detection - if we're constantly toggling between screens
       if (prevStep !== 'intro' && step === 'intro' && lastActionTimestamp.current - Date.now() < 300) {
@@ -179,12 +162,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   useEffect(() => {
     if (!isInitialized.current) {
-      console.log('[useDoseCalculator] Initial setup');
       resetFullForm('dose');
       
       // Ensure we start on intro screen
       setScreenStep('intro');
-      console.log('[useDoseCalculator] Initialization complete - screen set to intro');
     }
   }, [resetFullForm]);
 

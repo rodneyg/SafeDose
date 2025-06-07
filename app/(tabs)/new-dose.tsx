@@ -30,14 +30,10 @@ export default function NewDoseScreen() {
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
+  const prefillAppliedRef = useRef(false);
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   const feedbackStorage = useFeedbackStorage();
-  
-  console.log('[NewDoseScreen] ========== NEW DOSE SCREEN RENDER ==========');
-  console.log('[NewDoseScreen] Current screenStep:', doseCalculator.screenStep);
-  console.log('[NewDoseScreen] User:', user?.uid || 'No user');
-  console.log('[NewDoseScreen] isScreenActive:', isScreenActive);
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -87,21 +83,20 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  // Ensure intro screen is shown on initial load
+  // Handle prefill data from reconstitution planner - runs after doseCalculator is initialized
   useEffect(() => {
-    console.log('[NewDoseScreen] ========== INITIAL SETUP EFFECT ==========');
-    console.log('[NewDoseScreen] Ensuring intro screen is shown on initial load');
-    console.log('[NewDoseScreen] Current screenStep before force set:', doseCalculator.screenStep);
-    
-    // Check if we have prefill data from reconstitution planner
     const prefillConcentration = searchParams.prefillConcentration as string;
     const prefillUnit = searchParams.prefillUnit as string;
     
-    if (prefillConcentration && prefillUnit) {
-      console.log('[NewDoseScreen] Found prefill data from reconstitution planner:', { prefillConcentration, prefillUnit });
-      
-      // Reset form first, then set prefilled data
-      doseCalculator.resetFullForm('dose');
+    // Reset the applied flag when params change
+    if (!prefillConcentration || !prefillUnit) {
+      prefillAppliedRef.current = false;
+    }
+    
+    // Only apply prefill if we have data, haven't applied it yet, and doseCalculator is on the intro screen
+    if (prefillConcentration && prefillUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+      console.log('[NewDoseScreen] Applying prefilled concentration data');
+      prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled concentration data
       doseCalculator.setConcentrationAmount(prefillConcentration);
@@ -109,15 +104,13 @@ export default function NewDoseScreen() {
       doseCalculator.setMedicationInputType('concentration');
       doseCalculator.setConcentrationHint('From reconstitution planner');
       
-      // Go directly to manual entry with concentration already filled
+      // Skip to concentration input step
+      doseCalculator.setManualStep('concentrationInput');
       doseCalculator.setScreenStep('manualEntry');
-      console.log('[NewDoseScreen] ✅ Set up with prefilled concentration data');
-    } else {
-      // Force screenStep to 'intro' on first render
-      doseCalculator.setScreenStep('intro');
-      console.log('[NewDoseScreen] ✅ Forced screenStep to "intro"');
+      
+      console.log('[NewDoseScreen] ✅ Prefilled concentration data applied');
     }
-  }, [searchParams.prefillConcentration, searchParams.prefillUnit, doseCalculator]);
+  }, [searchParams.prefillConcentration, searchParams.prefillUnit, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
