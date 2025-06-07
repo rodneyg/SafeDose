@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import stripeConfig from "../lib/stripeConfig";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
-import { useUserProfile } from "../contexts/UserProfileContext";
-import { CheckCircle, Shield, Star, Clock, Zap } from "lucide-react-native";
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
@@ -15,53 +13,39 @@ const stripePromise = stripeConfig.publishableKey
 // Base URL for your API
 const API_BASE_URL = "https://app.safedoseai.com";
 
-// Get screen dimensions for mobile-first responsive design
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
 export default function PricingPage() {
-  const { profile } = useUserProfile();
-  
-  // Enhanced pricing plans with mobile-first design specifications
   const pricingPlansData = [
     {
       id: 'monthly',
-      name: "Plus Plan",
+      name: "Monthly Plan",
       price: 20,
-      originalPrice: 25,
       priceSuffix: "/month",
-      subtext: "Perfect for regular users",
-      priceId: stripeConfig.priceId,
+      subtext: "Billed monthly. Cancel anytime.",
+      priceId: stripeConfig.priceId, // Existing one
       features: [
-        { name: "50 AI scans per month", available: true, icon: "scan" },
-        { name: "Unlimited manual calculations", available: true, icon: "calculator" },
-        { name: "Priority scan processing", available: true, icon: "speed" },
-        { name: "No session limits", available: true, icon: "unlimited" },
+        { name: "50 AI scans/month", available: true },
+        { name: "Unlimited manual calculations", available: true },
+        { name: "Faster scans", available: true },
+        { name: "No mid-session limits", available: true },
       ],
       badgeText: "Most Popular",
       isDefault: true,
-      savings: 20,
-      backgroundColor: '#FFFFFF',
-      isPrimary: true,
     },
     {
       id: 'yearly',
-      name: "Pro Plan",
+      name: "Yearly Plan",
       price: 149.99,
-      originalPrice: 240,
       priceSuffix: "/year",
-      subtext: "Best value for professionals",
+      subtext: "SAVE 38%",
       priceId: 'price_yearly_placeholder',
       features: [
-        { name: "500 AI scans per month", available: true, icon: "scan" },
-        { name: "Unlimited manual calculations", available: true, icon: "calculator" },
-        { name: "Lightning-fast processing", available: true, icon: "speed" },
-        { name: "Professional features", available: true, icon: "pro" },
+        { name: "600 AI scans/year", available: true }, // Or "50 AI scans/month"
+        { name: "Unlimited manual calculations", available: true },
+        { name: "Faster scans", available: true },
+        { name: "No mid-session limits", available: true },
       ],
       badgeText: "SAVE 38%",
       isDefault: false,
-      savings: 38,
-      backgroundColor: '#1F2937',
-      isPrimary: false,
     },
   ];
 
@@ -69,68 +53,6 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showCloseSpinner, setShowCloseSpinner] = useState(false);
-  
-  // Animation refs
-  const iconPulseAnim = useRef(new Animated.Value(1)).current;
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
-  const planScaleAnim = useRef(new Animated.Value(1)).current;
-  
-  // User state for dynamic content
-  const [trialActive] = useState(true); // Would be connected to actual trial status
-  const [engagementScore] = useState(0.2); // Would be calculated from user behavior
-  
-  // Get personalized content based on user profile
-  const getPersonalizedHeadline = () => {
-    if (!profile) return "Unlock Professional-Grade Dose Calculations";
-    
-    if (profile.isLicensedProfessional) {
-      return "Professional Tools for Accurate Dosing";
-    } else if (profile.isPersonalUse && !profile.isCosmeticUse) {
-      return "Safe, Reliable Dose Calculations";
-    } else {
-      return "Precision Dosing Made Simple";
-    }
-  };
-
-  // Animation effects
-  useEffect(() => {
-    // App icon pulse animation (every 2 seconds)
-    const pulseAnimation = () => {
-      Animated.sequence([
-        Animated.timing(iconPulseAnim, {
-          toValue: 1.1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(iconPulseAnim, {
-          toValue: 1.0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
-
-    const pulseInterval = setInterval(pulseAnimation, 2000);
-
-    // CTA shimmer animation (every 3 seconds)
-    const shimmerAnimation = () => {
-      Animated.timing(shimmerAnim, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }).start(() => {
-        shimmerAnim.setValue(0);
-      });
-    };
-
-    const shimmerInterval = setInterval(shimmerAnimation, 3000);
-
-    return () => {
-      clearInterval(pulseInterval);
-      clearInterval(shimmerInterval);
-    };
-  }, []);
 
   // Log view_pricing_page event when component mounts
   useEffect(() => {
@@ -238,7 +160,7 @@ export default function PricingPage() {
       console.log("redirectToCheckout result:", result);
       if (result?.error) {
         console.error("Stripe redirectToCheckout error:", result.error);
-        setErrorMessage(result.error.message || "Payment error occurred");
+        setErrorMessage(result.error.message);
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
           plan: selectedPlan.id,
           error: result.error.message
@@ -257,571 +179,232 @@ export default function PricingPage() {
   };
 
   const handleCancel = () => {
-    // Implement 8-second delay with spinner for low engagement users
-    if (engagementScore < 0.3) {
-      setShowCloseSpinner(true);
-      setTimeout(() => {
-        setShowCloseSpinner(false);
-        router.back();
-      }, 8000);
-    } else {
-      router.back();
-    }
-  };
-
-  const handlePlanSelection = (plan: any) => {
-    // Plan selection animation
-    Animated.timing(planScaleAnim, {
-      toValue: 1.02,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      Animated.timing(planScaleAnim, {
-        toValue: 1.0,
-        duration: 150,
-        useNativeDriver: true,
-      }).start();
-    });
-    
-    setSelectedPlan(plan);
-  };
-
-  const getFeatureIcon = (iconType: string) => {
-    const iconProps = { size: 16, color: '#10B981' };
-    switch (iconType) {
-      case 'scan': return <Zap {...iconProps} />;
-      case 'calculator': return <CheckCircle {...iconProps} />;
-      case 'speed': return <Clock {...iconProps} />;
-      case 'unlimited': return <Star {...iconProps} />;
-      case 'pro': return <Shield {...iconProps} />;
-      default: return <CheckCircle {...iconProps} />;
-    }
+    router.back();
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Animated App Icon */}
-        <Animated.View 
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContentContainer}>
+      <Text style={styles.title}>Choose Your Plan</Text>
+
+      {pricingPlansData.map((plan) => (
+        <TouchableOpacity
+          key={plan.id}
           style={[
-            styles.iconContainer,
-            { transform: [{ scale: iconPulseAnim }] }
+            styles.planCard,
+            plan.id === selectedPlan.id && styles.selectedPlanCard, // Placeholder style
           ]}
+          onPress={() => setSelectedPlan(plan)}
         >
-          <View style={styles.appIcon}>
-            <Shield size={24} color="#8B5CF6" />
-          </View>
-        </Animated.View>
-
-        {/* Benefit-focused Headline */}
-        <Text style={styles.headline} numberOfLines={2}>
-          {getPersonalizedHeadline()}
-        </Text>
-
-        {/* Key Features */}
-        <View style={styles.featuresContainer}>
-          <View style={styles.featureRow}>
-            {getFeatureIcon('scan')}
-            <Text style={styles.featureText}>AI-powered precision</Text>
-          </View>
-          <View style={styles.featureRow}>
-            {getFeatureIcon('speed')}
-            <Text style={styles.featureText}>Instant calculations</Text>
-          </View>
-          <View style={styles.featureRow}>
-            {getFeatureIcon('unlimited')}
-            <Text style={styles.featureText}>Professional accuracy</Text>
-          </View>
-          <View style={styles.featureRow}>
-            {getFeatureIcon('pro')}
-            <Text style={styles.featureText}>Secure & trusted</Text>
-          </View>
-        </View>
-
-        {/* Plan Cards */}
-        <View style={styles.planCardsContainer}>
-          {pricingPlansData.map((plan) => (
-            <Animated.View
-              key={plan.id}
-              style={[
-                { transform: [{ scale: planScaleAnim }] }
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.planCard,
-                  { backgroundColor: plan.backgroundColor },
-                  plan.id === selectedPlan.id && styles.selectedPlanCard,
-                ]}
-                onPress={() => handlePlanSelection(plan)}
-                activeOpacity={0.95}
-              >
-                {/* Badge */}
-                {plan.badgeText && (
-                  <View style={[
-                    styles.badge,
-                    plan.badgeText === "Most Popular" ? styles.popularBadge : styles.savingsBadge
-                  ]}>
-                    <Text style={styles.badgeText}>{plan.badgeText}</Text>
-                  </View>
-                )}
-
-                {/* Plan Content */}
-                <View style={styles.planHeader}>
-                  <Text style={[
-                    styles.planName,
-                    { color: plan.backgroundColor === '#1F2937' ? '#FFFFFF' : '#1F2937' }
-                  ]}>
-                    {plan.name}
-                  </Text>
-                  
-                  {/* Pricing with strike-through */}
-                  <View style={styles.pricingContainer}>
-                    <View style={styles.priceRow}>
-                      <Text style={[
-                        styles.originalPrice,
-                        { color: plan.backgroundColor === '#1F2937' ? '#9CA3AF' : '#6B7280' }
-                      ]}>
-                        ${plan.originalPrice}
-                      </Text>
-                      <View style={styles.savingsBox}>
-                        <Text style={styles.savingsText}>Save {plan.savings}%</Text>
-                      </View>
-                    </View>
-                    <View style={styles.currentPriceRow}>
-                      <Text style={[
-                        styles.currentPrice,
-                        { color: plan.backgroundColor === '#1F2937' ? '#FFFFFF' : '#1F2937' }
-                      ]}>
-                        ${plan.price}
-                      </Text>
-                      <Text style={[
-                        styles.priceSuffix,
-                        { color: plan.backgroundColor === '#1F2937' ? '#D1D5DB' : '#6B7280' }
-                      ]}>
-                        {plan.priceSuffix}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <Text style={[
-                    styles.planSubtext,
-                    { color: plan.backgroundColor === '#1F2937' ? '#D1D5DB' : '#6B7280' }
-                  ]}>
-                    {plan.subtext}
-                  </Text>
-                </View>
-
-                {/* Features */}
-                <View style={styles.planFeatures}>
-                  {plan.features.map((feature, index) => (
-                    <View key={index} style={styles.planFeatureRow}>
-                      {getFeatureIcon(feature.icon)}
-                      <Text style={[
-                        styles.planFeatureText,
-                        { color: plan.backgroundColor === '#1F2937' ? '#E5E7EB' : '#374151' }
-                      ]}>
-                        {feature.name}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-
-                {/* Selection Indicator */}
-                <View style={styles.selectionContainer}>
-                  <Text style={[
-                    styles.selectionText,
-                    plan.id === selectedPlan.id && styles.selectedText,
-                    { color: plan.backgroundColor === '#1F2937' ? '#FFFFFF' : '#8B5CF6' }
-                  ]}>
-                    {plan.id === selectedPlan.id ? "✓ Selected" : "Select Plan"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </View>
-
-        {/* Trust Elements */}
-        <View style={styles.trustContainer}>
-          <View style={styles.securityBadge}>
-            <Shield size={16} color="#10B981" />
-            <Text style={styles.securityText}>SSL Secured • PCI Compliant</Text>
-          </View>
-          
-          <View style={styles.footerLinks}>
-            <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Privacy Policy</Text>
-            </TouchableOpacity>
-            <Text style={styles.footerSeparator}>•</Text>
-            <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Terms</Text>
-            </TouchableOpacity>
-            <Text style={styles.footerSeparator}>•</Text>
-            <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Restore Purchase</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.storeLogos}>
-            <Text style={styles.storeText}>Available on App Store & Google Play</Text>
-          </View>
-        </View>
-
-        {/* Error Message */}
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
-        {/* Spacing for sticky button */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-
-      {/* Sticky CTA Button */}
-      <View style={styles.stickyCtaContainer}>
-        {trialActive && (
-          <Text style={styles.noPaymentText}>No payment required today</Text>
-        )}
-        
-        <Animated.View
-          style={[
-            styles.ctaButtonContainer,
-            {
-              opacity: shimmerAnim.interpolate({
-                inputRange: [0, 0.5, 1],
-                outputRange: [1, 0.8, 1],
-              }),
-            },
-          ]}
-        >
-          <TouchableOpacity 
-            style={styles.ctaButton} 
-            onPress={initiateStripeCheckout}
-            disabled={isLoading}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.ctaButtonText}>
-              {isLoading ? "Processing..." : "🎉 Continue"}
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-        
-        <Text style={styles.cancelAnytimeText}>Cancel anytime</Text>
-        
-        <TouchableOpacity 
-          style={styles.cancelButton} 
-          onPress={handleCancel}
-          disabled={showCloseSpinner}
-        >
-          {showCloseSpinner ? (
-            <ActivityIndicator size="small" color="#8E8E93" />
-          ) : (
-            <Text style={styles.cancelButtonText}>Close</Text>
+          {plan.badgeText && (
+            <View style={[
+              styles.badgeContainer,
+              plan.badgeText === "Most Popular" ? styles.mostPopularBadge : styles.discountBadge
+            ]}>
+              <Text style={styles.badgeText}>{plan.badgeText}</Text>
+            </View>
           )}
+          <Text style={styles.planName}>{plan.name}</Text>
+          <View style={styles.priceContainer}>
+            <Text style={styles.planPrice}>${plan.price.toFixed(2)}</Text>
+            <Text style={styles.planPriceSuffix}>{plan.priceSuffix}</Text>
+          </View>
+          <Text style={styles.planSubtext}>{plan.subtext}</Text>
+
+          <View style={styles.featureList}>
+            {plan.features.map((feature) => (
+              <View key={feature.name} style={styles.featureItem}>
+                <Text style={styles.featureText}>• {feature.name}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.selectionIndicatorContainer}>
+            <Text style={[
+              styles.selectionIndicator,
+              plan.id === selectedPlan.id && styles.selectedIndicatorText
+            ]}>
+              {plan.id === selectedPlan.id ? "✓ Selected" : "Select"}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.upgradeButton} 
+          onPress={initiateStripeCheckout}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Processing..." : "Try Free Now"}
+          </Text>
+        </TouchableOpacity>
+        
+        {selectedPlan.id === 'monthly' && (
+          <Text style={styles.ctaSubtext}>1 week free trial, then $20/month</Text>
+        )}
+
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    maxHeight: screenHeight * 0.9, // 90% viewport height
-  },
   scrollView: {
     flex: 1,
+    backgroundColor: '#F2F2F7',
   },
   scrollViewContentContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 120, // Space for sticky CTA
-  },
-  
-  // Animated App Icon
-  iconContainer: {
+    padding: 24,
     alignItems: 'center',
-    marginBottom: 20,
+    flexGrow: 1, // Ensures content expands if shorter than screen
   },
-  appIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  
-  // Benefit-focused Headline
-  headline: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    textAlign: 'center',
+  // container style is now applied to scrollViewContentContainer or scrollView itself
+  // We might not need a separate 'container' style anymore, or it can be merged/adjusted.
+  // For now, let's assume padding and alignItems are for the content within ScrollView.
+  title: {
+    fontSize: 20, // text-xl equivalent (~20px)
+    fontWeight: '600', // font-semibold
+    color: '#000000',
     marginBottom: 24,
-    lineHeight: 34,
-    paddingHorizontal: 8,
-  },
-  
-  // Key Features Section
-  featuresContainer: {
-    marginBottom: 32,
-    paddingHorizontal: 8,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingLeft: 8,
-  },
-  featureText: {
-    fontSize: 16,
-    color: '#374151',
-    marginLeft: 12,
-    fontWeight: '500',
-  },
-  
-  // Plan Cards Container
-  planCardsContainer: {
-    marginBottom: 32,
+    textAlign: 'center',
   },
   planCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    maxHeight: screenHeight * 0.4, // Max 40% screen height
-    position: 'relative',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 32, // Keep horizontal padding
+    paddingVertical: 24, // Reduced vertical padding
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: 16, // Reduced margin bottom
+    alignItems: 'center',
+    // Add soft shadow
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
+    position: 'relative',
   },
   selectedPlanCard: {
-    borderWidth: 2,
     borderColor: '#8B5CF6',
-    shadowOpacity: 0.2,
-    elevation: 8,
+    borderWidth: 2,
+    elevation: 10, // Increased elevation for selected card
+    shadowOpacity: 0.25, // Slightly stronger shadow
+    shadowRadius: 10,
   },
-  
-  // Badge Styles
-  badge: {
+  badgeContainer: {
     position: 'absolute',
-    top: -8,
-    right: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    top: 12, // Adjusted for better visual placement
+    right: 12, // Adjusted for better visual placement
+    paddingHorizontal: 10, // Increased padding
+    paddingVertical: 5, // Increased padding
+    borderRadius: 16, // More rounded
     zIndex: 1,
-  },
-  popularBadge: {
-    backgroundColor: '#8B5CF6',
-  },
-  savingsBadge: {
-    backgroundColor: '#10B981',
+    elevation: 5, // Ensure badge is above card content slightly
   },
   badgeText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  
-  // Plan Header
-  planHeader: {
-    marginBottom: 20,
+  // Specific badge styles
+  mostPopularBadge: {
+    backgroundColor: '#8B5CF6', // brand color
+  },
+  discountBadge: {
+    backgroundColor: '#10B981', // A green color for discounts/savings
   },
   planName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22, // Slightly larger
+    fontWeight: '600',
+    color: '#1F2937', // Darker gray
     marginBottom: 8,
+    textAlign: 'center',
   },
-  
-  // Pricing Container with Strike-through
-  pricingContainer: {
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline', // Align text baselines
     marginBottom: 8,
+    justifyContent: 'center',
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  originalPrice: {
-    fontSize: 16,
-    textDecorationLine: 'line-through',
-    marginRight: 12,
-  },
-  savingsBox: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  savingsText: {
-    fontSize: 12,
-    color: '#92400E',
+  planPrice: {
+    fontSize: 40, // Larger for emphasis
     fontWeight: 'bold',
+    color: '#000000',
   },
-  currentPriceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  currentPrice: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  priceSuffix: {
-    fontSize: 16,
-    marginLeft: 4,
+  planPriceSuffix: {
+    fontSize: 18, // Slightly larger
     fontWeight: '500',
+    color: '#4B5563', // Medium gray
+    marginLeft: 5, // Adjusted spacing
+    // marginBottom: 5, // Removed, baseline alignment handles this
   },
   planSubtext: {
     fontSize: 14,
-    marginTop: 4,
+    color: '#4B5563', // Medium gray
+    marginBottom: 20, // Increased spacing before features
+    textAlign: 'center',
   },
-  
-  // Plan Features
-  planFeatures: {
-    marginBottom: 20,
+  featureList: {
+    width: '100%',
+    marginBottom: 16,
   },
-  planFeatureRow: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  planFeatureText: {
-    fontSize: 14,
-    marginLeft: 8,
-    flex: 1,
+  featureText: {
+    fontSize: 16, // text-base
+    fontWeight: '500',
+    color: '#374151', // Slightly darker gray for feature text
   },
-  
-  // Selection Container
-  selectionContainer: {
+  selectionIndicatorContainer: {
+    flexDirection: 'row', // To allow icon and text if needed
     alignItems: 'center',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    justifyContent: 'center',
+    marginTop: 20, // Increased spacing
+    paddingVertical: 10, // Add some padding
+    // backgroundColor: '#F3F4F6', // Optional: very light background for this section
+    borderRadius: 12,
+    width: '80%', // Take some width
   },
-  selectionText: {
+  selectionIndicator: { // For "Select" text
     fontSize: 16,
     fontWeight: '600',
+    color: '#6B7280', // Default gray for "Select"
   },
-  selectedText: {
-    color: '#8B5CF6',
+  selectedIndicatorText: { // For "✓ Selected" text
+    color: '#8B5CF6', // Brand color for selected state
+    fontWeight: 'bold',
   },
-  
-  // Trust Elements
-  trustContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  securityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  errorText: {
+    color: 'red',
     marginBottom: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 8,
+    textAlign: 'center',
   },
-  securityText: {
-    fontSize: 12,
-    color: '#166534',
-    marginLeft: 6,
-    fontWeight: '500',
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 400,
+    gap: 12,
   },
-  footerLinks: {
-    flexDirection: 'row',
+  upgradeButton: {
+    backgroundColor: '#8B5CF6', // brand color from tailwind config
+    paddingVertical: 16, // Increased padding
+    borderRadius: 16, // More rounded for modern look
     alignItems: 'center',
     marginBottom: 12,
-  },
-  footerLink: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 44, // Accessibility minimum touch target
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  footerLinkText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  footerSeparator: {
-    fontSize: 12,
-    color: '#D1D5DB',
-    marginHorizontal: 4,
-  },
-  storeLogos: {
-    alignItems: 'center',
-  },
-  storeText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-  },
-  
-  // Error Message
-  errorText: {
-    color: '#DC2626',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-    backgroundColor: '#FEF2F2',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  
-  // Bottom spacing for sticky button
-  bottomSpacing: {
-    height: 20,
-  },
-  
-  // Sticky CTA Container
-  stickyCtaContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16, // 32px total padding (16px each side)
-    paddingTop: 16,
-    paddingBottom: 34, // Safe area bottom padding
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  noPaymentText: {
-    fontSize: 12,
-    color: '#059669',
-    textAlign: 'center',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  ctaButtonContainer: {
-    marginBottom: 8,
-  },
-  ctaButton: {
-    backgroundColor: '#8B5CF6',
-    height: 56, // Specified height
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // Add subtle elevation/shadow for hover effect
     shadowColor: '#8B5CF6',
     shadowOffset: {
       width: 0,
@@ -830,31 +413,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    minWidth: 44, // Accessibility minimum
-    minHeight: 44,
-  },
-  ctaButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cancelAnytimeText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   cancelButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 12,
+    backgroundColor: 'transparent', // Outline style
+    borderWidth: 1,
+    borderColor: '#8E8E93',
+    paddingVertical: 16,
+    borderRadius: 16, // Match primary button
     alignItems: 'center',
-    minWidth: 44, // Accessibility minimum
-    minHeight: 44,
-    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   cancelButtonText: {
-    color: '#8E8E93',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#8E8E93', // Lighter text for outline button
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ctaSubtext: {
+    fontSize: 12,
+    color: '#555555', // Dark gray for readability
+    textAlign: 'center',
+    marginTop: 8, // Spacing from the main CTA button
+    marginBottom: 8, // Spacing before the cancel button if visible
   },
 });
