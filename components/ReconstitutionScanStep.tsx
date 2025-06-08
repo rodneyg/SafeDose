@@ -68,7 +68,7 @@ export default function ReconstitutionScanStep({
       )}
 
       <View style={styles.cameraContainer}>
-        {isMobileWeb && webCameraStream ? (
+        {isWeb && webCameraStream ? (
           <video
             ref={videoRef}
             style={styles.webCamera}
