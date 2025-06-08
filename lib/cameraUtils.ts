@@ -375,24 +375,56 @@ export async function captureAndProcessImage({
 // Helper function to capture an image from a web camera stream
 async function captureImageFromStream(stream: MediaStream): Promise<{ base64Image: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
+    const cleanup = (video: HTMLVideoElement) => {
+      try {
+        video.pause();
+        video.srcObject = null;
+        video.remove();
+      } catch (e) {
+        console.warn('[CaptureStream] Error during cleanup:', e);
+      }
+    };
+
+    // Set up timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.error('[CaptureStream] Timeout waiting for video metadata');
+      reject(new Error('Timeout waiting for video to load'));
+    }, 10000); // 10 second timeout
+
     try {
+      console.log('[CaptureStream] Creating video element for stream capture');
+      
       // Create a video element to display the stream
       const video = document.createElement('video');
       video.srcObject = stream;
       video.setAttribute('playsinline', 'true'); // Required for iOS Safari
+      video.setAttribute('muted', 'true'); // Muted to avoid audio issues
+      video.setAttribute('autoplay', 'true'); // Auto play to help with metadata loading
       
-      // Wait for the video to be ready
-      video.onloadedmetadata = () => {
-        // Start playing the video
-        video.play().then(() => {
+      // Add video to DOM temporarily (some browsers need this for proper rendering)
+      video.style.position = 'absolute';
+      video.style.left = '-9999px';
+      video.style.top = '-9999px';
+      video.style.width = '1px';
+      video.style.height = '1px';
+      document.body.appendChild(video);
+      
+      const handleSuccess = () => {
+        try {
+          console.log('[CaptureStream] Video ready, capturing frame');
+          clearTimeout(timeoutId);
+          
           // Create a canvas to draw the video frame
           const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth || 640; // Fallback dimensions
+          canvas.height = video.videoHeight || 480;
+          
+          console.log('[CaptureStream] Canvas dimensions:', canvas.width, 'x', canvas.height);
           
           // Draw the current video frame to the canvas
           const ctx = canvas.getContext('2d');
           if (!ctx) {
+            cleanup(video);
             reject(new Error('Could not get canvas context'));
             return;
           }
@@ -404,31 +436,82 @@ async function captureImageFromStream(stream: MediaStream): Promise<{ base64Imag
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             const base64Data = dataUrl.split(',')[1];
             
-            // Stop video display
-            video.pause();
-            video.srcObject = null;
+            console.log('[CaptureStream] Successfully captured image, size:', base64Data.length);
+            cleanup(video);
             
             resolve({
               base64Image: base64Data,
               mimeType: 'image/jpeg'
             });
           } catch (error) {
-            console.error('Error converting canvas to image:', error);
+            console.error('[CaptureStream] Error converting canvas to image:', error);
+            cleanup(video);
             reject(error);
           }
-        }).catch(error => {
-          console.error('Error playing video:', error);
+        } catch (error) {
+          console.error('[CaptureStream] Error in handleSuccess:', error);
+          cleanup(video);
           reject(error);
-        });
+        }
+      };
+      
+      // Try multiple approaches to detect when video is ready
+      let metadataLoaded = false;
+      let canPlayLoaded = false;
+      
+      const checkReady = () => {
+        if ((metadataLoaded || canPlayLoaded) && video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('[CaptureStream] Video is ready for capture');
+          handleSuccess();
+        }
+      };
+      
+      video.onloadedmetadata = () => {
+        console.log('[CaptureStream] Video metadata loaded');
+        metadataLoaded = true;
+        checkReady();
+      };
+      
+      video.oncanplay = () => {
+        console.log('[CaptureStream] Video can play');
+        canPlayLoaded = true;
+        checkReady();
+      };
+      
+      video.onloadeddata = () => {
+        console.log('[CaptureStream] Video data loaded');
+        checkReady();
       };
       
       video.onerror = (error) => {
-        console.error('Video element error:', error);
-        reject(error);
+        console.error('[CaptureStream] Video element error:', error);
+        clearTimeout(timeoutId);
+        cleanup(video);
+        reject(new Error('Video element failed to load'));
       };
       
+      // Start loading/playing the video
+      console.log('[CaptureStream] Starting video load/play');
+      video.load();
+      
+      // Also try to play the video (some browsers need this)
+      video.play().then(() => {
+        console.log('[CaptureStream] Video started playing');
+        
+        // Give it a moment to render the first frame, then try to capture
+        setTimeout(() => {
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            handleSuccess();
+          }
+        }, 100);
+      }).catch(error => {
+        console.warn('[CaptureStream] Video play failed, but might still work:', error);
+        // Don't reject here, as the video might still work for capture
+      });
+      
     } catch (error) {
-      console.error('Error setting up video capture:', error);
+      console.error('[CaptureStream] Error setting up video capture:', error);
+      clearTimeout(timeoutId);
       reject(error);
     }
   });
