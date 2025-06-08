@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { CameraView } from 'expo-camera';
+import { CameraView, CameraPermissionStatus } from 'expo-camera';
 import { Camera, AlertCircle } from 'lucide-react-native';
 import { isMobileWeb, isWeb } from '../lib/utils';
 
@@ -24,18 +24,6 @@ export default function ReconstitutionScanStep({
   webCameraStream,
 }: Props) {
   const isPermissionGranted = permission?.granted || false;
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Connect video element to stream for web camera - same pattern as main ScanScreen
-  useEffect(() => {
-    if (isWeb && webCameraStream && videoRef.current) {
-      console.log('[ReconstitutionScanStep] Connecting web camera stream to video element');
-      videoRef.current.srcObject = webCameraStream;
-      videoRef.current.play().catch(err => {
-        console.error('[ReconstitutionScanStep] Error playing video:', err);
-      });
-    }
-  }, [webCameraStream]);
 
   if (!permission || !permission.granted) {
     return (
@@ -70,7 +58,12 @@ export default function ReconstitutionScanStep({
       <View style={styles.cameraContainer}>
         {isWeb && webCameraStream ? (
           <video
-            ref={videoRef}
+            ref={(videoElement) => {
+              if (videoElement && webCameraStream) {
+                videoElement.srcObject = webCameraStream;
+                videoElement.play();
+              }
+            }}
             style={styles.webCamera}
             autoPlay
             playsInline
