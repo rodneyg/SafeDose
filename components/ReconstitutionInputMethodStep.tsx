@@ -5,9 +5,20 @@ import { Camera, Edit3 } from 'lucide-react-native';
 interface Props {
   selectedMethod: 'manual' | 'scan' | null;
   onSelectMethod: (method: 'manual' | 'scan') => void;
+  scanDisabled?: boolean;
 }
 
-export default function ReconstitutionInputMethodStep({ selectedMethod, onSelectMethod }: Props) {
+export default function ReconstitutionInputMethodStep({ 
+  selectedMethod, 
+  onSelectMethod, 
+  scanDisabled = false 
+}: Props) {
+  // Auto-select manual method if scan is disabled and no method is selected
+  React.useEffect(() => {
+    if (scanDisabled && !selectedMethod) {
+      onSelectMethod('manual');
+    }
+  }, [scanDisabled, selectedMethod, onSelectMethod]);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>How do you want to enter vial info?</Text>
@@ -16,30 +27,32 @@ export default function ReconstitutionInputMethodStep({ selectedMethod, onSelect
       </Text>
 
       <View style={styles.methodsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.methodButton,
-            selectedMethod === 'scan' && styles.methodButtonSelected,
-          ]}
-          onPress={() => onSelectMethod('scan')}
-        >
-          <Camera 
-            color={selectedMethod === 'scan' ? '#fff' : '#007AFF'} 
-            size={32} 
-          />
-          <Text style={[
-            styles.methodButtonText,
-            selectedMethod === 'scan' && styles.methodButtonTextSelected,
-          ]}>
-            Scan Vial Label
-          </Text>
-          <Text style={[
-            styles.methodButtonSubtext,
-            selectedMethod === 'scan' && styles.methodButtonSubtextSelected,
-          ]}>
-            Take a photo of your vial to extract peptide amount
-          </Text>
-        </TouchableOpacity>
+        {!scanDisabled && (
+          <TouchableOpacity
+            style={[
+              styles.methodButton,
+              selectedMethod === 'scan' && styles.methodButtonSelected,
+            ]}
+            onPress={() => onSelectMethod('scan')}
+          >
+            <Camera 
+              color={selectedMethod === 'scan' ? '#fff' : '#007AFF'} 
+              size={32} 
+            />
+            <Text style={[
+              styles.methodButtonText,
+              selectedMethod === 'scan' && styles.methodButtonTextSelected,
+            ]}>
+              Scan Vial Label
+            </Text>
+            <Text style={[
+              styles.methodButtonSubtext,
+              selectedMethod === 'scan' && styles.methodButtonSubtextSelected,
+            ]}>
+              Take a photo of your vial to extract peptide amount
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[
