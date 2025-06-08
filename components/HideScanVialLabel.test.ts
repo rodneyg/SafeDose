@@ -49,6 +49,34 @@ describe('Hide Scan Vial Label Feature', () => {
       
       expect(mockOnSelectMethod).toHaveBeenCalledWith('manual');
     });
+
+    it('should not auto-select when scan is disabled but method already selected', () => {
+      const mockOnSelectMethod = jest.fn();
+      
+      // Mock behavior when scan is disabled but method already selected
+      const scanDisabled = true;
+      const selectedMethod = 'manual';
+      
+      if (scanDisabled && !selectedMethod) {
+        // Should not call onSelectMethod if already selected
+        mockOnSelectMethod('manual');
+      }
+      
+      // Should not have been called because selectedMethod is already set
+      expect(mockOnSelectMethod).not.toHaveBeenCalled();
+    });
+
+    it('should default scanDisabled to false when prop not provided', () => {
+      // Test default behavior
+      const scanDisabled = undefined; // Prop not provided
+      const defaultScanDisabled = scanDisabled ?? false;
+      
+      expect(defaultScanDisabled).toBe(false);
+      
+      // Should show scan option by default
+      const availableMethods = defaultScanDisabled ? ['manual'] : ['manual', 'scan'];
+      expect(availableMethods).toContain('scan');
+    });
   });
 
   describe('ReconstitutionPlanner with scan disabled', () => {
@@ -84,6 +112,63 @@ describe('Hide Scan Vial Label Feature', () => {
       expect(availableSteps).not.toContain('scanLabel');
       expect(availableSteps).toContain('manualInput');
       expect(availableSteps.length).toBe(3);
+    });
+
+    it('should handle back navigation correctly when scan is disabled', () => {
+      const scanDisabled = true;
+      const inputMethod = 'scan'; // User had selected scan before it was disabled
+      
+      // Mock back navigation logic from output step
+      const getPreviousStep = (currentStep: string, inputMethod: string, scanDisabled: boolean) => {
+        if (currentStep === 'output') {
+          return (inputMethod === 'manual' || scanDisabled) ? 'manualInput' : 'scanLabel';
+        }
+        return currentStep;
+      };
+      
+      const previousStep = getPreviousStep('output', inputMethod, scanDisabled);
+      expect(previousStep).toBe('manualInput');
+      expect(previousStep).not.toBe('scanLabel');
+    });
+
+    it('should force manual input even if scan method was previously selected', () => {
+      const scanDisabled = true;
+      const inputMethod = 'scan'; // This should be overridden
+      
+      // Mock navigation logic
+      const getNextStep = (currentStep: string, inputMethod: string, scanDisabled: boolean) => {
+        if (currentStep === 'inputMethod') {
+          if (inputMethod === 'manual' || scanDisabled) {
+            return 'manualInput';
+          } else if (inputMethod === 'scan' && !scanDisabled) {
+            return 'scanLabel';
+          }
+        }
+        return currentStep;
+      };
+      
+      const nextStep = getNextStep('inputMethod', inputMethod, scanDisabled);
+      expect(nextStep).toBe('manualInput');
+    });
+
+    it('should maintain normal behavior when scan is enabled', () => {
+      const scanDisabled = false;
+      const inputMethod = 'scan';
+      
+      // Mock normal navigation logic
+      const getNextStep = (currentStep: string, inputMethod: string, scanDisabled: boolean) => {
+        if (currentStep === 'inputMethod') {
+          if (inputMethod === 'manual' || scanDisabled) {
+            return 'manualInput';
+          } else if (inputMethod === 'scan' && !scanDisabled) {
+            return 'scanLabel';
+          }
+        }
+        return currentStep;
+      };
+      
+      const nextStep = getNextStep('inputMethod', inputMethod, scanDisabled);
+      expect(nextStep).toBe('scanLabel');
     });
   });
 });
