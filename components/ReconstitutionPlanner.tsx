@@ -14,7 +14,11 @@ import ReconstitutionScanStep from './ReconstitutionScanStep';
 import ReconstitutionOutputStep from './ReconstitutionOutputStep';
 import { isMobileWeb } from '../lib/utils';
 
-export default function ReconstitutionPlanner() {
+interface ReconstitutionPlannerProps {
+  scanDisabled?: boolean;
+}
+
+export default function ReconstitutionPlanner({ scanDisabled = false }: ReconstitutionPlannerProps) {
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -58,7 +62,7 @@ export default function ReconstitutionPlanner() {
         setStep('inputMethod');
         break;
       case 'output':
-        setStep(inputMethod === 'manual' ? 'manualInput' : 'scanLabel');
+        setStep((inputMethod === 'manual' || scanDisabled) ? 'manualInput' : 'scanLabel');
         break;
       default:
         router.back();
@@ -161,9 +165,9 @@ export default function ReconstitutionPlanner() {
   const handleNext = () => {
     switch (step) {
       case 'inputMethod':
-        if (inputMethod === 'manual') {
+        if (inputMethod === 'manual' || scanDisabled) {
           setStep('manualInput');
-        } else if (inputMethod === 'scan') {
+        } else if (inputMethod === 'scan' && !scanDisabled) {
           setStep('scanLabel');
         }
         break;
@@ -192,6 +196,7 @@ export default function ReconstitutionPlanner() {
           <ReconstitutionInputMethodStep
             selectedMethod={inputMethod}
             onSelectMethod={setInputMethod}
+            scanDisabled={scanDisabled}
           />
         )}
 

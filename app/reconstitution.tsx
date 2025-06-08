@@ -7,7 +7,7 @@ export default function ReconstitutionScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <ReconstitutionPlanner />
+        <ReconstitutionPlanner scanDisabled={true} />
       </View>
     </SafeAreaView>
   );
