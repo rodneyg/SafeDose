@@ -54,6 +54,10 @@ export default function Welcome() {
             <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
             <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
           </TouchableOpacity>
+          <Text style={[styles.freeFeatureNote, isMobileWeb && styles.freeFeatureNoteMobile]}>
+            ✅ SafeDose is free to use for manual dosing.{'\n'}
+            Upgrade to Pro only if you want advanced features like AI-powered syringe and vial scanning.
+          </Text>
           <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed</Text>
         </Animated.View>
       </View>
@@ -125,6 +129,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
+  freeFeatureNote: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.95)',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
   disclaimer: {
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
@@ -158,6 +170,11 @@ const styles = StyleSheet.create({
   },
   buttonTextMobile: {
     fontSize: 16,
+  },
+  freeFeatureNoteMobile: {
+    fontSize: 13,
+    lineHeight: 18,
+    paddingHorizontal: 12,
   },
   disclaimerMobile: {
     fontSize: 14,
