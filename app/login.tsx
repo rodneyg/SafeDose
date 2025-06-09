@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
+import { trackConversionFunnel } from '../lib/analytics/revenueAnalytics';
 
 export default function LoginScreen() {
   const { user, auth } = useAuth();
@@ -16,12 +17,15 @@ export default function LoginScreen() {
     logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
     
     signInWithPopup(auth, provider)
-      .then((result) => {
+      .then(async (result) => {
         console.log('Google Sign-In successful', result.user);
         if (user?.isAnonymous) {
           // The anonymous account will be automatically linked to the signed-in account
           logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
           console.log('Linked anonymous account with Google');
+          
+          // Track conversion funnel
+          await trackConversionFunnel(result.user.uid, 'signup');
         } else {
           logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
           console.log('Signed in with Google');

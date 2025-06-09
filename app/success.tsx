@@ -5,7 +5,8 @@ import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import Constants from 'expo-constants';
-import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
+import { logAnalyticsEvent, setAnalyticsUserProperties, updateUserAnalyticsProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
+import { trackConversionFunnel } from '../lib/analytics/revenueAnalytics';
 
 // Base URL for API
 const API_BASE_URL = "https://app.safedoseai.com";
@@ -72,11 +73,16 @@ export default function SuccessScreen() {
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, { plan: 'plus', limit: 150, scansUsed: 0 }, { merge: true });
           
-          // Set user properties for analytics
-          setAnalyticsUserProperties({
-            [USER_PROPERTIES.PLAN_TYPE]: 'plus',
-            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
+          // Update comprehensive user analytics properties
+          updateUserAnalyticsProperties({
+            planType: 'plus',
+            isAnonymous: user.isAnonymous,
+            subscriptionStatus: 'active',
+            lastActiveDate: new Date(),
           });
+          
+          // Track conversion funnel
+          await trackConversionFunnel(user.uid, 'first_payment');
           
           console.log('[SuccessScreen] User plan updated to premium');
         } else {
