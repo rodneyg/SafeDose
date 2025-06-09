@@ -44,12 +44,23 @@ The following custom events are tracked:
 - **feedback_submitted**: Logged when post-dose feedback is submitted
 - **feedback_skipped**: Logged when the feedback step is skipped
 
+### Profile Storage Events
+- **profile_saved_firebase**: Logged when profile is saved to Firebase with detailed personalization parameters
+- **profile_saved_local_only**: Logged when profile is saved only to local storage (anonymous users)
+- **profile_save_firebase_failed**: Logged when Firebase profile save fails but local save succeeds
+- **profile_backed_up**: Logged when local profile is backed up to Firebase (user authentication transition)
+- **profile_backup_failed**: Logged when profile backup to Firebase fails
+
 ## User Properties
 
 The following user properties are set and maintained:
 
 - **plan_type**: "free", "plus", or "pro" (updated on auth change and after upgrades)
 - **is_anonymous**: true/false (updated on auth state changes)
+- **is_licensed_professional**: true/false (from user profile personalization)
+- **is_personal_use**: true/false (from user profile personalization)
+- **is_cosmetic_use**: true/false (from user profile personalization)
+- **user_segment**: "healthcare_professional", "cosmetic_user", "personal_medical_user", or "general_user" (derived from profile settings)
 
 ## Implementation Details
 
@@ -58,12 +69,14 @@ The following user properties are set and maintained:
 1. **lib/analytics.ts**: Central analytics utility with constants and helper functions
 2. **app/_layout.tsx**: Analytics initialization
 3. **contexts/AuthContext.tsx**: User properties and logout events
-4. **app/login.tsx**: Authentication events
-5. **app/pricing.tsx**: Pricing and upgrade initiation events
-6. **app/success.tsx**: Upgrade completion events
-7. **app/(tabs)/new-dose.tsx**: Scan events and error tracking
-8. **components/LimitModal.tsx**: Limit modal interaction events
-9. **lib/hooks/useUsageTracking.ts**: Plan type user property updates
+4. **contexts/UserProfileContext.tsx**: Personalization user properties and profile storage events
+5. **app/login.tsx**: Authentication events
+6. **app/pricing.tsx**: Pricing and upgrade initiation events
+7. **app/success.tsx**: Upgrade completion events
+8. **app/(tabs)/new-dose.tsx**: Scan events and error tracking
+9. **app/onboarding/userType.tsx**: Detailed onboarding step tracking and completion events
+10. **components/LimitModal.tsx**: Limit modal interaction events
+11. **lib/hooks/useUsageTracking.ts**: Plan type user property updates
 
 ### Event Parameters
 
@@ -72,6 +85,8 @@ Events include relevant parameters for analysis:
 - Plan type (plus) for upgrade events
 - Error messages for failure events
 - Action type (sign_in, upgrade, cancel) for modal events
+- Detailed personalization selections (isLicensedProfessional, isPersonalUse, isCosmeticUse) for profile and onboarding events
+- User segmentation and transition data for profile backup events
 
 ### Error Handling
 
@@ -92,11 +107,32 @@ logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, {
   error: error.message 
 });
 
+// Log profile storage events with personalization details
+logAnalyticsEvent(ANALYTICS_EVENTS.PROFILE_SAVED_FIREBASE, {
+  isLicensedProfessional: true,
+  isPersonalUse: false,
+  isCosmeticUse: false,
+  userId: user.uid,
+  userType: 'authenticated'
+});
+
+// Log profile backup events
+logAnalyticsEvent(ANALYTICS_EVENTS.PROFILE_BACKED_UP, {
+  isLicensedProfessional: false,
+  isPersonalUse: true,
+  isCosmeticUse: true,
+  userId: user.uid,
+  previouslyAnonymous: true
+});
+
 // Set user properties
 setAnalyticsUserProperties({
   [USER_PROPERTIES.PLAN_TYPE]: 'plus',
   [USER_PROPERTIES.IS_ANONYMOUS]: false,
 });
+
+// Set personalization user properties
+setPersonalizationUserProperties(profile);
 ```
 
 ## Key Metrics to Monitor
