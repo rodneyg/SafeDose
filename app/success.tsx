@@ -5,8 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import Constants from 'expo-constants';
-import { logAnalyticsEvent, setAnalyticsUserProperties, updateUserAnalyticsProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
-import { trackConversionFunnel } from '../lib/analytics/revenueAnalytics';
+import { logAnalyticsEvent, setAnalyticsUserProperties, trackRevenue, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
 
 // Base URL for API
 const API_BASE_URL = "https://app.safedoseai.com";
@@ -65,6 +64,10 @@ export default function SuccessScreen() {
         
         // Log successful upgrade
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_SUCCESS, { plan: 'plus' });
+        logAnalyticsEvent(ANALYTICS_EVENTS.SUBSCRIPTION_STARTED, { plan_type: 'plus' });
+        
+        // Track revenue - assuming Plus plan is $29.99/month
+        trackRevenue(29.99, 'USD', 'plus');
         
         // Update user plan in Firestore since payment is confirmed
         const auth = getAuth();
@@ -73,16 +76,12 @@ export default function SuccessScreen() {
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, { plan: 'plus', limit: 150, scansUsed: 0 }, { merge: true });
           
-          // Update comprehensive user analytics properties
-          updateUserAnalyticsProperties({
-            planType: 'plus',
-            isAnonymous: user.isAnonymous,
-            subscriptionStatus: 'active',
-            lastActiveDate: new Date(),
+          // Set user properties for analytics
+          setAnalyticsUserProperties({
+            [USER_PROPERTIES.PLAN_TYPE]: 'plus',
+            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
+            [USER_PROPERTIES.SUBSCRIPTION_STATUS]: 'active',
           });
-          
-          // Track conversion funnel
-          await trackConversionFunnel(user.uid, 'first_payment');
           
           console.log('[SuccessScreen] User plan updated to premium');
         } else {

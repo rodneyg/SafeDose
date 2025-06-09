@@ -3,8 +3,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'firebas
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNetworkStateAsync } from 'expo-network';
-import { setAnalyticsUserProperties, updateUserAnalyticsProperties, USER_PROPERTIES } from '../analytics';
-import { trackConversionFunnel } from '../analytics/revenueAnalytics';
+import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
@@ -128,13 +127,9 @@ export function useUsageTracking() {
           await saveCachedUsage(newUsageData);
           
           // Set user properties for analytics when plan data is available
-          updateUserAnalyticsProperties({
-            planType: data.plan || 'free',
-            isAnonymous: user.isAnonymous,
-            subscriptionStatus: data.subscriptionStatus || 'free',
-            signupDate: data.createdAt ? new Date(data.createdAt) : undefined,
-            totalScans: data.scansUsed || 0,
-            lastActiveDate: new Date(),
+          setAnalyticsUserProperties({
+            [USER_PROPERTIES.PLAN_TYPE]: data.plan || 'free',
+            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
           });
           
           console.log('Fetched usage data:', newUsageData);
