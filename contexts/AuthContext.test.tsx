@@ -77,6 +77,19 @@ describe('AuthContext Sign Out Functionality', () => {
     expect(mockSignInAnonymously).toHaveBeenCalledTimes(1);
   });
 
+  it('should prevent duplicate anonymous sign-in attempts', () => {
+    // Import here to ensure mocks are set up
+    require('./AuthContext');
+    
+    // Simulate rapid multiple auth state changes with null user
+    authStateCallback(null);
+    authStateCallback(null);
+    authStateCallback(null);
+    
+    // Should only call signInAnonymously once despite multiple null user callbacks
+    expect(mockSignInAnonymously).toHaveBeenCalledTimes(1);
+  });
+
   it('should not call signInAnonymously immediately during sign out process', () => {
     // This test verifies the sign out delay logic
     // We can't easily test the full React component lifecycle in this simple setup,

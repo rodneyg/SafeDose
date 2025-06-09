@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const isSigningOutRef = useRef(false);
+  const isSigningInAnonymouslyRef = useRef(false);
 
   const logout = async () => {
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
@@ -123,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
         isSigningOutRef.current = false;
+        isSigningInAnonymouslyRef.current = false; // Reset anonymous sign-in flag when user is authenticated
         console.log('[AuthContext] isSigningOut state and ref cleared');
         
         // Clear any pending timeout if user signs in
@@ -144,11 +146,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] User state set to null');
         
         // If we're not in the middle of signing out, automatically sign in anonymously
-        if (!isSigningOutRef.current) {
-          console.log('[AuthContext] Not signing out - signing in anonymously immediately');
+        if (!isSigningOutRef.current && !isSigningInAnonymouslyRef.current) {
+          console.log('[AuthContext] Not signing out and not already signing in anonymously - signing in anonymously immediately');
+          isSigningInAnonymouslyRef.current = true;
           signInAnonymously(auth)
             .then(() => {
               console.log('[AuthContext] ✅ Signed in anonymously successfully');
+              isSigningInAnonymouslyRef.current = false;
             })
             .catch((error) => {
               console.error('[AuthContext] ❌ Error signing in anonymously:', error);
@@ -156,7 +160,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 message: error?.message || 'Unknown error',
                 code: error?.code || 'No error code'
               });
+              isSigningInAnonymouslyRef.current = false;
             });
+        } else if (isSigningInAnonymouslyRef.current) {
+          console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt');
         } else {
           console.log('[AuthContext] Currently signing out - will sign in anonymously after 2 second delay');
           // User has completed sign out, wait a moment to show they're signed out
@@ -165,17 +172,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('[AuthContext] Timeout reached - resetting sign out state and signing in anonymously');
             setIsSigningOut(false);
             isSigningOutRef.current = false;
-            signInAnonymously(auth)
-              .then(() => {
-                console.log('[AuthContext] ✅ Signed in anonymously after logout');
-              })
-              .catch((error) => {
-                console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
-                console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
-                  message: error?.message || 'Unknown error',
-                  code: error?.code || 'No error code'
+            if (!isSigningInAnonymouslyRef.current) {
+              isSigningInAnonymouslyRef.current = true;
+              signInAnonymously(auth)
+                .then(() => {
+                  console.log('[AuthContext] ✅ Signed in anonymously after logout');
+                  isSigningInAnonymouslyRef.current = false;
+                })
+                .catch((error) => {
+                  console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
+                  console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
+                    message: error?.message || 'Unknown error',
+                    code: error?.code || 'No error code'
+                  });
+                  isSigningInAnonymouslyRef.current = false;
                 });
-              });
+            } else {
+              console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt after timeout');
+            }
           }, 2000); // 2 second delay to show the sign out actually happened
         }
       }
