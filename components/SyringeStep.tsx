@@ -39,22 +39,17 @@ export default function SyringeStep({
   const hasValidInsulinOptions = hasValidOptions('Insulin');
   const hasValidStandardOptions = hasValidOptions('Standard');
 
-  // Helper function to format insulin volumes as fractions for display
-  const formatInsulinVolumesForDisplay = () => {
-    return insulinVolumes.map(volume => {
-      if (volume === '0.3 ml') return '1/3';
-      if (volume === '0.5 ml') return '1/2';
-      if (volume === '1 ml') return '1mL';
-      return volume;
-    }).join(', ');
-  };
+  // Pre-computed display strings for better performance
+  const insulinVolumesDisplay = insulinVolumes.map(volume => {
+    if (volume === '0.3 ml') return '1/3';
+    if (volume === '0.5 ml') return '1/2';
+    if (volume === '1 ml') return '1mL';
+    return volume;
+  }).join(', ');
 
-  // Helper function to format standard volumes for display
-  const formatStandardVolumesForDisplay = () => {
-    return standardVolumes.map(volume => {
-      return volume.replace(' ml', 'mL');
-    }).join(', ');
-  };
+  const standardVolumesDisplay = standardVolumes.map(volume => 
+    volume.replace(' ml', 'mL')
+  ).join(', ');
 
   // Function to find a valid syringe based on the current selection and context
   const findValidSyringe = (): { type: 'Insulin' | 'Standard'; volume: string } => {
@@ -209,7 +204,7 @@ export default function SyringeStep({
           ]}>
             <Text style={styles.syringeTypeLabel}>Insulin Syringes</Text>
             {'\n'}
-            <Text style={styles.volumePreview}>({formatInsulinVolumesForDisplay()})</Text>
+            <Text style={styles.volumePreview}>({insulinVolumesDisplay})</Text>
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -235,7 +230,7 @@ export default function SyringeStep({
           ]}>
             <Text style={styles.syringeTypeLabel}>Standard Syringes</Text>
             {'\n'}
-            <Text style={styles.volumePreview}>({formatStandardVolumesForDisplay()})</Text>
+            <Text style={styles.volumePreview}>({standardVolumesDisplay})</Text>
           </Text>
         </TouchableOpacity>
       </View>
