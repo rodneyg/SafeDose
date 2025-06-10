@@ -275,16 +275,16 @@ const styles = StyleSheet.create({
     gap: 6, // Smaller gap between buttons for small screens
     marginBottom: 6, // Tighter margin
   },
-  optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 12, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5, minHeight: 64 },
+  optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5, minHeight: 48 },
   optionButtonMobile: {
-    paddingVertical: 10, // Reduced vertical padding for small screens
+    paddingVertical: 6, // Reduced vertical padding for small screens
     paddingHorizontal: 10, // Reduced horizontal padding
     marginHorizontal: 3, // Smaller margins between buttons
-    minHeight: 60, // Minimum height for mobile to accommodate two lines
+    minHeight: 44, // Minimum height for mobile to accommodate two lines
   },
   selectedOption: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   disabledOption: { backgroundColor: '#D1D1D6', borderColor: 'transparent', opacity: 0.6 },
-  buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
+  buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 18 },
   selectedButtonText: { color: '#ffffff', fontWeight: 'bold' },
   disabledButtonText: { color: '#6B6B6B' },
   syringeTypeLabel: { fontWeight: '600' },
