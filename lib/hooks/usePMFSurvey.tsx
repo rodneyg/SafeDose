@@ -126,33 +126,29 @@ export function usePMFSurvey() {
         },
       };
 
-      // Save to Firebase (for authenticated users only)
-      if (!user || user.isAnonymous) {
-        console.log('Skipping Firebase save for anonymous user - PMF survey saved locally only');
-      } else {
-        try {
-          console.log('Attempting to save PMF survey to Firebase...', { 
-            sessionId, 
-            userId: user.uid, 
-            surveyResponse 
-          });
-          const pmfCollection = collection(db, 'pmf_survey_responses');
-          const docRef = await addDoc(pmfCollection, surveyResponse);
-          console.log('PMF survey saved to Firebase successfully:', { 
-            sessionId, 
-            docId: docRef.id,
-            collection: 'pmf_survey_responses'
-          });
-        } catch (error) {
-          console.error('Error saving PMF survey to Firebase:', {
-            error,
-            errorMessage: error instanceof Error ? error.message : 'Unknown error',
-            errorCode: (error as any)?.code,
-            userId: user.uid,
-            sessionId
-          });
-          // Don't throw error - survey submission should be non-blocking
-        }
+      // Save to Firebase (for all users including anonymous)
+      try {
+        console.log('Attempting to save PMF survey to Firebase...', { 
+          sessionId, 
+          userId: user?.uid || 'anonymous', 
+          surveyResponse 
+        });
+        const pmfCollection = collection(db, 'pmf_survey_responses');
+        const docRef = await addDoc(pmfCollection, surveyResponse);
+        console.log('PMF survey saved to Firebase successfully:', { 
+          sessionId, 
+          docId: docRef.id,
+          collection: 'pmf_survey_responses'
+        });
+      } catch (error) {
+        console.error('Error saving PMF survey to Firebase:', {
+          error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorCode: (error as any)?.code,
+          userId: user?.uid || 'anonymous',
+          sessionId
+        });
+        // Don't throw error - survey submission should be non-blocking
       }
 
       // Mark as completed locally
