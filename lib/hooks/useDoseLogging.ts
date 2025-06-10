@@ -101,6 +101,8 @@ export function useDoseLogging() {
       doseValue: number | null;
       unit: string;
       calculatedVolume: number | null;
+      syringeType?: 'Insulin' | 'Standard' | null;
+      recommendedMarking?: string | null;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -129,6 +131,8 @@ export function useDoseLogging() {
         doseValue: doseInfo.doseValue,
         unit: doseInfo.unit,
         calculatedVolume: doseInfo.calculatedVolume,
+        syringeType: doseInfo.syringeType || undefined,
+        recommendedMarking: doseInfo.recommendedMarking || undefined,
         timestamp: new Date().toISOString(),
         notes,
       };
