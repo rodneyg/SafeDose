@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Download } from 'lucide-react-native';
 import SyringeIllustration from './SyringeIllustration';
-import { syringeOptions } from "../lib/utils";
+import { syringeOptions, isWeb } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { captureResultsScreenshot } from '../lib/screenshotUtils';
 
 type Props = {
   calculationError: string | null;
@@ -43,6 +44,31 @@ export default function FinalResultDisplay({
   const { disclaimerText } = useUserProfile();
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
+  const [isSavingScreenshot, setIsSavingScreenshot] = useState(false);
+  const resultsRef = useRef<any>(null);
+  
+  // Screenshot handler
+  const handleSaveScreenshot = async () => {
+    setIsSavingScreenshot(true);
+    try {
+      // For web, we'll use the element ID, for native we'll use the ref
+      const target = isWeb ? 'results-container' : resultsRef;
+      await captureResultsScreenshot(target);
+      
+      // Show success message
+      if (isWeb) {
+        // For web, the download will start automatically
+        Alert.alert('Success', 'Screenshot saved successfully!');
+      } else {
+        Alert.alert('Success', 'Screenshot captured successfully!');
+      }
+    } catch (error) {
+      console.error('Screenshot error:', error);
+      Alert.alert('Error', 'Failed to save screenshot. Please try again.');
+    } finally {
+      setIsSavingScreenshot(false);
+    }
+  };
   
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
@@ -92,7 +118,11 @@ export default function FinalResultDisplay({
     calculatedConcentration
   });
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      ref={resultsRef}
+      nativeID={isWeb ? 'results-container' : undefined}
+    >
       {calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
@@ -237,6 +267,18 @@ export default function FinalResultDisplay({
           <RotateCcw color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>Start Over</Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: '#3B82F6' }, isMobileWeb && styles.actionButtonMobile]} 
+          onPress={handleSaveScreenshot}
+          disabled={isSavingScreenshot}
+        >
+          <Download color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>
+            {isSavingScreenshot ? 'Saving...' : 'Save'}
+          </Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} 
           onPress={() => handleGoToFeedback('new_dose')}
@@ -284,8 +326,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20, gap: 10 },
-  actionButton: { paddingVertical: 14, borderRadius: 8, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginHorizontal: 5, minHeight: 50 },
+  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20, gap: 6 },
+  actionButton: { paddingVertical: 14, borderRadius: 8, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginHorizontal: 2, minHeight: 50 },
   actionButtonMobile: { paddingVertical: 16, minHeight: 60 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
