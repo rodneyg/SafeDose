@@ -371,7 +371,7 @@ export default function FinalResultDisplay({
           <Text style={styles.buttonText}>
             {isSaving 
               ? (pendingSave ? 'Signing in...' : 'Saving...') 
-              : 'Save this dose'
+              : 'Save'
             }
           </Text>
         </TouchableOpacity>
