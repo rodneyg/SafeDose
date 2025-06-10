@@ -12,6 +12,7 @@ type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
+  onShowManualEntryNudge?: () => void;
 }
 
 const isValidValue = (value: any): boolean => {
@@ -20,7 +21,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
-export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNudge }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -485,6 +486,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
+    
+    // Check if manual entry nudge should be shown
+    if (onShowManualEntryNudge) {
+      onShowManualEntryNudge();
+    }
+    
     setFeedbackContext({
       nextAction,
       doseInfo: {
@@ -498,7 +505,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     });
     setScreenStep('postDoseFeedback');
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
+  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, onShowManualEntryNudge]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
