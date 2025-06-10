@@ -88,7 +88,11 @@ export default function WhyAreYouHereScreen({
   ];
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, isMobileWeb && styles.containerMobile]}>
+    <ScrollView 
+      contentContainerStyle={[styles.scrollContainer, isMobileWeb && styles.scrollContainerMobile]}
+      style={styles.scrollView}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={[styles.headerContainer, isMobileWeb && styles.headerContainerMobile]}>
         <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>
           Quick question — what brought you here today?
@@ -166,6 +170,24 @@ export default function WhyAreYouHereScreen({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    minHeight: '100%',
+  },
+  scrollContainerMobile: {
+    padding: 16,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -179,11 +201,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     maxWidth: 500,
   },
   headerContainerMobile: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   title: {
     fontSize: 22,
@@ -209,17 +231,17 @@ const styles = StyleSheet.create({
   responseOptions: {
     width: '100%',
     maxWidth: 500,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   responseOptionsMobile: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   responseOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     borderWidth: 2,
@@ -230,8 +252,8 @@ const styles = StyleSheet.create({
     borderColor: '#10B981',
   },
   responseOptionMobile: {
-    padding: 14,
-    marginBottom: 10,
+    padding: 12,
+    marginBottom: 8,
   },
   responseText: {
     fontSize: 16,
@@ -284,10 +306,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     maxWidth: 500,
-    marginTop: 20,
+    marginTop: 16,
+    paddingTop: 10,
   },
   buttonContainerMobile: {
-    marginTop: 16,
+    marginTop: 12,
+    paddingTop: 8,
   },
   skipButton: {
     paddingVertical: 12,
