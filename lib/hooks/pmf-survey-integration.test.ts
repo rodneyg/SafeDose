@@ -1,43 +1,43 @@
 // Integration test for PMF Survey flow
 describe('PMF Survey Integration Flow', () => {
-  test('should show PMF survey on first dose completion', () => {
-    // Simulate user flow:
+  test('should NOT show PMF survey on first dose completion', () => {
+    // PMF survey should wait until user has more experience
     // 1. User completes first dose (scan or manual)
     const sessionCount = 1;
     const hasShownBefore = false;
-    const shouldShowSurvey = sessionCount === 1 || sessionCount === 2;
+    const shouldShowSurvey = sessionCount === 2;
     
-    // 2. PMF survey should be triggered
-    expect(shouldShowSurvey && !hasShownBefore).toBe(true);
-    
-    // 3. After PMF survey completion, user should proceed to regular feedback
-    const pmfCompleted = true;
-    expect(pmfCompleted).toBe(true);
+    // 2. PMF survey should NOT be triggered yet
+    expect(shouldShowSurvey && !hasShownBefore).toBe(false);
   });
 
-  test('should show PMF survey on second dose completion if missed first time', () => {
-    // Simulate scenario where user skipped/missed PMF on first dose
+  test('should show PMF survey on second dose completion', () => {
+    // After user has some experience with the app
     const sessionCount = 2;
-    const hasShownBefore = false; // User somehow missed it on first session
-    const shouldShowSurvey = sessionCount === 1 || sessionCount === 2;
+    const hasShownBefore = false;
+    const shouldShowSurvey = sessionCount === 2;
     
     expect(shouldShowSurvey && !hasShownBefore).toBe(true);
+    
+    // After PMF survey completion, user should proceed to regular feedback
+    const pmfCompleted = true;
+    expect(pmfCompleted).toBe(true);
   });
 
   test('should NOT show PMF survey after second session', () => {
     // After 2nd session, PMF survey should never show again
     const sessionCount = 3;
     const hasShownBefore = false; // Even if somehow not shown before
-    const shouldShowSurvey = sessionCount === 1 || sessionCount === 2;
+    const shouldShowSurvey = sessionCount === 2;
     
     expect(shouldShowSurvey).toBe(false);
   });
 
   test('should NOT show PMF survey if already completed', () => {
-    // User completed PMF survey on first session
+    // User completed PMF survey on second session
     const sessionCount = 2; // Second dose
     const hasShownBefore = true; // PMF already completed
-    const shouldShowSurvey = (sessionCount === 1 || sessionCount === 2) && !hasShownBefore;
+    const shouldShowSurvey = sessionCount === 2 && !hasShownBefore;
     
     expect(shouldShowSurvey).toBe(false);
   });

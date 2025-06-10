@@ -7,8 +7,7 @@ The Superhuman PMF (Product-Market Fit) Survey implementation follows the Rahul 
 ## Key Features
 
 ### Trigger Conditions
-- **After 1st full dose session** (manual or AI/scan)
-- **After 2nd session total** (if missed on first)
+- **After 2nd dose session** (manual or AI/scan) - Users have enough experience to provide meaningful feedback
 - **One-time only** - never shows again once completed or dismissed
 - **Works for anonymous users** - no authentication required
 
@@ -44,7 +43,7 @@ const { triggerData, recordDoseSession, submitPMFSurvey, skipPMFSurvey } = usePM
 await recordDoseSession('scan' | 'manual');
 
 // Check if survey should show
-triggerData.shouldShowSurvey; // true on 1st or 2nd session (if not shown before)
+triggerData.shouldShowSurvey; // true on 2nd session (if not shown before)
 ```
 
 #### `PMFSurveyModal` Component
@@ -121,7 +120,7 @@ PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed'
 ```
 Dose Completion → Record Session → Check PMF Trigger
                                        ↓
-                                 (1st or 2nd session?)
+                                 (2nd session?)
                                        ↓
                                [PMF Survey Modal]
                                   ↓        ↓
@@ -142,8 +141,8 @@ Dose Completion → Record Session → Check PMF Trigger
 - `usePMFSurvey.test.tsx` - Hook functionality
 
 ### Test Coverage
-- ✅ Trigger on 1st session
-- ✅ Trigger on 2nd session if missed
+- ✅ Does NOT trigger on 1st session (users need more experience)
+- ✅ Trigger on 2nd session if not shown before
 - ✅ Never trigger after 2nd session
 - ✅ Never trigger if already shown
 - ✅ Session tracking (scan vs manual)

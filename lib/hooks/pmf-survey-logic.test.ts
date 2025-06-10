@@ -4,11 +4,11 @@ import { PMFSurveyTriggerData } from '../../types/pmf-survey';
 describe('PMF Survey Trigger Logic', () => {
   const shouldTriggerSurvey = (sessionCount: number, hasShown: boolean): boolean => {
     if (hasShown) return false;
-    return sessionCount === 1 || sessionCount === 2;
+    return sessionCount === 2;
   };
 
-  test('should trigger survey on 1st session if not shown before', () => {
-    expect(shouldTriggerSurvey(1, false)).toBe(true);
+  test('should NOT trigger survey on 1st session', () => {
+    expect(shouldTriggerSurvey(1, false)).toBe(false);
   });
 
   test('should trigger survey on 2nd session if not shown before', () => {

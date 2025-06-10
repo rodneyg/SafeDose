@@ -43,7 +43,7 @@ export function usePMFSurvey() {
   // Determine if survey should be triggered
   const shouldTriggerSurvey = (sessionCount: number, hasShown: boolean): boolean => {
     if (hasShown) return false;
-    return sessionCount === 1 || sessionCount === 2;
+    return sessionCount === 2;
   };
 
   // Record a dose session completion
