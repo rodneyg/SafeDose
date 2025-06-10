@@ -13,6 +13,7 @@ type ResetFullFormFunc = (startStep?: ManualStep) => void;
 interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
   onShowManualEntryNudge?: () => void;
+  onShowFirstScanNudge?: () => void;
 }
 
 const isValidValue = (value: any): boolean => {
@@ -21,7 +22,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
-export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNudge }: UseDoseCalculatorProps) {
+export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNudge, onShowFirstScanNudge }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -532,6 +533,11 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     // Clear feedback context
     setFeedbackContext(null);
     
+    // Show first scan nudge if this was the completion of the first scan
+    if (onShowFirstScanNudge) {
+      onShowFirstScanNudge();
+    }
+    
     // Navigate to the intended destination
     if (nextAction === 'start_over') {
       console.log('[useDoseCalculator] Start over - navigating to intro and clearing state');
@@ -583,7 +589,7 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, onShowFirstScanNudge]);
 
   const handleCapture = useCallback(async () => {
     try {

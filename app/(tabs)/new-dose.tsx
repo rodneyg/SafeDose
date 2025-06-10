@@ -44,9 +44,19 @@ export default function NewDoseScreen() {
     }
   };
 
+  const handleShowFirstScanNudge = () => {
+    if (pendingFirstScanNudge) {
+      console.log('[NewDoseScreen] First scan dose completed, showing upgrade nudge');
+      setPendingFirstScanNudge(false);
+      setNudgeType('first_scan_complete');
+      setShowUpgradeNudge(true);
+    }
+  };
+
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
-    onShowManualEntryNudge: handleShowManualEntryNudge
+    onShowManualEntryNudge: handleShowManualEntryNudge,
+    onShowFirstScanNudge: handleShowFirstScanNudge
   });
   const feedbackStorage = useFeedbackStorage();
   const firstTimeTracking = useFirstTimeTracking();
@@ -55,6 +65,7 @@ export default function NewDoseScreen() {
   const [showUpgradeNudge, setShowUpgradeNudge] = useState(false);
   const [nudgeType, setNudgeType] = useState<NudgeType>('first_scan_complete');
   const [continueScanAfterNudge, setContinueScanAfterNudge] = useState(false);
+  const [pendingFirstScanNudge, setPendingFirstScanNudge] = useState(false);
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -531,12 +542,11 @@ export default function NewDoseScreen() {
     setScreenStep('manualEntry');
     setManualStep('dose');
 
-    // Show first scan completion nudge if this is user's first successful scan
+    // Mark that first scan was completed and set pending nudge flag if it's the first scan
     if (firstTimeTracking.isFirstScanCompletion()) {
-      console.log('[Process] First scan completed, showing upgrade nudge');
+      console.log('[Process] First scan completed, marking as completed and setting pending nudge');
       firstTimeTracking.markFirstScanCompleted();
-      setNudgeType('first_scan_complete');
-      setShowUpgradeNudge(true);
+      setPendingFirstScanNudge(true);
     }
   };
 
