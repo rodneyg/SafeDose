@@ -58,32 +58,129 @@ export const USER_PROPERTIES = {
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
-// Helper function to safely log analytics events
+// Platform detection
+const isWeb = typeof window !== "undefined";
+const isReactNative = !isWeb;
+
+// Fallback analytics for React Native platforms
+const logToNativeAnalytics = async (eventName: string, parameters?: Record<string, any>) => {
+  try {
+    // For React Native, we can use Expo's built-in analytics or implement native Firebase Analytics
+    // For now, we'll use a more robust logging system that could be extended to real analytics
+    
+    // Enhanced logging with structured data for future analytics integration
+    const analyticsData = {
+      timestamp: new Date().toISOString(),
+      platform: 'react-native',
+      event: eventName,
+      parameters: parameters || {},
+    };
+    
+    console.log('[Analytics][ReactNative]', JSON.stringify(analyticsData));
+    
+    // Future enhancement: Send to native analytics service
+    // - Firebase Analytics via React Native Firebase
+    // - Expo Analytics (when available)
+    // - Custom analytics endpoint
+    
+    // Store events locally for potential batch upload
+    if (typeof global !== 'undefined' && global.localStorage) {
+      try {
+        const stored = global.localStorage.getItem('pending_analytics') || '[]';
+        const events = JSON.parse(stored);
+        events.push(analyticsData);
+        
+        // Keep only last 100 events to prevent storage bloat
+        if (events.length > 100) {
+          events.splice(0, events.length - 100);
+        }
+        
+        global.localStorage.setItem('pending_analytics', JSON.stringify(events));
+      } catch (storageError) {
+        console.warn('[Analytics] Failed to store analytics event locally:', storageError);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[Analytics] Failed to log React Native analytics event:', error);
+    return false;
+  }
+};
+
+// Enhanced cross-platform analytics function
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
-  if (analytics) {
+  // Fire and forget approach - don't make callers wait for async operations
+  const logAsync = async () => {
     try {
-      logEvent(analytics, eventName, parameters);
-      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
+      if (isWeb && analytics) {
+        // Web platform with Firebase Analytics
+        logEvent(analytics, eventName, parameters);
+        console.log(`[Analytics][Web] Event logged: ${eventName}`, parameters);
+        return true;
+      } else if (isReactNative) {
+        // React Native platform - use enhanced native analytics
+        return await logToNativeAnalytics(eventName, parameters);
+      } else {
+        // Fallback for unsupported environments
+        console.log(`[Analytics][Fallback] Would log: ${eventName}`, parameters);
+        return false;
+      }
     } catch (error) {
       console.error(`[Analytics] Failed to log event ${eventName}:`, error);
+      return false;
     }
-  } else {
-    console.log(`[Analytics] Analytics not available, would log: ${eventName}`, parameters);
-  }
+  };
+  
+  // Execute async operation but don't wait for it
+  logAsync().catch(error => {
+    console.error(`[Analytics] Async logging failed for ${eventName}:`, error);
+  });
 };
 
 // Helper function to safely set user properties
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-  if (analytics) {
+  // Fire and forget approach
+  const setAsync = async () => {
     try {
-      setUserProperties(analytics, properties);
-      console.log(`[Analytics] User properties set:`, properties);
+      if (isWeb && analytics) {
+        setUserProperties(analytics, properties);
+        console.log(`[Analytics][Web] User properties set:`, properties);
+        return true;
+      } else if (isReactNative) {
+        // For React Native, store user properties locally for now
+        const propertiesData = {
+          timestamp: new Date().toISOString(),
+          platform: 'react-native',
+          userProperties: properties,
+        };
+        
+        console.log('[Analytics][ReactNative] User properties set:', propertiesData);
+        
+        // Store user properties locally
+        if (typeof global !== 'undefined' && global.localStorage) {
+          try {
+            global.localStorage.setItem('analytics_user_properties', JSON.stringify(propertiesData));
+          } catch (storageError) {
+            console.warn('[Analytics] Failed to store user properties locally:', storageError);
+          }
+        }
+        
+        return true;
+      } else {
+        console.log(`[Analytics][Fallback] Would set properties:`, properties);
+        return false;
+      }
     } catch (error) {
       console.error(`[Analytics] Failed to set user properties:`, error);
+      return false;
     }
-  } else {
-    console.log(`[Analytics] Analytics not available, would set properties:`, properties);
-  }
+  };
+  
+  // Execute async operation but don't wait for it
+  setAsync().catch(error => {
+    console.error(`[Analytics] Async user properties setting failed:`, error);
+  });
 };
 
 // Simple revenue tracking
@@ -126,4 +223,32 @@ export const setPersonalizationUserProperties = (profile: any) => {
     [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
     [USER_PROPERTIES.USER_SEGMENT]: userSegment,
   });
+};
+
+// Utility function to get pending analytics events (for React Native)
+export const getPendingAnalyticsEvents = () => {
+  if (isReactNative && typeof global !== 'undefined' && global.localStorage) {
+    try {
+      const stored = global.localStorage.getItem('pending_analytics') || '[]';
+      return JSON.parse(stored);
+    } catch (error) {
+      console.warn('[Analytics] Failed to retrieve pending analytics events:', error);
+      return [];
+    }
+  }
+  return [];
+};
+
+// Utility function to clear pending analytics events (after successful upload)
+export const clearPendingAnalyticsEvents = () => {
+  if (isReactNative && typeof global !== 'undefined' && global.localStorage) {
+    try {
+      global.localStorage.removeItem('pending_analytics');
+      return true;
+    } catch (error) {
+      console.warn('[Analytics] Failed to clear pending analytics events:', error);
+      return false;
+    }
+  }
+  return false;
 };

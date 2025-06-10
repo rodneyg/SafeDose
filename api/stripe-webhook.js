@@ -10,11 +10,22 @@ const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2025-03-31.basil', // Use a stable, supported version
 });
 
-// Simple analytics logging (Firebase Analytics would be initialized client-side)
+// Enhanced server-side analytics logging (Firebase Analytics would be initialized client-side)
 const logAnalyticsEvent = (eventName, parameters) => {
-  console.log(`[Analytics] Event: ${eventName}`, parameters);
-  // Note: In a real implementation, you'd send this to Firebase Analytics 
-  // via the Firebase Admin SDK or queue for client-side processing
+  const analyticsData = {
+    timestamp: new Date().toISOString(),
+    platform: 'server',
+    event: eventName,
+    parameters: parameters || {},
+  };
+  
+  console.log(`[Analytics][Server] ${JSON.stringify(analyticsData)}`);
+  
+  // Note: In a real implementation, you could:
+  // 1. Send this to Firebase Analytics via the Firebase Admin SDK
+  // 2. Queue for client-side processing when user next visits
+  // 3. Send to a dedicated analytics service endpoint
+  // 4. Store in database for later batch processing
 };
 
 module.exports = async (req, res) => {
