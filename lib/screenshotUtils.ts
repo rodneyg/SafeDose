@@ -81,6 +81,7 @@ export const captureResultsScreenshot = async (elementIdOrRef: string | any): Pr
     }
   } catch (error) {
     console.error('Screenshot capture failed:', error);
+    // Re-throw the original error for better debugging
     throw error;
   }
 };
