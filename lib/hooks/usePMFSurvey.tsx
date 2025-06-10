@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PMFSurveyResponse, PMFSurveyTriggerData, PMFSurveyState } from '../../types/pmf-survey';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
@@ -10,7 +11,6 @@ const PMF_SESSION_COUNT_KEY = 'pmf_session_count';
 
 export function usePMFSurvey() {
   const { user } = useAuth();
-  const db = getFirestore();
   const [triggerData, setTriggerData] = useState<PMFSurveyTriggerData>({
     sessionCount: 0,
     lastSessionType: 'manual',
@@ -100,7 +100,12 @@ export function usePMFSurvey() {
   const submitPMFSurvey = useCallback(async (
     responses: PMFSurveyResponse['responses']
   ): Promise<void> => {
-    if (isSubmitting) return;
+    console.log('submitPMFSurvey called with responses:', responses);
+    
+    if (isSubmitting) {
+      console.log('Already submitting, skipping...');
+      return;
+    }
     
     setIsSubmitting(true);
     try {
@@ -123,11 +128,26 @@ export function usePMFSurvey() {
 
       // Save to Firebase (for both anonymous and authenticated users)
       try {
+        console.log('Attempting to save PMF survey to Firebase...', { 
+          sessionId, 
+          userId: user?.uid, 
+          surveyResponse 
+        });
         const pmfCollection = collection(db, 'pmf_survey_responses');
-        await addDoc(pmfCollection, surveyResponse);
-        console.log('PMF survey saved to Firebase:', sessionId);
+        const docRef = await addDoc(pmfCollection, surveyResponse);
+        console.log('PMF survey saved to Firebase successfully:', { 
+          sessionId, 
+          docId: docRef.id,
+          collection: 'pmf_survey_responses'
+        });
       } catch (error) {
-        console.error('Error saving PMF survey to Firebase:', error);
+        console.error('Error saving PMF survey to Firebase:', {
+          error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorCode: (error as any)?.code,
+          userId: user?.uid,
+          sessionId
+        });
         // Don't throw error - survey submission should be non-blocking
       }
 
