@@ -13,9 +13,11 @@ import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
+import UpgradeNudgeModal, { NudgeType } from '../../components/UpgradeNudgeModal';
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
+import { useFirstTimeTracking } from '../../lib/hooks/useFirstTimeTracking';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
@@ -33,8 +35,26 @@ export default function NewDoseScreen() {
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
-  const doseCalculator = useDoseCalculator({ checkUsageLimit });
+  const handleShowManualEntryNudge = () => {
+    if (firstTimeTracking.shouldShowManualEntryNudge()) {
+      console.log('[NewDoseScreen] Manual entry completed without AI scan, showing nudge');
+      firstTimeTracking.markManualEntryOnly();
+      setNudgeType('manual_entry_only');
+      setShowUpgradeNudge(true);
+    }
+  };
+
+  const doseCalculator = useDoseCalculator({ 
+    checkUsageLimit,
+    onShowManualEntryNudge: handleShowManualEntryNudge
+  });
   const feedbackStorage = useFeedbackStorage();
+  const firstTimeTracking = useFirstTimeTracking();
+  
+  // Upgrade nudge modal state
+  const [showUpgradeNudge, setShowUpgradeNudge] = useState(false);
+  const [nudgeType, setNudgeType] = useState<NudgeType>('first_scan_complete');
+  const [continueScanAfterNudge, setContinueScanAfterNudge] = useState(false);
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -510,6 +530,14 @@ export default function NewDoseScreen() {
     // Note: showVolumeErrorModal and volumeErrorValue are managed internally by doseCalculator
     setScreenStep('manualEntry');
     setManualStep('dose');
+
+    // Show first scan completion nudge if this is user's first successful scan
+    if (firstTimeTracking.isFirstScanCompletion()) {
+      console.log('[Process] First scan completed, showing upgrade nudge');
+      firstTimeTracking.markFirstScanCompleted();
+      setNudgeType('first_scan_complete');
+      setShowUpgradeNudge(true);
+    }
   };
 
   const handleScanAttempt = async () => {
@@ -519,6 +547,20 @@ export default function NewDoseScreen() {
     if (isProcessing) {
       console.log('handleScanAttempt: Already processing, ignoring request');
       return;
+    }
+    
+    // Show pre-limit nudge if user is about to use their second-to-last scan
+    // Only for users with 3 scan limit (anonymous users) and not continuing after nudge
+    if (usageData.limit === 3 && usageData.scansUsed === 1 && !continueScanAfterNudge) {
+      console.log('handleScanAttempt: Showing pre-limit upgrade nudge');
+      setNudgeType('pre_scan_limit');
+      setShowUpgradeNudge(true);
+      return; // Don't proceed with scan yet, let user decide
+    }
+    
+    // Reset the continue flag if it was set
+    if (continueScanAfterNudge) {
+      setContinueScanAfterNudge(false);
     }
     
     // Log scan attempt
@@ -862,6 +904,17 @@ export default function NewDoseScreen() {
         onRetake={handleImagePreviewRetake}
         onContinue={handleImagePreviewContinue}
         autoAdvanceDelay={15000} // 15 seconds auto-advance for concentration
+      />
+      <UpgradeNudgeModal
+        visible={showUpgradeNudge}
+        nudgeType={nudgeType}
+        onClose={() => setShowUpgradeNudge(false)}
+        onContinueWithAction={() => {
+          setContinueScanAfterNudge(true);
+          setShowUpgradeNudge(false);
+          // Trigger scan attempt after nudge is dismissed
+          setTimeout(() => handleScanAttempt(), 100);
+        }}
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>

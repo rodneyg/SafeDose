@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { Trash2, Calendar, Pill } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
+import { useFirstTimeTracking } from '../../lib/hooks/useFirstTimeTracking';
+import UpgradeNudgeModal from '../../components/UpgradeNudgeModal';
 import { DoseLog } from '../../types/doseLog';
 
 // Helper function to format the "Draw to" text
@@ -18,8 +20,10 @@ function formatDrawToText(log: DoseLog): string | null {
 
 export default function LogsScreen() {
   const { getDoseLogHistory, deleteDoseLog } = useDoseLogging();
+  const firstTimeTracking = useFirstTimeTracking();
   const [logs, setLogs] = useState<DoseLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFirstLogsNudge, setShowFirstLogsNudge] = useState(false);
 
   const loadLogs = useCallback(async () => {
     try {
@@ -41,7 +45,14 @@ export default function LogsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadLogs();
-    }, [loadLogs])
+      
+      // Show first logs view nudge if this is the first time viewing logs
+      if (firstTimeTracking.isFirstLogsView()) {
+        console.log('[LogsScreen] First time viewing logs, showing upgrade nudge');
+        firstTimeTracking.markFirstLogsViewed();
+        setShowFirstLogsNudge(true);
+      }
+    }, [loadLogs, firstTimeTracking])
   );
 
   const handleDeleteLog = useCallback((log: DoseLog) => {
@@ -223,6 +234,11 @@ export default function LogsScreen() {
           </>
         )}
       </ScrollView>
+      <UpgradeNudgeModal
+        visible={showFirstLogsNudge}
+        nudgeType="first_logs_view"
+        onClose={() => setShowFirstLogsNudge(false)}
+      />
     </View>
   );
 }

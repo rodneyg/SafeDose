@@ -36,6 +36,9 @@ export const ANALYTICS_EVENTS = {
   PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
+  // Upgrade nudge events
+  UPGRADE_NUDGE_VIEW: 'upgrade_nudge_view',
+  UPGRADE_NUDGE_ACTION: 'upgrade_nudge_action',
 } as const;
 
 // User property names
