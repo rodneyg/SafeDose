@@ -70,6 +70,28 @@ export default function IntroScreen({
   }, []);
 
   /* =========================================================================
+     HANDLERS
+  ========================================================================= */
+  const handleSignInPress = useCallback(() => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log('Google Sign-In OK:', result.user.uid);
+        // Track sign-up prompt conversion if it was shown
+        if (showSignUpPrompt) {
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_PROMPT_CONVERSION, {
+            source: 'signup_prompt'
+          });
+        }
+      })
+      .catch((error) => {
+        console.error('Google Sign-In error:', error.code, error.message);
+      });
+  }, [auth, showSignUpPrompt]);
+
+  /* =========================================================================
      SIGN-UP PROMPT LOGIC
   ========================================================================= */
   useEffect(() => {
@@ -94,28 +116,6 @@ export default function IntroScreen({
     setShowSignUpPrompt(false);
     markPromptDismissed();
   }, [markPromptDismissed]);
-
-  /* =========================================================================
-     HANDLERS
-  ========================================================================= */
-  const handleSignInPress = useCallback(() => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log('Google Sign-In OK:', result.user.uid);
-        // Track sign-up prompt conversion if it was shown
-        if (showSignUpPrompt) {
-          logAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_PROMPT_CONVERSION, {
-            source: 'signup_prompt'
-          });
-        }
-      })
-      .catch((error) => {
-        console.error('Google Sign-In error:', error.code, error.message);
-      });
-  }, [auth, showSignUpPrompt]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');
