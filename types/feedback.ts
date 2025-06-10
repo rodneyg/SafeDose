@@ -21,5 +21,7 @@ export interface FeedbackContextType {
     doseValue: number | null;
     unit: string;
     calculatedVolume: number | null;
+    syringeType?: 'Insulin' | 'Standard' | null;
+    recommendedMarking?: string | null;
   };
 }

@@ -489,11 +489,13 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         doseValue,
         unit,
         calculatedVolume,
+        syringeType: manualSyringe?.type || null,
+        recommendedMarking,
       },
     });
     setScreenStep('postDoseFeedback');
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume]);
+  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });

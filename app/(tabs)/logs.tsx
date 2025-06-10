@@ -5,6 +5,17 @@ import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { DoseLog } from '../../types/doseLog';
 
+// Helper function to format the "Draw to" text
+function formatDrawToText(log: DoseLog): string | null {
+  if (!log.recommendedMarking || !log.syringeType) {
+    return null;
+  }
+  
+  const unit = log.syringeType === 'Insulin' ? 'units' : 'ml';
+  const value = parseFloat(log.recommendedMarking).toFixed(2);
+  return `Draw to ${value} ${unit}`;
+}
+
 export default function LogsScreen() {
   const { getDoseLogHistory, deleteDoseLog } = useDoseLogging();
   const [logs, setLogs] = useState<DoseLog[]>([]);
@@ -149,6 +160,7 @@ export default function LogsScreen() {
           <>
             {logs.map((log, index) => {
               const concentration = formatConcentration(log.doseValue, log.unit, log.calculatedVolume);
+              const drawToText = formatDrawToText(log);
               return (
                 <View key={log.id} style={[styles.logCard, index === 0 && styles.mostRecentCard]}>
                   <View style={styles.logHeader}>
@@ -162,6 +174,13 @@ export default function LogsScreen() {
                           → {log.calculatedVolume} mL
                         </Text>
                       </View>
+                      {drawToText && (
+                        <View style={styles.drawToInfo}>
+                          <Text style={styles.drawToText}>
+                            {drawToText}
+                          </Text>
+                        </View>
+                      )}
                       {concentration && (
                         <View style={styles.concentrationInfo}>
                           <Text style={styles.concentrationText}>
@@ -314,6 +333,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B6B6B',
     fontStyle: 'italic',
+  },
+  drawToInfo: {
+    marginTop: 4,
+  },
+  drawToText: {
+    fontSize: 15,
+    color: '#FF0000',
+    fontWeight: '600',
   },
   deleteButton: {
     padding: 8,
