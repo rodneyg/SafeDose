@@ -36,6 +36,11 @@ export const ANALYTICS_EVENTS = {
   PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
+  // Email capture events
+  EMAIL_CAPTURE_ATTEMPTED: 'email_capture_attempted',
+  EMAIL_CAPTURE_SUCCESS: 'email_capture_success',
+  EMAIL_CAPTURE_FAILED: 'email_capture_failed',
+  EXIT_SURVEY_SUBMITTED: 'exit_survey_submitted',
 } as const;
 
 // User property names
