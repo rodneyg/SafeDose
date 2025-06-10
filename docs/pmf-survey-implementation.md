@@ -82,11 +82,14 @@ pmf_survey_data_${userId}: {
 ```
 
 #### Firebase Storage
+
+**Note**: Firebase storage is only available for authenticated users due to security rules. Anonymous users' responses are stored locally only.
+
 ```typescript
-// Collection: pmf_survey_responses
+// Collection: pmf_survey_responses (authenticated users only)
 {
   id: "pmf_1234567890_abc123",
-  userId: "user-id-or-anonymous",
+  userId: "authenticated-user-id",
   sessionId: "pmf_1234567890_abc123", 
   deviceType: "web",
   timestamp: "2024-01-01T00:00:00.000Z",
