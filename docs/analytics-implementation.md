@@ -133,6 +133,29 @@ setAnalyticsUserProperties({
 
 // Set personalization user properties
 setPersonalizationUserProperties(profile);
+
+// Export analytics data grouped by user segments
+const groupedData = exportGroupedAnalytics();
+
+// Export analytics data for a specific date range
+const dataForDateRange = exportGroupedAnalytics(
+  new Date('2024-01-01'), 
+  new Date('2024-12-31')
+);
+
+// Export analytics as CSV format
+const csvExport = exportAnalyticsAsCSV(groupedData);
+
+// Export analytics summary with top events per segment
+const summary = exportAnalyticsSummary();
+
+// Log events with storage for export functionality
+logAnalyticsEventWithStorage(
+  ANALYTICS_EVENTS.SCAN_ATTEMPT,
+  { method: 'camera' },
+  USER_SEGMENTS.HEALTHCARE_PROFESSIONAL,
+  'user_123'
+);
 ```
 
 ## Key Metrics to Monitor
@@ -166,6 +189,98 @@ To verify the implementation:
 2. Check Firebase Analytics console for events (may take up to 24 hours)
 3. Verify user properties reflect current user state
 4. Test error scenarios to ensure error events are logged
+
+## Group Analyzer Export Functionality
+
+The analytics system now includes comprehensive export functionality for analyzing user behavior grouped by user segments. This allows administrators and analysts to understand usage patterns across different user types.
+
+### User Segments
+
+The system tracks four distinct user segments:
+
+- **healthcare_professional**: Licensed healthcare professionals
+- **cosmetic_user**: Users focused on cosmetic applications
+- **personal_medical_user**: Personal medical use cases
+- **general_user**: All other users (default segment)
+
+### Export Functions
+
+#### `logAnalyticsEventWithStorage`
+Enhanced logging function that stores events for export while maintaining regular analytics logging.
+
+```typescript
+logAnalyticsEventWithStorage(
+  eventName: string,
+  parameters?: Record<string, any>,
+  userSegment?: string,
+  userId?: string
+)
+```
+
+#### `exportGroupedAnalytics`
+Exports analytics data grouped by user segments with optional date filtering.
+
+```typescript
+const groupedData = exportGroupedAnalytics(
+  dateFrom?: Date,
+  dateTo?: Date
+): GroupedAnalyticsData
+```
+
+Returns data structured by user segment with:
+- Event lists per segment
+- Event counts per event type
+- Unique user counts
+- User properties
+
+#### `exportAnalyticsAsCSV`
+Exports analytics data in CSV format for spreadsheet analysis.
+
+```typescript
+const csvData = exportAnalyticsAsCSV(
+  groupedData?: GroupedAnalyticsData,
+  dateFrom?: Date,
+  dateTo?: Date
+): string
+```
+
+#### `exportAnalyticsSummary`
+Exports a summary report with top events and metrics per segment.
+
+```typescript
+const summary = exportAnalyticsSummary(
+  dateFrom?: Date,
+  dateTo?: Date
+): Record<string, any>
+```
+
+### Example Usage
+
+```typescript
+// Log events with storage for export
+logAnalyticsEventWithStorage(
+  ANALYTICS_EVENTS.SCAN_ATTEMPT,
+  { method: 'camera' },
+  USER_SEGMENTS.HEALTHCARE_PROFESSIONAL,
+  'user_123'
+);
+
+// Export all data grouped by segments
+const allData = exportGroupedAnalytics();
+
+// Export data for specific date range
+const monthlyData = exportGroupedAnalytics(
+  new Date('2024-01-01'),
+  new Date('2024-01-31')
+);
+
+// Export as CSV for spreadsheet analysis
+const csvReport = exportAnalyticsAsCSV(monthlyData);
+
+// Get summary report
+const summary = exportAnalyticsSummary();
+console.log('Healthcare professionals:', summary.segmentSummary.healthcare_professional);
+```
 
 ## Platform Support
 
