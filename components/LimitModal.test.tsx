@@ -36,7 +36,7 @@ describe('LimitModal Freemium Updates', () => {
 
     // Check the new title and message
     expect(getByText("You've used your 3 free photo scans")).toBeTruthy();
-    expect(getByText("SafeDose AI costs money to run. Upgrade to unlock unlimited scans and dose logs.")).toBeTruthy();
+    expect(getByText("Upgrade to Pro for unlimited AI scans and dose logs.")).toBeTruthy();
   });
 
   it('should display feedback input field', () => {

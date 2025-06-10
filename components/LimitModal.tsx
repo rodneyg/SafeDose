@@ -54,7 +54,7 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
             You've used your 3 free photo scans
           </Text>
           <Text style={styles.message}>
-            SafeDose AI costs money to run. Upgrade to unlock unlimited scans and dose logs.
+            Upgrade to Pro for unlimited AI scans and dose logs.
           </Text>
           
           <View style={styles.feedbackContainer}>
