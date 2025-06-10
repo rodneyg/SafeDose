@@ -8,6 +8,7 @@ import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/u
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
+import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
@@ -20,7 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -237,6 +238,9 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -707,6 +711,7 @@ export default function NewDoseScreen() {
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
+            {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
             {screenStep === 'manualEntry' && (
               `${
@@ -826,6 +831,13 @@ export default function NewDoseScreen() {
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
+        />
+      )}
+      {screenStep === 'whyAreYouHere' && (
+        <WhyAreYouHereScreen
+          onSubmit={handleWhyAreYouHereSubmit}
+          onSkip={handleWhyAreYouHereSkip}
+          isMobileWeb={isMobileWeb}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (

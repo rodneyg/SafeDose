@@ -3,8 +3,9 @@ import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../d
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
+import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -54,6 +55,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
+  
+  // Initialize WhyAreYouHere tracking hook
+  const whyAreYouHereTracking = useWhyAreYouHereTracking();
 
   // Log limit modal state
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -496,9 +500,16 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
         recommendedMarking,
       },
     });
-    setScreenStep('postDoseFeedback');
+    
+    // Check if we should show the "Why Are You Here?" prompt first
+    if (whyAreYouHereTracking.shouldShowPrompt()) {
+      setScreenStep('whyAreYouHere');
+    } else {
+      setScreenStep('postDoseFeedback');
+    }
+    
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
+  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, whyAreYouHereTracking]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -577,6 +588,28 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     
     lastActionTimestamp.current = Date.now();
   }, [feedbackContext, resetFullForm, checkUsageLimit, logDose]);
+
+  // WhyAreYouHere handlers
+  const handleWhyAreYouHereSubmit = useCallback(async (response: any, customText?: string) => {
+    console.log('[useDoseCalculator] WhyAreYouHere response submitted:', response);
+    
+    // Mark prompt as shown and store response
+    await whyAreYouHereTracking.markPromptAsShown();
+    await whyAreYouHereTracking.storeResponse(response, customText);
+    
+    // Continue to post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [whyAreYouHereTracking]);
+
+  const handleWhyAreYouHereSkip = useCallback(async () => {
+    console.log('[useDoseCalculator] WhyAreYouHere prompt skipped');
+    
+    // Mark prompt as shown (but skipped)
+    await whyAreYouHereTracking.markPromptAsShown();
+    
+    // Continue to post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [whyAreYouHereTracking]);
 
   const handleCapture = useCallback(async () => {
     try {
@@ -749,6 +782,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setFeedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     // Log limit modal
     showLogLimitModal,
     handleCloseLogLimitModal,
