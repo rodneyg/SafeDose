@@ -69,4 +69,37 @@ describe('useDoseLogging', () => {
     expect(typeof validDoseLog.timestamp).toBe('string');
     expect(validDoseLog.notes).toBe('Test notes');
   });
+
+  it('should support optional syringe information for "draw to" feature', () => {
+    const logWithSyringeInfo: DoseLog = {
+      id: 'test-with-syringe',
+      userId: 'test-user',
+      substanceName: 'Test Drug',
+      doseValue: 5,
+      unit: 'mg',
+      calculatedVolume: 0.5,
+      syringeType: 'Standard',
+      recommendedMarking: '0.5',
+      timestamp: new Date().toISOString(),
+    };
+
+    expect(logWithSyringeInfo.syringeType).toBe('Standard');
+    expect(logWithSyringeInfo.recommendedMarking).toBe('0.5');
+
+    // Test insulin syringe as well
+    const insulinLog: DoseLog = {
+      id: 'test-insulin',
+      userId: 'test-user',
+      substanceName: 'Insulin',
+      doseValue: 10,
+      unit: 'units',
+      calculatedVolume: 0.1,
+      syringeType: 'Insulin',
+      recommendedMarking: '10',
+      timestamp: new Date().toISOString(),
+    };
+
+    expect(insulinLog.syringeType).toBe('Insulin');
+    expect(insulinLog.recommendedMarking).toBe('10');
+  });
 });
