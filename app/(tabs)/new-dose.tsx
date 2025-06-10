@@ -608,6 +608,25 @@ export default function NewDoseScreen() {
     }
   };
 
+  const handleTryAIScan = useCallback(async () => {
+    console.log('handleTryAIScan: Called from teaser');
+    
+    // Check if user has remaining scans
+    const canProceed = await doseCalculator.handleCapture();
+    if (!canProceed) {
+      console.log('handleTryAIScan: Showing LimitModal');
+      logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
+      setShowLimitModal(true);
+      return;
+    }
+
+    // Log that user tried AI scan from teaser
+    logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT, { source: 'teaser' });
+    
+    // Transition to scan screen
+    setScreenStep('scan');
+  }, [doseCalculator, setScreenStep]);
+
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
     
@@ -827,7 +846,7 @@ export default function NewDoseScreen() {
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
-          onTryAIScan={handleScanAttempt}
+          onTryAIScan={handleTryAIScan}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (
