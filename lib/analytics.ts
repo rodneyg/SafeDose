@@ -36,6 +36,11 @@ export const ANALYTICS_EVENTS = {
   PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
+  // Sign-up prompt events
+  SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
+  SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
+  SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
+  SIGNUP_PROMPT_CONVERSION: 'signup_prompt_conversion',
 } as const;
 
 // User property names

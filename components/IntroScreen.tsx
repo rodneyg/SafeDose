@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Camera as CameraIcon,
@@ -16,10 +16,13 @@ import { isMobileWeb } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
+import { useSignUpPromptTracking } from '../lib/hooks/useSignUpPromptTracking';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
+import SignUpPromptOverlay from './SignUpPromptOverlay';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -46,6 +49,10 @@ export default function IntroScreen({
   const { usageData } = useUsageTracking();
   const router = useRouter();
 
+  // Sign-up prompt state
+  const { shouldShowPrompt, markPromptShown, markPromptDismissed } = useSignUpPromptTracking();
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
+
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
@@ -59,6 +66,32 @@ export default function IntroScreen({
   }, []);
 
   /* =========================================================================
+     SIGN-UP PROMPT LOGIC
+  ========================================================================= */
+  useEffect(() => {
+    const shouldShow = shouldShowPrompt();
+    if (shouldShow && !showSignUpPrompt) {
+      console.log('[IntroScreen] Showing sign-up prompt');
+      setShowSignUpPrompt(true);
+      markPromptShown();
+      logAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_PROMPT_SHOWN, {
+        source: 'signup_prompt'
+      });
+    }
+  }, [shouldShowPrompt, showSignUpPrompt, markPromptShown]);
+
+  const handleSignUpPromptSignUp = useCallback(() => {
+    setShowSignUpPrompt(false);
+    // Use the existing Google sign-in handler
+    handleSignInPress();
+  }, [handleSignInPress]);
+
+  const handleSignUpPromptDismiss = useCallback(() => {
+    setShowSignUpPrompt(false);
+    markPromptDismissed();
+  }, [markPromptDismissed]);
+
+  /* =========================================================================
      HANDLERS
   ========================================================================= */
   const handleSignInPress = useCallback(() => {
@@ -68,11 +101,17 @@ export default function IntroScreen({
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log('Google Sign-In OK:', result.user.uid);
+        // Track sign-up prompt conversion if it was shown
+        if (showSignUpPrompt) {
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_PROMPT_CONVERSION, {
+            source: 'signup_prompt'
+          });
+        }
       })
       .catch((error) => {
         console.error('Google Sign-In error:', error.code, error.message);
       });
-  }, [auth]);
+  }, [auth, showSignUpPrompt]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');
@@ -394,6 +433,13 @@ export default function IntroScreen({
             onCancel={handleWebLogoutCancel}
           />
         )}
+
+        {/* Sign-Up Prompt Overlay */}
+        <SignUpPromptOverlay
+          visible={showSignUpPrompt}
+          onSignUpPress={handleSignUpPromptSignUp}
+          onDismiss={handleSignUpPromptDismiss}
+        />
       </Animated.View>
     </SafeAreaView>
   );

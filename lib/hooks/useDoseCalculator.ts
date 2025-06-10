@@ -3,6 +3,7 @@ import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../d
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
+import { useSignUpPromptTracking } from './useSignUpPromptTracking';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -54,6 +55,9 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
+
+  // Initialize sign-up prompt tracking
+  const { incrementInteractionCount } = useSignUpPromptTracking();
 
   // Log limit modal state
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -485,6 +489,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
+    
+    // Track interaction for sign-up prompt (manual dose calculation completed)
+    incrementInteractionCount();
+    
     setFeedbackContext({
       nextAction,
       doseInfo: {
@@ -498,7 +506,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     });
     setScreenStep('postDoseFeedback');
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
+  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, incrementInteractionCount]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -515,6 +523,8 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     
     if (logResult.success) {
       console.log('[useDoseCalculator] Dose automatically logged');
+      // Track interaction for sign-up prompt (log save completed)
+      incrementInteractionCount();
     } else {
       console.warn('[useDoseCalculator] Failed to log dose, but continuing...');
     }
@@ -576,7 +586,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, incrementInteractionCount]);
 
   const handleCapture = useCallback(async () => {
     try {

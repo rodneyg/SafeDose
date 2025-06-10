@@ -12,7 +12,7 @@ const getLogLimitForPlan = (plan: string, isAnonymous: boolean) => {
   if (isAnonymous) return 10; // Anonymous users get 10 free logs
   if (plan === 'plus') return 100; // Plus plan gets 100 logs
   if (plan === 'pro') return -1; // Pro plan gets unlimited logs (-1 = unlimited)
-  return 10; // Signed-in free users get 10 logs
+  return 15; // Signed-in free users get 15 logs (increased from 10 for new registrants)
 };
 
 export function useLogUsageTracking() {
