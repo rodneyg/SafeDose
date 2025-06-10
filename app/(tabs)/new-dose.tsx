@@ -826,6 +826,8 @@ export default function NewDoseScreen() {
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
+          usageData={usageData}
+          onTryAIScan={handleScanAttempt}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (
