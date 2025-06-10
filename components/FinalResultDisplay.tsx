@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save } from 'lucide-react-native';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
 
 type Props = {
   calculationError: string | null;
@@ -41,8 +44,87 @@ export default function FinalResultDisplay({
   isMobileWeb,
 }: Props) {
   const { disclaimerText } = useUserProfile();
+  const { user, auth } = useAuth();
+  const { logDose, isLogging } = useDoseLogging();
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Helper function to trigger Google sign-in
+  const handleSignIn = useCallback(async (): Promise<boolean> => {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google Sign-In OK:', result.user.uid);
+      return true;
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      Alert.alert(
+        'Sign-in Failed', 
+        'There was an error signing in with Google. Please try again.'
+      );
+      return false;
+    }
+  }, [auth]);
+
+  // Handler for saving dose
+  const handleSaveDose = useCallback(async () => {
+    if (isSaving || isLogging) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Check if user is authenticated
+      if (!user || user.isAnonymous) {
+        // Trigger Google sign-in
+        const signInSuccessful = await handleSignIn();
+        if (!signInSuccessful) {
+          setIsSaving(false);
+          return;
+        }
+        // Note: After successful sign-in, user state will update via AuthContext
+        // We'll need to wait for the state to update before proceeding
+        // For now, let's show a message that they need to try again after sign-in
+        Alert.alert(
+          'Sign-in Successful',
+          'Please tap "Save this dose" again to save your dose.'
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      // User is authenticated, proceed with saving
+      const doseInfo = {
+        substanceName,
+        doseValue,
+        unit,
+        calculatedVolume,
+        syringeType: manualSyringe.type as 'Insulin' | 'Standard',
+        recommendedMarking,
+      };
+
+      const result = await logDose(doseInfo);
+      
+      if (result.success) {
+        Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+      } else if (result.limitReached) {
+        Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
+      } else {
+        Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving dose:', error);
+      Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    isSaving, isLogging, user, handleSignIn, logDose,
+    substanceName, doseValue, unit, calculatedVolume, 
+    manualSyringe, recommendedMarking
+  ]);
   
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
@@ -236,6 +318,20 @@ export default function FinalResultDisplay({
         >
           <RotateCcw color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>Start Over</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            { backgroundColor: isSaving ? '#9CA3AF' : '#3B82F6' }, 
+            isMobileWeb && styles.actionButtonMobile
+          ]} 
+          onPress={handleSaveDose}
+          disabled={isSaving || isLogging}
+        >
+          <Save color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>
+            {isSaving ? 'Saving...' : 'Save this dose'}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} 
