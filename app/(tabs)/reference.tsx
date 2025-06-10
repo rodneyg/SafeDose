@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Star, MessageSquare } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import { Star, MessageSquare, X } from 'lucide-react-native';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { isMobileWeb } from '../../lib/utils';
 
 interface CommonDose {
@@ -57,25 +59,60 @@ const COMMON_DOSES: CommonDose[] = [
 ];
 
 export default function ReferenceScreen() {
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [compoundName, setCompoundName] = useState('');
+  const [dosageRange, setDosageRange] = useState('');
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSuggestCompound = () => {
-    Alert.alert(
-      'Suggest a Compound',
-      'Would you like to suggest a compound to add to this reference list?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Suggest',
-          onPress: () => {
-            // TODO: Implement Firebase feedback collection
-            Alert.alert(
-              'Thank you!',
-              'We appreciate your feedback. This feature will be implemented soon to collect compound suggestions.'
-            );
-          },
-        },
-      ]
-    );
+    setShowFeedbackModal(true);
+  };
+
+  const handleSubmitSuggestion = async () => {
+    if (!compoundName.trim()) {
+      Alert.alert('Error', 'Please enter a compound name.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Store suggestion in Firebase
+      await addDoc(collection(db, 'compound-suggestions'), {
+        compoundName: compoundName.trim(),
+        dosageRange: dosageRange.trim(),
+        notes: notes.trim(),
+        timestamp: new Date(),
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
+      });
+
+      Alert.alert(
+        'Thank you!',
+        'Your compound suggestion has been submitted successfully.',
+        [{ text: 'OK', onPress: () => setShowFeedbackModal(false) }]
+      );
+
+      // Reset form
+      setCompoundName('');
+      setDosageRange('');
+      setNotes('');
+    } catch (error) {
+      console.error('Error submitting compound suggestion:', error);
+      Alert.alert(
+        'Error',
+        'Failed to submit suggestion. Please try again later.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseFeedbackModal = () => {
+    setShowFeedbackModal(false);
+    setCompoundName('');
+    setDosageRange('');
+    setNotes('');
   };
 
   const renderDoseRow = (dose: CommonDose, index: number) => (
@@ -169,6 +206,77 @@ export default function ReferenceScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={showFeedbackModal}
+        animationType="slide"
+        presentationStyle="formSheet"
+        onRequestClose={handleCloseFeedbackModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Suggest a Compound</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={handleCloseFeedbackModal}
+            >
+              <X size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalDescription}>
+              Help us expand our reference list by suggesting a compound and its common dosage information.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Compound Name *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={compoundName}
+                onChangeText={setCompoundName}
+                placeholder="e.g., GHRP-6"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Common Dosage Range</Text>
+              <TextInput
+                style={styles.textInput}
+                value={dosageRange}
+                onChangeText={setDosageRange}
+                placeholder="e.g., 100-200mcg 2x/day"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Notes / Use Cases</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="e.g., Growth hormone releasing peptide"
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+              onPress={handleSubmitSuggestion}
+              disabled={isSubmitting}
+            >
+              <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
+                {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -349,5 +457,83 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
     marginBottom: 6,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F2F2F7',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    ...(!isMobileWeb && {
+      paddingTop: 50, // Account for status bar on mobile
+    }),
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  modalDescription: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#000',
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#C7C7CC',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  submitButtonTextDisabled: {
+    color: '#8E8E93',
   },
 });
