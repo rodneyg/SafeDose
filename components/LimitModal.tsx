@@ -159,21 +159,25 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
               </Text>
             </>
           )}
-          <View style={styles.buttonContainer}>
-            {isAnonymous && (
-              <TouchableOpacity style={[styles.button, styles.signInButton]} onPress={handleSignIn}>
-                <Text style={styles.buttonText}>Sign In</Text>
+          
+          {/* Action buttons - only show when not in success state */}
+          {!emailSubmitted && (
+            <View style={styles.buttonContainer}>
+              {isAnonymous && (
+                <TouchableOpacity style={[styles.button, styles.signInButton]} onPress={handleSignIn}>
+                  <Text style={styles.buttonText}>Sign In</Text>
+                </TouchableOpacity>
+              )}
+              {!isPremium && (
+                <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
+                  <Text style={styles.buttonText}>Upgrade</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
+                <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
-            )}
-            {!isPremium && (
-              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-                <Text style={styles.buttonText}>Upgrade</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
