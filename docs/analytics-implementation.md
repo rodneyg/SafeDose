@@ -51,6 +51,12 @@ The following custom events are tracked:
 - **profile_backed_up**: Logged when local profile is backed up to Firebase (user authentication transition)
 - **profile_backup_failed**: Logged when profile backup to Firebase fails
 
+### Sign-Up Prompt Events
+- **signup_prompt_shown**: Logged when the sign-up prompt is displayed to anonymous users
+- **signup_prompt_clicked**: Logged when user clicks "Sign Up Free" button 
+- **signup_prompt_dismissed**: Logged when user dismisses the prompt with "Maybe Later"
+- **signup_prompt_conversion**: Logged when user successfully signs up after seeing the prompt
+
 ## User Properties
 
 The following user properties are set and maintained:

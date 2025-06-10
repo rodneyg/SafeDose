@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useSignUpPromptTracking } from '../lib/hooks/useSignUpPromptTracking';
+import { useWelcomeNotification } from '../lib/hooks/useWelcomeNotification';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -52,6 +53,9 @@ export default function IntroScreen({
   // Sign-up prompt state
   const { shouldShowPrompt, markPromptShown, markPromptDismissed } = useSignUpPromptTracking();
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
+
+  // Welcome notification for new registrants
+  useWelcomeNotification();
 
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);

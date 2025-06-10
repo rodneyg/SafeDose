@@ -66,6 +66,14 @@ export function useSignUpPromptTracking() {
     loadPromptState();
   }, [loadPromptState]);
 
+  // Reset prompt state when user becomes authenticated
+  useEffect(() => {
+    if (user && !user.isAnonymous) {
+      console.log('[SignUpPromptTracking] User is now authenticated, resetting prompt state');
+      resetPromptState();
+    }
+  }, [user, resetPromptState]);
+
   // Increment interaction count
   const incrementInteractionCount = useCallback(async () => {
     // Only track for anonymous users
