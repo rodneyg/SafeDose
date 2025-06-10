@@ -49,6 +49,49 @@ export default function FinalResultDisplay({
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
+  
+  // Effect to handle automatic saving after successful authentication
+  useEffect(() => {
+    const handleAuthenticatedSave = async () => {
+      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging) {
+        setPendingSave(false);
+        setIsSaving(true);
+        
+        try {
+          const doseInfo = {
+            substanceName,
+            doseValue,
+            unit,
+            calculatedVolume,
+            syringeType: manualSyringe.type as 'Insulin' | 'Standard',
+            recommendedMarking,
+          };
+
+          const result = await logDose(doseInfo);
+          
+          if (result.success) {
+            Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+          } else if (result.limitReached) {
+            Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
+          } else {
+            Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error saving dose after auth:', error);
+          Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+        } finally {
+          setIsSaving(false);
+        }
+      }
+    };
+
+    handleAuthenticatedSave();
+  }, [
+    pendingSave, user, isSaving, isLogging, logDose,
+    substanceName, doseValue, unit, calculatedVolume, 
+    manualSyringe, recommendedMarking
+  ]);
   
   // Helper function to trigger Google sign-in
   const handleSignIn = useCallback(async (): Promise<boolean> => {
@@ -78,24 +121,20 @@ export default function FinalResultDisplay({
     try {
       // Check if user is authenticated
       if (!user || user.isAnonymous) {
-        // Trigger Google sign-in
+        // Set pending save flag and trigger Google sign-in
+        setPendingSave(true);
         const signInSuccessful = await handleSignIn();
         if (!signInSuccessful) {
+          setPendingSave(false);
           setIsSaving(false);
           return;
         }
-        // Note: After successful sign-in, user state will update via AuthContext
-        // We'll need to wait for the state to update before proceeding
-        // For now, let's show a message that they need to try again after sign-in
-        Alert.alert(
-          'Sign-in Successful',
-          'Please tap "Save this dose" again to save your dose.'
-        );
-        setIsSaving(false);
+        // Note: The useEffect will handle the actual saving once auth completes
+        // Keep isSaving true to show loading state
         return;
       }
 
-      // User is authenticated, proceed with saving
+      // User is already authenticated, proceed with saving immediately
       const doseInfo = {
         substanceName,
         doseValue,
@@ -330,7 +369,10 @@ export default function FinalResultDisplay({
         >
           <Save color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>
-            {isSaving ? 'Saving...' : 'Save this dose'}
+            {isSaving 
+              ? (pendingSave ? 'Signing in...' : 'Saving...') 
+              : 'Save this dose'
+            }
           </Text>
         </TouchableOpacity>
         <TouchableOpacity 
