@@ -38,6 +38,12 @@ export const ANALYTICS_EVENTS = {
   USER_RETAINED_DAY_1: 'user_retained_day_1',
   USER_RETAINED_DAY_7: 'user_retained_day_7',
   USER_RETAINED_DAY_30: 'user_retained_day_30',
+  // Profile storage events  
+  PROFILE_SAVED_FIREBASE: 'profile_saved_firebase',
+  PROFILE_SAVED_LOCAL_ONLY: 'profile_saved_local_only',
+  PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
+  PROFILE_BACKED_UP: 'profile_backed_up',
+  PROFILE_BACKUP_FAILED: 'profile_backup_failed',
 } as const;
 
 // User property names
@@ -46,6 +52,10 @@ export const USER_PROPERTIES = {
   IS_ANONYMOUS: 'is_anonymous',
   SUBSCRIPTION_STATUS: 'subscription_status',
   RETENTION_COHORT: 'retention_cohort',
+  IS_LICENSED_PROFESSIONAL: 'is_licensed_professional',
+  IS_PERSONAL_USE: 'is_personal_use',
+  IS_COSMETIC_USE: 'is_cosmetic_use',
+  USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
 // Helper function to safely log analytics events
@@ -95,5 +105,25 @@ export const trackRetention = (days: 1 | 7 | 30) => {
   
   logAnalyticsEvent(eventMap[days], {
     retention_day: days,
+  });
+};
+
+// Helper function to set personalization user properties from profile
+export const setPersonalizationUserProperties = (profile: any) => {
+  // Determine user segment based on profile
+  let userSegment = 'general_user';
+  if (profile.isLicensedProfessional) {
+    userSegment = 'healthcare_professional';
+  } else if (profile.isCosmeticUse) {
+    userSegment = 'cosmetic_user';
+  } else if (profile.isPersonalUse) {
+    userSegment = 'personal_medical_user';
+  }
+
+  setAnalyticsUserProperties({
+    [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
+    [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
+    [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
+    [USER_PROPERTIES.USER_SEGMENT]: userSegment,
   });
 };
