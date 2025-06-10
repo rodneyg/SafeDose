@@ -12,6 +12,7 @@ type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
+  trackInteraction?: () => void;
 }
 
 const isValidValue = (value: any): boolean => {
@@ -20,7 +21,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
-export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculatorProps) {
+export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -485,6 +486,12 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
 
   const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
+    
+    // Track interaction for sign-up prompt
+    if (trackInteraction) {
+      trackInteraction();
+    }
+    
     setFeedbackContext({
       nextAction,
       doseInfo: {
@@ -498,7 +505,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     });
     setScreenStep('postDoseFeedback');
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -506,6 +513,11 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
+    
+    // Track interaction for sign-up prompt if log was successful
+    if (logResult.success && trackInteraction) {
+      trackInteraction();
+    }
     
     if (logResult.limitReached) {
       console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
@@ -576,7 +588,7 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
 
   const handleCapture = useCallback(async () => {
     try {
