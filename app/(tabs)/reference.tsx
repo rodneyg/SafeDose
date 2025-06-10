@@ -32,6 +32,18 @@ const COMMON_DOSES: CommonDose[] = [
     isPopular: true,
   },
   {
+    compound: 'Semaglutide',
+    dosageRange: '0.25–1mg weekly',
+    notes: 'GLP-1 agonist for weight management',
+    isPopular: true,
+  },
+  {
+    compound: 'Tirzepatide',
+    dosageRange: '2.5–15mg weekly',
+    notes: 'Dual GLP-1/GIP agonist for weight loss',
+    isPopular: true,
+  },
+  {
     compound: 'Ipamorelin',
     dosageRange: '200–300mcg 2–3x/day',
     notes: 'Growth hormone releasing peptide',
@@ -55,6 +67,47 @@ const COMMON_DOSES: CommonDose[] = [
     compound: 'Hexarelin',
     dosageRange: '100mcg 2–3x/day',
     notes: 'Growth hormone release',
+  },
+  {
+    compound: 'Liraglutide',
+    dosageRange: '0.6–3mg daily',
+    notes: 'GLP-1 agonist for appetite control',
+  },
+  {
+    compound: 'Dulaglutide',
+    dosageRange: '0.75–1.5mg weekly',
+    notes: 'GLP-1 agonist for metabolic support',
+  },
+  {
+    compound: 'Exenatide',
+    dosageRange: '5–10mcg 2x/day',
+    notes: 'GLP-1 agonist for blood sugar control',
+  },
+  {
+    compound: 'GHK-Cu',
+    dosageRange: '1–3mg daily',
+    notes: 'Copper peptide for skin repair and anti-aging',
+    isPopular: true,
+  },
+  {
+    compound: 'Matrixyl',
+    dosageRange: '0.5–2mg topically',
+    notes: 'Palmitoyl pentapeptide for collagen synthesis',
+  },
+  {
+    compound: 'SNAP-8',
+    dosageRange: '1–5mg topically',
+    notes: 'Acetyl octapeptide for wrinkle reduction',
+  },
+  {
+    compound: 'Epithalon',
+    dosageRange: '5–10mg daily',
+    notes: 'Tetrapeptide for anti-aging and longevity',
+  },
+  {
+    compound: 'Thymosin Alpha-1',
+    dosageRange: '1.6mg 2x/week',
+    notes: 'Immune support and anti-aging peptide',
   },
 ];
 
