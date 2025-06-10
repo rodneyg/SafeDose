@@ -10,6 +10,7 @@ import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import LimitModal from '../../components/LimitModal';
+import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
@@ -240,6 +241,11 @@ export default function NewDoseScreen() {
     validateConcentrationInput,
     // Last action tracking
     lastActionType,
+    // Log limit modal
+    showLogLimitModal,
+    handleCloseLogLimitModal,
+    handleContinueWithoutSaving,
+    logUsageData,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -835,6 +841,13 @@ export default function NewDoseScreen() {
         isAnonymous={user?.isAnonymous ?? true}
         isPremium={usageData.plan !== 'free'}
         onClose={() => setShowLimitModal(false)}
+      />
+      <LogLimitModal
+        visible={showLogLimitModal}
+        isAnonymous={user?.isAnonymous ?? true}
+        isPremium={logUsageData.plan !== 'free'}
+        onClose={handleCloseLogLimitModal}
+        onContinueWithoutSaving={handleContinueWithoutSaving}
       />
       <VolumeErrorModal
         visible={showVolumeErrorModal}

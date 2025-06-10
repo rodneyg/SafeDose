@@ -53,7 +53,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
 
   // Initialize dose logging hook
-  const { logDose } = useDoseLogging();
+  const { logDose, logUsageData } = useDoseLogging();
+
+  // Log limit modal state
+  const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -500,8 +503,19 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     if (!feedbackContext) return;
     
     // Automatically log the completed dose
-    await logDose(feedbackContext.doseInfo);
-    console.log('[useDoseCalculator] Dose automatically logged');
+    const logResult = await logDose(feedbackContext.doseInfo);
+    
+    if (logResult.limitReached) {
+      console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
+      setShowLogLimitModal(true);
+      return; // Stop here, don't proceed with navigation
+    }
+    
+    if (logResult.success) {
+      console.log('[useDoseCalculator] Dose automatically logged');
+    } else {
+      console.warn('[useDoseCalculator] Failed to log dose, but continuing...');
+    }
     
     const nextAction = feedbackContext.nextAction;
     console.log('[useDoseCalculator] Next action:', nextAction);
@@ -600,6 +614,49 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
   //   }
   // }, [screenStep, manualStep, resetFullForm]);
 
+  // Handle log limit modal actions
+  const handleCloseLogLimitModal = useCallback(() => {
+    setShowLogLimitModal(false);
+  }, []);
+
+  const handleContinueWithoutSaving = useCallback(() => {
+    console.log('[useDoseCalculator] User chose to continue without saving dose');
+    // Clear feedback context and proceed with navigation without logging
+    if (feedbackContext) {
+      const nextAction = feedbackContext.nextAction;
+      setFeedbackContext(null);
+      
+      // Navigate based on the next action, just like in handleFeedbackComplete
+      if (nextAction === 'start_over') {
+        resetFullForm('dose');
+        setLastActionType(null);
+        setScreenStep('intro');
+      } else if (nextAction === 'new_dose') {
+        resetFullForm('dose');
+        if (lastActionType === 'scan') {
+          setScreenStep('scan');
+        } else if (lastActionType === 'manual') {
+          setScreenStep('manualEntry');
+        } else {
+          setScreenStep('intro');
+        }
+      } else {
+        setScreenStep('intro');
+      }
+    }
+    setShowLogLimitModal(false);
+  }, [feedbackContext, lastActionType, resetFullForm]);
+
+  // // Alternative implementation - reset to initial screen without navigation
+  // // Uncomment if the above navigation logic causes issues
+  // const handleContinueWithoutSaving = useCallback(() => {
+  //   console.log('[useDoseCalculator] User chose to continue without saving dose');
+  //   setFeedbackContext(null);
+  //   setShowLogLimitModal(false);
+  //   resetFullForm('dose');
+  //   setScreenStep('intro');
+  // }, [resetFullForm]);
+
   return {
     screenStep,
     setScreenStep: safeSetScreenStep,
@@ -690,5 +747,10 @@ export default function useDoseCalculator({ checkUsageLimit }: UseDoseCalculator
     setFeedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // Log limit modal
+    showLogLimitModal,
+    handleCloseLogLimitModal,
+    handleContinueWithoutSaving,
+    logUsageData,
   };
 }
