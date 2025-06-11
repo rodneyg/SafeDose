@@ -47,12 +47,12 @@ const pricingPlans: PricingPlan[] = [
   {
     name: "Basic Pro",
     price: { monthly: 9.99, annual: 89.99 },
-    description: "For consistent logging without AI features",
+    description: "For consistent logging with AI scan assistance",
     features: [
+      { name: "20 AI scans/month", available: true },
       { name: "Unlimited logs", available: true },
       { name: "Manual calculations", available: true },
       { name: "Priority support", available: true },
-      { name: "AI scans", available: false },
       { name: "Priority processing", available: false },
       { name: "Priority scan queue", available: false },
     ],

@@ -58,7 +58,7 @@ export default function PricingPage() {
       name: "Basic Pro",
       price: 9.99,
       priceSuffix: "/month",
-      subtext: "Unlimited logs, no AI scans",
+      subtext: "Unlimited logs, 20 AI scans",
       priceId: 'price_1RYgyPAY2p4W374YNbpBpbqv',
       badgeText: "Popular",
       isDefault: true,
@@ -121,10 +121,10 @@ export default function PricingPage() {
         ];
       case 'basic_pro':
         return [
+          { icon: Zap, text: "20 AI scans/month", color: "#FF6B6B" },
           { icon: CheckCircle, text: "Unlimited logs", color: "#4ECDC4" },
           { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
           { icon: Shield, text: "Priority support", color: "#96CEB4" },
-          { icon: Zap, text: "No AI scans", color: "#999999", disabled: true },
         ];
       case 'full_pro':
         return [
