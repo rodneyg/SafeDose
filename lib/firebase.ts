@@ -16,9 +16,13 @@ const getFirebaseConfig = () => {
     measurementId: "G-WRY88Q57KK",
   };
   
-  // For web platforms, ensure measurementId is only included if Analytics will be used
-  if (typeof window !== "undefined") {
-    return config;
+  // Only include measurementId for web platforms where Analytics is available
+  if (typeof window !== "undefined" && config.measurementId) {
+    return {
+      ...config,
+      // Ensure measurementId is properly formatted as a string
+      measurementId: String(config.measurementId)
+    };
   } else {
     // For non-web platforms, exclude measurementId to avoid potential issues
     const { measurementId, ...configWithoutMeasurementId } = config;
@@ -81,6 +85,7 @@ export const getDbInstance = (): Firestore => {
 };
 
 export const getAnalyticsInstance = (): Analytics | undefined => {
+  // Only initialize Analytics in browser environments
   if (typeof window === "undefined") {
     console.log('[Firebase] Analytics not available - not in browser environment');
     return undefined;
@@ -94,6 +99,13 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
       const appInstance = getFirebaseApp();
       if (!appInstance) {
         console.error('[Firebase] Cannot initialize Analytics - Firebase app not available');
+        return undefined;
+      }
+      
+      // Verify the app configuration includes measurementId before proceeding
+      const config = getFirebaseConfig();
+      if (!config.measurementId) {
+        console.log('[Firebase] Analytics not initialized - no measurementId in config');
         return undefined;
       }
       
