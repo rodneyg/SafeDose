@@ -1,5 +1,4 @@
-import { logEvent, setUserProperties } from 'firebase/analytics';
-import { getAnalyticsInstance } from './firebase';
+import * as Decoy from './analytics-proxy';
 
 // Custom event names as defined in the issue
 export const ANALYTICS_EVENTS = {
@@ -58,34 +57,44 @@ export const USER_PROPERTIES = {
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
-// Helper function to safely log analytics events
-export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      logEvent(analytics, eventName, parameters);
-      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
-    } catch (error) {
-      console.error(`[Analytics] Failed to log event ${eventName}:`, error);
-    }
-  } else {
-    console.log(`[Analytics] Analytics not available, would log: ${eventName}`, parameters);
-  }
+let isActivationStarted = false;
+
+// Function type definitions
+type LogEventFunction = (eventName: string, eventParams?: { [key: string]: any }) => Promise<void>;
+type SetPropertiesFunction = (properties: { [key: string]: any }) => Promise<void>;
+
+// By default, all exports point to the safe decoy functions.
+let _logAnalyticsEvent: LogEventFunction = Decoy.logAnalyticsEvent;
+let _setAnalyticsUserProperties: SetPropertiesFunction = Decoy.setAnalyticsUserProperties;
+
+/**
+ * Call this ONCE from the root of the app after it has stabilized.
+ * It will load the real analytics module and hot-swap the functions.
+ */
+export const activateAnalytics = () => {
+  if (isActivationStarted) return;
+  isActivationStarted = true;
+
+  setTimeout(() => {
+    import('./analytics-real')
+      .then(RealAnalytics => {
+        _logAnalyticsEvent = RealAnalytics.logAnalyticsEvent;
+        _setAnalyticsUserProperties = RealAnalytics.setAnalyticsUserProperties;
+        console.log('[Analytics Controller] ✅ Analytics ACTIVATED. Real functions are now live.');
+      })
+      .catch(error => {
+        console.error('[Analytics Controller] ❌ FAILED TO ACTIVATE ANALYTICS. App will continue safely with decoy.', error);
+      });
+  }, 500); // Generous delay to ensure app is stable
 };
 
-// Helper function to safely set user properties
-export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      setUserProperties(analytics, properties);
-      console.log(`[Analytics] User properties set:`, properties);
-    } catch (error) {
-      console.error(`[Analytics] Failed to set user properties:`, error);
-    }
-  } else {
-    console.log(`[Analytics] Analytics not available, would set properties:`, properties);
-  }
+// Export wrapper functions that call the swappable implementations.
+export const logAnalyticsEvent = async (eventName: string, parameters?: Record<string, any>): Promise<void> => {
+  return await _logAnalyticsEvent(eventName, parameters);
+};
+
+export const setAnalyticsUserProperties = async (properties: Record<string, any>): Promise<void> => {
+  return await _setAnalyticsUserProperties(properties);
 };
 
 // Helper function to set personalization user properties from profile
