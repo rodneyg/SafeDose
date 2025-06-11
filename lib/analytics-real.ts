@@ -1,4 +1,4 @@
-import { getFirebaseApp, getFullFirebaseConfig } from './firebase';
+import { getFirebaseApp } from './firebase';
 import type { Analytics } from 'firebase/analytics';
 
 let analyticsInstance: Analytics | null = null;
