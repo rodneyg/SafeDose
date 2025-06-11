@@ -80,6 +80,9 @@ export function useDoseLogging() {
           doseValue: data.doseValue,
           unit: data.unit,
           calculatedVolume: data.calculatedVolume,
+          syringeType: data.syringeType,
+          recommendedMarking: data.recommendedMarking,
+          injectionSite: data.injectionSite,
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
@@ -133,6 +136,7 @@ export function useDoseLogging() {
         calculatedVolume: doseInfo.calculatedVolume,
         syringeType: doseInfo.syringeType || undefined,
         recommendedMarking: doseInfo.recommendedMarking || undefined,
+        injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
       };

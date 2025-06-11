@@ -4,6 +4,7 @@ import { Trash2, Calendar, Pill } from 'lucide-react-native';
 import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { DoseLog } from '../../types/doseLog';
+import { formatInjectionSiteForDisplay } from '../../lib/injectionSites';
 
 // Helper function to format the "Draw to" text
 function formatDrawToText(log: DoseLog): string | null {
@@ -126,6 +127,14 @@ export default function LogsScreen() {
     return `${formattedConcentration} ${concentrationUnit}`;
   };
 
+  const formatInjectionSite = (injectionSite: string): string => {
+    try {
+      return formatInjectionSiteForDisplay(injectionSite as any);
+    } catch (error) {
+      return injectionSite; // Fallback to raw value if formatting fails
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -173,6 +182,11 @@ export default function LogsScreen() {
                         <Text style={styles.volumeAmount}>
                           → {log.calculatedVolume} mL
                         </Text>
+                        {log.injectionSite && (
+                          <Text style={styles.injectionSiteText}>
+                            — {formatInjectionSite(log.injectionSite)}
+                          </Text>
+                        )}
                       </View>
                       {drawToText && (
                         <View style={styles.drawToInfo}>
@@ -324,6 +338,11 @@ const styles = StyleSheet.create({
   volumeAmount: {
     fontSize: 16,
     color: '#10B981',
+    fontWeight: '500',
+  },
+  injectionSiteText: {
+    fontSize: 15,
+    color: '#007AFF',
     fontWeight: '500',
   },
   concentrationInfo: {

@@ -9,6 +9,7 @@ import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
+import InjectionSiteSelector from '../../components/InjectionSiteSelector';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import PMFSurveyModal from '../../components/PMFSurveyModal';
 import LimitModal from '../../components/LimitModal';
@@ -19,12 +20,13 @@ import SignUpPrompt from '../../components/SignUpPrompt'; // Import sign-up prom
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
+import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -39,6 +41,7 @@ export default function NewDoseScreen() {
 
   const feedbackStorage = useFeedbackStorage();
   const signUpPrompt = useSignUpPrompt();
+  const { getDoseLogHistory } = useDoseLogging();
   
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
@@ -262,6 +265,11 @@ export default function NewDoseScreen() {
     pmfSurveyTriggerData,
     handlePMFSurveyComplete,
     handlePMFSurveySkip,
+    // Injection site selection
+    selectedInjectionSite,
+    setSelectedInjectionSite,
+    handleInjectionSiteSelected,
+    handleInjectionSiteCancel,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -270,6 +278,7 @@ export default function NewDoseScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
+  const [doseHistory, setDoseHistory] = useState<import('../../types/doseLog').DoseLog[]>([]);
   const [webFlashlightEnabled, setWebFlashlightEnabled] = useState(false);
   const [webFlashlightSupported, setWebFlashlightSupported] = useState(false);
   const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
@@ -451,6 +460,23 @@ export default function NewDoseScreen() {
       return () => clearTimeout(timerId);
     }
   }, [isProcessing]);
+
+  // Load dose history when injection site selection screen is shown
+  useEffect(() => {
+    if (screenStep === 'injectionSiteSelection') {
+      const loadDoseHistory = async () => {
+        try {
+          const history = await getDoseLogHistory();
+          setDoseHistory(history);
+        } catch (error) {
+          console.error('Error loading dose history for injection site selection:', error);
+          setDoseHistory([]); // Fallback to empty array
+        }
+      };
+      
+      loadDoseHistory();
+    }
+  }, [screenStep, getDoseLogHistory]);
 
   // Function to apply scan results to form state
   const applyScanResults = (result: any) => {
@@ -746,6 +772,7 @@ export default function NewDoseScreen() {
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
             {screenStep === 'whyAreYouHere' && 'Quick Question'}
+            {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
             {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
@@ -884,6 +911,15 @@ export default function NewDoseScreen() {
           onSkip={handlePMFSurveySkip}
           sessionCount={pmfSurveyTriggerData.sessionCount}
           isMobileWeb={isMobileWeb}
+        />
+      )}
+      {screenStep === 'injectionSiteSelection' && (
+        <InjectionSiteSelector
+          doseHistory={doseHistory}
+          selectedSite={selectedInjectionSite}
+          onSiteSelect={setSelectedInjectionSite}
+          onConfirm={handleInjectionSiteSelected}
+          onCancel={handleInjectionSiteCancel}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (

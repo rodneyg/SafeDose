@@ -102,4 +102,40 @@ describe('useDoseLogging', () => {
     expect(insulinLog.syringeType).toBe('Insulin');
     expect(insulinLog.recommendedMarking).toBe('10');
   });
+
+  it('should support injection site tracking', () => {
+    const logWithInjectionSite: DoseLog = {
+      id: 'test-with-injection-site',
+      userId: 'test-user',
+      substanceName: 'Peptide',
+      doseValue: 5,
+      unit: 'mg',
+      calculatedVolume: 0.25,
+      injectionSite: 'abdomen_L',
+      timestamp: new Date().toISOString(),
+    };
+
+    expect(logWithInjectionSite.injectionSite).toBe('abdomen_L');
+
+    // Test all injection site options
+    const validSites = [
+      'abdomen_L', 'abdomen_R', 'thigh_L', 'thigh_R',
+      'glute_L', 'glute_R', 'arm_L', 'arm_R'
+    ];
+
+    validSites.forEach(site => {
+      const log: DoseLog = {
+        id: `test-${site}`,
+        userId: 'test-user',
+        substanceName: 'Test Drug',
+        doseValue: 1,
+        unit: 'mg',
+        calculatedVolume: 0.1,
+        injectionSite: site as any,
+        timestamp: new Date().toISOString(),
+      };
+
+      expect(log.injectionSite).toBe(site);
+    });
+  });
 });
