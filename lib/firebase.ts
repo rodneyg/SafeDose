@@ -18,9 +18,26 @@ const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
 // Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// Export Firebase auth, analytics, and firestore
+// Export Firebase auth and firestore
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const analytics = typeof window !== "undefined"
-  ? getAnalytics(app)
-  : undefined;
+
+// Lazy-initialize analytics to prevent initialization order issues
+let analyticsInstance: ReturnType<typeof getAnalytics> | undefined = undefined;
+
+export const getAnalyticsInstance = () => {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+  
+  if (!analyticsInstance) {
+    try {
+      analyticsInstance = getAnalytics(app);
+    } catch (error) {
+      console.warn('[Firebase] Analytics initialization failed:', error);
+      return undefined;
+    }
+  }
+  
+  return analyticsInstance;
+};
