@@ -3,7 +3,6 @@ import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
-import { getAnalyticsInstance } from '../lib/firebase';
 import "../global.css";
 
 export default function RootLayout() {
@@ -13,13 +12,8 @@ export default function RootLayout() {
     console.log('[RootLayout] Root layout effect running - hiding splash screen');
     SplashScreen.hideAsync();
     
-    // Initialize Firebase Analytics lazily
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
-      console.log('[Analytics] Firebase Analytics initialized');
-    } else {
-      console.log('[Analytics] Firebase Analytics not available (likely not web platform)');
-    }
+    // Note: Firebase Analytics initialization is now deferred to prevent 'G' variable reference errors
+    console.log('[RootLayout] Firebase Analytics initialization deferred to prevent timing issues');
   }, []);
   
   console.log('[RootLayout] Rendering providers and slot');

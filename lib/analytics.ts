@@ -1,6 +1,66 @@
 import { logEvent, setUserProperties } from 'firebase/analytics';
 import { getAnalyticsInstance } from './firebase';
 
+// Analytics initialization state and queue management
+let analyticsInitialized = false;
+let initializationAttempted = false;
+let eventQueue: Array<{ type: 'event'; eventName: string; parameters?: Record<string, any> }> = [];
+let propertyQueue: Array<{ type: 'properties'; properties: Record<string, any> }> = [];
+
+// Deferred Analytics initialization function
+const initializeAnalyticsDeferred = () => {
+  if (initializationAttempted) {
+    return;
+  }
+  
+  initializationAttempted = true;
+  console.log('[Analytics] Starting deferred Analytics initialization...');
+  
+  // Add a small delay to ensure component tree is fully mounted
+  setTimeout(() => {
+    try {
+      console.log('[Analytics] Attempting to get Analytics instance after delay...');
+      const analytics = getAnalyticsInstance();
+      
+      if (analytics) {
+        analyticsInitialized = true;
+        console.log('[Analytics] Analytics successfully initialized, processing queued events');
+        console.log('[Analytics] Processing', eventQueue.length, 'queued events and', propertyQueue.length, 'property updates');
+        
+        // Process queued events
+        eventQueue.forEach(({ eventName, parameters }) => {
+          try {
+            logEvent(analytics, eventName, parameters);
+            console.log(`[Analytics] Queued event processed: ${eventName}`, parameters);
+          } catch (error) {
+            console.error(`[Analytics] Failed to process queued event ${eventName}:`, error);
+          }
+        });
+        
+        // Process queued properties
+        propertyQueue.forEach(({ properties }) => {
+          try {
+            setUserProperties(analytics, properties);
+            console.log(`[Analytics] Queued properties processed:`, properties);
+          } catch (error) {
+            console.error(`[Analytics] Failed to process queued properties:`, error);
+          }
+        });
+        
+        // Clear queues
+        eventQueue = [];
+        propertyQueue = [];
+        console.log('[Analytics] Event and property queues cleared');
+      } else {
+        console.log('[Analytics] Analytics not available after initialization attempt');
+      }
+    } catch (error) {
+      console.error('[Analytics] Deferred Analytics initialization failed:', error);
+      initializationAttempted = false; // Allow retry
+    }
+  }, 1000); // 1 second delay to ensure app is fully loaded
+};
+
 // Custom event names as defined in the issue
 export const ANALYTICS_EVENTS = {
   SIGN_IN_ATTEMPT: 'sign_in_attempt',
@@ -60,31 +120,61 @@ export const USER_PROPERTIES = {
 
 // Helper function to safely log analytics events
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      logEvent(analytics, eventName, parameters);
-      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
-    } catch (error) {
-      console.error(`[Analytics] Failed to log event ${eventName}:`, error);
+  console.log(`[Analytics] logAnalyticsEvent called: ${eventName}`, parameters);
+  
+  // Trigger deferred initialization if not already attempted
+  if (!initializationAttempted) {
+    console.log('[Analytics] First analytics call detected, triggering deferred initialization');
+    initializeAnalyticsDeferred();
+  }
+  
+  if (analyticsInitialized) {
+    // Analytics is ready, log immediately
+    const analytics = getAnalyticsInstance();
+    if (analytics) {
+      try {
+        logEvent(analytics, eventName, parameters);
+        console.log(`[Analytics] Event logged immediately: ${eventName}`, parameters);
+      } catch (error) {
+        console.error(`[Analytics] Failed to log event ${eventName}:`, error);
+      }
+    } else {
+      console.log(`[Analytics] Analytics instance not available for event: ${eventName}`, parameters);
     }
   } else {
-    console.log(`[Analytics] Analytics not available, would log: ${eventName}`, parameters);
+    // Queue the event for later processing
+    console.log(`[Analytics] Queueing event: ${eventName}`, parameters);
+    eventQueue.push({ type: 'event', eventName, parameters });
   }
 };
 
 // Helper function to safely set user properties
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      setUserProperties(analytics, properties);
-      console.log(`[Analytics] User properties set:`, properties);
-    } catch (error) {
-      console.error(`[Analytics] Failed to set user properties:`, error);
+  console.log(`[Analytics] setAnalyticsUserProperties called:`, properties);
+  
+  // Trigger deferred initialization if not already attempted
+  if (!initializationAttempted) {
+    console.log('[Analytics] First analytics call detected, triggering deferred initialization');
+    initializeAnalyticsDeferred();
+  }
+  
+  if (analyticsInitialized) {
+    // Analytics is ready, set properties immediately
+    const analytics = getAnalyticsInstance();
+    if (analytics) {
+      try {
+        setUserProperties(analytics, properties);
+        console.log(`[Analytics] User properties set immediately:`, properties);
+      } catch (error) {
+        console.error(`[Analytics] Failed to set user properties:`, error);
+      }
+    } else {
+      console.log(`[Analytics] Analytics instance not available for properties:`, properties);
     }
   } else {
-    console.log(`[Analytics] Analytics not available, would set properties:`, properties);
+    // Queue the properties for later processing
+    console.log(`[Analytics] Queueing properties:`, properties);
+    propertyQueue.push({ type: 'properties', properties });
   }
 };
 

@@ -228,6 +228,13 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
         return undefined;
       }
       
+      // Additional defensive check - ensure measurementId follows expected format to prevent 'G' variable issues
+      if (!config.measurementId.startsWith('G-') || config.measurementId.length < 10) {
+        console.log('[Firebase Analytics] Analytics not initialized - invalid measurementId format');
+        console.log('[Firebase Analytics] MeasurementId format validation failed, skipping to prevent initialization errors');
+        return undefined;
+      }
+      
       // Ensure the Firebase app is fully initialized before proceeding
       console.log('[Firebase Analytics] Firebase app ready, initializing Analytics...');
       console.log('[Firebase Analytics] About to call getAnalytics() with app instance');
@@ -237,7 +244,24 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
         projectId: appInstance.options?.projectId
       });
       
-      analyticsInstance = getAnalytics(appInstance);
+      // Wrap the getAnalytics call in additional try-catch to catch 'G' variable reference errors
+      try {
+        console.log('[Firebase Analytics] Calling getAnalytics() with defensive error handling...');
+        analyticsInstance = getAnalytics(appInstance);
+        console.log('[Firebase Analytics] getAnalytics() call completed successfully');
+      } catch (analyticsError) {
+        console.error('[Firebase Analytics] getAnalytics() call failed - likely the G variable reference error:', analyticsError);
+        console.error('[Firebase Analytics] This error is related to Firebase Analytics measurementId processing');
+        
+        // Check if this is the specific 'G' variable error
+        if (analyticsError?.message?.includes('G') || analyticsError?.message?.includes('before initialization')) {
+          console.error('[Firebase Analytics] Detected G variable reference error - Firebase Analytics incompatible with current environment');
+          console.error('[Firebase Analytics] This is a known issue with Firebase Analytics initialization timing');
+        }
+        
+        analyticsInstance = undefined;
+        return undefined;
+      }
       
       console.log('[Firebase Analytics] Firebase Analytics initialized successfully');
       console.log('[Firebase Analytics] Analytics instance created:', {
