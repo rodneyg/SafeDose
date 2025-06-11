@@ -1,4 +1,4 @@
-import { UserTypeSegmentation } from './userType';
+import UserTypeSegmentation from './userType';
 
 // Mock React Native components to prevent errors during testing
 jest.mock('react-native', () => ({

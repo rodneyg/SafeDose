@@ -36,12 +36,13 @@ export default function NewDoseScreen() {
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
+  const feedbackStorage = useFeedbackStorage();
+  const signUpPrompt = useSignUpPrompt();
+  
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
     trackInteraction: signUpPrompt.trackInteraction,
   });
-  const feedbackStorage = useFeedbackStorage();
-  const signUpPrompt = useSignUpPrompt();
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -277,7 +278,7 @@ export default function NewDoseScreen() {
   const [pendingScanResult, setPendingScanResult] = useState<any>(null);
 
   const openai = new OpenAI({
-    apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
+    apiKey: (Constants as any).expoConfig?.extra?.OPENAI_API_KEY || '',
     dangerouslyAllowBrowser: true,
   });
 
