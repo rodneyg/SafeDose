@@ -513,7 +513,13 @@ export default function NewDoseScreen() {
   };
 
   const handleScanAttempt = async () => {
-    console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
+    console.log('handleScanAttempt: Called', { 
+      isProcessing, 
+      scansUsed: usageData.scansUsed, 
+      limit: usageData.limit,
+      showLimitModal,
+      user: user ? { uid: user.uid, isAnonymous: user.isAnonymous } : 'No user'
+    });
     
     // Don't proceed if already processing
     if (isProcessing) {
@@ -527,10 +533,26 @@ export default function NewDoseScreen() {
     try {
       const canProceed = await handleCapture();
       console.log('handleScanAttempt: canProceed=', canProceed);
+      console.log('handleScanAttempt: Usage data before limit check:', {
+        scansUsed: usageData.scansUsed,
+        limit: usageData.limit,
+        plan: usageData.plan
+      });
+      
       if (!canProceed) {
-        console.log('handleScanAttempt: Showing LimitModal');
+        console.log('handleScanAttempt: ❌ LIMIT REACHED - Showing LimitModal');
+        console.log('handleScanAttempt: Setting showLimitModal to true');
         logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
+        
+        // Ensure processing state is cleared when showing limit modal
+        setIsProcessing(false);
         setShowLimitModal(true);
+        
+        // Double check the state is being set
+        setTimeout(() => {
+          console.log('handleScanAttempt: showLimitModal state after timeout:', showLimitModal);
+        }, 100);
+        
         return;
       }
 
@@ -697,6 +719,22 @@ export default function NewDoseScreen() {
     };
   }, []);
 
+  console.log('[NewDoseScreen] Current state for debugging:', {
+    showLimitModal,
+    user: user ? {
+      uid: user.uid,
+      isAnonymous: user.isAnonymous,
+      displayName: user.displayName
+    } : 'No user',
+    usageData: {
+      scansUsed: usageData.scansUsed,
+      limit: usageData.limit,
+      plan: usageData.plan
+    },
+    isProcessing,
+    screenStep
+  });
+
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
   return (
@@ -836,6 +874,14 @@ export default function NewDoseScreen() {
           isMobileWeb={isMobileWeb}
         />
       )}
+      {/* Debug logging for LimitModal */}
+      {console.log('[NewDoseScreen] LimitModal props:', {
+        visible: showLimitModal,
+        isAnonymous: user?.isAnonymous ?? true,
+        isPremium: usageData.plan !== 'free',
+        usageData,
+        user: user ? { uid: user.uid, isAnonymous: user.isAnonymous } : 'No user'
+      })}
       <LimitModal
         visible={showLimitModal}
         isAnonymous={user?.isAnonymous ?? true}

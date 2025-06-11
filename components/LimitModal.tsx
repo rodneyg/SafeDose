@@ -15,6 +15,7 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
   const [feedback, setFeedback] = useState('');
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
+  console.log('[LimitModal] Modal should display:', visible);
 
   React.useEffect(() => {
     if (visible) {
@@ -91,6 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2000, // Higher than loading overlay (1000)
   },
   modal: {
     backgroundColor: '#FFFFFF',
