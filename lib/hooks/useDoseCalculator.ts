@@ -699,21 +699,6 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   //   setScreenStep('intro');
   // }, [resetFullForm]);
 
-  // PMF Survey handlers
-  const handlePMFSurveyComplete = useCallback(async (responses: any) => {
-    console.log('[useDoseCalculator] PMF survey completed', responses);
-    await pmfSurvey.submitPMFSurvey(responses);
-    // After PMF survey, continue to regular post-dose feedback
-    setScreenStep('postDoseFeedback');
-  }, [pmfSurvey]);
-
-  const handlePMFSurveySkip = useCallback(() => {
-    console.log('[useDoseCalculator] PMF survey skipped');
-    pmfSurvey.skipPMFSurvey();
-    // After PMF survey skip, continue to regular post-dose feedback
-    setScreenStep('postDoseFeedback');
-  }, [pmfSurvey]);
-
   return {
     screenStep,
     setScreenStep: safeSetScreenStep,
