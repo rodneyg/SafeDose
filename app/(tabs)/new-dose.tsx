@@ -9,6 +9,7 @@ import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
+import PMFSurveyModal from '../../components/PMFSurveyModal';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
@@ -20,7 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -246,6 +247,10 @@ export default function NewDoseScreen() {
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
+    // PMF Survey
+    pmfSurveyTriggerData,
+    handlePMFSurveyComplete,
+    handlePMFSurveySkip,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -727,6 +732,7 @@ export default function NewDoseScreen() {
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
+            {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
               `${
                 manualStep === 'dose' ? 'Enter Dose' :
@@ -847,6 +853,15 @@ export default function NewDoseScreen() {
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
+        />
+      )}
+      {screenStep === 'pmfSurvey' && (
+        <PMFSurveyModal
+          isVisible={true}
+          onComplete={handlePMFSurveyComplete}
+          onSkip={handlePMFSurveySkip}
+          sessionCount={pmfSurveyTriggerData.sessionCount}
+          isMobileWeb={isMobileWeb}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (

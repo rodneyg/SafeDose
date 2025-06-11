@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Info } from 'lucide-react-native';
 import { insulinVolumes, standardVolumes, syringeOptions, isMobileWeb } from '../lib/utils';
 
 type Props = {
@@ -37,6 +38,18 @@ export default function SyringeStep({
   
   const hasValidInsulinOptions = hasValidOptions('Insulin');
   const hasValidStandardOptions = hasValidOptions('Standard');
+
+  // Pre-computed display strings for better performance
+  const insulinVolumesDisplay = insulinVolumes.map(volume => {
+    if (volume === '0.3 ml') return '1/3';
+    if (volume === '0.5 ml') return '1/2';
+    if (volume === '1 ml') return '1mL';
+    return volume;
+  }).join(', ');
+
+  const standardVolumesDisplay = standardVolumes.map(volume => 
+    volume.replace(' ml', 'mL')
+  ).join(', ');
 
   // Function to find a valid syringe based on the current selection and context
   const findValidSyringe = (): { type: 'Insulin' | 'Standard'; volume: string } => {
@@ -163,6 +176,10 @@ export default function SyringeStep({
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Syringe Details</Text>
       <Text style={styles.label}>Syringe Type:</Text>
+      <View style={styles.infoContainer}>
+        <Info color={'#6B7280'} size={12} style={styles.infoIcon} />
+        <Text style={styles.infoText}>Choose based on what your syringe says.</Text>
+      </View>
       <View style={[styles.presetContainer, isMobileWeb && styles.presetContainerMobile]}>
         <TouchableOpacity
           style={[
@@ -184,7 +201,11 @@ export default function SyringeStep({
             styles.buttonText, 
             manualSyringe.type === 'Insulin' && styles.selectedButtonText,
             !hasValidInsulinOptions && styles.disabledButtonText
-          ]}>Insulin (units)</Text>
+          ]}>
+            <Text style={styles.syringeTypeLabel}>Insulin Syringes</Text>
+            {'\n'}
+            <Text style={styles.volumePreview}>({insulinVolumesDisplay})</Text>
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
@@ -206,7 +227,11 @@ export default function SyringeStep({
             styles.buttonText, 
             manualSyringe.type === 'Standard' && styles.selectedButtonText,
             !hasValidStandardOptions && styles.disabledButtonText
-          ]}>Standard (ml)</Text>
+          ]}>
+            <Text style={styles.syringeTypeLabel}>Standard Syringes</Text>
+            {'\n'}
+            <Text style={styles.volumePreview}>({standardVolumesDisplay})</Text>
+          </Text>
         </TouchableOpacity>
       </View>
       {syringeHint && <Text style={styles.helperHint}>{syringeHint}</Text>}
@@ -250,17 +275,35 @@ const styles = StyleSheet.create({
     gap: 6, // Smaller gap between buttons for small screens
     marginBottom: 6, // Tighter margin
   },
-  optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5 },
+  optionButton: { backgroundColor: '#E5E5EA', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', marginHorizontal: 5, minHeight: 48 },
   optionButtonMobile: {
-    paddingVertical: 8, // Reduced vertical padding for small screens
+    paddingVertical: 6, // Reduced vertical padding for small screens
     paddingHorizontal: 10, // Reduced horizontal padding
     marginHorizontal: 3, // Smaller margins between buttons
+    minHeight: 44, // Minimum height for mobile to accommodate two lines
   },
   selectedOption: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   disabledOption: { backgroundColor: '#D1D1D6', borderColor: 'transparent', opacity: 0.6 },
-  buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center' },
+  buttonText: { color: '#000000', fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 18 },
   selectedButtonText: { color: '#ffffff', fontWeight: 'bold' },
   disabledButtonText: { color: '#6B6B6B' },
+  syringeTypeLabel: { fontWeight: '600' },
+  volumePreview: { fontSize: 12, fontWeight: '400', opacity: 0.8 },
+  infoContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 6,
+    paddingHorizontal: 2,
+  },
+  infoIcon: { 
+    marginRight: 6,
+  },
+  infoText: { 
+    fontSize: 12, 
+    color: '#6B7280', 
+    fontStyle: 'italic',
+    flex: 1,
+  },
   helperHint: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, marginBottom: 8, fontStyle: 'italic' },
   inferredMarkings: { fontSize: 13, color: '#8E8E93', textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
 });
