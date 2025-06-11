@@ -36,6 +36,12 @@ export const ANALYTICS_EVENTS = {
   PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
+  // PMF Survey events
+  PMF_SURVEY_SHOWN: 'pmf_survey_shown',
+  PMF_SURVEY_QUESTION_ANSWERED: 'pmf_survey_question_answered',
+  PMF_SURVEY_COMPLETED: 'pmf_survey_completed',
+  PMF_SURVEY_SKIPPED: 'pmf_survey_skipped',
+  PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed',
   // Sign-up prompt events
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',

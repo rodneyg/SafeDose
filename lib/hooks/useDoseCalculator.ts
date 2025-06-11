@@ -3,8 +3,9 @@ import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../d
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
+import { usePMFSurvey } from './usePMFSurvey';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -55,6 +56,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
+  const pmfSurvey = usePMFSurvey();
 
   // Log limit modal state
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -484,13 +486,17 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     resetFullForm('dose');
   }, [resetFullForm]);
 
-  const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
+  const handleGoToFeedback = useCallback(async (nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
     
     // Track interaction for sign-up prompt
     if (trackInteraction) {
       trackInteraction();
     }
+    
+    // Record dose session for PMF survey tracking  
+    const sessionType = lastActionType === 'scan' ? 'scan' : 'manual';
+    const triggerData = await pmfSurvey.recordDoseSession(sessionType);
     
     setFeedbackContext({
       nextAction,
@@ -503,9 +509,16 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         recommendedMarking,
       },
     });
-    setScreenStep('postDoseFeedback');
+    
+    // Check if PMF survey should be shown first
+    if (triggerData.shouldShowSurvey) {
+      setScreenStep('pmfSurvey');
+    } else {
+      setScreenStep('postDoseFeedback'); 
+    }
+    
     lastActionTimestamp.current = Date.now();
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, lastActionType, pmfSurvey]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -590,6 +603,21 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     lastActionTimestamp.current = Date.now();
   }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
 
+  // PMF Survey handlers
+  const handlePMFSurveyComplete = useCallback(async (responses: any) => {
+    console.log('[useDoseCalculator] PMF survey completed', responses);
+    await pmfSurvey.submitPMFSurvey(responses);
+    // After PMF survey, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
+
+  const handlePMFSurveySkip = useCallback(() => {
+    console.log('[useDoseCalculator] PMF survey skipped');
+    pmfSurvey.skipPMFSurvey();
+    // After PMF survey skip, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
+
   const handleCapture = useCallback(async () => {
     try {
       const canProceed = await checkUsageLimit();
@@ -670,6 +698,21 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   //   resetFullForm('dose');
   //   setScreenStep('intro');
   // }, [resetFullForm]);
+
+  // PMF Survey handlers
+  const handlePMFSurveyComplete = useCallback(async (responses: any) => {
+    console.log('[useDoseCalculator] PMF survey completed', responses);
+    await pmfSurvey.submitPMFSurvey(responses);
+    // After PMF survey, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
+
+  const handlePMFSurveySkip = useCallback(() => {
+    console.log('[useDoseCalculator] PMF survey skipped');
+    pmfSurvey.skipPMFSurvey();
+    // After PMF survey skip, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
 
   return {
     screenStep,
@@ -766,5 +809,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
+    // PMF Survey
+    pmfSurveyTriggerData: pmfSurvey.triggerData,
+    handlePMFSurveyComplete,
+    handlePMFSurveySkip,
   };
 }
