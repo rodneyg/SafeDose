@@ -123,22 +123,3 @@ export const db = new Proxy({} as Firestore, {
     throw new Error('Firestore must be accessed asynchronously. Use getDbInstance() instead.');
   }
 });
-
-/**
- * Phase 2: Analytics Configuration Injection
- * This function should be called AFTER the app has fully rendered and stabilized.
- * It reconfigures the Firebase app to include the measurementId for Analytics.
- */
-export const enableAnalytics = async (): Promise<void> => {
-  console.log('[Firebase] Phase 2: Enabling Analytics configuration...');
-  
-  const fullConfig = getFullFirebaseConfig();
-  if (!fullConfig?.measurementId) {
-    console.log('[Firebase] No measurementId found, Analytics will remain disabled');
-    return;
-  }
-
-  // At this point, we don't need to reinitialize the app
-  // The analytics module will use the app instance and get the measurementId from the config
-  console.log('[Firebase] Analytics configuration ready for injection');
-};

@@ -1,106 +1,57 @@
-import { getFirebaseApp, getFullFirebaseConfig, enableAnalytics } from './firebase';
-import type { Analytics } from 'firebase/analytics';
-
-// State management for the singleton
-let analyticsInstance: Analytics | null = null;
-let initializationPromise: Promise<Analytics | null> | null = null;
-let analyticsEnabled = false;
-
 /**
- * Phase 2: Enable Analytics after app stabilization.
- * This should be called after the app has fully rendered.
+ * A completely safe, in-memory queue for analytics events.
+ * THIS FILE MUST NOT IMPORT ANYTHING FROM FIREBASE.
  */
-export const initializeAnalytics = async (): Promise<void> => {
-  console.log('[Analytics] Phase 2: Initializing Analytics after app stabilization...');
-  
-  if (analyticsEnabled) {
-    console.log('[Analytics] Analytics already enabled');
-    return;
-  }
 
-  // Enable analytics configuration in Firebase
-  await enableAnalytics();
-  analyticsEnabled = true;
-  
-  console.log('[Analytics] Analytics configuration enabled');
+type QueuedOperation = {
+  type: 'logEvent';
+  payload: { eventName: string; eventParams?: { [key: string]: any } };
+} | {
+  type: 'setUserProperties';
+  payload: { properties: { [key: string]: any } };
 };
 
-/**
- * Initializes and returns the Firebase Analytics instance.
- * This is called only AFTER initializeAnalytics() has been called.
- */
-const getAnalyticsInstance = (): Promise<Analytics | null> => {
-  // If initialization is already in progress, return the existing promise
-  if (initializationPromise) {
-    return initializationPromise;
+// This queue is globally accessible and safe.
+export const analyticsQueue: QueuedOperation[] = [];
+export let isAnalyticsInitialized = false;
+
+// The functions the app will call. They just add to the queue.
+export const logAnalyticsEvent = (eventName: string, eventParams?: { [key: string]: any }) => {
+  if (isAnalyticsInitialized) {
+    console.warn(`[Analytics Queue] Analytics already initialized, but old log function called for ${eventName}. This is a bug.`);
+    return;
+  }
+  console.log(`[Analytics Queue] Queuing event: ${eventName}`);
+  analyticsQueue.push({ type: 'logEvent', payload: { eventName, eventParams } });
+};
+
+export const setAnalyticsUserProperties = (properties: { [key: string]: any }) => {
+  if (isAnalyticsInitialized) {
+    console.warn(`[Analytics Queue] Analytics already initialized, but old setUserProperties called. This is a bug.`);
+    return;
+  }
+  console.log(`[Analytics Queue] Queuing user properties:`, properties);
+  analyticsQueue.push({ type: 'setUserProperties', payload: { properties } });
+};
+
+// Helper function to set personalization user properties from profile
+export const setPersonalizationUserProperties = (profile: any) => {
+  // Determine user segment based on profile
+  let userSegment = 'general_user';
+  if (profile.isLicensedProfessional) {
+    userSegment = 'healthcare_professional';
+  } else if (profile.isCosmeticUse) {
+    userSegment = 'cosmetic_user';
+  } else if (profile.isPersonalUse) {
+    userSegment = 'personal_medical_user';
   }
 
-  // Start initialization
-  initializationPromise = (async () => {
-    // Return cached instance if already initialized
-    if (analyticsInstance) {
-      return analyticsInstance;
-    }
-    
-    // Environment check: Do not run on server
-    if (typeof window === 'undefined') {
-      console.log('[Analytics] Environment is not a browser. Analytics disabled.');
-      return null;
-    }
-
-    // Check if analytics has been enabled in Phase 2
-    if (!analyticsEnabled) {
-      console.log('[Analytics] Analytics not yet enabled. Call initializeAnalytics() first.');
-      return null;
-    }
-
-    // Check if measurementId is available
-    const fullConfig = getFullFirebaseConfig();
-    if (!fullConfig?.measurementId) {
-      console.log('[Analytics] No measurementId found. Analytics disabled.');
-      return null;
-    }
-
-    try {
-      console.log('[Analytics] Starting dynamic import of Firebase Analytics modules...');
-      
-      // KEY FIX: Dynamically import ALL required functions ONLY when needed.
-      const { getAnalytics, isSupported } = await import('firebase/analytics');
-      
-      console.log('[Analytics] Modules imported. Checking for support...');
-
-      if (!(await isSupported())) {
-        console.warn('[Analytics] Firebase Analytics is not supported in this environment.');
-        return null;
-      }
-
-      const app = await getFirebaseApp();
-      console.log('[Analytics] Firebase app obtained, initializing Analytics...');
-
-      analyticsInstance = getAnalytics(app);
-      console.log('[Analytics] Firebase Analytics initialized successfully');
-
-      return analyticsInstance;
-      
-    } catch (error: any) {
-      console.error('[Analytics] Failed to initialize Firebase Analytics:', error);
-      console.error('[Analytics] Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Check if this is the specific 'G' variable error
-      if (error?.message?.includes('G') || error?.message?.includes('before initialization')) {
-        console.error('[Analytics] Detected G variable reference error - this is the known Firebase Analytics bug');
-      }
-      
-      return null;
-    }
-  })();
-
-  return initializationPromise;
+  setAnalyticsUserProperties({
+    [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
+    [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
+    [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
+    [USER_PROPERTIES.USER_SEGMENT]: userSegment,
+  });
 };
 
 // Custom event names as defined in the issue
@@ -160,58 +111,11 @@ export const USER_PROPERTIES = {
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
-// Helper function to safely log analytics events
-export const logAnalyticsEvent = async (eventName: string, parameters?: Record<string, any>) => {
-  console.log('[Analytics] logAnalyticsEvent called:', { eventName, parameters, timestamp: new Date().toISOString() });
-  
-  try {
-    const analytics = await getAnalyticsInstance();
-    if (analytics) {
-      const { logEvent } = await import('firebase/analytics');
-      logEvent(analytics, eventName, parameters);
-      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
-    } else {
-      console.log(`[Analytics] Analytics not available, event not logged: ${eventName}`);
-    }
-  } catch (error: any) {
-    console.error(`[Analytics] Failed to log event ${eventName}:`, error);
-  }
-};
-
-// Helper function to safely set user properties
-export const setAnalyticsUserProperties = async (properties: Record<string, any>) => {
-  console.log('[Analytics] setAnalyticsUserProperties called:', { properties, timestamp: new Date().toISOString() });
-  
-  try {
-    const analytics = await getAnalyticsInstance();
-    if (analytics) {
-      const { setUserProperties } = await import('firebase/analytics');
-      setUserProperties(analytics, properties);
-      console.log(`[Analytics] User properties set:`, properties);
-    } else {
-      console.log(`[Analytics] Analytics not available, properties not set`);
-    }
-  } catch (error: any) {
-    console.error(`[Analytics] Failed to set user properties:`, error);
-  }
-};
-
-// Helper function to set personalization user properties from profile
-export const setPersonalizationUserProperties = async (profile: any) => {
-  // Determine user segment based on profile
-  let userSegment = 'general_user';
-  if (profile.isLicensedProfessional) {
-    userSegment = 'healthcare_professional';
-  } else if (profile.isCosmeticUse) {
-    userSegment = 'cosmetic_user';
-  } else if (profile.isPersonalUse) {
-    userSegment = 'personal_medical_user';
-  }
-
-  await setAnalyticsUserProperties({
-    [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
-    [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
-    [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
-    [USER_PROPERTIES.USER_SEGMENT]: userSegment,
-  });
+/**
+ * Signal that the Analytics provider has taken over.
+ * Called by the AnalyticsProvider component.
+ */
+export const markAnalyticsInitialized = () => {
+  isAnalyticsInitialized = true;
+  console.log(`[Analytics Queue] Analytics provider has taken over. Queue contained ${analyticsQueue.length} operations.`);
 };
