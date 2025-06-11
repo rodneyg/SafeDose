@@ -1,64 +1,177 @@
-import { logEvent, setUserProperties } from 'firebase/analytics';
-import { getAnalyticsInstance } from './firebase';
+import Constants from "expo-constants";
 
-// Analytics initialization state and queue management
-let analyticsInitialized = false;
-let initializationAttempted = false;
+// Analytics initialization state management
+type AnalyticsState = 'uninitialized' | 'initializing' | 'initialized' | 'failed';
+
+let analyticsState: AnalyticsState = 'uninitialized';
+let analyticsInstance: any = null;
 let eventQueue: Array<{ type: 'event'; eventName: string; parameters?: Record<string, any> }> = [];
 let propertyQueue: Array<{ type: 'properties'; properties: Record<string, any> }> = [];
 
-// Deferred Analytics initialization function
-const initializeAnalyticsDeferred = () => {
-  if (initializationAttempted) {
+// Firebase Analytics module references (loaded dynamically)
+let firebaseAnalytics: any = null;
+let firebaseApp: any = null;
+
+// Firebase configuration - isolated to prevent circular dependencies
+const getFirebaseConfig = () => {
+  const config = Constants.expoConfig?.extra?.firebase || {
+    apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
+    authDomain: "safedose-e320d.firebaseapp.com",
+    projectId: "safedose-e320d",
+    storageBucket: "safedose-e320d.firebasestorage.app",
+    messagingSenderId: "704055775889",
+    appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
+    measurementId: "G-WRY88Q57KK",
+  };
+  
+  // Only include measurementId for web platforms where Analytics is available
+  if (typeof window !== "undefined" && config.measurementId) {
+    return {
+      ...config,
+      measurementId: String(config.measurementId)
+    };
+  } else {
+    // For non-web platforms, exclude measurementId to avoid potential issues
+    const { measurementId, ...configWithoutMeasurementId } = config;
+    return configWithoutMeasurementId;
+  }
+};
+
+// Core Analytics initialization function - completely isolated
+const initializeAnalytics = async (): Promise<boolean> => {
+  // Prevent multiple concurrent initialization attempts
+  if (analyticsState === 'initializing') {
+    console.log('[Analytics] Already initializing, waiting...');
+    // Wait for current initialization to complete
+    while (analyticsState === 'initializing') {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return analyticsState === 'initialized';
+  }
+  
+  if (analyticsState === 'initialized') {
+    console.log('[Analytics] Already initialized');
+    return true;
+  }
+  
+  // Only initialize in browser environments
+  if (typeof window === "undefined") {
+    console.log('[Analytics] Not in browser environment, skipping initialization');
+    analyticsState = 'failed';
+    return false;
+  }
+  
+  analyticsState = 'initializing';
+  console.log('[Analytics] Starting Firebase Analytics initialization...');
+  
+  try {
+    // Get Firebase configuration
+    const firebaseConfig = getFirebaseConfig();
+    console.log('[Analytics] Configuration obtained:', { 
+      hasMeasurementId: !!firebaseConfig.measurementId,
+      measurementId: firebaseConfig.measurementId 
+    });
+    
+    if (!firebaseConfig.measurementId) {
+      console.log('[Analytics] No measurementId in config, Analytics not available');
+      analyticsState = 'failed';
+      return false;
+    }
+    
+    // Validate measurementId format to prevent 'G' variable issues
+    if (!firebaseConfig.measurementId.startsWith('G-') || firebaseConfig.measurementId.length < 10) {
+      console.log('[Analytics] Invalid measurementId format, skipping to prevent initialization errors');
+      analyticsState = 'failed';
+      return false;
+    }
+    
+    // Dynamic import of Firebase modules to prevent side effects
+    console.log('[Analytics] Dynamically importing Firebase modules...');
+    const [firebaseAppModule, firebaseAnalyticsModule] = await Promise.all([
+      import('firebase/app'),
+      import('firebase/analytics')
+    ]);
+    
+    firebaseApp = firebaseAppModule;
+    firebaseAnalytics = firebaseAnalyticsModule;
+    
+    console.log('[Analytics] Firebase modules loaded successfully');
+    
+    // Initialize Firebase App
+    console.log('[Analytics] Initializing Firebase App...');
+    const app = firebaseApp.initializeApp(firebaseConfig);
+    console.log('[Analytics] Firebase App initialized:', { name: app.name });
+    
+    // Initialize Firebase Analytics
+    console.log('[Analytics] Initializing Firebase Analytics...');
+    analyticsInstance = firebaseAnalytics.getAnalytics(app);
+    console.log('[Analytics] Firebase Analytics initialized successfully');
+    
+    analyticsState = 'initialized';
+    
+    // Process any queued events and properties
+    await processQueuedOperations();
+    
+    return true;
+    
+  } catch (error: any) {
+    console.error('[Analytics] Failed to initialize Firebase Analytics:', error);
+    console.error('[Analytics] Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Check if this is the specific 'G' variable error
+    if (error?.message?.includes('G') || error?.message?.includes('before initialization')) {
+      console.error('[Analytics] Detected G variable reference error - this is the known Firebase Analytics bug');
+    }
+    
+    analyticsState = 'failed';
+    analyticsInstance = null;
+    firebaseAnalytics = null;
+    firebaseApp = null;
+    
+    return false;
+  }
+};
+
+// Process queued operations after successful initialization
+const processQueuedOperations = async () => {
+  if (analyticsState !== 'initialized' || !analyticsInstance || !firebaseAnalytics) {
     return;
   }
   
-  initializationAttempted = true;
-  console.log('[Analytics] Starting deferred Analytics initialization...');
+  console.log('[Analytics] Processing queued operations:', {
+    events: eventQueue.length,
+    properties: propertyQueue.length
+  });
   
-  // Add a small delay to ensure component tree is fully mounted
-  setTimeout(async () => {
+  // Process queued events
+  eventQueue.forEach(({ eventName, parameters }) => {
     try {
-      console.log('[Analytics] Attempting to get Analytics instance after delay...');
-      const analytics = await getAnalyticsInstance();
-      
-      if (analytics) {
-        analyticsInitialized = true;
-        console.log('[Analytics] Analytics successfully initialized, processing queued events');
-        console.log('[Analytics] Processing', eventQueue.length, 'queued events and', propertyQueue.length, 'property updates');
-        
-        // Process queued events
-        eventQueue.forEach(({ eventName, parameters }) => {
-          try {
-            logEvent(analytics, eventName, parameters);
-            console.log(`[Analytics] Queued event processed: ${eventName}`, parameters);
-          } catch (error) {
-            console.error(`[Analytics] Failed to process queued event ${eventName}:`, error);
-          }
-        });
-        
-        // Process queued properties
-        propertyQueue.forEach(({ properties }) => {
-          try {
-            setUserProperties(analytics, properties);
-            console.log(`[Analytics] Queued properties processed:`, properties);
-          } catch (error) {
-            console.error(`[Analytics] Failed to process queued properties:`, error);
-          }
-        });
-        
-        // Clear queues
-        eventQueue = [];
-        propertyQueue = [];
-        console.log('[Analytics] Event and property queues cleared');
-      } else {
-        console.log('[Analytics] Analytics not available after initialization attempt');
-      }
-    } catch (error) {
-      console.error('[Analytics] Deferred Analytics initialization failed:', error);
-      initializationAttempted = false; // Allow retry
+      firebaseAnalytics.logEvent(analyticsInstance, eventName, parameters);
+      console.log(`[Analytics] Queued event processed: ${eventName}`, parameters);
+    } catch (error: any) {
+      console.error(`[Analytics] Failed to process queued event ${eventName}:`, error);
     }
-  }, 1000); // 1 second delay to ensure app is fully loaded
+  });
+  
+  // Process queued properties
+  propertyQueue.forEach(({ properties }) => {
+    try {
+      firebaseAnalytics.setUserProperties(analyticsInstance, properties);
+      console.log(`[Analytics] Queued properties processed:`, properties);
+    } catch (error: any) {
+      console.error(`[Analytics] Failed to process queued properties:`, error);
+    }
+  });
+  
+  // Clear queues
+  eventQueue = [];
+  propertyQueue = [];
+  console.log('[Analytics] All queued operations processed and queues cleared');
 };
 
 // Custom event names as defined in the issue
@@ -122,31 +235,29 @@ export const USER_PROPERTIES = {
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
   console.log('[Analytics] logAnalyticsEvent called:', { eventName, parameters, timestamp: new Date().toISOString() });
   
-  // Trigger deferred initialization if not already attempted
-  if (!initializationAttempted) {
-    console.log('[Analytics] First analytics call detected, triggering deferred initialization');
-    initializeAnalyticsDeferred();
-  }
-  
-  if (analyticsInitialized) {
+  if (analyticsState === 'initialized' && analyticsInstance && firebaseAnalytics) {
     // Analytics is ready, log immediately
-    (async () => {
-      try {
-        const analytics = await getAnalyticsInstance();
-        if (analytics) {
-          logEvent(analytics, eventName, parameters);
-          console.log(`[Analytics] Event logged: ${eventName}`, parameters);
-        } else {
-          console.log(`[Analytics] Analytics instance not available for event: ${eventName}`, parameters);
-        }
-      } catch (error) {
-        console.error(`[Analytics] Failed to log event ${eventName}:`, error);
-      }
-    })();
+    try {
+      firebaseAnalytics.logEvent(analyticsInstance, eventName, parameters);
+      console.log(`[Analytics] Event logged immediately: ${eventName}`, parameters);
+    } catch (error: any) {
+      console.error(`[Analytics] Failed to log event ${eventName}:`, error);
+    }
   } else {
-    // Queue the event for later processing
+    // Queue the event and trigger initialization if needed
     console.log(`[Analytics] Queueing event: ${eventName}`, parameters);
     eventQueue.push({ type: 'event', eventName, parameters });
+    
+    // Trigger initialization if not already started
+    if (analyticsState === 'uninitialized') {
+      console.log('[Analytics] First analytics call detected, starting initialization');
+      // Use setTimeout to avoid blocking the current call
+      setTimeout(() => {
+        initializeAnalytics().catch((error: any) => {
+          console.error('[Analytics] Initialization failed:', error);
+        });
+      }, 0);
+    }
   }
 };
 
@@ -154,31 +265,29 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
   console.log('[Analytics] setAnalyticsUserProperties called:', { properties, timestamp: new Date().toISOString() });
   
-  // Trigger deferred initialization if not already attempted
-  if (!initializationAttempted) {
-    console.log('[Analytics] First analytics call detected, triggering deferred initialization');
-    initializeAnalyticsDeferred();
-  }
-  
-  if (analyticsInitialized) {
+  if (analyticsState === 'initialized' && analyticsInstance && firebaseAnalytics) {
     // Analytics is ready, set properties immediately
-    (async () => {
-      try {
-        const analytics = await getAnalyticsInstance();
-        if (analytics) {
-          setUserProperties(analytics, properties);
-          console.log(`[Analytics] User properties set immediately:`, properties);
-        } else {
-          console.log(`[Analytics] Analytics instance not available for properties:`, properties);
-        }
-      } catch (error) {
-        console.error(`[Analytics] Failed to set user properties:`, error);
-      }
-    })();
+    try {
+      firebaseAnalytics.setUserProperties(analyticsInstance, properties);
+      console.log(`[Analytics] User properties set immediately:`, properties);
+    } catch (error: any) {
+      console.error(`[Analytics] Failed to set user properties:`, error);
+    }
   } else {
-    // Queue the properties for later processing
+    // Queue the properties and trigger initialization if needed
     console.log(`[Analytics] Queueing properties:`, properties);
     propertyQueue.push({ type: 'properties', properties });
+    
+    // Trigger initialization if not already started
+    if (analyticsState === 'uninitialized') {
+      console.log('[Analytics] First analytics call detected, starting initialization');
+      // Use setTimeout to avoid blocking the current call
+      setTimeout(() => {
+        initializeAnalytics().catch((error: any) => {
+          console.error('[Analytics] Initialization failed:', error);
+        });
+      }, 0);
+    }
   }
 };
 
