@@ -1,6 +1,5 @@
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getAnalytics, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
@@ -19,7 +18,6 @@ const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
 let app: FirebaseApp | undefined = undefined;
 let authInstance: Auth | undefined = undefined;
 let dbInstance: Firestore | undefined = undefined;
-let analyticsInstance: Analytics | undefined = undefined;
 
 export const getFirebaseApp = (): FirebaseApp => {
   if (!app) {
@@ -70,31 +68,6 @@ export const getDbInstance = (): Firestore => {
     }
   }
   return dbInstance;
-};
-
-export const getAnalyticsInstance = (): Analytics | undefined => {
-  if (typeof window === "undefined") {
-    console.log('[Firebase] Analytics not available - not in browser environment');
-    return undefined;
-  }
-  
-  if (!analyticsInstance) {
-    try {
-      console.log('[Firebase] Initializing Firebase Analytics...');
-      analyticsInstance = getAnalytics(getFirebaseApp());
-      console.log('[Firebase] Firebase Analytics initialized successfully');
-    } catch (error) {
-      console.error('[Firebase] Analytics initialization failed:', error);
-      console.error('[Firebase] Analytics error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
-      });
-      return undefined;
-    }
-  }
-  
-  return analyticsInstance;
 };
 
 // For backward compatibility, provide auth and db as getters
