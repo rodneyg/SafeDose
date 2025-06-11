@@ -25,41 +25,123 @@ export default function PricingPage() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  // Compact pricing plans optimized for App Store-style layout
+  // Updated pricing plans with new 4-tier structure and Stripe Price IDs
   const pricingPlansData = [
     {
-      id: 'monthly',
-      name: "Plus",
-      price: 20,
-      originalPrice: 25,
+      id: 'starter_monthly',
+      name: "Starter",
+      price: 4.99,
       priceSuffix: "/month",
-      subtext: "7-day free trial",
-      priceId: stripeConfig.priceId,
-      badgeText: "Popular",
-      isDefault: true,
-      savings: 20,
+      subtext: "20 saved doses, 10 AI scans",
+      priceId: 'price_1RYgx7AY2p4W374YR9UxS0vr',
+      badgeText: "Entry Level",
+      isDefault: false,
+      planType: 'starter',
+      isMonthly: true,
     },
     {
-      id: 'yearly',
-      name: "Pro",
-      price: 149.99,
-      originalPrice: 240,
+      id: 'starter_yearly',
+      name: "Starter",
+      price: 44.99,
+      originalPrice: 59.88,
       priceSuffix: "/year",
-      subtext: "Save 38%",
-      priceId: 'price_yearly_placeholder',
+      subtext: "Save 25%",
+      priceId: 'price_1RYgx7AY2p4W374Yy23EtyIm',
+      badgeText: "Entry Level",
+      isDefault: false,
+      savings: 25,
+      planType: 'starter',
+      isMonthly: false,
+    },
+    {
+      id: 'basic_pro_monthly',
+      name: "Basic Pro",
+      price: 9.99,
+      priceSuffix: "/month",
+      subtext: "Unlimited logs, 20 AI scans",
+      priceId: 'price_1RYgyPAY2p4W374YNbpBpbqv',
+      badgeText: "Popular",
+      isDefault: true,
+      planType: 'basic_pro',
+      isMonthly: true,
+    },
+    {
+      id: 'basic_pro_yearly',
+      name: "Basic Pro",
+      price: 89.99,
+      originalPrice: 119.88,
+      priceSuffix: "/year",
+      subtext: "Save 25%",
+      priceId: 'price_1RYgyPAY2p4W374YJOhwDafY',
+      badgeText: "Popular",
+      isDefault: false,
+      savings: 25,
+      planType: 'basic_pro',
+      isMonthly: false,
+    },
+    {
+      id: 'full_pro_monthly',
+      name: "Full Pro",
+      price: 20,
+      priceSuffix: "/month",
+      subtext: "7-day free trial",
+      priceId: 'price_1RUHgxAY2p4W374Yb5EWEtZ0',
       badgeText: "Best Value",
       isDefault: false,
-      savings: 38,
+      planType: 'full_pro',
+      isMonthly: true,
+      hasTrial: true,
+    },
+    {
+      id: 'full_pro_yearly',
+      name: "Full Pro",
+      price: 179.99,
+      originalPrice: 240,
+      priceSuffix: "/year",
+      subtext: "7-day free trial, Save 25%",
+      priceId: 'price_1RYgzUAY2p4W374YHiBBHvuX',
+      badgeText: "Best Value",
+      isDefault: false,
+      savings: 25,
+      planType: 'full_pro',
+      isMonthly: false,
+      hasTrial: true,
     },
   ];
 
-  // Key features for compact display
-  const keyFeatures = [
-    { icon: Zap, text: "50 AI scans/month", color: "#FF6B6B" },
-    { icon: CheckCircle, text: "Unlimited calculations", color: "#4ECDC4" },
-    { icon: Clock, text: "Priority processing", color: "#45B7D1" },
-    { icon: Shield, text: "No session limits", color: "#96CEB4" },
-  ];
+  // Key features for compact display - updated for new pricing structure
+  const getKeyFeatures = (planType) => {
+    switch (planType) {
+      case 'starter':
+        return [
+          { icon: Zap, text: "10 AI scans/month", color: "#FF6B6B" },
+          { icon: CheckCircle, text: "20 saved doses", color: "#4ECDC4" },
+          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
+          { icon: Shield, text: "Basic support", color: "#96CEB4" },
+        ];
+      case 'basic_pro':
+        return [
+          { icon: Zap, text: "20 AI scans/month", color: "#FF6B6B" },
+          { icon: CheckCircle, text: "Unlimited logs", color: "#4ECDC4" },
+          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
+          { icon: Shield, text: "Priority support", color: "#96CEB4" },
+        ];
+      case 'full_pro':
+        return [
+          { icon: Zap, text: "Unlimited AI scans", color: "#FF6B6B" },
+          { icon: CheckCircle, text: "Unlimited logs", color: "#4ECDC4" },
+          { icon: Clock, text: "Priority processing", color: "#45B7D1" },
+          { icon: Shield, text: "Premium support", color: "#96CEB4" },
+        ];
+      default:
+        return [
+          { icon: Zap, text: "3 AI scans/month", color: "#FF6B6B" },
+          { icon: CheckCircle, text: "10 saved doses", color: "#4ECDC4" },
+          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
+          { icon: Shield, text: "Basic support", color: "#96CEB4" },
+        ];
+    }
+  };
 
   // Dynamic headline based on user profile
   const getPersonalizedHeadline = () => {
@@ -74,15 +156,16 @@ export default function PricingPage() {
 
   const defaultPlan = pricingPlansData.find(plan => plan.isDefault) || pricingPlansData[0];
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
+  const [selectedPlanType, setSelectedPlanType] = useState(defaultPlan.planType);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Get current key features based on selected plan type
+  const keyFeatures = getKeyFeatures(selectedPlanType);
 
   // Log view_pricing_page event when component mounts
   useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.VIEW_PRICING_PAGE);
-    console.warn(
-      "TODO: Replace placeholder Stripe Price IDs ('price_yearly_placeholder') in pricingPlansData with actual Price IDs from your Stripe dashboard."
-    );
     
     // Start entrance animations
     Animated.parallel([
@@ -157,6 +240,7 @@ export default function PricingPage() {
         priceId,
         successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${API_BASE_URL}/pricing`,
+        hasTrial: selectedPlan.hasTrial,
       });
 
       const res = await fetch(
@@ -168,6 +252,7 @@ export default function PricingPage() {
             priceId,
             successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${API_BASE_URL}/pricing`,
+            hasTrial: selectedPlan.hasTrial,
           }),
         }
       );
@@ -267,17 +352,55 @@ export default function PricingPage() {
       <View style={styles.featuresContainer}>
         {keyFeatures.map((feature, index) => (
           <View key={index} style={styles.featureItem}>
-            <View style={[styles.featureIcon, { backgroundColor: feature.color + '20' }]}>
+            <View style={[
+              styles.featureIcon, 
+              { backgroundColor: feature.color + '20' },
+              feature.disabled && styles.featureIconDisabled
+            ]}>
               <feature.icon size={screenHeight <= 667 ? 14 : 16} color={feature.color} />
             </View>
-            <Text style={styles.featureText}>{feature.text}</Text>
+            <Text style={[
+              styles.featureText,
+              feature.disabled && styles.featureTextDisabled
+            ]}>{feature.text}</Text>
           </View>
         ))}
       </View>
 
-      {/* Compact Plan Selection */}
+      {/* Plan Type Selection */}
+      <View style={styles.planTypesContainer}>
+        {['starter', 'basic_pro', 'full_pro'].map((planType) => {
+          const planData = pricingPlansData.find(p => p.planType === planType && p.isMonthly);
+          return (
+            <TouchableOpacity
+              key={planType}
+              style={[
+                styles.planTypeBox,
+                selectedPlanType === planType && styles.selectedPlanTypeBox,
+              ]}
+              onPress={() => {
+                setSelectedPlanType(planType);
+                const newPlan = pricingPlansData.find(p => p.planType === planType && p.isMonthly);
+                setSelectedPlan(newPlan);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={[
+                styles.planTypeName,
+                selectedPlanType === planType && styles.selectedPlanTypeName
+              ]}>{planData.name}</Text>
+              <Text style={styles.planTypePrice}>${planData.price}/mo</Text>
+              {planData.hasTrial && (
+                <Text style={styles.planTypeTrialBadge}>Free Trial</Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Monthly/Yearly Toggle */}
       <View style={styles.plansContainer}>
-        {pricingPlansData.map((plan) => (
+        {pricingPlansData.filter(plan => plan.planType === selectedPlanType).map((plan) => (
           <TouchableOpacity
             key={plan.id}
             style={[
@@ -293,7 +416,7 @@ export default function PricingPage() {
               </View>
             )}
             
-            <Text style={styles.planName}>{plan.name}</Text>
+            <Text style={styles.planName}>{plan.isMonthly ? 'Monthly' : 'Yearly'}</Text>
             
             <View style={styles.priceRow}>
               {plan.originalPrice && (
@@ -322,13 +445,16 @@ export default function PricingPage() {
         activeOpacity={0.9}
       >
         <Text style={styles.ctaButtonText}>
-          {isLoading ? "Processing..." : "Start Free Trial"}
+          {isLoading ? "Processing..." : selectedPlan.hasTrial ? "Start Free Trial" : `Upgrade to ${selectedPlan.name}`}
         </Text>
       </TouchableOpacity>
 
       {/* Trial Info */}
       <Text style={styles.trialInfo}>
-        7-day free trial • Cancel anytime • No payment required today
+        {selectedPlan.hasTrial 
+          ? "7-day free trial • Cancel anytime • No payment required today"
+          : `Start with ${selectedPlan.name} plan • Cancel anytime`
+        }
       </Text>
 
       {/* Error Message */}
@@ -437,6 +563,63 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontWeight: '500',
     flex: 1,
+  },
+  featureIconDisabled: {
+    opacity: 0.5,
+  },
+  featureTextDisabled: {
+    opacity: 0.5,
+    textDecorationLine: 'line-through',
+  },
+
+  // Plan Types Section
+  planTypesContainer: {
+    width: '100%',
+    marginBottom: screenHeight <= 667 ? 12 : 16,
+  },
+  planTypeBox: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedPlanTypeBox: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#007AFF',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  planTypeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    flex: 1,
+  },
+  selectedPlanTypeName: {
+    color: '#007AFF',
+  },
+  planTypePrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
+    marginRight: 8,
+  },
+  planTypeTrialBadge: {
+    fontSize: 10,
+    color: '#34C759',
+    fontWeight: '600',
+    backgroundColor: '#34C759' + '20',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
 
   // Plans Section  

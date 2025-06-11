@@ -3,8 +3,10 @@ import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../d
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
+import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
+import { usePMFSurvey } from './usePMFSurvey';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -14,6 +16,7 @@ interface UseDoseCalculatorProps {
   checkUsageLimit: () => Promise<boolean>;
   onShowManualEntryNudge?: () => void;
   onShowFirstScanNudge?: () => void;
+  trackInteraction?: () => void;
 }
 
 const isValidValue = (value: any): boolean => {
@@ -22,7 +25,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
-export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNudge, onShowFirstScanNudge }: UseDoseCalculatorProps) {
+export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNudge, onShowFirstScanNudge, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -56,6 +59,10 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
+  
+  // Initialize WhyAreYouHere tracking hook
+  const whyAreYouHereTracking = useWhyAreYouHereTracking();
+  const pmfSurvey = usePMFSurvey();
 
   // Log limit modal state
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -485,13 +492,22 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     resetFullForm('dose');
   }, [resetFullForm]);
 
-  const handleGoToFeedback = useCallback((nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
+  const handleGoToFeedback = useCallback(async (nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
     
     // Check if manual entry nudge should be shown
     if (onShowManualEntryNudge) {
       onShowManualEntryNudge();
     }
+    
+    // Track interaction for sign-up prompt
+    if (trackInteraction) {
+      trackInteraction();
+    }
+    
+    // Record dose session for PMF survey tracking  
+    const sessionType = lastActionType === 'scan' ? 'scan' : 'manual';
+    const triggerData = await pmfSurvey.recordDoseSession(sessionType);
     
     setFeedbackContext({
       nextAction,
@@ -504,9 +520,21 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
         recommendedMarking,
       },
     });
-    setScreenStep('postDoseFeedback');
+    
+    // Check if we should show the "Why Are You Here?" prompt first
+    // This is a lighter micro-prompt that should come before PMF survey
+    if (whyAreYouHereTracking.shouldShowPrompt()) {
+      setScreenStep('whyAreYouHere');
+    } else if (triggerData.shouldShowSurvey) {
+      // If no WhyAreYouHere prompt, check for PMF survey
+      setScreenStep('pmfSurvey');
+    } else {
+      // If neither prompt is needed, go directly to feedback
+      setScreenStep('postDoseFeedback');
+    }
+    
     lastActionTimestamp.current = Date.now();
-  }, [substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, onShowManualEntryNudge]);
+  }, [onShowManualEntryNudge, trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, lastActionType, pmfSurvey, whyAreYouHereTracking]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -514,6 +542,11 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
+    
+    // Track interaction for sign-up prompt if log was successful
+    if (logResult.success && trackInteraction) {
+      trackInteraction();
+    }
     
     if (logResult.limitReached) {
       console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
@@ -589,7 +622,52 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, onShowFirstScanNudge]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, onShowFirstScanNudge, trackInteraction]);
+
+  // PMF Survey handlers
+  const handlePMFSurveyComplete = useCallback(async (responses: any) => {
+    console.log('[useDoseCalculator] PMF survey completed', responses);
+    await pmfSurvey.submitPMFSurvey(responses);
+    // After PMF survey, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
+
+  const handlePMFSurveySkip = useCallback(() => {
+    console.log('[useDoseCalculator] PMF survey skipped');
+    pmfSurvey.skipPMFSurvey();
+    // After PMF survey skip, continue to regular post-dose feedback
+    setScreenStep('postDoseFeedback');
+  }, [pmfSurvey]);
+
+  // WhyAreYouHere handlers
+  const handleWhyAreYouHereSubmit = useCallback(async (response: any, customText?: string) => {
+    console.log('[useDoseCalculator] WhyAreYouHere response submitted:', response);
+    
+    // Mark prompt as shown and store response
+    await whyAreYouHereTracking.markPromptAsShown();
+    await whyAreYouHereTracking.storeResponse(response, customText);
+    
+    // Check if PMF survey should be shown next, otherwise go to feedback
+    if (pmfSurvey.triggerData?.shouldShowSurvey) {
+      setScreenStep('pmfSurvey');
+    } else {
+      setScreenStep('postDoseFeedback');
+    }
+  }, [whyAreYouHereTracking, pmfSurvey]);
+
+  const handleWhyAreYouHereSkip = useCallback(async () => {
+    console.log('[useDoseCalculator] WhyAreYouHere prompt skipped');
+    
+    // Mark prompt as shown (but skipped)
+    await whyAreYouHereTracking.markPromptAsShown();
+    
+    // Check if PMF survey should be shown next, otherwise go to feedback
+    if (pmfSurvey.triggerData?.shouldShowSurvey) {
+      setScreenStep('pmfSurvey');
+    } else {
+      setScreenStep('postDoseFeedback');
+    }
+  }, [whyAreYouHereTracking, pmfSurvey]);
 
   const handleCapture = useCallback(async () => {
     try {
@@ -762,10 +840,17 @@ export default function useDoseCalculator({ checkUsageLimit, onShowManualEntryNu
     setFeedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     // Log limit modal
     showLogLimitModal,
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
+    // PMF Survey
+    pmfSurveyTriggerData: pmfSurvey.triggerData,
+    handlePMFSurveyComplete,
+    handlePMFSurveySkip,
   };
 }

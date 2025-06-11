@@ -74,15 +74,15 @@ export function useLogUsageTracking() {
 
   useEffect(() => {
     checkNetworkStatus();
-    if (user) {
+    if (user?.uid) {
       loadCachedLogUsage();
     }
   }, [user]);
 
   useEffect(() => {
     const fetchLogUsageData = async () => {
-      if (!user || !isOnline) {
-        console.log('Skipping log usage Firestore fetch: user not authenticated or offline');
+      if (!user?.uid || !isOnline) {
+        console.log('Skipping log usage Firestore fetch: no user UID or offline');
         return;
       }
 
@@ -154,8 +154,8 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
-    if (!user) {
-      console.log('[useLogUsageTracking] No user found, denying access');
+    if (!user?.uid) {
+      console.log('[useLogUsageTracking] No user UID found, denying access');
       return false;
     }
 
@@ -245,8 +245,8 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
-    if (!user || !isOnline) {
-      console.log('[useLogUsageTracking] Skipping log increment: user not authenticated or offline');
+    if (!user?.uid || !isOnline) {
+      console.log('[useLogUsageTracking] Skipping log increment: no user UID or offline');
       return;
     }
 

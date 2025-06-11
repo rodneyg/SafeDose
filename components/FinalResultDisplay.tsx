@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { CameraIcon, Plus, X, Info, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon } from 'lucide-react-native';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
 
 type Props = {
   calculationError: string | null;
@@ -21,6 +24,8 @@ type Props = {
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
   lastActionType: 'manual' | 'scan' | null;
   isMobileWeb: boolean;
+  usageData?: { scansUsed: number; limit: number; plan: string };
+  onTryAIScan?: () => void;
 };
 
 export default function FinalResultDisplay({
@@ -39,10 +44,130 @@ export default function FinalResultDisplay({
   handleGoToFeedback,
   lastActionType,
   isMobileWeb,
+  usageData,
+  onTryAIScan,
 }: Props) {
   const { disclaimerText } = useUserProfile();
+  const { user, auth } = useAuth();
+  const { logDose, isLogging } = useDoseLogging();
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
+  
+  // Effect to handle automatic saving after successful authentication
+  useEffect(() => {
+    const handleAuthenticatedSave = async () => {
+      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging) {
+        setPendingSave(false);
+        setIsSaving(true);
+        
+        try {
+          const doseInfo = {
+            substanceName,
+            doseValue,
+            unit,
+            calculatedVolume,
+            syringeType: manualSyringe.type as 'Insulin' | 'Standard',
+            recommendedMarking,
+          };
+
+          const result = await logDose(doseInfo);
+          
+          if (result.success) {
+            Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+          } else if (result.limitReached) {
+            Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
+          } else {
+            Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error saving dose after auth:', error);
+          Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+        } finally {
+          setIsSaving(false);
+        }
+      }
+    };
+
+    handleAuthenticatedSave();
+  }, [
+    pendingSave, user, isSaving, isLogging, logDose,
+    substanceName, doseValue, unit, calculatedVolume, 
+    manualSyringe, recommendedMarking
+  ]);
+  
+  // Helper function to trigger Google sign-in
+  const handleSignIn = useCallback(async (): Promise<boolean> => {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google Sign-In OK:', result.user.uid);
+      return true;
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      Alert.alert(
+        'Sign-in Failed', 
+        'There was an error signing in with Google. Please try again.'
+      );
+      return false;
+    }
+  }, [auth]);
+
+  // Handler for saving dose
+  const handleSaveDose = useCallback(async () => {
+    if (isSaving || isLogging) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Check if user is authenticated
+      if (!user || user.isAnonymous) {
+        // Set pending save flag and trigger Google sign-in
+        setPendingSave(true);
+        const signInSuccessful = await handleSignIn();
+        if (!signInSuccessful) {
+          setPendingSave(false);
+          setIsSaving(false);
+          return;
+        }
+        // Note: The useEffect will handle the actual saving once auth completes
+        // Keep isSaving true to show loading state
+        return;
+      }
+
+      // User is already authenticated, proceed with saving immediately
+      const doseInfo = {
+        substanceName,
+        doseValue,
+        unit,
+        calculatedVolume,
+        syringeType: manualSyringe.type as 'Insulin' | 'Standard',
+        recommendedMarking,
+      };
+
+      const result = await logDose(doseInfo);
+      
+      if (result.success) {
+        Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+      } else if (result.limitReached) {
+        Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
+      } else {
+        Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving dose:', error);
+      Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    isSaving, isLogging, user, handleSignIn, logDose,
+    substanceName, doseValue, unit, calculatedVolume, 
+    manualSyringe, recommendedMarking
+  ]);
   
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
@@ -229,6 +354,30 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       </View>
+      
+      {/* AI Scan Teaser - show only for manual users with remaining scans and successful calculation */}
+      {lastActionType === 'manual' && 
+       !calculationError && 
+       recommendedMarking && 
+       usageData && 
+       usageData.scansUsed < usageData.limit && 
+       onTryAIScan && (
+        <View style={styles.scanTeaserContainer}>
+          <Text style={styles.scanTeaserText}>
+            Want to double-check with a vial/syringe photo?
+          </Text>
+          <TouchableOpacity 
+            style={styles.scanTeaserButton}
+            onPress={onTryAIScan}
+            accessibilityRole="button"
+            accessibilityLabel="Try AI Scan to double-check your calculation"
+          >
+            <CameraIcon color="#007AFF" size={14} style={{ marginRight: 4 }} />
+            <Text style={styles.scanTeaserButtonText}>Try AI Scan</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#6B7280' }, isMobileWeb && styles.actionButtonMobile]} 
@@ -236,6 +385,23 @@ export default function FinalResultDisplay({
         >
           <RotateCcw color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>Start Over</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            { backgroundColor: isSaving ? '#9CA3AF' : '#3B82F6' }, 
+            isMobileWeb && styles.actionButtonMobile
+          ]} 
+          onPress={handleSaveDose}
+          disabled={isSaving || isLogging}
+        >
+          <Save color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>
+            {isSaving 
+              ? (pendingSave ? 'Signing in...' : 'Saving...') 
+              : 'Save'
+            }
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} 
@@ -342,5 +508,32 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
     marginTop: 4,
+  },
+  // AI Scan Teaser Styles
+  scanTeaserContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+    paddingHorizontal: 16,
+  },
+  scanTeaserText: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  scanTeaserButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 122, 255, 0.05)',
+  },
+  scanTeaserButtonText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
   },
 });

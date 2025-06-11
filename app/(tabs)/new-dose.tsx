@@ -8,21 +8,25 @@ import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/u
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
+import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
+import PMFSurveyModal from '../../components/PMFSurveyModal';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
 import UpgradeNudgeModal, { NudgeType } from '../../components/UpgradeNudgeModal';
+import SignUpPrompt from '../../components/SignUpPrompt'; // Import sign-up prompt
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useFirstTimeTracking } from '../../lib/hooks/useFirstTimeTracking';
+import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -34,6 +38,10 @@ export default function NewDoseScreen() {
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
+
+  const feedbackStorage = useFeedbackStorage();
+  const firstTimeTracking = useFirstTimeTracking();
+  const signUpPrompt = useSignUpPrompt();
 
   const handleShowManualEntryNudge = () => {
     if (firstTimeTracking.shouldShowManualEntryNudge()) {
@@ -56,10 +64,9 @@ export default function NewDoseScreen() {
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
     onShowManualEntryNudge: handleShowManualEntryNudge,
-    onShowFirstScanNudge: handleShowFirstScanNudge
+    onShowFirstScanNudge: handleShowFirstScanNudge,
+    trackInteraction: signUpPrompt.trackInteraction,
   });
-  const feedbackStorage = useFeedbackStorage();
-  const firstTimeTracking = useFirstTimeTracking();
   
   // Upgrade nudge modal state
   const [showUpgradeNudge, setShowUpgradeNudge] = useState(false);
@@ -268,6 +275,9 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -277,6 +287,10 @@ export default function NewDoseScreen() {
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
+    // PMF Survey
+    pmfSurveyTriggerData,
+    handlePMFSurveyComplete,
+    handlePMFSurveySkip,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -297,7 +311,7 @@ export default function NewDoseScreen() {
   const [pendingScanResult, setPendingScanResult] = useState<any>(null);
 
   const openai = new OpenAI({
-    apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
+    apiKey: (Constants as any).expoConfig?.extra?.OPENAI_API_KEY || '',
     dangerouslyAllowBrowser: true,
   });
 
@@ -603,6 +617,9 @@ export default function NewDoseScreen() {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
         
+        // Track interaction for sign-up prompt
+        signUpPrompt.trackInteraction();
+        
         // If we have a captured image, show the preview modal first
         if (result.capturedImage?.uri) {
           console.log('[Process] Showing image preview modal');
@@ -659,6 +676,25 @@ export default function NewDoseScreen() {
       setManualStep('dose');
     }
   };
+
+  const handleTryAIScan = useCallback(async () => {
+    console.log('handleTryAIScan: Called from teaser');
+    
+    // Check if user has remaining scans
+    const canProceed = await doseCalculator.handleCapture();
+    if (!canProceed) {
+      console.log('handleTryAIScan: Showing LimitModal');
+      logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
+      setShowLimitModal(true);
+      return;
+    }
+
+    // Log that user tried AI scan from teaser
+    logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT, { source: 'teaser' });
+    
+    // Transition to scan screen
+    setScreenStep('scan');
+  }, [doseCalculator, setScreenStep]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
@@ -759,7 +795,9 @@ export default function NewDoseScreen() {
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
+            {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
+            {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
               `${
                 manualStep === 'dose' ? 'Enter Dose' :
@@ -878,6 +916,24 @@ export default function NewDoseScreen() {
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
+          usageData={usageData}
+          onTryAIScan={handleTryAIScan}
+        />
+      )}
+      {screenStep === 'whyAreYouHere' && (
+        <WhyAreYouHereScreen
+          onSubmit={handleWhyAreYouHereSubmit}
+          onSkip={handleWhyAreYouHereSkip}
+          isMobileWeb={isMobileWeb}
+        />
+      )}
+      {screenStep === 'pmfSurvey' && (
+        <PMFSurveyModal
+          isVisible={true}
+          onComplete={handlePMFSurveyComplete}
+          onSkip={handlePMFSurveySkip}
+          sessionCount={pmfSurveyTriggerData.sessionCount}
+          isMobileWeb={isMobileWeb}
         />
       )}
       {screenStep === 'postDoseFeedback' && feedbackContext && (
@@ -932,6 +988,12 @@ export default function NewDoseScreen() {
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
       )}
+      <SignUpPrompt
+        visible={signUpPrompt.shouldShowPrompt}
+        onSignUp={signUpPrompt.handlePromptClick}
+        onDismiss={signUpPrompt.dismissPrompt}
+        onShow={signUpPrompt.markPromptShown}
+      />
     </View>
   );
 }

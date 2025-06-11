@@ -61,6 +61,8 @@ interface ManualEntryScreenProps {
   lastActionType: 'manual' | 'scan' | null;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
+  usageData?: { scansUsed: number; limit: number; plan: string };
+  onTryAIScan?: () => void;
 }
 
 export default function ManualEntryScreen({
@@ -111,6 +113,8 @@ export default function ManualEntryScreen({
   lastActionType,
   validateDoseInput,
   validateConcentrationInput,
+  usageData,
+  onTryAIScan,
 }: ManualEntryScreenProps) {
   useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
@@ -372,6 +376,8 @@ export default function ManualEntryScreen({
           handleGoToFeedback={handleGoToFeedback}
           lastActionType={lastActionType}
           isMobileWeb={isMobileWeb}
+          usageData={usageData}
+          onTryAIScan={onTryAIScan}
         />
       );
       progress = 1;

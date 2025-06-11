@@ -102,7 +102,6 @@ describe('Automatic Dose Logging Integration', () => {
 
     expect(formatDrawToText(legacyLog)).toBeNull();
   });
-  });
 
   it('should properly format timestamps', () => {
     const now = new Date();

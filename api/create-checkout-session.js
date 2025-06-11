@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { priceId, successUrl, cancelUrl } = req.body;
+  const { priceId, successUrl, cancelUrl, hasTrial } = req.body;
   if (!priceId || !successUrl || !cancelUrl) {
     console.log('Missing parameters:', { priceId, successUrl, cancelUrl });
     return res.status(400).json({ error: 'Missing parameters' });
@@ -87,13 +87,28 @@ module.exports = async (req, res) => {
 
   try {
     console.log('Attempting to create checkout session with Stripe...');
-    const session = await stripe.checkout.sessions.create({
+    
+    // Base session configuration
+    const sessionConfig = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
-    });
+      metadata: { 
+        source: hasTrial ? 'full_pro_trial' : 'standard_subscription'
+      },
+    };
+
+    // Add trial period for Full Pro plans (both monthly and yearly)
+    if (hasTrial) {
+      console.log('Adding 7-day trial period for Full Pro plan');
+      sessionConfig.subscription_data = {
+        trial_period_days: 7,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
     console.log('Created checkout session:', session.id);
     res.status(200).json({ sessionId: session.id });
   } catch (err) {

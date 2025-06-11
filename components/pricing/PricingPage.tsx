@@ -17,7 +17,9 @@ const pricingPlans: PricingPlan[] = [
     description: "Manual calculations only, ideal for light or trial use",
     features: [
       { name: "3 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
+      { name: "10 saved doses", available: true },
+      { name: "Manual calculations", available: true },
+      { name: "Basic support", available: true },
       { name: "Faster scans & no mid-session limits", available: false },
       { name: "Priority scan queue", available: false },
     ],
@@ -25,35 +27,61 @@ const pricingPlans: PricingPlan[] = [
     priceId: { monthly: null, annual: null },
   },
   {
-    name: "Plus",
-    price: { monthly: 20, annual: 240 },
-    description: "For consistent at-home dosing",
+    name: "Starter",
+    price: { monthly: 4.99, annual: 44.99 },
+    description: "For occasional dosing with basic AI assistance",
     features: [
-      { name: "50 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans", available: true },
-      { name: "No mid-session limits", available: true },
+      { name: "10 AI scans/month", available: true },
+      { name: "20 saved doses", available: true },
+      { name: "Manual calculations", available: true },
+      { name: "Basic support", available: true },
+      { name: "Priority processing", available: false },
       { name: "Priority scan queue", available: false },
     ],
-    cta: "Upgrade to Plus",
-    badge: "popular",
-    priceId: { monthly: "price_1REz2UAY2p4W374YGel1OISL", annual: "price_1REz2UAY2p4W374YGel1OISL" },
+    cta: "Upgrade to Starter",
+    priceId: { 
+      monthly: "price_1RYgx7AY2p4W374YR9UxS0vr", 
+      annual: "price_1RYgx7AY2p4W374Yy23EtyIm" 
+    },
   },
   {
-    name: "Pro",
-    price: { monthly: 50, annual: 600 },
-    description: "Clinical-grade volume and control",
+    name: "Basic Pro",
+    price: { monthly: 9.99, annual: 89.99 },
+    description: "For consistent logging with AI scan assistance",
     features: [
-      { name: "500 AI scans/month", available: true },
-      { name: "Unlimited manual calculations", available: true },
-      { name: "Faster scans", available: true },
-      { name: "No mid-session limits", available: true },
-      { name: "Priority scan queue", available: true },
-      { name: "Dedicated support line", available: true },
+      { name: "20 AI scans/month", available: true },
+      { name: "Unlimited logs", available: true },
+      { name: "Manual calculations", available: true },
+      { name: "Priority support", available: true },
+      { name: "Priority processing", available: false },
+      { name: "Priority scan queue", available: false },
     ],
-    cta: "Go Pro",
+    cta: "Upgrade to Basic Pro",
+    badge: "popular",
+    priceId: { 
+      monthly: "price_1RYgyPAY2p4W374YNbpBpbqv", 
+      annual: "price_1RYgyPAY2p4W374YJOhwDafY" 
+    },
+  },
+  {
+    name: "Full Pro",
+    price: { monthly: 20, annual: 179.99 },
+    description: "Complete solution with unlimited AI scans and logs",
+    features: [
+      { name: "Unlimited AI scans", available: true },
+      { name: "Unlimited logs", available: true },
+      { name: "Manual calculations", available: true },
+      { name: "Priority processing", available: true },
+      { name: "Priority scan queue", available: true },
+      { name: "Premium support", available: true },
+    ],
+    cta: "Start Free Trial",
     badge: "best-value",
-    priceId: { monthly: "price_1REz24AY2p4W374Y0HsCxUre", annual: "price_1REz24AY2p4W374Y0HsCxUre" },
+    trialDays: 7,
+    priceId: { 
+      monthly: "price_1RUHgxAY2p4W374Yb5EWEtZ0", 
+      annual: "price_1RYgzUAY2p4W374YHiBBHvuX" 
+    },
   },
 ];
 
@@ -91,6 +119,7 @@ export default function PricingPage() {
           priceId,
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/pricing`,
+          hasTrial: plan.trialDays ? true : false,
         }),
       });
 
