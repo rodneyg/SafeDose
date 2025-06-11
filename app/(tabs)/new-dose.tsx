@@ -922,9 +922,10 @@ export default function NewDoseScreen() {
         onContinueWithAction={() => {
           setContinueScanAfterNudge(true);
           setShowUpgradeNudge(false);
-          // Trigger scan attempt after nudge is dismissed
-          setTimeout(() => handleScanAttempt(), 100);
+          // Trigger scan attempt after nudge is dismissed with shorter delay for better UX
+          setTimeout(() => handleScanAttempt(), 50);
         }}
+        isOverCamera={screenStep === 'scan'}
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>

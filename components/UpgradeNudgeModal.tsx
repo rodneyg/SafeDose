@@ -10,6 +10,7 @@ interface UpgradeNudgeModalProps {
   nudgeType: NudgeType;
   onClose: () => void;
   onContinueWithAction?: () => void; // For pre-limit nudge, allows continuing with scan
+  isOverCamera?: boolean; // Whether modal is shown over camera view
 }
 
 const getNudgeContent = (nudgeType: NudgeType) => {
@@ -52,7 +53,7 @@ const getNudgeContent = (nudgeType: NudgeType) => {
   }
 };
 
-export default function UpgradeNudgeModal({ visible, nudgeType, onClose, onContinueWithAction }: UpgradeNudgeModalProps) {
+export default function UpgradeNudgeModal({ visible, nudgeType, onClose, onContinueWithAction, isOverCamera = false }: UpgradeNudgeModalProps) {
   const router = useRouter();
   const content = getNudgeContent(nudgeType);
 
@@ -68,8 +69,14 @@ export default function UpgradeNudgeModal({ visible, nudgeType, onClose, onConti
       action: 'upgrade', 
       nudge_type: nudgeType 
     });
-    router.push('/pricing');
+    
+    // Close the modal first to ensure smooth transition
     onClose();
+    
+    // Navigate to pricing after a brief delay to allow modal to close
+    setTimeout(() => {
+      router.push('/pricing');
+    }, 100);
   };
 
   const handleDismiss = () => {
@@ -94,7 +101,7 @@ export default function UpgradeNudgeModal({ visible, nudgeType, onClose, onConti
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, isOverCamera && styles.overlayOverCamera]}>
         <View style={styles.modal}>
           <Text style={styles.title}>{content.title}</Text>
           <Text style={styles.message}>{content.message}</Text>
@@ -120,6 +127,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  overlayOverCamera: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)', // Much lighter overlay when over camera
+  },
   modal: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -127,6 +137,15 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    // Add subtle shadow for better visibility over camera
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   title: {
     fontSize: 20,
