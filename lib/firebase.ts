@@ -1,7 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getAnalytics, Analytics } from "firebase/analytics";
+import { getFirestore, Firestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
 // Firebase configuration from app.config.js
@@ -15,29 +15,94 @@ const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
   measurementId: "G-WRY88Q57KK",
 };
 
-// Initialize Firebase app
-const app = initializeApp(firebaseConfig);
+// Lazy initialization - nothing is initialized at module load time
+let app: FirebaseApp | undefined = undefined;
+let authInstance: Auth | undefined = undefined;
+let dbInstance: Firestore | undefined = undefined;
+let analyticsInstance: Analytics | undefined = undefined;
 
-// Export Firebase auth and firestore
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const getFirebaseApp = (): FirebaseApp => {
+  if (!app) {
+    try {
+      console.log('[Firebase] Initializing Firebase app...');
+      app = initializeApp(firebaseConfig);
+      console.log('[Firebase] Firebase app initialized successfully');
+    } catch (error) {
+      console.error('[Firebase] Failed to initialize Firebase app:', error);
+      console.error('[Firebase] Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
+      throw error;
+    }
+  }
+  return app;
+};
 
-// Lazy-initialize analytics to prevent initialization order issues
-let analyticsInstance: ReturnType<typeof getAnalytics> | undefined = undefined;
+export const getAuthInstance = (): Auth => {
+  if (!authInstance) {
+    try {
+      console.log('[Firebase] Initializing Firebase Auth...');
+      authInstance = getAuth(getFirebaseApp());
+      console.log('[Firebase] Firebase Auth initialized successfully');
+    } catch (error) {
+      console.error('[Firebase] Failed to initialize Firebase Auth:', error);
+      throw error;
+    }
+  }
+  return authInstance;
+};
 
-export const getAnalyticsInstance = () => {
+export const getDbInstance = (): Firestore => {
+  if (!dbInstance) {
+    try {
+      console.log('[Firebase] Initializing Firestore...');
+      dbInstance = getFirestore(getFirebaseApp());
+      console.log('[Firebase] Firestore initialized successfully');
+    } catch (error) {
+      console.error('[Firebase] Failed to initialize Firestore:', error);
+      throw error;
+    }
+  }
+  return dbInstance;
+};
+
+export const getAnalyticsInstance = (): Analytics | undefined => {
   if (typeof window === "undefined") {
+    console.log('[Firebase] Analytics not available - not in browser environment');
     return undefined;
   }
   
   if (!analyticsInstance) {
     try {
-      analyticsInstance = getAnalytics(app);
+      console.log('[Firebase] Initializing Firebase Analytics...');
+      analyticsInstance = getAnalytics(getFirebaseApp());
+      console.log('[Firebase] Firebase Analytics initialized successfully');
     } catch (error) {
-      console.warn('[Firebase] Analytics initialization failed:', error);
+      console.error('[Firebase] Analytics initialization failed:', error);
+      console.error('[Firebase] Analytics error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       return undefined;
     }
   }
   
   return analyticsInstance;
 };
+
+// For backward compatibility, provide auth and db as getters
+// These will initialize on first access rather than at module load time
+export const auth = new Proxy({} as Auth, {
+  get(target, prop) {
+    return getAuthInstance()[prop as keyof Auth];
+  }
+});
+
+export const db = new Proxy({} as Firestore, {
+  get(target, prop) {
+    return getDbInstance()[prop as keyof Firestore];
+  }
+});
