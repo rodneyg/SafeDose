@@ -8,10 +8,9 @@ import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/u
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
-import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
+import CombinedOnboardingSurvey from '../../components/CombinedOnboardingSurvey';
 import InjectionSiteSelector from '../../components/InjectionSiteSelector';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
-import PMFSurveyModal from '../../components/PMFSurveyModal';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
@@ -26,7 +25,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback' | 'combinedOnboardingSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -249,9 +248,9 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
-    // WhyAreYouHere handlers
-    handleWhyAreYouHereSubmit,
-    handleWhyAreYouHereSkip,
+    // Combined onboarding survey handlers
+    handleCombinedSurveyComplete,
+    handleCombinedSurveySkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -261,10 +260,8 @@ export default function NewDoseScreen() {
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
-    // PMF Survey
-    pmfSurveyTriggerData,
-    handlePMFSurveyComplete,
-    handlePMFSurveySkip,
+    // Combined onboarding survey
+    combinedSurveyTriggerData,
     // Injection site selection
     selectedInjectionSite,
     setSelectedInjectionSite,
@@ -771,10 +768,9 @@ export default function NewDoseScreen() {
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
-            {screenStep === 'whyAreYouHere' && 'Quick Question'}
+            {screenStep === 'combinedOnboardingSurvey' && 'Quick Survey'}
             {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
-            {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
               `${
                 manualStep === 'dose' ? 'Enter Dose' :
@@ -897,19 +893,12 @@ export default function NewDoseScreen() {
           onTryAIScan={handleTryAIScan}
         />
       )}
-      {screenStep === 'whyAreYouHere' && (
-        <WhyAreYouHereScreen
-          onSubmit={handleWhyAreYouHereSubmit}
-          onSkip={handleWhyAreYouHereSkip}
-          isMobileWeb={isMobileWeb}
-        />
-      )}
-      {screenStep === 'pmfSurvey' && (
-        <PMFSurveyModal
+      {screenStep === 'combinedOnboardingSurvey' && (
+        <CombinedOnboardingSurvey
           isVisible={true}
-          onComplete={handlePMFSurveyComplete}
-          onSkip={handlePMFSurveySkip}
-          sessionCount={pmfSurveyTriggerData.sessionCount}
+          onComplete={handleCombinedSurveyComplete}
+          onSkip={handleCombinedSurveySkip}
+          sessionCount={combinedSurveyTriggerData.sessionCount}
           isMobileWeb={isMobileWeb}
         />
       )}
