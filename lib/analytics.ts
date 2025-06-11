@@ -17,10 +17,10 @@ const initializeAnalyticsDeferred = () => {
   console.log('[Analytics] Starting deferred Analytics initialization...');
   
   // Add a small delay to ensure component tree is fully mounted
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       console.log('[Analytics] Attempting to get Analytics instance after delay...');
-      const analytics = getAnalyticsInstance();
+      const analytics = await getAnalyticsInstance();
       
       if (analytics) {
         analyticsInitialized = true;
@@ -120,7 +120,7 @@ export const USER_PROPERTIES = {
 
 // Helper function to safely log analytics events
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
-  console.log(`[Analytics] logAnalyticsEvent called: ${eventName}`, parameters);
+  console.log('[Analytics] logAnalyticsEvent called:', { eventName, parameters, timestamp: new Date().toISOString() });
   
   // Trigger deferred initialization if not already attempted
   if (!initializationAttempted) {
@@ -130,17 +130,19 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
   
   if (analyticsInitialized) {
     // Analytics is ready, log immediately
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    (async () => {
       try {
-        logEvent(analytics, eventName, parameters);
-        console.log(`[Analytics] Event logged immediately: ${eventName}`, parameters);
+        const analytics = await getAnalyticsInstance();
+        if (analytics) {
+          logEvent(analytics, eventName, parameters);
+          console.log(`[Analytics] Event logged: ${eventName}`, parameters);
+        } else {
+          console.log(`[Analytics] Analytics instance not available for event: ${eventName}`, parameters);
+        }
       } catch (error) {
         console.error(`[Analytics] Failed to log event ${eventName}:`, error);
       }
-    } else {
-      console.log(`[Analytics] Analytics instance not available for event: ${eventName}`, parameters);
-    }
+    })();
   } else {
     // Queue the event for later processing
     console.log(`[Analytics] Queueing event: ${eventName}`, parameters);
@@ -150,7 +152,7 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
 
 // Helper function to safely set user properties
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-  console.log(`[Analytics] setAnalyticsUserProperties called:`, properties);
+  console.log('[Analytics] setAnalyticsUserProperties called:', { properties, timestamp: new Date().toISOString() });
   
   // Trigger deferred initialization if not already attempted
   if (!initializationAttempted) {
@@ -160,17 +162,19 @@ export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
   
   if (analyticsInitialized) {
     // Analytics is ready, set properties immediately
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    (async () => {
       try {
-        setUserProperties(analytics, properties);
-        console.log(`[Analytics] User properties set immediately:`, properties);
+        const analytics = await getAnalyticsInstance();
+        if (analytics) {
+          setUserProperties(analytics, properties);
+          console.log(`[Analytics] User properties set immediately:`, properties);
+        } else {
+          console.log(`[Analytics] Analytics instance not available for properties:`, properties);
+        }
       } catch (error) {
         console.error(`[Analytics] Failed to set user properties:`, error);
       }
-    } else {
-      console.log(`[Analytics] Analytics instance not available for properties:`, properties);
-    }
+    })();
   } else {
     // Queue the properties for later processing
     console.log(`[Analytics] Queueing properties:`, properties);

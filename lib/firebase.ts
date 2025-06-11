@@ -1,8 +1,10 @@
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getAnalytics, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 import Constants from "expo-constants";
+
+let getAnalytics: any = null;
+let Analytics: any = null;
 
 // Module initialization debug logging
 console.log('[Firebase Module] Firebase module loading started');
@@ -66,6 +68,15 @@ const getFirebaseConfig = () => {
       apiKey: configWithoutMeasurementId.apiKey ? '[REDACTED]' : undefined
     });
     return configWithoutMeasurementId;
+  }
+};
+
+// Dynamically import Analytics module only when needed
+const loadAnalyticsModule = async () => {
+  if (!getAnalytics) {
+    const analyticsModule = await import('firebase/analytics');
+    getAnalytics = analyticsModule.getAnalytics;
+    Analytics = analyticsModule.Analytics;
   }
 };
 
@@ -180,42 +191,39 @@ export const getDbInstance = (): Firestore => {
   return dbInstance;
 };
 
-export const getAnalyticsInstance = (): Analytics | undefined => {
-  console.log('[Firebase Analytics] getAnalyticsInstance called');
-  console.log('[Firebase Analytics] Current analytics state:', !!analyticsInstance);
-  console.log('[Firebase Analytics] Environment check details:', {
-    windowUndefined: typeof window === "undefined",
-    hasWindow: typeof window !== "undefined",
-    hasDocument: typeof document !== "undefined",
-    hasNavigator: typeof navigator !== "undefined"
-  });
+export const getAnalyticsInstance = async (): Promise<Analytics | undefined> => {
+  console.log('[Firebase] getAnalyticsInstance called at:', new Date().toISOString());
   
   // Only initialize Analytics in browser environments
   if (typeof window === "undefined") {
-    console.log('[Firebase Analytics] Analytics not available - not in browser environment');
-    console.log('[Firebase Analytics] Skipping Analytics initialization (server-side or non-browser)');
+    console.log('[Firebase] Analytics not available - not in browser environment');
+    console.log('[Firebase] Skipping Analytics initialization (server-side or non-browser)');
     return undefined;
   }
   
+  console.log('[Firebase] getAnalyticsInstance called at:', new Date().toISOString());
+  
   if (!analyticsInstance) {
     try {
-      console.log('[Firebase Analytics] Starting Firebase Analytics initialization...');
-      console.log('[Firebase Analytics] Browser environment confirmed, proceeding with initialization');
+      console.log('[Firebase] Starting Firebase Analytics initialization...');
+      console.log('[Firebase] Browser environment confirmed, proceeding with initialization');
       
       // Get Firebase app instance first and ensure it's fully initialized
-      console.log('[Firebase Analytics] Obtaining Firebase app instance...');
+      console.log('[Firebase] Obtaining Firebase app instance...');
       const appInstance = getFirebaseApp();
+      console.log('[Firebase] Firebase app instance retrieved:', !!appInstance);
       if (!appInstance) {
-        console.error('[Firebase Analytics] Cannot initialize Analytics - Firebase app not available');
-        console.error('[Firebase Analytics] App instance is null or undefined');
+        console.error('[Firebase] Cannot initialize Analytics - Firebase app not available');
+        console.error('[Firebase] App instance is null or undefined');
         return undefined;
       }
-      console.log('[Firebase Analytics] Firebase app instance obtained successfully');
+      console.log('[Firebase] Firebase app instance obtained successfully');
       
       // Verify the app configuration includes measurementId before proceeding
-      console.log('[Firebase Analytics] Verifying measurementId in configuration...');
+      console.log('[Firebase] Verifying measurementId in configuration...');
       const config = getFirebaseConfig();
-      console.log('[Firebase Analytics] Configuration check:', {
+      console.log('[Firebase] Firebase config retrieved:', { hasMeasurementId: !!config.measurementId });
+      console.log('[Firebase] Configuration check:', {
         hasMeasurementId: !!config.measurementId,
         measurementId: config.measurementId,
         measurementIdType: typeof config.measurementId,
@@ -223,22 +231,26 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
       });
       
       if (!config.measurementId) {
-        console.log('[Firebase Analytics] Analytics not initialized - no measurementId in config');
-        console.log('[Firebase Analytics] This is expected for non-web platforms or when Analytics is disabled');
+        console.log('[Firebase] Analytics not initialized - no measurementId in config');
+        console.log('[Firebase] This is expected for non-web platforms or when Analytics is disabled');
         return undefined;
       }
       
       // Additional defensive check - ensure measurementId follows expected format to prevent 'G' variable issues
       if (!config.measurementId.startsWith('G-') || config.measurementId.length < 10) {
-        console.log('[Firebase Analytics] Analytics not initialized - invalid measurementId format');
-        console.log('[Firebase Analytics] MeasurementId format validation failed, skipping to prevent initialization errors');
+        console.log('[Firebase] Analytics not initialized - invalid measurementId format');
+        console.log('[Firebase] MeasurementId format validation failed, skipping to prevent initialization errors');
         return undefined;
       }
       
+      // Load Analytics module dynamically
+      await loadAnalyticsModule();
+      console.log('[Firebase] Analytics module loaded');
+      
       // Ensure the Firebase app is fully initialized before proceeding
-      console.log('[Firebase Analytics] Firebase app ready, initializing Analytics...');
-      console.log('[Firebase Analytics] About to call getAnalytics() with app instance');
-      console.log('[Firebase Analytics] App instance details:', {
+      console.log('[Firebase] Firebase app ready, initializing Analytics...');
+      console.log('[Firebase] About to call getAnalytics() with app instance');
+      console.log('[Firebase] App instance details:', {
         appName: appInstance.name,
         hasOptions: !!appInstance.options,
         projectId: appInstance.options?.projectId
@@ -246,55 +258,56 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
       
       // Wrap the getAnalytics call in additional try-catch to catch 'G' variable reference errors
       try {
-        console.log('[Firebase Analytics] Calling getAnalytics() with defensive error handling...');
+        console.log('[Firebase] Calling getAnalytics() with defensive error handling...');
         analyticsInstance = getAnalytics(appInstance);
-        console.log('[Firebase Analytics] getAnalytics() call completed successfully');
+        console.log('[Firebase] getAnalytics() call completed successfully');
       } catch (analyticsError) {
-        console.error('[Firebase Analytics] getAnalytics() call failed - likely the G variable reference error:', analyticsError);
-        console.error('[Firebase Analytics] This error is related to Firebase Analytics measurementId processing');
+        console.error('[Firebase] getAnalytics() call failed - likely the G variable reference error:', analyticsError);
+        console.error('[Firebase] This error is related to Firebase Analytics measurementId processing');
         
         // Check if this is the specific 'G' variable error
         if (analyticsError?.message?.includes('G') || analyticsError?.message?.includes('before initialization')) {
-          console.error('[Firebase Analytics] Detected G variable reference error - Firebase Analytics incompatible with current environment');
-          console.error('[Firebase Analytics] This is a known issue with Firebase Analytics initialization timing');
+          console.error('[Firebase] Detected G variable reference error - Firebase Analytics incompatible with current environment');
+          console.error('[Firebase] This is a known issue with Firebase Analytics initialization timing');
         }
         
         analyticsInstance = undefined;
         return undefined;
       }
       
-      console.log('[Firebase Analytics] Firebase Analytics initialized successfully');
-      console.log('[Firebase Analytics] Analytics instance created:', {
+      console.log('[Firebase] Firebase Analytics initialized successfully at:', new Date().toISOString());
+      console.log('[Firebase] Analytics instance created:', {
         hasApp: !!analyticsInstance.app,
         appName: analyticsInstance.app?.name
       });
     } catch (error) {
-      console.error('[Firebase Analytics] Analytics initialization failed:', error);
-      console.error('[Firebase Analytics] Analytics error details:', {
+      console.error('[Firebase] Analytics initialization failed:', error);
+      console.error('[Firebase] Analytics error details:', {
         message: error?.message,
         stack: error?.stack,
         name: error?.name,
         errorType: typeof error,
-        errorConstructor: error?.constructor?.name
+        errorConstructor: error?.constructor?.name,
+        timestamp: new Date().toISOString()
       });
       
       // Log additional context that might help debug the 'G' variable issue
-      console.error('[Firebase Analytics] Additional debug context:', {
+      console.error('[Firebase] Additional debug context:', {
         currentUrl: typeof window !== "undefined" ? window.location?.href : 'N/A',
         userAgent: typeof navigator !== "undefined" ? navigator.userAgent?.substring(0, 100) : 'N/A',
         timestamp: new Date().toISOString()
       });
       
       // Ensure we don't leave analyticsInstance in a partial state
-      console.log('[Firebase Analytics] Cleaning up failed Analytics instance...');
+      console.log('[Firebase] Cleaning up failed Analytics instance...');
       analyticsInstance = undefined;
       return undefined;
     }
   } else {
-    console.log('[Firebase Analytics] Returning existing Analytics instance');
+    console.log('[Firebase] Returning existing Analytics instance');
   }
   
-  console.log('[Firebase Analytics] getAnalyticsInstance completed, returning:', !!analyticsInstance);
+  console.log('[Firebase] Returning analytics instance:', !!analyticsInstance);
   return analyticsInstance;
 };
 
