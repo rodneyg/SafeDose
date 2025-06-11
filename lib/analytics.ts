@@ -1,5 +1,5 @@
 import { logEvent, setUserProperties } from 'firebase/analytics';
-import { analytics } from './firebase';
+import { getAnalyticsInstance } from './firebase';
 
 // Custom event names as defined in the issue
 export const ANALYTICS_EVENTS = {
@@ -40,6 +40,16 @@ export const ANALYTICS_EVENTS = {
   WHY_HERE_PROMPT_SHOWN: 'why_here_prompt_shown',
   WHY_HERE_PROMPT_RESPONSE: 'why_here_prompt_response',
   WHY_HERE_PROMPT_SKIPPED: 'why_here_prompt_skipped',
+  // PMF Survey events
+  PMF_SURVEY_SHOWN: 'pmf_survey_shown',
+  PMF_SURVEY_QUESTION_ANSWERED: 'pmf_survey_question_answered',
+  PMF_SURVEY_COMPLETED: 'pmf_survey_completed',
+  PMF_SURVEY_SKIPPED: 'pmf_survey_skipped',
+  PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed',
+  // Sign-up prompt events
+  SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
+  SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
+  SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
 } as const;
 
 // User property names
@@ -54,6 +64,7 @@ export const USER_PROPERTIES = {
 
 // Helper function to safely log analytics events
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
+  const analytics = getAnalyticsInstance();
   if (analytics) {
     try {
       logEvent(analytics, eventName, parameters);
@@ -68,6 +79,7 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
 
 // Helper function to safely set user properties
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
+  const analytics = getAnalyticsInstance();
   if (analytics) {
     try {
       setUserProperties(analytics, properties);

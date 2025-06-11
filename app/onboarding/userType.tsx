@@ -9,11 +9,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileAnswers, UserProfile } from '@/types/userProfile';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { isMobileWeb } from '@/lib/utils';
+import { useOnboardingIntentStorage } from '@/lib/hooks/useOnboardingIntentStorage';
 
 export default function UserTypeSegmentation() {
   const router = useRouter();
   const { user } = useAuth();
   const { saveProfile } = useUserProfile();
+  const { submitOnboardingIntent } = useOnboardingIntentStorage();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<UserProfileAnswers>({
     isLicensedProfessional: null,
@@ -90,6 +92,17 @@ export default function UserTypeSegmentation() {
       console.log('[UserType] Current answers:', answers);
       console.log('[UserType] Current user:', user?.uid || 'No user');
       
+      // Submit onboarding intent data (for analytics and data collection)
+      // This happens first and independently of profile saving
+      console.log('[UserType] Submitting onboarding intent data...');
+      try {
+        await submitOnboardingIntent(answers);
+        console.log('[UserType] ✅ Onboarding intent data submitted');
+      } catch (intentError) {
+        console.warn('[UserType] ⚠️ Failed to submit onboarding intent data:', intentError);
+        // Continue with onboarding even if intent submission fails
+      }
+      
       const profile: UserProfile = {
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
@@ -148,7 +161,7 @@ export default function UserTypeSegmentation() {
       // Fallback navigation to root
       router.replace('/');
     }
-  }, [answers, saveProfile, router, user?.uid]);
+  }, [answers, saveProfile, router, user?.uid, submitOnboardingIntent]);
 
   const isCurrentStepComplete = (): boolean => {
     switch (currentStep) {

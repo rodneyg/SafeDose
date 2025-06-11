@@ -100,24 +100,11 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       let profileData: UserProfile | null = null;
       let dataSource = 'none';
 
-      // For anonymous users, prioritize local storage (they shouldn't have Firebase access)
-      if (user?.isAnonymous) {
-        console.log('[UserProfile] Anonymous user detected - prioritizing local storage');
-        try {
-          const storedProfile = await AsyncStorage.getItem(USER_PROFILE_STORAGE_KEY);
-          if (storedProfile) {
-            profileData = JSON.parse(storedProfile);
-            dataSource = 'local_storage_anonymous';
-            console.log('[UserProfile] ✅ Profile loaded from local storage (anonymous user):', profileData);
-          } else {
-            console.log('[UserProfile] No local profile found for anonymous user');
-          }
-        } catch (localError) {
-          console.error('[UserProfile] ❌ Failed to load from local storage for anonymous user:', localError);
-        }
-      } else if (user?.uid) {
-        // For authenticated users, try Firebase first, then local storage fallback
-        console.log('[UserProfile] Authenticated user detected - trying Firebase first');
+      // For both anonymous and authenticated users, try Firebase first if user has UID
+      if (user?.uid) {
+        // For all users with UID (anonymous and authenticated), try Firebase first
+        console.log('[UserProfile] User with UID detected - trying Firebase first');
+        console.log('[UserProfile] User type:', user.isAnonymous ? 'anonymous' : 'authenticated');
         try {
           const docRef = doc(db, 'userProfiles', user.uid);
           const docSnap = await getDoc(docRef);
@@ -135,6 +122,10 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
           }
         } catch (firebaseError) {
           console.warn('[UserProfile] ⚠️ Firebase load failed, falling back to local storage:', firebaseError);
+          console.warn('[UserProfile] Error details:', {
+            code: firebaseError?.code || 'No error code',
+            message: firebaseError?.message || 'Unknown error'
+          });
         }
 
         // Fallback to local storage if Firebase failed
@@ -149,6 +140,8 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
               // Since we have a local profile but Firebase failed initially, 
               // try to backup this profile to Firebase (this handles cases where 
               // user has local profile but it's not synced to Firebase)
+              // Only attempt backup if Firebase rules allow it (which they now do for anonymous users too)
+              console.log('[UserProfile] Attempting to backup local profile to Firebase...');
               try {
                 const docRef = doc(db, 'userProfiles', user.uid);
                 const profileToBackup = {
@@ -238,8 +231,12 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       // Save to local storage first (as cache/fallback)
       await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
       
-      // Save to Firebase if user is available
+      // Save to Firebase if user is available (both anonymous and authenticated users supported)
       if (user?.uid) {
+        console.log('[UserProfile] Saving to Firebase for user:', {
+          uid: user.uid,
+          userType: user.isAnonymous ? 'anonymous' : 'authenticated'
+        });
         try {
           const docRef = doc(db, 'userProfiles', user.uid);
           await setDoc(docRef, newProfile);
@@ -254,7 +251,11 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
             userType: user.isAnonymous ? 'anonymous' : 'authenticated'
           });
         } catch (firebaseError) {
-          console.warn('Error saving profile to Firebase, but local storage succeeded:', firebaseError);
+          console.warn('[UserProfile] Error saving profile to Firebase, but local storage succeeded:', firebaseError);
+          console.warn('[UserProfile] Firebase error details:', {
+            code: firebaseError?.code || 'No error code',
+            message: firebaseError?.message || 'Unknown error'
+          });
           
           // Log analytics for failed Firebase save
           logAnalyticsEvent(ANALYTICS_EVENTS.PROFILE_SAVE_FIREBASE_FAILED, {
@@ -291,14 +292,22 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       // Clear from local storage
       await AsyncStorage.removeItem(USER_PROFILE_STORAGE_KEY);
       
-      // Clear from Firebase if user is available
+      // Clear from Firebase if user is available (both anonymous and authenticated users)
       if (user?.uid) {
+        console.log('[UserProfile] Clearing from Firebase for user:', {
+          uid: user.uid,
+          userType: user.isAnonymous ? 'anonymous' : 'authenticated'
+        });
         try {
           const docRef = doc(db, 'userProfiles', user.uid);
           await setDoc(docRef, {}, { merge: false }); // Effectively deletes the document
           console.log('User profile cleared from Firebase');
         } catch (firebaseError) {
-          console.warn('Error clearing profile from Firebase:', firebaseError);
+          console.warn('[UserProfile] Error clearing profile from Firebase:', firebaseError);
+          console.warn('[UserProfile] Firebase error details:', {
+            code: firebaseError?.code || 'No error code',
+            message: firebaseError?.message || 'Unknown error'
+          });
         }
       }
       
