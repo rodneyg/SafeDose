@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Camera, History, BookOpen } from 'lucide-react-native';
+import { Camera, History, BookOpen, Settings } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 
 export default function TabLayout() {
@@ -42,6 +42,13 @@ export default function TabLayout() {
         options={{
           title: 'Log',
           tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>
