@@ -3,7 +3,8 @@ import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'fire
 import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/lib/firebase'; // Initialized auth instance
-import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
+// Temporarily disable analytics import to test if it's causing the initialization issue
+// import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -73,9 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       console.log('[AuthContext] Cached data cleared');
       
-      console.log('[AuthContext] Logging analytics event...');
-      logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
-      console.log('[AuthContext] Analytics event logged successfully');
+      console.log('[AuthContext] Would log analytics event for logout (disabled for testing)');
+      // logAnalyticsEvent(ANALYTICS_EVENTS.LOGOUT);
+      console.log('[AuthContext] Analytics event logging skipped');
       
       console.log('[AuthContext] ✅ Signed out successfully - logout function complete');
     } catch (error) {
@@ -134,12 +135,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           timeoutId = null;
         }
         
-        // Set user properties for analytics
-        setAnalyticsUserProperties({
-          [USER_PROPERTIES.IS_ANONYMOUS]: firebaseUser.isAnonymous,
-          // Note: plan_type will be set when we have user plan data
-        });
-        console.log('[AuthContext] Analytics user properties set');
+        // Set user properties for analytics (disabled for testing)
+        // setAnalyticsUserProperties({
+        //   [USER_PROPERTIES.IS_ANONYMOUS]: firebaseUser.isAnonymous,
+        //   // Note: plan_type will be set when we have user plan data
+        // });
+        console.log('[AuthContext] Analytics user properties setting skipped');
       } else {
         console.log('[AuthContext] No user found - setting user to null');
         setUser(null);
