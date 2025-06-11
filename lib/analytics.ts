@@ -33,7 +33,7 @@ export const ANALYTICS_EVENTS = {
   // Profile storage events
   PROFILE_SAVED_FIREBASE: 'profile_saved_firebase',
   PROFILE_SAVED_LOCAL_ONLY: 'profile_saved_local_only',
-  PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',  
+  PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
   // PMF Survey events
@@ -42,6 +42,10 @@ export const ANALYTICS_EVENTS = {
   PMF_SURVEY_COMPLETED: 'pmf_survey_completed',
   PMF_SURVEY_SKIPPED: 'pmf_survey_skipped',
   PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed',
+  // Sign-up prompt events
+  SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
+  SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
+  SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
 } as const;
 
 // User property names

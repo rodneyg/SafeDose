@@ -14,9 +14,11 @@ import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
+import SignUpPrompt from '../../components/SignUpPrompt'; // Import sign-up prompt
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
+import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
@@ -34,8 +36,12 @@ export default function NewDoseScreen() {
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
-  const doseCalculator = useDoseCalculator({ checkUsageLimit });
+  const doseCalculator = useDoseCalculator({ 
+    checkUsageLimit,
+    trackInteraction: signUpPrompt.trackInteraction,
+  });
   const feedbackStorage = useFeedbackStorage();
+  const signUpPrompt = useSignUpPrompt();
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -556,6 +562,9 @@ export default function NewDoseScreen() {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
         
+        // Track interaction for sign-up prompt
+        signUpPrompt.trackInteraction();
+        
         // If we have a captured image, show the preview modal first
         if (result.capturedImage?.uri) {
           console.log('[Process] Showing image preview modal');
@@ -883,6 +892,12 @@ export default function NewDoseScreen() {
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
       )}
+      <SignUpPrompt
+        visible={signUpPrompt.shouldShowPrompt}
+        onSignUp={signUpPrompt.handlePromptClick}
+        onDismiss={signUpPrompt.dismissPrompt}
+        onShow={signUpPrompt.markPromptShown}
+      />
     </View>
   );
 }
