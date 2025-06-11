@@ -149,6 +149,7 @@ export function useUsageTracking() {
     console.log('[useUsageTracking] ========== CHECKING USAGE LIMIT ==========');
     console.log('[useUsageTracking] Checking usage limit:', {
       user: user ? user.uid : 'No user',
+      isAnonymous: user?.isAnonymous,
       isOnline,
       currentUsage: usageData.scansUsed,
       limit: usageData.limit,
@@ -156,14 +157,19 @@ export function useUsageTracking() {
     });
     
     if (!user) {
-      console.log('[useUsageTracking] No user found, denying access');
+      console.log('[useUsageTracking] ❌ No user found, denying access');
       return false;
     }
 
+    // For offline users, use cached data
     if (!isOnline) {
-      console.log('[useUsageTracking] Checking cached usage limit due to offline status');
+      console.log('[useUsageTracking] ⚠️ Checking cached usage limit due to offline status');
       const hasScansRemaining = usageData.scansUsed < usageData.limit;
-      console.log('[useUsageTracking] Offline limit check result:', hasScansRemaining);
+      console.log('[useUsageTracking] 📱 Offline limit check result:', { 
+        scansUsed: usageData.scansUsed, 
+        limit: usageData.limit, 
+        hasScansRemaining 
+      });
       return hasScansRemaining;
     }
 
@@ -221,14 +227,27 @@ export function useUsageTracking() {
     console.log('[useUsageTracking] ========== INCREMENTING SCAN USAGE ==========');
     console.log('[useUsageTracking] Attempting to increment scans used:', {
       user: user ? user.uid : 'No user',
+      isAnonymous: user?.isAnonymous,
       isOnline,
       currentScansUsed: usageData.scansUsed,
       limit: usageData.limit,
       plan: usageData.plan
     });
     
-    if (!user || !isOnline) {
-      console.log('[useUsageTracking] Skipping scan increment: user not authenticated or offline');
+    if (!user) {
+      console.log('[useUsageTracking] ❌ Skipping scan increment: user not authenticated');
+      return;
+    }
+    
+    if (!isOnline) {
+      console.log('[useUsageTracking] ⚠️ User is offline - incrementing locally only');
+      // For offline users, still increment the local counter
+      setUsageData((prev) => {
+        const newData = { ...prev, scansUsed: prev.scansUsed + 1 };
+        console.log('[useUsageTracking] 📱 Updated local usage data (offline):', newData);
+        saveCachedUsage(newData);
+        return newData;
+      });
       return;
     }
 
