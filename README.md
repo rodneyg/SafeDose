@@ -17,6 +17,23 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ---
 
+## ✨ Features
+
+SafeDose offers a range of features to simplify medication dosing:
+
+*   **Versatile Dose Calculations:**
+    *   Calculate required dosage volume based on medication concentration.
+    *   Determine dosage from the total amount of medication in a vial and the volume of solution added.
+*   **Reconstitution Planner:**
+    *   Plan how to reconstitute powdered medication to achieve a desired dose and injection volume.
+*   **Supported Units:**
+    *   **Dose Units:** mg, mcg, units, mL
+    *   **Concentration Units:** mg/mL, mcg/mL, units/mL
+*   **Syringe Compatibility:**
+    *   Supports calculations for both Standard (mL) and Insulin (units) syringes.
+
+---
+
 ## 🚀 Hosted Version
 
 A hosted version of SafeDose: https://app.safedoseai.com/
@@ -55,9 +72,43 @@ Note: To use the AI-powered scan feature, you’ll need your own OpenAI API Key.
 
 🔧 Environment Setup
 
-Create a .env file in the root:
+Create a `.env` file in the root by copying `.env.example`:
+```bash
+cp .env.example .env
+```
 
-OPENAI_API_KEY=your-openai-key-here
+Then, populate the `.env` file with your specific keys and configurations:
+
+# OpenAI API Key (for AI-powered scan feature)
+OPENAI_API_KEY=your_openai_api_key
+
+# Stripe Configuration (for premium features/subscriptions)
+STRIPE_MODE=test # or 'live'
+STRIPE_TEST_PUBLISHABLE_KEY=pk_test_...
+STRIPE_TEST_SECRET_KEY=sk_test_...
+STRIPE_TEST_PRICE_ID=price_...
+STRIPE_LIVE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_LIVE_SECRET_KEY=sk_live_...
+STRIPE_LIVE_PRICE_ID=price_...
+# Legacy Stripe Keys (if applicable)
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+
+# Firebase Configuration (for backend services like auth and database)
+FIREBASE_API_KEY=your_firebase_api_key
+FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+FIREBASE_APP_ID=your_app_id
+FIREBASE_MEASUREMENT_ID=your_measurement_id # Optional
+
+# Google OAuth Configuration (for Google Sign-In)
+GOOGLE_WEB_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
+GOOGLE_ANDROID_CLIENT_ID=your_google_android_client_id.apps.googleusercontent.com
+GOOGLE_IOS_CLIENT_ID=your_google_ios_client_id.apps.googleusercontent.com
+
+Make sure to replace placeholder values with your actual credentials.
 
 
 
@@ -67,12 +118,18 @@ OPENAI_API_KEY=your-openai-key-here
 
 rodneyg-safedose/
 ├── app/                 # Screens and navigation
-├── hooks/               # Camera + system hooks
 ├── assets/              # Icons and images
-├── android/             # Android project files
-├── ios/                 # iOS project files
+├── components/          # Reusable UI components for building screens
 ├── docs/                # Documentation
 │   └── auth-config.md   # Authentication configuration info
+├── hooks/               # Camera + system hooks (distinct from lib/hooks)
+├── ios/                 # iOS project files
+├── lib/                 # Core logic, utilities, and hooks
+│   ├── doseUtils.ts     # Contains core dose calculation logic
+│   ├── hooks/           # Custom React hooks for app logic
+│   │   ├── useDoseCalculator.ts    # Manages state and logic for the main dose calculation flow
+│   │   └── useReconstitutionPlanner.ts # Manages state and logic for the reconstitution planning flow
+├── android/             # Android project files
 ├── types/               # Global type definitions
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration
