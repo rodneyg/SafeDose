@@ -8,6 +8,7 @@ import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/u
 import IntroScreen from '../../components/IntroScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
+import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
 import PMFSurveyModal from '../../components/PMFSurveyModal';
 import LimitModal from '../../components/LimitModal';
@@ -23,7 +24,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -245,6 +246,9 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -741,6 +745,7 @@ export default function NewDoseScreen() {
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
+            {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
             {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
@@ -863,6 +868,13 @@ export default function NewDoseScreen() {
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
+        />
+      )}
+      {screenStep === 'whyAreYouHere' && (
+        <WhyAreYouHereScreen
+          onSubmit={handleWhyAreYouHereSubmit}
+          onSkip={handleWhyAreYouHereSkip}
+          isMobileWeb={isMobileWeb}
         />
       )}
       {screenStep === 'pmfSurvey' && (

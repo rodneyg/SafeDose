@@ -3,9 +3,10 @@ import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../d
 import { FeedbackContextType } from '../../types/feedback';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
+import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -56,6 +57,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
+  
+  // Initialize WhyAreYouHere tracking hook
+  const whyAreYouHereTracking = useWhyAreYouHereTracking();
   const pmfSurvey = usePMFSurvey();
 
   // Log limit modal state
@@ -510,15 +514,20 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       },
     });
     
-    // Check if PMF survey should be shown first
-    if (triggerData.shouldShowSurvey) {
+    // Check if we should show the "Why Are You Here?" prompt first
+    // This is a lighter micro-prompt that should come before PMF survey
+    if (whyAreYouHereTracking.shouldShowPrompt()) {
+      setScreenStep('whyAreYouHere');
+    } else if (triggerData.shouldShowSurvey) {
+      // If no WhyAreYouHere prompt, check for PMF survey
       setScreenStep('pmfSurvey');
     } else {
-      setScreenStep('postDoseFeedback'); 
+      // If neither prompt is needed, go directly to feedback
+      setScreenStep('postDoseFeedback');
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, lastActionType, pmfSurvey]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, lastActionType, pmfSurvey, whyAreYouHereTracking]);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
@@ -617,6 +626,36 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     // After PMF survey skip, continue to regular post-dose feedback
     setScreenStep('postDoseFeedback');
   }, [pmfSurvey]);
+
+  // WhyAreYouHere handlers
+  const handleWhyAreYouHereSubmit = useCallback(async (response: any, customText?: string) => {
+    console.log('[useDoseCalculator] WhyAreYouHere response submitted:', response);
+    
+    // Mark prompt as shown and store response
+    await whyAreYouHereTracking.markPromptAsShown();
+    await whyAreYouHereTracking.storeResponse(response, customText);
+    
+    // Check if PMF survey should be shown next, otherwise go to feedback
+    if (pmfSurvey.triggerData?.shouldShowSurvey) {
+      setScreenStep('pmfSurvey');
+    } else {
+      setScreenStep('postDoseFeedback');
+    }
+  }, [whyAreYouHereTracking, pmfSurvey]);
+
+  const handleWhyAreYouHereSkip = useCallback(async () => {
+    console.log('[useDoseCalculator] WhyAreYouHere prompt skipped');
+    
+    // Mark prompt as shown (but skipped)
+    await whyAreYouHereTracking.markPromptAsShown();
+    
+    // Check if PMF survey should be shown next, otherwise go to feedback
+    if (pmfSurvey.triggerData?.shouldShowSurvey) {
+      setScreenStep('pmfSurvey');
+    } else {
+      setScreenStep('postDoseFeedback');
+    }
+  }, [whyAreYouHereTracking, pmfSurvey]);
 
   const handleCapture = useCallback(async () => {
     try {
@@ -789,6 +828,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setFeedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
+    // WhyAreYouHere handlers
+    handleWhyAreYouHereSubmit,
+    handleWhyAreYouHereSkip,
     // Log limit modal
     showLogLimitModal,
     handleCloseLogLimitModal,

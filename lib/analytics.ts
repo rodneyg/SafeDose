@@ -36,6 +36,10 @@ export const ANALYTICS_EVENTS = {
   PROFILE_SAVE_FIREBASE_FAILED: 'profile_save_firebase_failed',
   PROFILE_BACKED_UP: 'profile_backed_up',
   PROFILE_BACKUP_FAILED: 'profile_backup_failed',
+  // Why Are You Here micro-prompt events
+  WHY_HERE_PROMPT_SHOWN: 'why_here_prompt_shown',
+  WHY_HERE_PROMPT_RESPONSE: 'why_here_prompt_response',
+  WHY_HERE_PROMPT_SKIPPED: 'why_here_prompt_skipped',
   // PMF Survey events
   PMF_SURVEY_SHOWN: 'pmf_survey_shown',
   PMF_SURVEY_QUESTION_ANSWERED: 'pmf_survey_question_answered',
