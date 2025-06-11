@@ -26,6 +26,7 @@ export interface PricingPlan {
     percentIncrease: number;
   };
   isTrial?: boolean;
+  trialDays?: number;
 }
 
 interface PricingCardProps {
@@ -68,7 +69,12 @@ const PricingCard = ({ plan, isAnnual, onSelectPlan }: PricingCardProps) => {
             </div>
           </div>
         )}
-        {plan.isTrial && (
+        {plan.trialDays && (
+          <div className="mt-1">
+            <span className="text-sm text-brand dark:text-brand-light font-medium">Free {plan.trialDays}-day trial</span>
+          </div>
+        )}
+        {plan.isTrial && !plan.trialDays && (
           <div className="mt-1">
             <span className="text-sm text-brand dark:text-brand-light font-medium">Free 7-day trial</span>
           </div>
