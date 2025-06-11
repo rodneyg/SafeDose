@@ -4,15 +4,26 @@ import { getAnalytics, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
-// Firebase configuration from app.config.js
-const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
-  apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
-  authDomain: "safedose-e320d.firebaseapp.com",
-  projectId: "safedose-e320d",
-  storageBucket: "safedose-e320d.firebasestorage.app",
-  messagingSenderId: "704055775889",
-  appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
-  measurementId: "G-WRY88Q57KK",
+// Firebase configuration from app.config.js - lazily evaluated to avoid initialization issues
+const getFirebaseConfig = () => {
+  const config = Constants.expoConfig?.extra?.firebase || {
+    apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
+    authDomain: "safedose-e320d.firebaseapp.com",
+    projectId: "safedose-e320d",
+    storageBucket: "safedose-e320d.firebasestorage.app",
+    messagingSenderId: "704055775889",
+    appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
+    measurementId: "G-WRY88Q57KK",
+  };
+  
+  // For web platforms, ensure measurementId is only included if Analytics will be used
+  if (typeof window !== "undefined") {
+    return config;
+  } else {
+    // For non-web platforms, exclude measurementId to avoid potential issues
+    const { measurementId, ...configWithoutMeasurementId } = config;
+    return configWithoutMeasurementId;
+  }
 };
 
 // Lazy initialization - nothing is initialized at module load time
@@ -25,6 +36,7 @@ const getFirebaseApp = (): FirebaseApp => {
   if (!app) {
     try {
       console.log('[Firebase] Initializing Firebase app...');
+      const firebaseConfig = getFirebaseConfig();
       app = initializeApp(firebaseConfig);
       console.log('[Firebase] Firebase app initialized successfully');
     } catch (error) {
@@ -77,7 +89,18 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
   if (!analyticsInstance) {
     try {
       console.log('[Firebase] Initializing Firebase Analytics...');
-      analyticsInstance = getAnalytics(getFirebaseApp());
+      
+      // Get Firebase app instance first and ensure it's fully initialized
+      const appInstance = getFirebaseApp();
+      if (!appInstance) {
+        console.error('[Firebase] Cannot initialize Analytics - Firebase app not available');
+        return undefined;
+      }
+      
+      // Ensure the Firebase app is fully initialized before proceeding
+      console.log('[Firebase] Firebase app ready, initializing Analytics...');
+      analyticsInstance = getAnalytics(appInstance);
+      
       console.log('[Firebase] Firebase Analytics initialized successfully');
     } catch (error) {
       console.error('[Firebase] Analytics initialization failed:', error);
@@ -86,6 +109,9 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
         stack: error?.stack,
         name: error?.name
       });
+      
+      // Ensure we don't leave analyticsInstance in a partial state
+      analyticsInstance = undefined;
       return undefined;
     }
   }
