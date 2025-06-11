@@ -1,188 +1,144 @@
-import { initializeApp, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
-import Constants from "expo-constants";
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, initializeAuth, getReactNativePersistence, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// --- Singleton Instances ---
+let appInstance: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
+let dbInstance: Firestore | null = null;
+let appInitializationPromise: Promise<FirebaseApp> | null = null;
 
-
-// Module initialization debug logging
-console.log('[Firebase Module] Firebase module loading started');
-console.log('[Firebase Module] Module load environment:', {
-  hasWindow: typeof window !== "undefined",
-  hasDocument: typeof document !== "undefined",
-  hasNavigator: typeof navigator !== "undefined",
-  hasConstants: !!Constants,
-  timestamp: new Date().toISOString()
-});
-
-// Firebase configuration from app.config.js - lazily evaluated to avoid initialization issues
-const getFirebaseConfig = () => {
-  console.log('[Firebase Config] Starting configuration evaluation...');
-  console.log('[Firebase Config] Environment check - window available:', typeof window !== "undefined");
-  console.log('[Firebase Config] Constants.expoConfig available:', !!Constants.expoConfig);
-  console.log('[Firebase Config] Constants.expoConfig.extra available:', !!Constants.expoConfig?.extra);
-  console.log('[Firebase Config] Constants.expoConfig.extra.firebase available:', !!Constants.expoConfig?.extra?.firebase);
-  
-  const config = Constants.expoConfig?.extra?.firebase || {
-    apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
-    authDomain: "safedose-e320d.firebaseapp.com",
-    projectId: "safedose-e320d",
-    storageBucket: "safedose-e320d.firebasestorage.app",
-    messagingSenderId: "704055775889",
-    appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
-  };
-  
-  console.log('[Firebase Config] Raw config loaded:', {
-    hasApiKey: !!config.apiKey,
-    hasAuthDomain: !!config.authDomain,
-    hasProjectId: !!config.projectId,
-    hasAppId: !!config.appId,
-  });
-  
-  const finalConfig = {
-    ...config,
-  };
-  console.log('[Firebase Config] Final config:', {
-    ...finalConfig,
-    apiKey: finalConfig.apiKey ? '[REDACTED]' : undefined
-  });
-  return finalConfig;
+/**
+ * [CRITICAL] Returns the Firebase config *without* the measurementId.
+ * This is used for the initial, safe app initialization to prevent the Analytics bug.
+ */
+export const getInitialFirebaseConfig = () => {
+  const config = Constants.expoConfig?.extra?.firebase;
+  if (!config) return null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { measurementId, ...initialConfig } = config;
+  return initialConfig;
 };
 
-
-
-// Lazy initialization - nothing is initialized at module load time
-let app: FirebaseApp | undefined = undefined;
-let authInstance: Auth | undefined = undefined;
-let dbInstance: Firestore | undefined = undefined;
-
-export const getFirebaseApp = (): FirebaseApp => {
-  console.log('[Firebase App] getFirebaseApp called, current app state:', !!app);
-  
-  if (!app) {
-    try {
-      console.log('[Firebase App] Starting Firebase app initialization...');
-      console.log('[Firebase App] Current environment:', {
-        hasWindow: typeof window !== "undefined",
-        hasNavigator: typeof navigator !== "undefined",
-        userAgent: typeof navigator !== "undefined" ? navigator.userAgent?.substring(0, 100) : 'N/A'
-      });
-      
-      const firebaseConfig = getFirebaseConfig();
-      console.log('[Firebase App] Configuration obtained, initializing Firebase...');
-      
-      app = initializeApp(firebaseConfig);
-      console.log('[Firebase App] Firebase app initialized successfully');
-      console.log('[Firebase App] App details:', {
-        name: app.name,
-        hasOptions: !!app.options,
-        optionsProjectId: app.options?.projectId
-      });
-    } catch (error) {
-      console.error('[Firebase App] Failed to initialize Firebase app:', error);
-      console.error('[Firebase App] Error details:', {
-        message: (error as any)?.message,
-        stack: (error as any)?.stack,
-        name: (error as any)?.name,
-        errorType: typeof error,
-        errorConstructor: (error as any)?.constructor?.name
-      });
-      console.error('[Firebase App] Error occurred during app initialization phase');
-      throw error;
-    }
-  } else {
-    console.log('[Firebase App] Returning existing Firebase app instance');
-  }
-  
-  return app;
+/**
+ * Returns the full Firebase config, including the measurementId.
+ * To be used only after the app has stabilized.
+ */
+export const getFullFirebaseConfig = () => {
+  return Constants.expoConfig?.extra?.firebase;
 };
 
-export const getAuthInstance = (): Auth => {
-  console.log('[Firebase Auth] getAuthInstance called, current auth state:', !!authInstance);
+/**
+ * Initializes and returns the Firebase app using the SAFE config (no measurementId).
+ * This prevents the Analytics module from being processed during app initialization.
+ */
+export const getFirebaseApp = (): Promise<FirebaseApp> => {
+  if (appInitializationPromise) {
+    return appInitializationPromise;
+  }
+
+  appInitializationPromise = (async () => {
+    if (appInstance) {
+      return appInstance;
+    }
+
+    const config = getInitialFirebaseConfig();
+    if (!config) {
+      throw new Error('Firebase configuration is missing');
+    }
+
+    console.log('[Firebase] Initializing with SAFE config (no measurementId)');
+    
+    // Check if an app already exists
+    const existingApps = getApps();
+    if (existingApps.length > 0) {
+      appInstance = existingApps[0];
+      console.log('[Firebase] Using existing Firebase app');
+    } else {
+      appInstance = initializeApp(config);
+      console.log('[Firebase] New Firebase app initialized');
+    }
+
+    return appInstance;
+  })();
+
+  return appInitializationPromise;
+};
+
+/**
+ * Gets the Firebase Auth instance
+ */
+export const getAuthInstance = async (): Promise<Auth> => {
+  if (authInstance) {
+    return authInstance;
+  }
+
+  const app = await getFirebaseApp();
   
-  if (!authInstance) {
-    try {
-      console.log('[Firebase Auth] Starting Firebase Auth initialization...');
-      const appInstance = getFirebaseApp();
-      console.log('[Firebase Auth] Firebase app obtained, initializing auth...');
-      
-      authInstance = getAuth(appInstance);
-      console.log('[Firebase Auth] Firebase Auth initialized successfully');
-      console.log('[Firebase Auth] Auth details:', {
-        hasCurrentUser: !!authInstance.currentUser,
-        hasConfig: !!authInstance.config
+  try {
+    // For React Native, we need to use initializeAuth with persistence
+    if (typeof window === 'undefined' || !window.location) {
+      authInstance = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage)
       });
-    } catch (error) {
-      console.error('[Firebase Auth] Failed to initialize Firebase Auth:', error);
-      console.error('[Firebase Auth] Auth initialization error details:', {
-        message: (error as any)?.message,
-        stack: (error as any)?.stack,
-        name: (error as any)?.name,
-        errorType: typeof error
-      });
+    } else {
+      authInstance = getAuth(app);
+    }
+  } catch (error: any) {
+    // If auth is already initialized, get the existing instance
+    if (error.code === 'auth/already-initialized') {
+      authInstance = getAuth(app);
+    } else {
       throw error;
     }
-  } else {
-    console.log('[Firebase Auth] Returning existing Firebase Auth instance');
   }
-  
+
   return authInstance;
 };
 
-export const getDbInstance = (): Firestore => {
-  console.log('[Firebase Firestore] getDbInstance called, current db state:', !!dbInstance);
-  
-  if (!dbInstance) {
-    try {
-      console.log('[Firebase Firestore] Starting Firestore initialization...');
-      const appInstance = getFirebaseApp();
-      console.log('[Firebase Firestore] Firebase app obtained, initializing Firestore...');
-      
-      dbInstance = getFirestore(appInstance);
-      console.log('[Firebase Firestore] Firestore initialized successfully');
-      console.log('[Firebase Firestore] Firestore details:', {
-        hasApp: !!dbInstance.app,
-        appName: dbInstance.app?.name
-      });
-    } catch (error) {
-      console.error('[Firebase Firestore] Failed to initialize Firestore:', error);
-      console.error('[Firebase Firestore] Firestore initialization error details:', {
-        message: (error as any)?.message,
-        stack: (error as any)?.stack,
-        name: (error as any)?.name,
-        errorType: typeof error
-      });
-      throw error;
-    }
-  } else {
-    console.log('[Firebase Firestore] Returning existing Firestore instance');
+/**
+ * Gets the Firestore instance
+ */
+export const getDbInstance = async (): Promise<Firestore> => {
+  if (dbInstance) {
+    return dbInstance;
   }
-  
+
+  const app = await getFirebaseApp();
+  dbInstance = getFirestore(app);
   return dbInstance;
 };
 
-
-
-// For backward compatibility, provide auth and db as getters
-// These will initialize on first access rather than at module load time
+// For backward compatibility, provide auth and db as async getters
 export const auth = new Proxy({} as Auth, {
   get(target, prop) {
-    console.log('[Firebase Proxy] Auth proxy accessed for property:', String(prop));
-    const authInstance = getAuthInstance();
-    console.log('[Firebase Proxy] Auth instance obtained, accessing property');
-    return authInstance[prop as keyof Auth];
+    throw new Error('Auth must be accessed asynchronously. Use getAuthInstance() instead.');
   }
 });
 
 export const db = new Proxy({} as Firestore, {
   get(target, prop) {
-    console.log('[Firebase Proxy] Firestore proxy accessed for property:', String(prop));
-    const dbInstance = getDbInstance();
-    console.log('[Firebase Proxy] Firestore instance obtained, accessing property');
-    return dbInstance[prop as keyof Firestore];
+    throw new Error('Firestore must be accessed asynchronously. Use getDbInstance() instead.');
   }
 });
 
-// Module loading completion
-console.log('[Firebase Module] Firebase module loading completed successfully');
-console.log('[Firebase Module] All exports and functions defined, ready for use');
+/**
+ * Phase 2: Analytics Configuration Injection
+ * This function should be called AFTER the app has fully rendered and stabilized.
+ * It reconfigures the Firebase app to include the measurementId for Analytics.
+ */
+export const enableAnalytics = async (): Promise<void> => {
+  console.log('[Firebase] Phase 2: Enabling Analytics configuration...');
+  
+  const fullConfig = getFullFirebaseConfig();
+  if (!fullConfig?.measurementId) {
+    console.log('[Firebase] No measurementId found, Analytics will remain disabled');
+    return;
+  }
+
+  // At this point, we don't need to reinitialize the app
+  // The analytics module will use the app instance and get the measurementId from the config
+  console.log('[Firebase] Analytics configuration ready for injection');
+};

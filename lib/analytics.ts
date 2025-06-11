@@ -1,14 +1,33 @@
-import { getFirebaseApp } from './firebase';
+import { getFirebaseApp, getFullFirebaseConfig, enableAnalytics } from './firebase';
 import type { Analytics } from 'firebase/analytics';
 
 // State management for the singleton
 let analyticsInstance: Analytics | null = null;
 let initializationPromise: Promise<Analytics | null> | null = null;
+let analyticsEnabled = false;
+
+/**
+ * Phase 2: Enable Analytics after app stabilization.
+ * This should be called after the app has fully rendered.
+ */
+export const initializeAnalytics = async (): Promise<void> => {
+  console.log('[Analytics] Phase 2: Initializing Analytics after app stabilization...');
+  
+  if (analyticsEnabled) {
+    console.log('[Analytics] Analytics already enabled');
+    return;
+  }
+
+  // Enable analytics configuration in Firebase
+  await enableAnalytics();
+  analyticsEnabled = true;
+  
+  console.log('[Analytics] Analytics configuration enabled');
+};
 
 /**
  * Initializes and returns the Firebase Analytics instance.
- * This is the core function that isolates all side effects.
- * It's idempotent and safe to call multiple times.
+ * This is called only AFTER initializeAnalytics() has been called.
  */
 const getAnalyticsInstance = (): Promise<Analytics | null> => {
   // If initialization is already in progress, return the existing promise
@@ -29,6 +48,19 @@ const getAnalyticsInstance = (): Promise<Analytics | null> => {
       return null;
     }
 
+    // Check if analytics has been enabled in Phase 2
+    if (!analyticsEnabled) {
+      console.log('[Analytics] Analytics not yet enabled. Call initializeAnalytics() first.');
+      return null;
+    }
+
+    // Check if measurementId is available
+    const fullConfig = getFullFirebaseConfig();
+    if (!fullConfig?.measurementId) {
+      console.log('[Analytics] No measurementId found. Analytics disabled.');
+      return null;
+    }
+
     try {
       console.log('[Analytics] Starting dynamic import of Firebase Analytics modules...');
       
@@ -42,7 +74,7 @@ const getAnalyticsInstance = (): Promise<Analytics | null> => {
         return null;
       }
 
-      const app = getFirebaseApp();
+      const app = await getFirebaseApp();
       console.log('[Analytics] Firebase app obtained, initializing Analytics...');
 
       analyticsInstance = getAnalytics(app);

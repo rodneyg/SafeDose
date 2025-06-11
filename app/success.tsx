@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from '../lib/firebase';
+import { getDbInstance } from '../lib/firebase';
 import Constants from 'expo-constants';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
 
@@ -69,6 +69,7 @@ export default function SuccessScreen() {
         const auth = getAuth();
         const user = auth.currentUser;
         if (user) {
+          const db = await getDbInstance();
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, { plan: 'plus', limit: 150, scansUsed: 0 }, { merge: true });
           

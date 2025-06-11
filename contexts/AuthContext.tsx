@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '@/lib/firebase'; // Initialized auth instance
+import { getAuthInstance } from '@/lib/firebase'; // Updated to use async function
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
 interface AuthContextType {
@@ -18,10 +18,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [authInstance, setAuthInstance] = useState<Auth | null>(null);
   const isSigningOutRef = useRef(false);
   const isSigningInAnonymouslyRef = useRef(false);
 
+  // Initialize auth instance asynchronously
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const auth = await getAuthInstance();
+        setAuthInstance(auth);
+      } catch (error) {
+        console.error('[AuthContext] Failed to initialize auth:', error);
+      }
+    };
+    initAuth();
+  }, []);
+
   const logout = async () => {
+    if (!authInstance) {
+      console.warn('[AuthContext] Auth instance not ready for logout');
+      return;
+    }
+
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
     console.log('[AuthContext] Current user before logout:', user ? {
       uid: user.uid,
@@ -38,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] isSigningOut state and ref updated to true');
       
       console.log('[AuthContext] Calling Firebase signOut...');
-      await signOut(auth);
+      await signOut(authInstance);
       console.log('[AuthContext] Firebase signOut completed successfully');
       
       console.log('[AuthContext] Clearing user state...');
@@ -98,10 +117,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSigningOut]);
 
   useEffect(() => {
+    if (!authInstance) {
+      // Wait for auth instance to be initialized
+      return;
+    }
+
     let timeoutId: NodeJS.Timeout | null = null;
     
-    // Subscribe to auth state changes on the single `auth` instance
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    // Subscribe to auth state changes on the auth instance
+    const unsubscribe = onAuthStateChanged(authInstance, (firebaseUser) => {
       console.log('[AuthContext] ========== AUTH STATE CHANGED ==========');
       console.log('[AuthContext] New user state:', firebaseUser ? {
         uid: firebaseUser.uid,
@@ -149,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isSigningOutRef.current && !isSigningInAnonymouslyRef.current) {
           console.log('[AuthContext] Not signing out and not already signing in anonymously - signing in anonymously immediately');
           isSigningInAnonymouslyRef.current = true;
-          signInAnonymously(auth)
+          signInAnonymously(authInstance)
             .then(() => {
               console.log('[AuthContext] ✅ Signed in anonymously successfully');
               isSigningInAnonymouslyRef.current = false;
@@ -174,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isSigningOutRef.current = false;
             if (!isSigningInAnonymouslyRef.current) {
               isSigningInAnonymouslyRef.current = true;
-              signInAnonymously(auth)
+              signInAnonymously(authInstance)
                 .then(() => {
                   console.log('[AuthContext] ✅ Signed in anonymously after logout');
                   isSigningInAnonymouslyRef.current = false;
@@ -204,14 +228,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timeoutId);
       }
     };
-  }, []); // Remove isSigningOut dependency to prevent auth listener recreation
+  }, [authInstance]); // Add authInstance dependency
 
-  if (loading) {
+  if (loading || !authInstance) {
     return <ActivityIndicator size="large" />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, auth, logout, isSigningOut }}>
+    <AuthContext.Provider value={{ user, auth: authInstance, logout, isSigningOut }}>
       {children}
     </AuthContext.Provider>
   );
