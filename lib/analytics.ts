@@ -1,177 +1,74 @@
-import Constants from "expo-constants";
+import { getFirebaseApp } from './firebase';
+import type { Analytics } from 'firebase/analytics';
 
-// Analytics initialization state management
-type AnalyticsState = 'uninitialized' | 'initializing' | 'initialized' | 'failed';
+// State management for the singleton
+let analyticsInstance: Analytics | null = null;
+let initializationPromise: Promise<Analytics | null> | null = null;
 
-let analyticsState: AnalyticsState = 'uninitialized';
-let analyticsInstance: any = null;
-let eventQueue: Array<{ type: 'event'; eventName: string; parameters?: Record<string, any> }> = [];
-let propertyQueue: Array<{ type: 'properties'; properties: Record<string, any> }> = [];
-
-// Firebase Analytics module references (loaded dynamically)
-let firebaseAnalytics: any = null;
-let firebaseApp: any = null;
-
-// Firebase configuration - isolated to prevent circular dependencies
-const getFirebaseConfig = () => {
-  const config = Constants.expoConfig?.extra?.firebase || {
-    apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
-    authDomain: "safedose-e320d.firebaseapp.com",
-    projectId: "safedose-e320d",
-    storageBucket: "safedose-e320d.firebasestorage.app",
-    messagingSenderId: "704055775889",
-    appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
-    measurementId: "G-WRY88Q57KK",
-  };
-  
-  // Only include measurementId for web platforms where Analytics is available
-  if (typeof window !== "undefined" && config.measurementId) {
-    return {
-      ...config,
-      measurementId: String(config.measurementId)
-    };
-  } else {
-    // For non-web platforms, exclude measurementId to avoid potential issues
-    const { measurementId, ...configWithoutMeasurementId } = config;
-    return configWithoutMeasurementId;
+/**
+ * Initializes and returns the Firebase Analytics instance.
+ * This is the core function that isolates all side effects.
+ * It's idempotent and safe to call multiple times.
+ */
+const getAnalyticsInstance = (): Promise<Analytics | null> => {
+  // If initialization is already in progress, return the existing promise
+  if (initializationPromise) {
+    return initializationPromise;
   }
-};
 
-// Core Analytics initialization function - completely isolated
-const initializeAnalytics = async (): Promise<boolean> => {
-  // Prevent multiple concurrent initialization attempts
-  if (analyticsState === 'initializing') {
-    console.log('[Analytics] Already initializing, waiting...');
-    // Wait for current initialization to complete
-    while (analyticsState === 'initializing') {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    return analyticsState === 'initialized';
-  }
-  
-  if (analyticsState === 'initialized') {
-    console.log('[Analytics] Already initialized');
-    return true;
-  }
-  
-  // Only initialize in browser environments
-  if (typeof window === "undefined") {
-    console.log('[Analytics] Not in browser environment, skipping initialization');
-    analyticsState = 'failed';
-    return false;
-  }
-  
-  analyticsState = 'initializing';
-  console.log('[Analytics] Starting Firebase Analytics initialization...');
-  
-  try {
-    // Get Firebase configuration
-    const firebaseConfig = getFirebaseConfig();
-    console.log('[Analytics] Configuration obtained:', { 
-      hasMeasurementId: !!firebaseConfig.measurementId,
-      measurementId: firebaseConfig.measurementId 
-    });
-    
-    if (!firebaseConfig.measurementId) {
-      console.log('[Analytics] No measurementId in config, Analytics not available');
-      analyticsState = 'failed';
-      return false;
+  // Start initialization
+  initializationPromise = (async () => {
+    // Return cached instance if already initialized
+    if (analyticsInstance) {
+      return analyticsInstance;
     }
     
-    // Validate measurementId format to prevent 'G' variable issues
-    if (!firebaseConfig.measurementId.startsWith('G-') || firebaseConfig.measurementId.length < 10) {
-      console.log('[Analytics] Invalid measurementId format, skipping to prevent initialization errors');
-      analyticsState = 'failed';
-      return false;
+    // Environment check: Do not run on server
+    if (typeof window === 'undefined') {
+      console.log('[Analytics] Environment is not a browser. Analytics disabled.');
+      return null;
     }
-    
-    // Dynamic import of Firebase modules to prevent side effects
-    console.log('[Analytics] Dynamically importing Firebase modules...');
-    const [firebaseAppModule, firebaseAnalyticsModule] = await Promise.all([
-      import('firebase/app'),
-      import('firebase/analytics')
-    ]);
-    
-    firebaseApp = firebaseAppModule;
-    firebaseAnalytics = firebaseAnalyticsModule;
-    
-    console.log('[Analytics] Firebase modules loaded successfully');
-    
-    // Initialize Firebase App
-    console.log('[Analytics] Initializing Firebase App...');
-    const app = firebaseApp.initializeApp(firebaseConfig);
-    console.log('[Analytics] Firebase App initialized:', { name: app.name });
-    
-    // Initialize Firebase Analytics
-    console.log('[Analytics] Initializing Firebase Analytics...');
-    analyticsInstance = firebaseAnalytics.getAnalytics(app);
-    console.log('[Analytics] Firebase Analytics initialized successfully');
-    
-    analyticsState = 'initialized';
-    
-    // Process any queued events and properties
-    await processQueuedOperations();
-    
-    return true;
-    
-  } catch (error: any) {
-    console.error('[Analytics] Failed to initialize Firebase Analytics:', error);
-    console.error('[Analytics] Error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Check if this is the specific 'G' variable error
-    if (error?.message?.includes('G') || error?.message?.includes('before initialization')) {
-      console.error('[Analytics] Detected G variable reference error - this is the known Firebase Analytics bug');
-    }
-    
-    analyticsState = 'failed';
-    analyticsInstance = null;
-    firebaseAnalytics = null;
-    firebaseApp = null;
-    
-    return false;
-  }
-};
 
-// Process queued operations after successful initialization
-const processQueuedOperations = async () => {
-  if (analyticsState !== 'initialized' || !analyticsInstance || !firebaseAnalytics) {
-    return;
-  }
-  
-  console.log('[Analytics] Processing queued operations:', {
-    events: eventQueue.length,
-    properties: propertyQueue.length
-  });
-  
-  // Process queued events
-  eventQueue.forEach(({ eventName, parameters }) => {
     try {
-      firebaseAnalytics.logEvent(analyticsInstance, eventName, parameters);
-      console.log(`[Analytics] Queued event processed: ${eventName}`, parameters);
+      console.log('[Analytics] Starting dynamic import of Firebase Analytics modules...');
+      
+      // KEY FIX: Dynamically import ALL required functions ONLY when needed.
+      const { getAnalytics, isSupported } = await import('firebase/analytics');
+      
+      console.log('[Analytics] Modules imported. Checking for support...');
+
+      if (!(await isSupported())) {
+        console.warn('[Analytics] Firebase Analytics is not supported in this environment.');
+        return null;
+      }
+
+      const app = getFirebaseApp();
+      console.log('[Analytics] Firebase app obtained, initializing Analytics...');
+
+      analyticsInstance = getAnalytics(app);
+      console.log('[Analytics] Firebase Analytics initialized successfully');
+
+      return analyticsInstance;
+      
     } catch (error: any) {
-      console.error(`[Analytics] Failed to process queued event ${eventName}:`, error);
+      console.error('[Analytics] Failed to initialize Firebase Analytics:', error);
+      console.error('[Analytics] Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Check if this is the specific 'G' variable error
+      if (error?.message?.includes('G') || error?.message?.includes('before initialization')) {
+        console.error('[Analytics] Detected G variable reference error - this is the known Firebase Analytics bug');
+      }
+      
+      return null;
     }
-  });
-  
-  // Process queued properties
-  propertyQueue.forEach(({ properties }) => {
-    try {
-      firebaseAnalytics.setUserProperties(analyticsInstance, properties);
-      console.log(`[Analytics] Queued properties processed:`, properties);
-    } catch (error: any) {
-      console.error(`[Analytics] Failed to process queued properties:`, error);
-    }
-  });
-  
-  // Clear queues
-  eventQueue = [];
-  propertyQueue = [];
-  console.log('[Analytics] All queued operations processed and queues cleared');
+  })();
+
+  return initializationPromise;
 };
 
 // Custom event names as defined in the issue
@@ -232,67 +129,43 @@ export const USER_PROPERTIES = {
 } as const;
 
 // Helper function to safely log analytics events
-export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
+export const logAnalyticsEvent = async (eventName: string, parameters?: Record<string, any>) => {
   console.log('[Analytics] logAnalyticsEvent called:', { eventName, parameters, timestamp: new Date().toISOString() });
   
-  if (analyticsState === 'initialized' && analyticsInstance && firebaseAnalytics) {
-    // Analytics is ready, log immediately
-    try {
-      firebaseAnalytics.logEvent(analyticsInstance, eventName, parameters);
-      console.log(`[Analytics] Event logged immediately: ${eventName}`, parameters);
-    } catch (error: any) {
-      console.error(`[Analytics] Failed to log event ${eventName}:`, error);
+  try {
+    const analytics = await getAnalyticsInstance();
+    if (analytics) {
+      const { logEvent } = await import('firebase/analytics');
+      logEvent(analytics, eventName, parameters);
+      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
+    } else {
+      console.log(`[Analytics] Analytics not available, event not logged: ${eventName}`);
     }
-  } else {
-    // Queue the event and trigger initialization if needed
-    console.log(`[Analytics] Queueing event: ${eventName}`, parameters);
-    eventQueue.push({ type: 'event', eventName, parameters });
-    
-    // Trigger initialization if not already started
-    if (analyticsState === 'uninitialized') {
-      console.log('[Analytics] First analytics call detected, starting initialization');
-      // Use setTimeout to avoid blocking the current call
-      setTimeout(() => {
-        initializeAnalytics().catch((error: any) => {
-          console.error('[Analytics] Initialization failed:', error);
-        });
-      }, 0);
-    }
+  } catch (error: any) {
+    console.error(`[Analytics] Failed to log event ${eventName}:`, error);
   }
 };
 
 // Helper function to safely set user properties
-export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
+export const setAnalyticsUserProperties = async (properties: Record<string, any>) => {
   console.log('[Analytics] setAnalyticsUserProperties called:', { properties, timestamp: new Date().toISOString() });
   
-  if (analyticsState === 'initialized' && analyticsInstance && firebaseAnalytics) {
-    // Analytics is ready, set properties immediately
-    try {
-      firebaseAnalytics.setUserProperties(analyticsInstance, properties);
-      console.log(`[Analytics] User properties set immediately:`, properties);
-    } catch (error: any) {
-      console.error(`[Analytics] Failed to set user properties:`, error);
+  try {
+    const analytics = await getAnalyticsInstance();
+    if (analytics) {
+      const { setUserProperties } = await import('firebase/analytics');
+      setUserProperties(analytics, properties);
+      console.log(`[Analytics] User properties set:`, properties);
+    } else {
+      console.log(`[Analytics] Analytics not available, properties not set`);
     }
-  } else {
-    // Queue the properties and trigger initialization if needed
-    console.log(`[Analytics] Queueing properties:`, properties);
-    propertyQueue.push({ type: 'properties', properties });
-    
-    // Trigger initialization if not already started
-    if (analyticsState === 'uninitialized') {
-      console.log('[Analytics] First analytics call detected, starting initialization');
-      // Use setTimeout to avoid blocking the current call
-      setTimeout(() => {
-        initializeAnalytics().catch((error: any) => {
-          console.error('[Analytics] Initialization failed:', error);
-        });
-      }, 0);
-    }
+  } catch (error: any) {
+    console.error(`[Analytics] Failed to set user properties:`, error);
   }
 };
 
 // Helper function to set personalization user properties from profile
-export const setPersonalizationUserProperties = (profile: any) => {
+export const setPersonalizationUserProperties = async (profile: any) => {
   // Determine user segment based on profile
   let userSegment = 'general_user';
   if (profile.isLicensedProfessional) {
@@ -303,7 +176,7 @@ export const setPersonalizationUserProperties = (profile: any) => {
     userSegment = 'personal_medical_user';
   }
 
-  setAnalyticsUserProperties({
+  await setAnalyticsUserProperties({
     [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
     [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
     [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,

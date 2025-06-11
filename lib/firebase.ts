@@ -56,7 +56,7 @@ let app: FirebaseApp | undefined = undefined;
 let authInstance: Auth | undefined = undefined;
 let dbInstance: Firestore | undefined = undefined;
 
-const getFirebaseApp = (): FirebaseApp => {
+export const getFirebaseApp = (): FirebaseApp => {
   console.log('[Firebase App] getFirebaseApp called, current app state:', !!app);
   
   if (!app) {
