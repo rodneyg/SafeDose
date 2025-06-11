@@ -1,5 +1,58 @@
-import { logEvent, setUserProperties } from 'firebase/analytics';
-import { getAnalyticsInstance } from './firebase';
+/**
+ * A completely safe, in-memory queue for analytics events.
+ * THIS FILE MUST NOT IMPORT ANYTHING FROM FIREBASE.
+ */
+
+type QueuedOperation = {
+  type: 'logEvent';
+  payload: { eventName: string; eventParams?: { [key: string]: any } };
+} | {
+  type: 'setUserProperties';
+  payload: { properties: { [key: string]: any } };
+};
+
+// This queue is globally accessible and safe.
+export const analyticsQueue: QueuedOperation[] = [];
+export let isAnalyticsInitialized = false;
+
+// The functions the app will call. They just add to the queue.
+export const logAnalyticsEvent = (eventName: string, eventParams?: { [key: string]: any }) => {
+  if (isAnalyticsInitialized) {
+    console.warn(`[Analytics Queue] Analytics already initialized, but old log function called for ${eventName}. This is a bug.`);
+    return;
+  }
+  console.log(`[Analytics Queue] Queuing event: ${eventName}`);
+  analyticsQueue.push({ type: 'logEvent', payload: { eventName, eventParams } });
+};
+
+export const setAnalyticsUserProperties = (properties: { [key: string]: any }) => {
+  if (isAnalyticsInitialized) {
+    console.warn(`[Analytics Queue] Analytics already initialized, but old setUserProperties called. This is a bug.`);
+    return;
+  }
+  console.log(`[Analytics Queue] Queuing user properties:`, properties);
+  analyticsQueue.push({ type: 'setUserProperties', payload: { properties } });
+};
+
+// Helper function to set personalization user properties from profile
+export const setPersonalizationUserProperties = (profile: any) => {
+  // Determine user segment based on profile
+  let userSegment = 'general_user';
+  if (profile.isLicensedProfessional) {
+    userSegment = 'healthcare_professional';
+  } else if (profile.isCosmeticUse) {
+    userSegment = 'cosmetic_user';
+  } else if (profile.isPersonalUse) {
+    userSegment = 'personal_medical_user';
+  }
+
+  setAnalyticsUserProperties({
+    [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
+    [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
+    [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
+    [USER_PROPERTIES.USER_SEGMENT]: userSegment,
+  });
+};
 
 // Custom event names as defined in the issue
 export const ANALYTICS_EVENTS = {
@@ -58,52 +111,11 @@ export const USER_PROPERTIES = {
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
-// Helper function to safely log analytics events
-export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      logEvent(analytics, eventName, parameters);
-      console.log(`[Analytics] Event logged: ${eventName}`, parameters);
-    } catch (error) {
-      console.error(`[Analytics] Failed to log event ${eventName}:`, error);
-    }
-  } else {
-    console.log(`[Analytics] Analytics not available, would log: ${eventName}`, parameters);
-  }
-};
-
-// Helper function to safely set user properties
-export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
-  const analytics = getAnalyticsInstance();
-  if (analytics) {
-    try {
-      setUserProperties(analytics, properties);
-      console.log(`[Analytics] User properties set:`, properties);
-    } catch (error) {
-      console.error(`[Analytics] Failed to set user properties:`, error);
-    }
-  } else {
-    console.log(`[Analytics] Analytics not available, would set properties:`, properties);
-  }
-};
-
-// Helper function to set personalization user properties from profile
-export const setPersonalizationUserProperties = (profile: any) => {
-  // Determine user segment based on profile
-  let userSegment = 'general_user';
-  if (profile.isLicensedProfessional) {
-    userSegment = 'healthcare_professional';
-  } else if (profile.isCosmeticUse) {
-    userSegment = 'cosmetic_user';
-  } else if (profile.isPersonalUse) {
-    userSegment = 'personal_medical_user';
-  }
-
-  setAnalyticsUserProperties({
-    [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
-    [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
-    [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
-    [USER_PROPERTIES.USER_SEGMENT]: userSegment,
-  });
+/**
+ * Signal that the Analytics provider has taken over.
+ * Called by the AnalyticsProvider component.
+ */
+export const markAnalyticsInitialized = () => {
+  isAnalyticsInitialized = true;
+  console.log(`[Analytics Queue] Analytics provider has taken over. Queue contained ${analyticsQueue.length} operations.`);
 };

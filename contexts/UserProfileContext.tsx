@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getDbInstance } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfile, WarningLevel, getUserWarningLevel, getDisclaimerText } from '@/types/userProfile';
 import { logAnalyticsEvent, ANALYTICS_EVENTS, setPersonalizationUserProperties } from '@/lib/analytics';
@@ -38,6 +38,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         // User has transitioned from anonymous to authenticated
         // Check if profile needs to be backed up to Firebase
         try {
+          const db = await getDbInstance();
           const docRef = doc(db, 'userProfiles', user.uid);
           const docSnap = await getDoc(docRef);
           
@@ -119,6 +120,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         // For authenticated users, try Firebase first, then local storage fallback
         console.log('[UserProfile] Authenticated user detected - trying Firebase first');
         try {
+          const db = await getDbInstance();
           const docRef = doc(db, 'userProfiles', user.uid);
           const docSnap = await getDoc(docRef);
           
@@ -150,6 +152,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
               // try to backup this profile to Firebase (this handles cases where 
               // user has local profile but it's not synced to Firebase)
               try {
+                const db = await getDbInstance();
                 const docRef = doc(db, 'userProfiles', user.uid);
                 const profileToBackup = {
                   ...profileData,
@@ -241,6 +244,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       // Save to Firebase if user is available
       if (user?.uid) {
         try {
+          const db = await getDbInstance();
           const docRef = doc(db, 'userProfiles', user.uid);
           await setDoc(docRef, newProfile);
           console.log('User profile saved to Firebase');
@@ -294,6 +298,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       // Clear from Firebase if user is available
       if (user?.uid) {
         try {
+          const db = await getDbInstance();
           const docRef = doc(db, 'userProfiles', user.uid);
           await setDoc(docRef, {}, { merge: false }); // Effectively deletes the document
           console.log('User profile cleared from Firebase');

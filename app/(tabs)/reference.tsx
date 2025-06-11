@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
 import { Star, MessageSquare, X } from 'lucide-react-native';
 import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { getDbInstance } from '../../lib/firebase';
 import { isMobileWeb } from '../../lib/utils';
 
 interface CommonDose {
@@ -131,6 +131,7 @@ export default function ReferenceScreen() {
     setIsSubmitting(true);
     try {
       // Store suggestion in Firebase
+      const db = await getDbInstance();
       await addDoc(collection(db, 'compound-suggestions'), {
         compoundName: compoundName.trim(),
         dosageRange: dosageRange.trim(),
