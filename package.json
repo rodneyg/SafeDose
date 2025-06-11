@@ -12,7 +12,8 @@
     "build": "npx expo export --platform web --non-interactive",
     "lint": "expo lint",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "postinstall": "node scripts/fix-css-interop.js"
   },
   "vercel": {
     "projectRoot": "."
