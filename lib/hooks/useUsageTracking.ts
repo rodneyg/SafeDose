@@ -152,11 +152,12 @@ export function useUsageTracking() {
       isOnline,
       currentUsage: usageData.scansUsed,
       limit: usageData.limit,
-      plan: usageData.plan
+      plan: usageData.plan,
+      userIsAnonymous: user?.isAnonymous
     });
     
     if (!user) {
-      console.log('[useUsageTracking] No user found, denying access');
+      console.log('[useUsageTracking] ❌ No user found, denying access');
       return false;
     }
 
@@ -208,12 +209,28 @@ export function useUsageTracking() {
         const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
         setUsageData(newUsageData);
         await saveCachedUsage(newUsageData);
-        return newUsageData.scansUsed < newUsageData.limit;
+        
+        const canProceed = newUsageData.scansUsed < newUsageData.limit;
+        console.log('[useUsageTracking] ✅ FINAL RESULT:', {
+          scansUsed: newUsageData.scansUsed,
+          limit: newUsageData.limit,
+          canProceed,
+          shouldShowModal: !canProceed
+        });
+        
+        return canProceed;
       };
       return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
     } catch (error) {
-      console.error('Error checking usage limit:', error);
-      return usageData.scansUsed < usageData.limit; // Fallback to cached data
+      console.error('[useUsageTracking] ❌ Error checking usage limit:', error);
+      const fallbackResult = usageData.scansUsed < usageData.limit;
+      console.log('[useUsageTracking] 🔄 FALLBACK RESULT:', {
+        scansUsed: usageData.scansUsed,
+        limit: usageData.limit,
+        canProceed: fallbackResult,
+        shouldShowModal: !fallbackResult
+      });
+      return fallbackResult; // Fallback to cached data
     }
   };
 

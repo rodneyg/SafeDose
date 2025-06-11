@@ -15,7 +15,6 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
   const [feedback, setFeedback] = useState('');
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
-  console.log('[LimitModal] Modal should display:', visible);
 
   React.useEffect(() => {
     if (visible) {
@@ -52,32 +51,26 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>
-            You've used your 3 free photo scans
+            {isAnonymous ? 'Free Scan Limit Reached' : 'Plan Limit Reached'}
           </Text>
           <Text style={styles.message}>
-            Upgrade to Pro for unlimited AI scans and dose logs.
+            {isAnonymous
+              ? 'You’ve used all 3 free scans. Sign in to get 10 scans per month or upgrade for more.'
+              : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
           </Text>
-          
-          <View style={styles.feedbackContainer}>
-            <Text style={styles.feedbackLabel}>
-              What would make this worth paying for? (optional)
-            </Text>
-            <TextInput
-              style={styles.feedbackInput}
-              value={feedback}
-              onChangeText={setFeedback}
-              placeholder="Your feedback..."
-              multiline={false}
-              maxLength={100}
-            />
-          </View>
-
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-              <Text style={styles.buttonText}>Upgrade to Pro</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.manualButton]} onPress={handleKeepManual}>
-              <Text style={styles.manualButtonText}>Keep using manual mode (free)</Text>
+            {isAnonymous && (
+              <TouchableOpacity style={[styles.button, styles.signInButton]} onPress={handleSignIn}>
+                <Text style={styles.buttonText}>Sign In</Text>
+              </TouchableOpacity>
+            )}
+            {!isPremium && (
+              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
+                <Text style={styles.buttonText}>Upgrade</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
+              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -92,7 +85,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2000, // Higher than loading overlay (1000)
   },
   modal: {
     backgroundColor: '#FFFFFF',
@@ -116,25 +108,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 22,
   },
-  feedbackContainer: {
-    width: '100%',
-    marginBottom: 24,
-  },
-  feedbackLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  feedbackInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#FAFAFA',
-    width: '100%',
-  },
   buttonContainer: {
     flexDirection: 'column',
     gap: 12,
@@ -145,21 +118,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  signInButton: {
+    backgroundColor: '#007AFF',
+  },
   upgradeButton: {
     backgroundColor: '#34C759',
   },
-  manualButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#8E8E93',
+  cancelButton: {
+    backgroundColor: '#8E8E93',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  manualButtonText: {
-    color: '#8E8E93',
     fontSize: 16,
     fontWeight: '600',
   },
