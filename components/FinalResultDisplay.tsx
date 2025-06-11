@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save } from 'lucide-react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon } from 'lucide-react-native';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
@@ -24,6 +24,8 @@ type Props = {
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
   lastActionType: 'manual' | 'scan' | null;
   isMobileWeb: boolean;
+  usageData?: { scansUsed: number; limit: number; plan: string };
+  onTryAIScan?: () => void;
 };
 
 export default function FinalResultDisplay({
@@ -42,6 +44,8 @@ export default function FinalResultDisplay({
   handleGoToFeedback,
   lastActionType,
   isMobileWeb,
+  usageData,
+  onTryAIScan,
 }: Props) {
   const { disclaimerText } = useUserProfile();
   const { user, auth } = useAuth();
@@ -350,6 +354,30 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       </View>
+      
+      {/* AI Scan Teaser - show only for manual users with remaining scans and successful calculation */}
+      {lastActionType === 'manual' && 
+       !calculationError && 
+       recommendedMarking && 
+       usageData && 
+       usageData.scansUsed < usageData.limit && 
+       onTryAIScan && (
+        <View style={styles.scanTeaserContainer}>
+          <Text style={styles.scanTeaserText}>
+            Want to double-check with a vial/syringe photo?
+          </Text>
+          <TouchableOpacity 
+            style={styles.scanTeaserButton}
+            onPress={onTryAIScan}
+            accessibilityRole="button"
+            accessibilityLabel="Try AI Scan to double-check your calculation"
+          >
+            <CameraIcon color="#007AFF" size={14} style={{ marginRight: 4 }} />
+            <Text style={styles.scanTeaserButtonText}>Try AI Scan</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#6B7280' }, isMobileWeb && styles.actionButtonMobile]} 
@@ -480,5 +508,32 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
     marginTop: 4,
+  },
+  // AI Scan Teaser Styles
+  scanTeaserContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+    paddingHorizontal: 16,
+  },
+  scanTeaserText: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  scanTeaserButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 122, 255, 0.05)',
+  },
+  scanTeaserButtonText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
   },
 });
