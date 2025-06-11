@@ -533,7 +533,7 @@ export default function NewDoseScreen() {
     try {
       const canProceed = await handleCapture();
       console.log('handleScanAttempt: canProceed=', canProceed);
-      console.log('handleScanAttempt: Usage data before limit check:', {
+      console.log('handleScanAttempt: Usage data after limit check:', {
         scansUsed: usageData.scansUsed,
         limit: usageData.limit,
         plan: usageData.plan
@@ -541,16 +541,23 @@ export default function NewDoseScreen() {
       
       if (!canProceed) {
         console.log('handleScanAttempt: ❌ LIMIT REACHED - Showing LimitModal');
-        console.log('handleScanAttempt: Setting showLimitModal to true');
+        console.log('handleScanAttempt: Current showLimitModal state before setting:', showLimitModal);
         logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
         
         // Ensure processing state is cleared when showing limit modal
         setIsProcessing(false);
+        
+        // Force a state update with a callback to ensure it's set
+        console.log('handleScanAttempt: Setting showLimitModal to true...');
         setShowLimitModal(true);
         
-        // Double check the state is being set
+        // Verify state was set with a slight delay
         setTimeout(() => {
-          console.log('handleScanAttempt: showLimitModal state after timeout:', showLimitModal);
+          console.log('handleScanAttempt: showLimitModal state after timeout - checking via callback');
+          setShowLimitModal(current => {
+            console.log('handleScanAttempt: showLimitModal current state in callback:', current);
+            return current; // Don't change it, just log it
+          });
         }, 100);
         
         return;

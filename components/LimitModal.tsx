@@ -14,14 +14,22 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
   const router = useRouter();
   const [feedback, setFeedback] = useState('');
 
-  console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
+  console.log('[LimitModal] Rendering with props:', { 
+    visible, 
+    isAnonymous, 
+    isPremium,
+    typeof_visible: typeof visible,
+    boolean_visible: !!visible 
+  });
   console.log('[LimitModal] Modal should display:', visible);
 
   React.useEffect(() => {
+    console.log('[LimitModal] Props changed - visible:', visible, 'isAnonymous:', isAnonymous, 'isPremium:', isPremium);
     if (visible) {
+      console.log('[LimitModal] Modal is now visible, logging analytics event');
       logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_VIEW);
     }
-  }, [visible]);
+  }, [visible, isAnonymous, isPremium]);
 
   const handleUpgrade = () => {
     console.log('[LimitModal] Upgrade to Pro button pressed');

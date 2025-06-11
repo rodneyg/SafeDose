@@ -179,10 +179,19 @@ export default function IntroScreen({
      NAV HANDLERS
   ========================================================================= */
   const handleScanPress = useCallback(async () => {
-    // Always go to scan screen - the scan flow will handle showing the limit modal
+    // Check if user has remaining scans
+    const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
+    
+    if (scansRemaining <= 0) {
+      // If no scans remaining, redirect to pricing page
+      router.push('/pricing');
+      return;
+    }
+    
+    // Otherwise go to scan screen
     setNavigatingFromIntro?.(true);
     setScreenStep('scan');
-  }, [setScreenStep, setNavigatingFromIntro]);
+  }, [setScreenStep, setNavigatingFromIntro, usageData, router]);
 
   const handleManualEntryPress = useCallback(() => {
     setNavigatingFromIntro?.(true);
@@ -238,17 +247,26 @@ export default function IntroScreen({
               </View>
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
-                <TouchableOpacity
-                  style={[
-                    styles.button, 
-                    styles.primaryButton, 
-                    isMobileWeb && styles.buttonMobile
-                  ]}
-                  onPress={handleScanPress}
-                >
-                  <CameraIcon color="#fff" size={20} />
-                  <Text style={styles.buttonText}>Scan</Text>
-                </TouchableOpacity>
+                {(() => {
+                  const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
+                  const isOutOfScans = scansRemaining <= 0;
+                  
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.button, 
+                        isOutOfScans ? styles.outOfScansButton : styles.primaryButton, 
+                        isMobileWeb && styles.buttonMobile
+                      ]}
+                      onPress={handleScanPress}
+                    >
+                      <CameraIcon color="#fff" size={20} />
+                      <Text style={styles.buttonText}>
+                        {isOutOfScans ? 'Upgrade' : 'Scan'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })()}
 
                 <TouchableOpacity
                   style={[
@@ -525,6 +543,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: '#007AFF',
+  },
+  outOfScansButton: {
+    backgroundColor: '#f59e0b', // Orange color to indicate upgrade needed
   },
   secondaryButton: {
     backgroundColor: '#6366f1',
