@@ -21,7 +21,7 @@ let authInstance: Auth | undefined = undefined;
 let dbInstance: Firestore | undefined = undefined;
 let analyticsInstance: Analytics | undefined = undefined;
 
-const getFirebaseApp = (): FirebaseApp => {
+export const getFirebaseApp = (): FirebaseApp => {
   if (!app) {
     try {
       console.log('[Firebase] Initializing Firebase app...');
@@ -38,6 +38,10 @@ const getFirebaseApp = (): FirebaseApp => {
     }
   }
   return app;
+};
+
+export const getFullFirebaseConfig = () => {
+  return firebaseConfig;
 };
 
 export const getAuthInstance = (): Auth => {
