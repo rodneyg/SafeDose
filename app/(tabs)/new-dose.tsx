@@ -32,9 +32,19 @@ export default function NewDoseScreen() {
   const [isScreenActive, setIsScreenActive] = useState(true);
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
+  const limitReachedRef = useRef(false); // Track if limit was reached to prevent state resets
 
   const doseCalculator = useDoseCalculator({ checkUsageLimit });
   const feedbackStorage = useFeedbackStorage();
+
+  // Monitor showLimitModal state changes for debugging
+  useEffect(() => {
+    console.log('[NewDoseScreen] showLimitModal state changed to:', showLimitModal);
+    if (showLimitModal) {
+      limitReachedRef.current = true;
+      console.log('[NewDoseScreen] Modal is now visible, setting limitReachedRef to true');
+    }
+  }, [showLimitModal]);
   
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
@@ -143,11 +153,16 @@ export default function NewDoseScreen() {
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
+      console.log('[NewDoseScreen] Screen focused', { 
+        navigatingFromIntro, 
+        screenStep: doseCalculator.screenStep,
+        showLimitModal,
+        limitReached: limitReachedRef.current 
+      });
       setIsScreenActive(true);
       
-      // Don't reset state during initial render or when navigating from intro
-      if (hasInitializedAfterNavigation && !navigatingFromIntro) {
+      // Don't reset state during initial render, when navigating from intro, or when limit modal should be showing
+      if (hasInitializedAfterNavigation && !navigatingFromIntro && !limitReachedRef.current) {
         if (doseCalculator.stateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
@@ -169,7 +184,7 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Screen unfocused');
         setIsScreenActive(false);
       };
-    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
+    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro, showLimitModal])
   );
   const {
     screenStep,
@@ -549,14 +564,30 @@ export default function NewDoseScreen() {
         
         // Force a state update with a callback to ensure it's set
         console.log('handleScanAttempt: Setting showLimitModal to true...');
-        setShowLimitModal(true);
+        limitReachedRef.current = true; // Set the ref immediately
+        
+        // Use functional update to ensure we get the latest state
+        setShowLimitModal(prev => {
+          console.log('handleScanAttempt: setShowLimitModal functional update - prev:', prev);
+          return true;
+        });
+        
+        // Also try a direct setState call with a small delay to force a re-render
+        setTimeout(() => {
+          console.log('handleScanAttempt: Timeout - forcing modal state to true');
+          setShowLimitModal(true);
+        }, 10);
         
         // Verify state was set with a slight delay
         setTimeout(() => {
           console.log('handleScanAttempt: showLimitModal state after timeout - checking via callback');
           setShowLimitModal(current => {
             console.log('handleScanAttempt: showLimitModal current state in callback:', current);
-            return current; // Don't change it, just log it
+            if (!current) {
+              console.warn('handleScanAttempt: WARNING - Modal state is false when it should be true!');
+              return true; // Force it to true if it's somehow false
+            }
+            return current; // Don't change it if it's already true
           });
         }, 100);
         
@@ -893,7 +924,11 @@ export default function NewDoseScreen() {
         visible={showLimitModal}
         isAnonymous={user?.isAnonymous ?? true}
         isPremium={usageData.plan !== 'free'}
-        onClose={() => setShowLimitModal(false)}
+        onClose={() => {
+          console.log('[NewDoseScreen] Closing limit modal');
+          setShowLimitModal(false);
+          limitReachedRef.current = false; // Reset the limit reached flag
+        }}
       />
       <LogLimitModal
         visible={showLogLimitModal}
