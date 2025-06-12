@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection } from 'firebase/firestore';
+import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseFeedback, FeedbackType } from '../../types/feedback';
@@ -39,7 +40,7 @@ export function useFeedbackStorage() {
 
     try {
       const feedbackCollection = collection(db, 'feedback');
-      await addDoc(feedbackCollection, {
+      await addDocWithEnv(feedbackCollection, {
         ...feedback,
         userId: user.uid,
       });
