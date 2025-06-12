@@ -7,7 +7,7 @@ import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
-import { usePresetStorage } from '@/lib/hooks/usePresetStorage';
+import { usePresetStorage } from '@/lib/hooks/useSimplePresetStorage';
 
 type Props = {
   calculationError: string | null;
@@ -185,16 +185,36 @@ export default function FinalResultDisplay({
   
   // Handler for saving preset
   const handleSavePreset = useCallback(() => {
+    console.log('[FinalResultDisplay] Save preset button clicked');
+    console.log('[FinalResultDisplay] Button state:', {
+      isSavingPreset,
+      doseValue,
+      substanceName,
+      disabled: isSavingPreset || !doseValue || !substanceName
+    });
     setShowPresetModal(true);
-  }, []);
+  }, [isSavingPreset, doseValue, substanceName]);
 
   const handlePresetSave = useCallback(async () => {
+    console.log('[FinalResultDisplay] Preset save initiated');
+    console.log('[FinalResultDisplay] Form state:', {
+      presetName: presetName.trim(),
+      presetNotes: presetNotes.trim(),
+      doseValue,
+      substanceName,
+      unit,
+      concentration,
+      concentrationUnit
+    });
+    
     if (!presetName.trim()) {
+      console.warn('[FinalResultDisplay] Preset name is empty');
       Alert.alert('Error', 'Please enter a name for the preset.');
       return;
     }
 
     if (!doseValue || !substanceName) {
+      console.warn('[FinalResultDisplay] Missing dose information:', { doseValue, substanceName });
       Alert.alert('Error', 'Unable to save preset - missing dose information.');
       return;
     }
@@ -213,18 +233,22 @@ export default function FinalResultDisplay({
         notes: presetNotes.trim() || undefined,
       };
 
+      console.log('[FinalResultDisplay] Calling savePreset with data:', presetData);
       const result = await savePreset(presetData);
+      console.log('[FinalResultDisplay] Save result:', result);
       
       if (result.success) {
+        console.log('[FinalResultDisplay] Preset saved successfully');
         Alert.alert('Preset Saved', `"${presetName}" has been saved as a preset.`);
         setShowPresetModal(false);
         setPresetName('');
         setPresetNotes('');
       } else {
+        console.error('[FinalResultDisplay] Save failed:', result.error);
         Alert.alert('Save Failed', result.error || 'Unable to save preset.');
       }
     } catch (error) {
-      console.error('Error saving preset:', error);
+      console.error('[FinalResultDisplay] Error saving preset:', error);
       Alert.alert('Save Failed', 'There was an error saving the preset. Please try again.');
     }
   }, [presetName, presetNotes, doseValue, substanceName, unit, concentration, concentrationUnit, totalAmount, totalAmountUnit, solutionVolume, savePreset]);
@@ -278,6 +302,11 @@ export default function FinalResultDisplay({
     doseValue,
     unit,
     substanceName,
+    doseValueType: typeof doseValue,
+    substanceNameType: typeof substanceName,
+    buttonDisabled: !doseValue || !substanceName,
+    isSavingPreset
+  });
     manualSyringe,
     calculatedVolume,
     calculatedConcentration
@@ -456,6 +485,7 @@ export default function FinalResultDisplay({
           style={[
             styles.actionButton, 
             { backgroundColor: isSavingPreset ? '#9CA3AF' : '#8B5CF6' }, 
+            (isSavingPreset || !doseValue || !substanceName) && { opacity: 0.6 },
             isMobileWeb && styles.actionButtonMobile
           ]} 
           onPress={handleSavePreset}
@@ -493,6 +523,7 @@ export default function FinalResultDisplay({
       </View>
       
       {/* Preset Save Modal */}
+      {console.log('[FinalResultDisplay] Modal render check - showPresetModal:', showPresetModal)}
       <Modal
         animationType="slide"
         transparent={true}

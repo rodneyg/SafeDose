@@ -50,6 +50,13 @@ export function usePresetStorage() {
 
     try {
       console.log('[usePresetStorage] Attempting to save to Firestore...');
+      
+      // Check if Firebase is available
+      if (!db) {
+        console.warn('[usePresetStorage] Firestore db not available, skipping');
+        return null;
+      }
+      
       const presetsCollection = collection(db, 'dose_presets');
       const docRef = await addDoc(presetsCollection, {
         ...preset,
@@ -73,6 +80,13 @@ export function usePresetStorage() {
 
     try {
       console.log('[usePresetStorage] Loading presets from Firestore for user:', user.uid);
+      
+      // Check if Firebase is available
+      if (!db) {
+        console.warn('[usePresetStorage] Firestore db not available, skipping');
+        return [];
+      }
+      
       const presetsCollection = collection(db, 'dose_presets');
       const q = query(
         presetsCollection,

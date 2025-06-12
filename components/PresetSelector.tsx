@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal } from 'react-native';
 import { Bookmark, Trash2, X } from 'lucide-react-native';
-import { usePresetStorage } from '../lib/hooks/usePresetStorage';
+import { usePresetStorage } from '../lib/hooks/useSimplePresetStorage';
 import { DosePreset } from '../types/preset';
 
 type Props = {
