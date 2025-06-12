@@ -9,6 +9,7 @@ import {
   LogOut,
   Info,
   User,
+  Bookmark,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -20,6 +21,8 @@ import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
+import PresetSelector from './PresetSelector';
+import { DosePreset } from '../types/preset';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -34,12 +37,14 @@ interface IntroScreenProps {
       | 'finalResult',
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
+  onPresetSelected?: (preset: DosePreset) => void;
 }
 
 export default function IntroScreen({
   setScreenStep,
   resetFullForm,
   setNavigatingFromIntro,
+  onPresetSelected,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
@@ -49,6 +54,7 @@ export default function IntroScreen({
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
+  const [showPresetSelector, setShowPresetSelector] = useState(false);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -198,6 +204,23 @@ export default function IntroScreen({
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
 
+  const handlePresetPress = useCallback(() => {
+    setShowPresetSelector(true);
+  }, []);
+
+  const handlePresetSelected = useCallback((preset: DosePreset) => {
+    setShowPresetSelector(false);
+    if (onPresetSelected) {
+      setNavigatingFromIntro?.(true);
+      onPresetSelected(preset);
+      setScreenStep('manualEntry');
+    }
+  }, [onPresetSelected, setNavigatingFromIntro, setScreenStep]);
+
+  const handleClosePresetSelector = useCallback(() => {
+    setShowPresetSelector(false);
+  }, []);
+
   /* =========================================================================
      RENDER
   ========================================================================= */
@@ -277,6 +300,18 @@ export default function IntroScreen({
                 >
                   <Pill color="#fff" size={20} />
                   <Text style={styles.buttonText}>Manual</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.presetButton,
+                    isMobileWeb && styles.buttonMobile,
+                  ]}
+                  onPress={handlePresetPress}
+                >
+                  <Bookmark color="#fff" size={20} />
+                  <Text style={styles.buttonText}>Presets</Text>
                 </TouchableOpacity>
               </View>
 
@@ -395,6 +430,13 @@ export default function IntroScreen({
           />
         )}
       </Animated.View>
+      
+      {showPresetSelector && (
+        <PresetSelector
+          onPresetSelected={handlePresetSelected}
+          onClose={handleClosePresetSelector}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -548,6 +590,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#6366f1',
+  },
+  presetButton: {
+    backgroundColor: '#8B5CF6',
   },
   buttonText: {
     color: '#fff',

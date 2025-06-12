@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal, TextInput } from 'react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Bookmark } from 'lucide-react-native';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
+import { usePresetStorage } from '@/lib/hooks/usePresetStorage';
 
 type Props = {
   calculationError: string | null;
@@ -26,6 +27,11 @@ type Props = {
   isMobileWeb: boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
   onTryAIScan?: () => void;
+  // Preset-related props
+  concentrationValue?: number | null;
+  totalAmount?: number | null;
+  totalAmountUnit?: 'mg' | 'mcg' | 'units';
+  solutionVolume?: number | null;
 };
 
 export default function FinalResultDisplay({
@@ -46,14 +52,23 @@ export default function FinalResultDisplay({
   isMobileWeb,
   usageData,
   onTryAIScan,
+  concentrationValue,
+  totalAmount,
+  totalAmountUnit,
+  solutionVolume,
 }: Props) {
   const { disclaimerText } = useUserProfile();
   const { user, auth } = useAuth();
   const { logDose, isLogging } = useDoseLogging();
+  const { savePreset, maxPresets } = usePresetStorage();
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
+  const [showPresetModal, setShowPresetModal] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetNotes, setPresetNotes] = useState('');
+  const [isSavingPreset, setIsSavingPreset] = useState(false);
   
   // Effect to handle automatic saving after successful authentication
   useEffect(() => {
@@ -169,6 +184,56 @@ export default function FinalResultDisplay({
     manualSyringe, recommendedMarking
   ]);
   
+  // Preset handlers
+  const handleSavePreset = useCallback(() => {
+    setShowPresetModal(true);
+  }, []);
+
+  const handleSavePresetConfirm = useCallback(async () => {
+    if (!presetName.trim()) {
+      Alert.alert('Error', 'Please enter a preset name');
+      return;
+    }
+
+    setIsSavingPreset(true);
+    try {
+      const presetData = {
+        name: presetName.trim(),
+        substanceName,
+        doseValue: doseValue || 0,
+        unit,
+        concentrationValue,
+        concentrationUnit,
+        totalAmount,
+        totalAmountUnit,
+        solutionVolume,
+        notes: presetNotes.trim() || undefined,
+      };
+
+      const result = await savePreset(presetData);
+      
+      if (result.success) {
+        Alert.alert('Preset Saved', `"${presetName}" has been saved as a preset.`);
+        setShowPresetModal(false);
+        setPresetName('');
+        setPresetNotes('');
+      } else {
+        Alert.alert('Save Failed', result.error || 'Failed to save preset');
+      }
+    } catch (error) {
+      console.error('Error saving preset:', error);
+      Alert.alert('Save Failed', 'Failed to save preset');
+    } finally {
+      setIsSavingPreset(false);
+    }
+  }, [presetName, presetNotes, substanceName, doseValue, unit, concentrationValue, concentrationUnit, totalAmount, totalAmountUnit, solutionVolume, savePreset]);
+
+  const handlePresetModalClose = useCallback(() => {
+    setShowPresetModal(false);
+    setPresetName('');
+    setPresetNotes('');
+  }, []);
+  
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
     if (!doseValue) return 'Formula not available';
@@ -217,7 +282,8 @@ export default function FinalResultDisplay({
     calculatedConcentration
   });
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <>
+      <ScrollView contentContainerStyle={styles.container}>
       {calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
@@ -403,6 +469,20 @@ export default function FinalResultDisplay({
             }
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            { backgroundColor: isSavingPreset ? '#9CA3AF' : '#8B5CF6' },
+            isMobileWeb && styles.actionButtonMobile
+          ]}
+          onPress={handleSavePreset}
+          disabled={isSavingPreset}
+        >
+          <Bookmark color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>
+            {isSavingPreset ? 'Saving...' : 'Save Preset'}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#10B981' }, isMobileWeb && styles.actionButtonMobile]} 
           onPress={() => handleGoToFeedback('new_dose')}
@@ -412,6 +492,91 @@ export default function FinalResultDisplay({
         </TouchableOpacity>
       </View>
     </ScrollView>
+    
+    {/* Save Preset Modal */}
+    {showPresetModal && (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showPresetModal}
+        onRequestClose={handlePresetModalClose}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Save as Preset</Text>
+              <TouchableOpacity onPress={handlePresetModalClose} style={styles.closeButton}>
+                <X color="#6B7280" size={24} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.presetPreview}>
+              <Text style={styles.previewTitle}>Preset Preview:</Text>
+              <Text style={styles.previewText}>
+                {substanceName} • {doseValue} {unit}
+              </Text>
+              {concentrationValue && concentrationUnit && (
+                <Text style={styles.previewText}>
+                  Concentration: {concentrationValue} {concentrationUnit}
+                </Text>
+              )}
+              {totalAmount && totalAmountUnit && (
+                <Text style={styles.previewText}>
+                  Total: {totalAmount} {totalAmountUnit}
+                </Text>
+              )}
+              {solutionVolume && (
+                <Text style={styles.previewText}>
+                  Solution: {solutionVolume} ml
+                </Text>
+              )}
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Preset Name (required)</Text>
+              <TextInput
+                style={styles.textInput}
+                value={presetName}
+                onChangeText={setPresetName}
+                placeholder="Enter preset name..."
+                autoFocus={true}
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Notes (optional)</Text>
+              <TextInput
+                style={[styles.textInput, styles.notesInput]}
+                value={presetNotes}
+                onChangeText={setPresetNotes}
+                placeholder="Add notes about this preset..."
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={handlePresetModalClose}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton, isSavingPreset && styles.disabledButton]}
+                onPress={handleSavePresetConfirm}
+                disabled={isSavingPreset || !presetName.trim()}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSavingPreset ? 'Saving...' : 'Save Preset'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    )}
+    </>
   );
 }
 
@@ -535,5 +700,105 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#065F46',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  presetPreview: {
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  previewText: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 6,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  notesInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  saveButton: {
+    backgroundColor: '#8B5CF6',
+  },
+  disabledButton: {
+    backgroundColor: '#9CA3AF',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
 });

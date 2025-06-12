@@ -1,0 +1,262 @@
+[1mdiff --git a/lib/hooks/usePresetStorage.ts b/lib/hooks/usePresetStorage.ts[m
+[1mindex ffdc506..885320b 100644[m
+[1m--- a/lib/hooks/usePresetStorage.ts[m
+[1m+++ b/lib/hooks/usePresetStorage.ts[m
+[36m@@ -1,6 +1,8 @@[m
+ import { useState, useCallback } from 'react';[m
+ import { useAuth } from '../../contexts/AuthContext';[m
+ import AsyncStorage from '@react-native-async-storage/async-storage';[m
+[32m+[m[32mimport { collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';[m
+[32m+[m[32mimport { db } from '../firebase';[m
+ import { DosePreset } from '../../types/preset';[m
+ [m
+ const MAX_PRESETS = 10; // Keep UX clean as specified[m
+[36m@@ -33,25 +35,149 @@[m [mexport function usePresetStorage() {[m
+     }[m
+   }, [user]);[m
+ [m
+[31m-  // Get all presets from local storage[m
+[32m+[m[32m  // Save preset to Firestore (for authenticated users)[m
+[32m+[m[32m  const savePresetToFirestore = useCallback(async (preset: DosePreset): Promise<string | null> => {[m
+[32m+[m[32m    if (!user || user.isAnonymous) {[m
+[32m+[m[32m      console.log('Skipping Firestore save for anonymous user');[m
+[32m+[m[32m      return null;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const presetsCollection = collection(db, 'dose_presets');[m
+[32m+[m[32m      const docRef = await addDoc(presetsCollection, {[m
+[32m+[m[32m        ...preset,[m
+[32m+[m[32m        userId: user.uid,[m
+[32m+[m[32m      });[m
+[32m+[m[32m      console.log('Preset saved to Firestore:', preset.id, 'Document ID:', docRef.id);[m
+[32m+[m[32m      return docRef.id;[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Error saving preset to Firestore:', error);[m
+[32m+[m[32m      // Don't throw error - local storage is the fallback[m
+[32m+[m[32m      return null;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [user]);[m
+[32m+[m
+[32m+[m[32m  // Load presets from Firestore (for authenticated users)[m
+[32m+[m[32m  const loadPresetsFromFirestore = useCallback(async (): Promise<DosePreset[]> => {[m
+[32m+[m[32m    if (!user || user.isAnonymous) {[m
+[32m+[m[32m      console.log('Skipping Firestore load for anonymous user');[m
+[32m+[m[32m      return [];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const presetsCollection = collection(db, 'dose_presets');[m
+[32m+[m[32m      const q = query([m
+[32m+[m[32m        presetsCollection,[m
+[32m+[m[32m        where('userId', '==', user.uid),[m
+[32m+[m[32m        orderBy('timestamp', 'desc')[m
+[32m+[m[32m      );[m
+[32m+[m[32m      const querySnapshot = await getDocs(q);[m
+[32m+[m[41m      [m
+[32m+[m[32m      const presets: DosePreset[] = [];[m
+[32m+[m[32m      querySnapshot.forEach((doc) => {[m
+[32m+[m[32m        const data = doc.data();[m
+[32m+[m[32m        presets.push({[m
+[32m+[m[32m          id: data.id,[m
+[32m+[m[32m          userId: data.userId,[m
+[32m+[m[32m          name: data.name,[m
+[32m+[m[32m          substanceName: data.substanceName,[m
+[32m+[m[32m          doseValue: data.doseValue,[m
+[32m+[m[32m          unit: data.unit,[m
+[32m+[m[32m          concentrationValue: data.concentrationValue,[m
+[32m+[m[32m          concentrationUnit: data.concentrationUnit,[m
+[32m+[m[32m          totalAmount: data.totalAmount,[m
+[32m+[m[32m          totalAmountUnit: data.totalAmountUnit,[m
+[32m+[m[32m          solutionVolume: data.solutionVolume,[m
+[32m+[m[32m          notes: data.notes,[m
+[32m+[m[32m          timestamp: data.timestamp,[m
+[32m+[m[32m          firestoreId: doc.id, // Store the Firestore document ID[m
+[32m+[m[32m        });[m
+[32m+[m[32m      });[m
+[32m+[m[41m      [m
+[32m+[m[32m      console.log('Loaded', presets.length, 'presets from Firestore');[m
+[32m+[m[32m      return presets;[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Error loading presets from Firestore:', error);[m
+[32m+[m[32m      return [];[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [user]);[m
+[32m+[m
+[32m+[m[32m  // Delete preset from Firestore[m
+[32m+[m[32m  const deletePresetFromFirestore = useCallback(async (firestoreId: string): Promise<boolean> => {[m
+[32m+[m[32m    if (!user || user.isAnonymous) {[m
+[32m+[m[32m      console.log('Skipping Firestore delete for anonymous user');[m
+[32m+[m[32m      return true;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const presetDoc = doc(db, 'dose_presets', firestoreId);[m
+[32m+[m[32m      await deleteDoc(presetDoc);[m
+[32m+[m[32m      console.log('Preset deleted from Firestore:', firestoreId);[m
+[32m+[m[32m      return true;[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Error deleting preset from Firestore:', error);[m
+[32m+[m[32m      return false;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [user]);[m
+[32m+[m
+[32m+[m[32m  // Get all presets from both local storage and Firestore, merging intelligently[m
+   const getPresets = useCallback(async (): Promise<DosePreset[]> => {[m
+     try {[m
+       setIsLoading(true);[m
+[32m+[m[41m      [m
+[32m+[m[32m      // Load from both sources[m
+[32m+[m[32m      const localPresets = await getPresetsFromLocal();[m
+[32m+[m[32m      const firestorePresets = await loadPresetsFromFirestore();[m
+[32m+[m[41m      [m
+[32m+[m[32m      // For authenticated users, prefer Firestore data and sync to local[m
+[32m+[m[32m      if (!user?.isAnonymous && firestorePresets.length > 0) {[m
+[32m+[m[32m        console.log('Using Firestore presets as source of truth for authenticated user');[m
+[32m+[m[32m        // Store Firestore presets locally for offline access[m
+[32m+[m[32m        const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;[m
+[32m+[m[32m        await AsyncStorage.setItem(storageKey, JSON.stringify(firestorePresets));[m
+[32m+[m[32m        return firestorePresets.slice(0, MAX_PRESETS); // Enforce limit[m
+[32m+[m[32m      }[m
+[32m+[m[41m      [m
+[32m+[m[32m      // For anonymous users or when Firestore is empty, use local presets[m
+[32m+[m[32m      console.log('Using local presets');[m
+[32m+[m[32m      return localPresets.slice(0, MAX_PRESETS); // Enforce limit[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Error loading presets:', error);[m
+[32m+[m[32m      return [];[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setIsLoading(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [user]);[m
+[32m+[m
+[32m+[m[32m  // Helper to get presets from local storage only[m
+[32m+[m[32m  const getPresetsFromLocal = useCallback(async (): Promise<DosePreset[]> => {[m
+[32m+[m[32m    try {[m
+       const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;[m
+       const existingPresets = await AsyncStorage.getItem(storageKey);[m
+       const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];[m
+       return presetsList;[m
+     } catch (error) {[m
+[31m-      console.error('Error loading presets:', error);[m
+[32m+[m[32m      console.error('Error loading presets from local storage:', error);[m
+       return [];[m
+[31m-    } finally {[m
+[31m-      setIsLoading(false);[m
+     }[m
+   }, [user]);[m
+ [m
+   // Delete a preset by ID[m
+   const deletePreset = useCallback(async (presetId: string) => {[m
+     try {[m
+[32m+[m[32m      // Find the preset to get its Firestore ID[m
+[32m+[m[32m      const localPresets = await getPresetsFromLocal();[m
+[32m+[m[32m      const presetToDelete = localPresets.find(preset => preset.id === presetId);[m
+[32m+[m[41m      [m
+[32m+[m[32m      // Delete from Firestore if it has a Firestore ID[m
+[32m+[m[32m      if (presetToDelete?.firestoreId) {[m
+[32m+[m[32m        const firestoreDeleteSuccess = await deletePresetFromFirestore(presetToDelete.firestoreId);[m
+[32m+[m[32m        if (!firestoreDeleteSuccess) {[m
+[32m+[m[32m          console.warn('Failed to delete preset from Firestore, continuing with local delete');[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m[41m      [m
+[32m+[m[32m      // Delete from local storage[m
+       const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;[m
+       const existingPresets = await AsyncStorage.getItem(storageKey);[m
+       const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];[m
+[36m@@ -65,11 +191,12 @@[m [mexport function usePresetStorage() {[m
+       console.error('Error deleting preset:', error);[m
+       return { success: false, error: 'Failed to delete preset' };[m
+     }[m
+[31m-  }, [user]);[m
+[32m+[m[32m  }, [user, getPresetsFromLocal, deletePresetFromFirestore]);[m
+ [m
+   // Update a preset (for rename functionality)[m
+   const updatePreset = useCallback(async (presetId: string, updates: Partial<DosePreset>) => {[m
+     try {[m
+[32m+[m[32m      // Update in local storage[m
+       const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;[m
+       const existingPresets = await AsyncStorage.getItem(storageKey);[m
+       const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];[m
+[36m@@ -79,9 +206,23 @@[m [mexport function usePresetStorage() {[m
+         return { success: false, error: 'Preset not found' };[m
+       }[m
+       [m
+[31m-      presetsList[presetIndex] = { ...presetsList[presetIndex], ...updates };[m
+[32m+[m[32m      const updatedPreset = { ...presetsList[presetIndex], ...updates };[m
+[32m+[m[32m      presetsList[presetIndex] = updatedPreset;[m
+       [m
+       await AsyncStorage.setItem(storageKey, JSON.stringify(presetsList));[m
+[32m+[m[41m      [m
+[32m+[m[32m      // Update in Firestore if it has a Firestore ID[m
+[32m+[m[32m      if (updatedPreset.firestoreId && !user?.isAnonymous) {[m
+[32m+[m[32m        try {[m
+[32m+[m[32m          const presetDoc = doc(db, 'dose_presets', updatedPreset.firestoreId);[m
+[32m+[m[32m          await updateDoc(presetDoc, updates);[m
+[32m+[m[32m          console.log('Preset updated in Firestore:', presetId);[m
+[32m+[m[32m        } catch (firestoreError) {[m
+[32m+[m[32m          console.warn('Failed to update preset in Firestore:', firestoreError);[m
+[32m+[m[32m          // Continue anyway since local update succeeded[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m[41m      [m
+       console.log('Preset updated:', presetId);[m
+       return { success: true };[m
+     } catch (error) {[m
+[36m@@ -90,7 +231,7 @@[m [mexport function usePresetStorage() {[m
+     }[m
+   }, [user]);[m
+ [m
+[31m-  // Main save function that generates ID and calls savePresetLocally[m
+[32m+[m[32m  // Main save function that generates ID and saves to both local and Firestore[m
+   const savePreset = useCallback(async (presetData: {[m
+     name: string;[m
+     substanceName: string;[m
+[36m@@ -105,6 +246,12 @@[m [mexport function usePresetStorage() {[m
+   }) => {[m
+     setIsSaving(true);[m
+     try {[m
+[32m+[m[32m      // Check local limit first[m
+[32m+[m[32m      const existingLocalPresets = await getPresetsFromLocal();[m
+[32m+[m[32m      if (existingLocalPresets.length >= MAX_PRESETS) {[m
+[32m+[m[32m        return { success: false, error: `Maximum ${MAX_PRESETS} presets allowed. Please delete an existing preset first.` };[m
+[32m+[m[32m      }[m
+[32m+[m
+       const preset: DosePreset = {[m
+         id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,[m
+         userId: user?.uid,[m
+[36m@@ -112,15 +259,30 @@[m [mexport function usePresetStorage() {[m
+         ...presetData,[m
+       };[m
+ [m
+[31m-      const result = await savePresetLocally(preset);[m
+[31m-      return result;[m
+[32m+[m[32m      // Save to local storage first (primary storage)[m
+[32m+[m[32m      const localResult = await savePresetLocally(preset);[m
+[32m+[m[32m      if (!localResult.success) {[m
+[32m+[m[32m        return localResult;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      // Save to Firestore for authenticated users (for sync across devices)[m
+[32m+[m[32m      if (!user?.isAnonymous) {[m
+[32m+[m[32m        const firestoreId = await savePresetToFirestore(preset);[m
+[32m+[m[32m        if (firestoreId) {[m
+[32m+[m[32m          // Update the local copy with the Firestore ID for future operations[m
+[32m+[m[32m          preset.firestoreId = firestoreId;[m
+[32m+[m[32m          await savePresetLocally(preset); // Re-save with Firestore ID[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      return { success: true };[m
+     } catch (error) {[m
+       console.error('Error in savePreset:', error);[m
+       return { success: false, error: 'Failed to save preset' };[m
+     } finally {[m
+       setIsSaving(false);[m
+     }[m
+[31m-  }, [user, savePresetLocally]);[m
+[32m+[m[32m  }, [user, savePresetLocally, savePresetToFirestore, getPresetsFromLocal]);[m
+ [m
+   return {[m
+     savePreset,[m

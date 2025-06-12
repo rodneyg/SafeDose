@@ -695,6 +695,38 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     lastActionTimestamp.current = Date.now();
   }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction, powerUserPromotion]);
 
+  // Load preset data
+  const loadPreset = useCallback((preset: any) => {
+    resetFullForm('dose');
+    
+    setDose(preset.doseValue?.toString() || '');
+    setUnit(preset.unit || 'mg');
+    setSubstanceName(preset.substanceName || '');
+    setDoseValue(preset.doseValue || null);
+    
+    if (preset.concentrationValue && preset.concentrationUnit) {
+      setConcentrationAmount(preset.concentrationValue.toString());
+      setConcentrationUnit(preset.concentrationUnit);
+      setConcentration(preset.concentrationValue);
+      setMedicationInputType('concentration');
+    }
+    
+    if (preset.totalAmount && preset.totalAmountUnit) {
+      setTotalAmount(preset.totalAmount.toString());
+      if (!preset.concentrationValue) {
+        setMedicationInputType('totalAmount');
+      }
+    }
+    
+    if (preset.solutionVolume) {
+      setSolutionVolume(preset.solutionVolume.toString());
+    }
+    
+    setSubstanceNameHint(`Loaded from preset: ${preset.name}`);
+    setManualStep('dose');
+    setLastActionType('manual');
+  }, [resetFullForm]);
+
   // PMF Survey handlers
   const handlePMFSurveyComplete = useCallback(async (responses: any) => {
     console.log('[useDoseCalculator] PMF survey completed', responses);
@@ -953,5 +985,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setSelectedInjectionSite,
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
+    // Preset functionality
+    loadPreset,
   };
 }
