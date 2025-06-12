@@ -270,18 +270,27 @@ export default function NewDoseScreen() {
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
+      console.log('[NewDoseScreen] Screen focused', { 
+        navigatingFromIntro, 
+        screenStep: doseCalculator.screenStep, 
+        hasInitialized: hasInitializedAfterNavigation,
+        stateHealth: doseCalculator.stateHealth,
+        isLastDoseFlow: doseCalculator.isLastDoseFlow,
+        isCompletingFeedback: doseCalculator.isCompletingFeedback
+      });
       setIsScreenActive(true);
       
-      // Don't reset state during initial render or when navigating from intro
-      if (hasInitializedAfterNavigation && !navigatingFromIntro) {
+      // Don't reset state during initial render, when navigating from intro, or during feedback completion
+      if (hasInitializedAfterNavigation && !navigatingFromIntro && !doseCalculator.isCompletingFeedback) {
         if (doseCalculator.stateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
           doseCalculator.resetFullForm();
           doseCalculator.setScreenStep('intro');
         }
       } else {
-        setHasInitializedAfterNavigation(true);
+        if (!hasInitializedAfterNavigation) {
+          setHasInitializedAfterNavigation(true);
+        }
       }
       
       // Reset the navigation tracking flag after processing
@@ -296,7 +305,14 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Screen unfocused');
         setIsScreenActive(false);
       };
-    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
+    }, [
+      hasInitializedAfterNavigation, 
+      navigatingFromIntro,
+      // Extract only stable values instead of entire doseCalculator object
+      doseCalculator.stateHealth,
+      doseCalculator.screenStep,
+      doseCalculator.isCompletingFeedback
+    ])
   );
   const {
     screenStep,
@@ -879,7 +895,15 @@ export default function NewDoseScreen() {
     };
   }, []);
 
-  console.log('[NewDoseScreen] Rendering', { screenStep });
+  console.log('[NewDoseScreen] Rendering', { 
+    screenStep, 
+    manualStep: doseCalculator.manualStep,
+    isLastDoseFlow: doseCalculator.isLastDoseFlow,
+    stateHealth: doseCalculator.stateHealth,
+    feedbackContext: !!doseCalculator.feedbackContext,
+    isScreenActive,
+    navigatingFromIntro
+  });
 
   return (
     <View style={styles.container}>

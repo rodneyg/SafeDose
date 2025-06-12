@@ -254,7 +254,13 @@ export default function ManualEntryScreen({
   let progress = 0;
 
   // Add logging for step changes
-  console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`);
+  console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`, {
+    calculatedVolume,
+    recommendedMarking,
+    calculationError,
+    formError,
+    hasMedicationInputType: !!medicationInputType
+  });
 
   switch (manualStep) {
     case 'dose':

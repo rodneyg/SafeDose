@@ -57,6 +57,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [selectedInjectionSite, setSelectedInjectionSite] = useState<InjectionSite | null>(null);
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
   const [isLastDoseFlow, setIsLastDoseFlow] = useState<boolean>(false);
+  const [isCompletingFeedback, setIsCompletingFeedback] = useState<boolean>(false);
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
@@ -565,8 +566,16 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, []);
 
   const handleFeedbackComplete = useCallback(async () => {
-    console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext, isLastDoseFlow });
+    console.log('[useDoseCalculator] handleFeedbackComplete called', { 
+      feedbackContext: !!feedbackContext, 
+      isLastDoseFlow, 
+      nextAction: feedbackContext?.nextAction,
+      lastActionType 
+    });
     if (!feedbackContext) return;
+    
+    // Set flag to prevent interfering state changes during completion
+    setIsCompletingFeedback(true);
     
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
@@ -578,6 +587,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     
     if (logResult.limitReached) {
       console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
+      setIsCompletingFeedback(false);
       setShowLogLimitModal(true);
       return; // Stop here, don't proceed with navigation
     }
@@ -589,9 +599,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     const nextAction = feedbackContext.nextAction;
-    console.log('[useDoseCalculator] Next action:', nextAction);
+    console.log('[useDoseCalculator] Processing next action:', nextAction, 'isLastDoseFlow:', isLastDoseFlow);
     
-    // Clear feedback context
+    // Clear feedback context first to prevent loops
     setFeedbackContext(null);
     
     // Navigate to the intended destination
@@ -600,20 +610,26 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       resetFullForm('dose');
       setLastActionType(null); // Clear the last action type
       setIsLastDoseFlow(false); // Clear last dose flow flag
+      setIsCompletingFeedback(false);
       setScreenStep('intro');
     } else if (nextAction === 'new_dose') {
-      console.log('[useDoseCalculator] New dose - repeating last action type:', lastActionType);
+      console.log('[useDoseCalculator] New dose - checking flow type');
       
       // Special handling for last dose flow - preserve state if we're in that context
       if (isLastDoseFlow) {
-        console.log('[useDoseCalculator] In last dose flow, preserving calculation state');
-        // Don't reset the form state, just go back to final result to show the calculation
-        setManualStep('finalResult');
-        setScreenStep('manualEntry');
+        console.log('[useDoseCalculator] ✅ Last dose flow detected - preserving calculation state and returning to finalResult');
+        // Add small delay to ensure feedback context is cleared and prevent rapid state changes
+        setTimeout(() => {
+          setManualStep('finalResult');
+          setScreenStep('manualEntry');
+          setIsCompletingFeedback(false);
+          console.log('[useDoseCalculator] ✅ Last dose flow navigation completed');
+        }, 100); // Increased delay for stability
         return;
       }
       
       // Normal new dose flow - reset form but preserve the last action type for tracking
+      console.log('[useDoseCalculator] Regular new dose flow - resetting form');
       resetFullForm('dose');
       
       if (lastActionType === 'scan') {
@@ -624,18 +640,22 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
           // Add a small delay to ensure state is clean before navigation
           setTimeout(() => {
             setScreenStep('scan');
+            setIsCompletingFeedback(false);
           }, 100);
         } else {
           // If no scans remaining, go back to intro screen
           console.log('[useDoseCalculator] ❌ Scan limit reached, going to intro');
+          setIsCompletingFeedback(false);
           setScreenStep('intro');
         }
       } else if (lastActionType === 'manual') {
         console.log('[useDoseCalculator] ✅ Repeating manual entry action');
+        setIsCompletingFeedback(false);
         setScreenStep('manualEntry');
       } else {
         // Fallback to intro if no last action type is set
         console.log('[useDoseCalculator] No last action type set, defaulting to intro');
+        setIsCompletingFeedback(false);
         setScreenStep('intro');
       }
     } else if (nextAction === 'scan_again') {
@@ -646,13 +666,16 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         console.log('[useDoseCalculator] ✅ Navigating to scan screen with camera reset flag');
         setTimeout(() => {
           setScreenStep('scan');
+          setIsCompletingFeedback(false);
         }, 100);
       } else {
         console.log('[useDoseCalculator] ❌ Scan limit reached, going to intro');
+        setIsCompletingFeedback(false);
         setScreenStep('intro');
       }
     } else {
       console.log('[useDoseCalculator] ⚠️ Unknown next action:', nextAction);
+      setIsCompletingFeedback(false);
     }
     
     lastActionTimestamp.current = Date.now();
@@ -876,6 +899,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     // Last dose flow tracking
     isLastDoseFlow,
     setIsLastDoseFlow,
+    isCompletingFeedback,
     // New state and handlers
     showVolumeErrorModal,
     volumeErrorValue,

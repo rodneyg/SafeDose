@@ -16,6 +16,7 @@ export function useSignUpPrompt() {
   const { user } = useAuth();
   const [shouldShowPrompt, setShouldShowPrompt] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastInteractionTime, setLastInteractionTime] = useState<number>(0);
 
   // Storage key for tracking prompt state
   const getStorageKey = () => `signup_prompt_${user?.uid || 'anonymous'}`;
@@ -91,6 +92,14 @@ export function useSignUpPrompt() {
     // Only track for anonymous users
     if (!user?.isAnonymous) return;
 
+    // Throttle interactions - only allow one per 5 seconds to prevent rapid calls
+    const now = Date.now();
+    if (now - lastInteractionTime < 5000) {
+      console.log('[useSignUpPrompt] Interaction throttled - too soon after last interaction');
+      return;
+    }
+    setLastInteractionTime(now);
+
     const state = await loadPromptState();
     const newState = {
       ...state,
@@ -105,10 +114,16 @@ export function useSignUpPrompt() {
     }
     
     console.log('[useSignUpPrompt] Interaction tracked, count:', newState.interactionCount);
-  }, [user, loadPromptState, savePromptState, shouldShowPrompt, checkShouldShowPrompt]);
+  }, [user, loadPromptState, savePromptState, shouldShowPrompt, checkShouldShowPrompt, lastInteractionTime]);
 
   // Mark prompt as shown
   const markPromptShown = useCallback(async () => {
+    // Prevent multiple rapid calls
+    if (!shouldShowPrompt) {
+      console.log('[useSignUpPrompt] Prompt already marked as shown, skipping');
+      return;
+    }
+    
     const state = await loadPromptState();
     const newState = {
       ...state,
@@ -124,7 +139,7 @@ export function useSignUpPrompt() {
     });
     
     console.log('[useSignUpPrompt] Prompt shown event logged');
-  }, [loadPromptState, savePromptState]);
+  }, [loadPromptState, savePromptState, shouldShowPrompt]);
 
   // Handle prompt dismissal
   const dismissPrompt = useCallback(async () => {
