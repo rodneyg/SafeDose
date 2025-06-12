@@ -154,6 +154,13 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
+    // AGGRESSIVE SAFETY CHECK: Always allow the first few logs to prevent false positives
+    // This prevents users from seeing limit modals on their very first doses
+    if (logUsageData.logsUsed <= 3) {
+      console.log('[useLogUsageTracking] 🛡️ SAFETY CHECK: User has very low usage count:', logUsageData.logsUsed, '- allowing to prevent false positive');
+      return true;
+    }
+
     // SANITY CHECK: If we have a suspiciously high log count for a free user, log it
     if (logUsageData.plan === 'free' && logUsageData.logsUsed > 50) {
       console.warn('[useLogUsageTracking] ⚠️ SUSPICIOUS: Free user has very high log count:', logUsageData.logsUsed, 'This may indicate corrupted data');
@@ -227,6 +234,12 @@ export function useLogUsageTracking() {
           return true;
         }
         
+        // ADDITIONAL SAFETY CHECK: Never block users with very low usage
+        if (newLogUsageData.logsUsed <= 3) {
+          console.log('[useLogUsageTracking] 🛡️ ADDITIONAL SAFETY: Low usage count, allowing to prevent false positive:', newLogUsageData.logsUsed);
+          return true;
+        }
+
         return newLogUsageData.logsUsed < newLogUsageData.limit;
       };
       return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
