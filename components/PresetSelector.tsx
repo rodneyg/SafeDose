@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal } from 'react-native';
 import { Bookmark, Trash2, X } from 'lucide-react-native';
 import { usePresetStorage } from '../lib/hooks/usePresetStorage';
@@ -15,17 +15,19 @@ export default function PresetSelector({ onPresetSelected, onClose }: Props) {
 
   useEffect(() => {
     loadPresets();
-  }, []);
+  }, [loadPresets]);
 
-  const loadPresets = async () => {
+  const loadPresets = useCallback(async () => {
+    console.log('[PresetSelector] Loading presets...');
     try {
       const loadedPresets = await getPresets();
+      console.log('[PresetSelector] Loaded', loadedPresets.length, 'presets');
       setPresets(loadedPresets);
     } catch (error) {
-      console.error('Error loading presets:', error);
+      console.error('[PresetSelector] Error loading presets:', error);
       Alert.alert('Error', 'Failed to load presets');
     }
-  };
+  }, [getPresets]);
 
   const handleDeletePreset = (preset: DosePreset) => {
     Alert.alert(
@@ -50,6 +52,7 @@ export default function PresetSelector({ onPresetSelected, onClose }: Props) {
   };
 
   const handlePresetSelect = (preset: DosePreset) => {
+    console.log('[PresetSelector] Preset selected:', preset.name);
     onPresetSelected(preset);
     onClose();
   };
