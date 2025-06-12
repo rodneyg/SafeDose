@@ -14,23 +14,29 @@ export function usePresetStorage() {
 
   // Save preset to local storage
   const savePresetLocally = useCallback(async (preset: DosePreset) => {
+    console.log('[usePresetStorage] savePresetLocally called for:', preset.name);
     try {
       const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
+      console.log('[usePresetStorage] Using storage key:', storageKey);
+      
       const existingPresets = await AsyncStorage.getItem(storageKey);
       const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];
+      console.log('[usePresetStorage] Found', presetsList.length, 'existing presets');
       
       // Check if we're at the limit
       if (presetsList.length >= MAX_PRESETS) {
+        console.warn('[usePresetStorage] Preset limit reached:', presetsList.length, '>=', MAX_PRESETS);
         return { success: false, error: `Maximum ${MAX_PRESETS} presets allowed. Please delete an existing preset first.` };
       }
       
       presetsList.unshift(preset); // Add to beginning for recent-first order
+      console.log('[usePresetStorage] Adding preset, new total:', presetsList.length);
       
       await AsyncStorage.setItem(storageKey, JSON.stringify(presetsList));
-      console.log('Preset saved locally:', preset.id);
+      console.log('[usePresetStorage] Preset saved locally:', preset.id);
       return { success: true };
     } catch (error) {
-      console.error('Error saving preset locally:', error);
+      console.error('[usePresetStorage] Error saving preset locally:', error);
       return { success: false, error: 'Failed to save preset' };
     }
   }, [user]);
@@ -38,20 +44,21 @@ export function usePresetStorage() {
   // Save preset to Firestore (for authenticated users)
   const savePresetToFirestore = useCallback(async (preset: DosePreset): Promise<string | null> => {
     if (!user || user.isAnonymous) {
-      console.log('Skipping Firestore save for anonymous user');
+      console.log('[usePresetStorage] Skipping Firestore save for anonymous user');
       return null;
     }
 
     try {
+      console.log('[usePresetStorage] Attempting to save to Firestore...');
       const presetsCollection = collection(db, 'dose_presets');
       const docRef = await addDoc(presetsCollection, {
         ...preset,
         userId: user.uid,
       });
-      console.log('Preset saved to Firestore:', preset.id, 'Document ID:', docRef.id);
+      console.log('[usePresetStorage] Preset saved to Firestore:', preset.id, 'Document ID:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Error saving preset to Firestore:', error);
+      console.error('[usePresetStorage] Error saving preset to Firestore:', error);
       // Don't throw error - local storage is the fallback
       return null;
     }
@@ -60,11 +67,12 @@ export function usePresetStorage() {
   // Load presets from Firestore (for authenticated users)
   const loadPresetsFromFirestore = useCallback(async (): Promise<DosePreset[]> => {
     if (!user || user.isAnonymous) {
-      console.log('Skipping Firestore load for anonymous user');
+      console.log('[usePresetStorage] Skipping Firestore load for anonymous user');
       return [];
     }
 
     try {
+      console.log('[usePresetStorage] Loading presets from Firestore for user:', user.uid);
       const presetsCollection = collection(db, 'dose_presets');
       const q = query(
         presetsCollection,
@@ -94,10 +102,10 @@ export function usePresetStorage() {
         });
       });
       
-      console.log('Loaded', presets.length, 'presets from Firestore');
+      console.log('[usePresetStorage] Loaded', presets.length, 'presets from Firestore');
       return presets;
     } catch (error) {
-      console.error('Error loading presets from Firestore:', error);
+      console.error('[usePresetStorage] Error loading presets from Firestore:', error);
       return [];
     }
   }, [user]);
@@ -122,42 +130,65 @@ export function usePresetStorage() {
 
   // Get all presets from both local storage and Firestore, merging intelligently
   const getPresets = useCallback(async (): Promise<DosePreset[]> => {
+    console.log('[usePresetStorage] Getting presets...');
     try {
       setIsLoading(true);
       
-      // Load from both sources
+      // Always try to load from local storage first (most reliable)
+      console.log('[usePresetStorage] Loading from local storage...');
       const localPresets = await getPresetsFromLocal();
-      const firestorePresets = await loadPresetsFromFirestore();
+      console.log('[usePresetStorage] Found', localPresets.length, 'local presets');
       
-      // For authenticated users, prefer Firestore data and sync to local
-      if (!user?.isAnonymous && firestorePresets.length > 0) {
-        console.log('Using Firestore presets as source of truth for authenticated user');
-        // Store Firestore presets locally for offline access
-        const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
-        await AsyncStorage.setItem(storageKey, JSON.stringify(firestorePresets));
-        return firestorePresets.slice(0, MAX_PRESETS); // Enforce limit
+      // For anonymous users, just return local presets
+      if (!user || user.isAnonymous) {
+        console.log('[usePresetStorage] Anonymous user, returning local presets only');
+        return localPresets.slice(0, MAX_PRESETS);
       }
       
-      // For anonymous users or when Firestore is empty, use local presets
-      console.log('Using local presets');
-      return localPresets.slice(0, MAX_PRESETS); // Enforce limit
+      // For authenticated users, try to load from Firestore but don't fail if it doesn't work
+      try {
+        console.log('[usePresetStorage] Authenticated user, trying Firestore...');
+        const firestorePresets = await loadPresetsFromFirestore();
+        console.log('[usePresetStorage] Found', firestorePresets.length, 'Firestore presets');
+        
+        // If we have Firestore presets, use them as source of truth and sync to local
+        if (firestorePresets.length > 0) {
+          console.log('[usePresetStorage] Using Firestore presets as source of truth');
+          // Store Firestore presets locally for offline access
+          const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
+          await AsyncStorage.setItem(storageKey, JSON.stringify(firestorePresets));
+          return firestorePresets.slice(0, MAX_PRESETS);
+        }
+      } catch (firestoreError) {
+        console.warn('[usePresetStorage] Firestore failed, using local presets as fallback:', firestoreError);
+      }
+      
+      // Fall back to local presets if Firestore fails or is empty
+      console.log('[usePresetStorage] Using local presets as fallback');
+      return localPresets.slice(0, MAX_PRESETS);
     } catch (error) {
-      console.error('Error loading presets:', error);
+      console.error('[usePresetStorage] Error loading presets:', error);
       return [];
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, getPresetsFromLocal, loadPresetsFromFirestore]);
 
   // Helper to get presets from local storage only
   const getPresetsFromLocal = useCallback(async (): Promise<DosePreset[]> => {
     try {
       const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
+      console.log('[usePresetStorage] Loading from storage key:', storageKey);
+      
       const existingPresets = await AsyncStorage.getItem(storageKey);
+      console.log('[usePresetStorage] Raw storage data:', existingPresets ? 'found data' : 'no data');
+      
       const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];
+      console.log('[usePresetStorage] Parsed', presetsList.length, 'presets from local storage');
+      
       return presetsList;
     } catch (error) {
-      console.error('Error loading presets from local storage:', error);
+      console.error('[usePresetStorage] Error loading presets from local storage:', error);
       return [];
     }
   }, [user]);
@@ -244,11 +275,14 @@ export function usePresetStorage() {
     solutionVolume?: number | null;
     notes?: string;
   }) => {
+    console.log('[usePresetStorage] Saving preset:', presetData.name);
     setIsSaving(true);
+    
     try {
       // Check local limit first
       const existingLocalPresets = await getPresetsFromLocal();
       if (existingLocalPresets.length >= MAX_PRESETS) {
+        console.warn('[usePresetStorage] Preset limit reached:', existingLocalPresets.length);
         return { success: false, error: `Maximum ${MAX_PRESETS} presets allowed. Please delete an existing preset first.` };
       }
 
@@ -259,25 +293,39 @@ export function usePresetStorage() {
         ...presetData,
       };
 
+      console.log('[usePresetStorage] Created preset with ID:', preset.id);
+
       // Save to local storage first (primary storage)
+      console.log('[usePresetStorage] Saving to local storage...');
       const localResult = await savePresetLocally(preset);
       if (!localResult.success) {
+        console.error('[usePresetStorage] Local save failed:', localResult.error);
         return localResult;
       }
+      console.log('[usePresetStorage] Local save successful');
 
-      // Save to Firestore for authenticated users (for sync across devices)
+      // Try to save to Firestore for authenticated users (but don't fail if it doesn't work)
       if (!user?.isAnonymous) {
-        const firestoreId = await savePresetToFirestore(preset);
-        if (firestoreId) {
-          // Update the local copy with the Firestore ID for future operations
-          preset.firestoreId = firestoreId;
-          await savePresetLocally(preset); // Re-save with Firestore ID
+        try {
+          console.log('[usePresetStorage] Attempting Firestore save...');
+          const firestoreId = await savePresetToFirestore(preset);
+          if (firestoreId) {
+            console.log('[usePresetStorage] Firestore save successful:', firestoreId);
+            // Update the local copy with the Firestore ID for future operations
+            preset.firestoreId = firestoreId;
+            await savePresetLocally(preset); // Re-save with Firestore ID
+          } else {
+            console.warn('[usePresetStorage] Firestore save returned null, continuing with local save');
+          }
+        } catch (firestoreError) {
+          console.warn('[usePresetStorage] Firestore save failed, continuing with local save:', firestoreError);
         }
       }
 
+      console.log('[usePresetStorage] Preset save completed successfully');
       return { success: true };
     } catch (error) {
-      console.error('Error in savePreset:', error);
+      console.error('[usePresetStorage] Error in savePreset:', error);
       return { success: false, error: 'Failed to save preset' };
     } finally {
       setIsSaving(false);
