@@ -15,8 +15,18 @@ export function useDoseLogging() {
   const saveDoseLogLocally = useCallback(async (doseLog: DoseLog) => {
     try {
       const storageKey = `dose_logs_${user?.uid || 'anonymous'}`;
+      console.log('[useDoseLogging] 💾 Saving dose log locally with key:', storageKey);
+      console.log('[useDoseLogging] 💾 Dose log details:', {
+        id: doseLog.id,
+        substance: doseLog.substanceName,
+        doseValue: doseLog.doseValue,
+        unit: doseLog.unit,
+        timestamp: doseLog.timestamp
+      });
+      
       const existingLogs = await AsyncStorage.getItem(storageKey);
       const logsList: DoseLog[] = existingLogs ? JSON.parse(existingLogs) : [];
+      console.log('[useDoseLogging] 💾 Existing logs count before save:', logsList.length);
       
       logsList.unshift(doseLog); // Add to beginning for recent-first order
       
@@ -26,9 +36,9 @@ export function useDoseLogging() {
       }
       
       await AsyncStorage.setItem(storageKey, JSON.stringify(logsList));
-      console.log('Dose log saved locally:', doseLog.id);
+      console.log('[useDoseLogging] 💾 Dose log saved locally successfully. Total logs:', logsList.length);
     } catch (error) {
-      console.error('Error saving dose log locally:', error);
+      console.error('[useDoseLogging] ❌ Error saving dose log locally:', error);
     }
   }, [user]);
 
@@ -126,21 +136,36 @@ export function useDoseLogging() {
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
-    if (isLogging) return { success: false };
+    console.log('[useDoseLogging] 🎯 logDose called with:', {
+      substanceName: doseInfo.substanceName,
+      doseValue: doseInfo.doseValue,
+      unit: doseInfo.unit,
+      calculatedVolume: doseInfo.calculatedVolume,
+      isLogging,
+      user: user?.uid || 'anonymous'
+    });
+    
+    if (isLogging) {
+      console.log('[useDoseLogging] 🎯 Already logging, skipping...');
+      return { success: false };
+    }
     
     setIsLogging(true);
     
     try {
       // Only proceed if we have valid dose info
       if (!doseInfo.doseValue || !doseInfo.calculatedVolume) {
-        console.warn('Incomplete dose info, skipping dose logging');
+        console.warn('[useDoseLogging] ⚠️ Incomplete dose info, skipping dose logging:', {
+          hasDoseValue: !!doseInfo.doseValue,
+          hasCalculatedVolume: !!doseInfo.calculatedVolume
+        });
         return { success: false };
       }
 
       // Check if user has reached log limit
       const canLog = await checkLogUsageLimit();
       if (!canLog) {
-        console.log('Log limit reached, cannot save dose log');
+        console.log('[useDoseLogging] 🚫 Log limit reached, cannot save dose log');
         return { success: false, limitReached: true };
       }
 
@@ -166,12 +191,20 @@ export function useDoseLogging() {
         calculatedConcentration: doseInfo.calculatedConcentration || undefined,
       };
 
+      console.log('[useDoseLogging] 🎯 Created dose log object:', {
+        id: doseLog.id,
+        userId: doseLog.userId,
+        substanceName: doseLog.substanceName,
+        timestamp: doseLog.timestamp
+      });
+
       // Try to save to Firestore first (for authenticated users)
       const firestoreId = await saveDoseLogToFirestore(doseLog);
       
       // Add Firestore ID to the log if it was saved successfully
       if (firestoreId) {
         doseLog.firestoreId = firestoreId;
+        console.log('[useDoseLogging] 🎯 Firestore save successful, ID:', firestoreId);
       }
       
       // Save locally (always works, now includes Firestore ID if available)
@@ -180,14 +213,15 @@ export function useDoseLogging() {
       // Increment log usage count
       await incrementLogsUsed();
       
-      console.log('Dose logged successfully:', doseLog.id);
+      console.log('[useDoseLogging] 🎯 Dose logged successfully! ID:', doseLog.id);
       return { success: true };
     } catch (error) {
-      console.error('Error logging dose:', error);
+      console.error('[useDoseLogging] ❌ Error logging dose:', error);
       // Don't throw - we want logging to be non-blocking
       return { success: false };
     } finally {
       setIsLogging(false);
+      console.log('[useDoseLogging] 🎯 logDose completed, isLogging set to false');
     }
   }, [isLogging, user, saveDoseLogLocally, saveDoseLogToFirestore, checkLogUsageLimit, incrementLogsUsed]);
 
@@ -195,13 +229,24 @@ export function useDoseLogging() {
   const getDoseLogHistory = useCallback(async (): Promise<DoseLog[]> => {
     try {
       const storageKey = `dose_logs_${user?.uid || 'anonymous'}`;
+      console.log('[useDoseLogging] 📚 getDoseLogHistory called with storageKey:', storageKey);
       
       // Load from local storage
       const localLogData = await AsyncStorage.getItem(storageKey);
       const localLogs: DoseLog[] = localLogData ? JSON.parse(localLogData) : [];
+      console.log('[useDoseLogging] 📚 Local storage loaded:', {
+        hasData: !!localLogData,
+        dataLength: localLogData?.length || 0,
+        logsCount: localLogs.length,
+        firstLogId: localLogs[0]?.id || 'none'
+      });
       
       // Load from Firestore for authenticated users
       const firestoreLogs = await loadDoseLogsFromFirestore();
+      console.log('[useDoseLogging] 📚 Firestore loaded:', {
+        logsCount: firestoreLogs.length,
+        firstLogId: firestoreLogs[0]?.id || 'none'
+      });
       
       // Merge logs, avoiding duplicates (prioritize local logs)
       const mergedLogs = new Map<string, DoseLog>();
@@ -221,14 +266,22 @@ export function useDoseLogging() {
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
       
+      console.log('[useDoseLogging] 📚 Final merged logs:', {
+        totalLogs: allLogs.length,
+        mostRecentId: allLogs[0]?.id || 'none',
+        mostRecentSubstance: allLogs[0]?.substanceName || 'none',
+        mostRecentTimestamp: allLogs[0]?.timestamp || 'none'
+      });
+      
       // Update local storage with merged logs (for offline access)
       if (firestoreLogs.length > 0) {
         await AsyncStorage.setItem(storageKey, JSON.stringify(allLogs.slice(0, 100)));
+        console.log('[useDoseLogging] 📚 Updated local storage with merged logs');
       }
       
       return allLogs;
     } catch (error) {
-      console.error('Error loading dose log history:', error);
+      console.error('[useDoseLogging] ❌ Error loading dose log history:', error);
       return [];
     }
   }, [user, loadDoseLogsFromFirestore]);
@@ -309,18 +362,35 @@ export function useDoseLogging() {
   // Get the most recent dose log entry
   const getMostRecentDose = useCallback(async (): Promise<DoseLog | null> => {
     try {
-      console.log('[useDoseLogging] getMostRecentDose called for user:', user?.uid || 'anonymous');
+      console.log('[useDoseLogging] 🔎 getMostRecentDose called');
+      console.log('[useDoseLogging] 🔎 User info:', {
+        hasUser: !!user,
+        uid: user?.uid || 'none',
+        isAnonymous: user?.isAnonymous ?? 'unknown'
+      });
+      
       const logs = await getDoseLogHistory();
       const recentDose = logs.length > 0 ? logs[0] : null; // logs are already sorted by timestamp desc
-      console.log('[useDoseLogging] getMostRecentDose result:', {
+      
+      console.log('[useDoseLogging] 🔎 getDoseLogHistory returned:', {
+        totalLogs: logs.length,
+        logIds: logs.slice(0, 3).map(log => ({ id: log.id, substance: log.substanceName, timestamp: log.timestamp }))
+      });
+      
+      console.log('[useDoseLogging] 🔎 getMostRecentDose result:', {
         hasRecentDose: !!recentDose,
-        doseId: recentDose?.id,
+        doseId: recentDose?.id || 'none',
+        doseSubstance: recentDose?.substanceName || 'none',
+        doseValue: recentDose?.doseValue || 'none',
+        doseUnit: recentDose?.unit || 'none',
+        doseTimestamp: recentDose?.timestamp || 'none',
         totalLogs: logs.length,
         user: user?.uid || 'anonymous'
       });
+      
       return recentDose;
     } catch (error) {
-      console.error('[useDoseLogging] Error getting most recent dose:', error);
+      console.error('[useDoseLogging] ❌ Error getting most recent dose:', error);
       return null;
     }
   }, [getDoseLogHistory, user?.uid]);

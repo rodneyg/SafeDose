@@ -180,72 +180,50 @@ export default function IntroScreen({
     if (auto && user?.isAnonymous) handleSignInPress();
   }, [user, handleSignInPress]);
 
-  /* Check if user has recent dose logs for "Use Last Dose" button */
+  /* Simplified function to check for recent dose logs */
   const checkForRecentDose = useCallback(async (context = 'unknown') => {
     try {
-      console.log(`[IntroScreen] Checking for recent dose (${context})... User:`, user?.uid || 'anonymous');
+      console.log(`[IntroScreen] 🔍 Checking for recent dose (${context})...`);
+      console.log(`[IntroScreen] 🔍 User info:`, {
+        hasUser: !!user,
+        uid: user?.uid || 'none',
+        isAnonymous: user?.isAnonymous ?? 'unknown'
+      });
+      
       const recentDose = await getMostRecentDose();
       const hasRecentDoseValue = !!recentDose;
-      console.log(`[IntroScreen] Recent dose check result (${context}):`, hasRecentDoseValue, 'Dose ID:', recentDose?.id, 'User:', user?.uid || 'anonymous');
+      
+      console.log(`[IntroScreen] 🔍 Recent dose check result (${context}):`, {
+        hasRecentDose: hasRecentDoseValue,
+        doseId: recentDose?.id || 'none',
+        doseSubstance: recentDose?.substanceName || 'none',
+        doseValue: recentDose?.doseValue || 'none',
+        doseTimestamp: recentDose?.timestamp || 'none',
+        user: user?.uid || 'anonymous'
+      });
+      
       setHasRecentDose(hasRecentDoseValue);
       return hasRecentDoseValue;
     } catch (error) {
-      console.error(`[IntroScreen] Error checking for recent dose (${context}):`, error);
+      console.error(`[IntroScreen] ❌ Error checking for recent dose (${context}):`, error);
       setHasRecentDose(false);
       return false;
     }
   }, [getMostRecentDose, user?.uid]);
 
-  // Check for recent dose on mount 
+  // Initial check on mount
   useEffect(() => {
-    console.log('[IntroScreen] Running initial recent dose check on mount');
+    console.log('[IntroScreen] 🏠 Component mounted - checking for recent dose');
     checkForRecentDose('mount');
   }, [checkForRecentDose]);
 
-  /* Re-check for recent dose when screen becomes focused */
+  // Check when screen becomes focused (simplified)
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[IntroScreen] Screen focused - scheduling recent dose check');
-      // Use longer delay to ensure any dose logging from feedback completion has finished
-      const timeoutId = setTimeout(() => {
-        checkForRecentDose('focus');
-      }, 300); // Increased delay to ensure dose logging is complete
-      
-      return () => clearTimeout(timeoutId);
+      console.log('[IntroScreen] 👁️ Screen focused - checking for recent dose');
+      checkForRecentDose('focus');
     }, [checkForRecentDose])
   );
-
-  // Additional robust check when user state changes with multiple retry attempts
-  useEffect(() => {
-    if (user?.uid) {
-      console.log('[IntroScreen] User state changed - scheduling robust recent dose check');
-      let timeoutId: NodeJS.Timeout;
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      const robustCheck = async () => {
-        try {
-          const hasRecentDose = await checkForRecentDose(`user-change-attempt-${retryCount + 1}`);
-          
-          // If no recent dose found and we haven't exhausted retries, try again with longer delay
-          if (!hasRecentDose && retryCount < maxRetries) {
-            retryCount++;
-            console.log(`[IntroScreen] No recent dose found, retrying in ${500 * retryCount}ms (attempt ${retryCount}/${maxRetries})`);
-            timeoutId = setTimeout(robustCheck, 500 * retryCount);
-          }
-        } catch (error) {
-          console.error('[IntroScreen] Error in robust recent dose check:', error);
-        }
-      };
-      
-      // Start the robust check after a small delay
-      timeoutId = setTimeout(robustCheck, 250);
-      
-      return () => {
-        if (timeoutId) clearTimeout(timeoutId);
-      };
-    }
-  }, [user?.uid, checkForRecentDose]);
 
   /* =========================================================================
      NAV HANDLERS
@@ -349,8 +327,17 @@ export default function IntroScreen({
           <View style={styles.debugOverlay}>
             <Text style={styles.debugText}>
               Profile {profile ? '✓' : '✗'} | Loading {isLoading ? '✓' : '✗'} | Usage{' '}
-              {usageData ? '✓' : '✗'}
+              {usageData ? '✓' : '✗'} | Recent Dose {hasRecentDose ? '✓' : '✗'}
             </Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: 'blue', padding: 4, borderRadius: 4, marginTop: 4 }}
+              onPress={() => {
+                console.log('[IntroScreen] 🔧 DEBUG: Manual recent dose check triggered');
+                checkForRecentDose('debug-manual');
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10 }}>Check Recent Dose</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -387,20 +374,34 @@ export default function IntroScreen({
               </View>
 
               {/* Use Last Dose button - only show if user has previous dose */}
-              {hasRecentDose && (
-                <View style={styles.lastDoseContainer}>
-                  <TouchableOpacity
-                    style={[styles.lastDoseButton, isMobileWeb && styles.lastDoseButtonMobile]}
-                    onPress={handleUseLastDosePress}
-                    accessibilityRole="button"
-                    accessibilityLabel="Use Last Dose"
-                    accessibilityHint="Repeat your most recent dose with the same settings"
-                  >
-                    <RotateCcw color="#10b981" size={16} />
-                    <Text style={styles.lastDoseButtonText}>Use Last Dose</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              {(() => {
+                console.log('[IntroScreen] 🔘 Button visibility check:', {
+                  hasRecentDose,
+                  userUid: user?.uid || 'anonymous',
+                  timestamp: new Date().toISOString()
+                });
+                
+                if (hasRecentDose) {
+                  console.log('[IntroScreen] 🔘 Rendering "Use Last Dose" button');
+                  return (
+                    <View style={styles.lastDoseContainer}>
+                      <TouchableOpacity
+                        style={[styles.lastDoseButton, isMobileWeb && styles.lastDoseButtonMobile]}
+                        onPress={handleUseLastDosePress}
+                        accessibilityRole="button"
+                        accessibilityLabel="Use Last Dose"
+                        accessibilityHint="Repeat your most recent dose with the same settings"
+                      >
+                        <RotateCcw color="#10b981" size={16} />
+                        <Text style={styles.lastDoseButtonText}>Use Last Dose</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                } else {
+                  console.log('[IntroScreen] 🔘 NOT rendering "Use Last Dose" button - no recent dose');
+                  return null;
+                }
+              })()}
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
                 {(() => {
