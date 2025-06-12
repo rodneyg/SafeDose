@@ -258,6 +258,7 @@ export default function NewDoseScreen() {
     lastActionType,
     // Log limit modal
     showLogLimitModal,
+    logLimitModalTriggerReason,
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
@@ -942,6 +943,7 @@ export default function NewDoseScreen() {
         isPremium={logUsageData.plan !== 'free'}
         onClose={handleCloseLogLimitModal}
         onContinueWithoutSaving={handleContinueWithoutSaving}
+        triggerReason={logLimitModalTriggerReason}
       />
       <VolumeErrorModal
         visible={showVolumeErrorModal}

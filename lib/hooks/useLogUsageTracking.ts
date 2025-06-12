@@ -154,21 +154,33 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
+    // ULTRA-AGGRESSIVE SAFETY CHECK: Always allow the first 10 logs to prevent ANY false positives
+    // This ensures new users will never see inappropriate limit modals
+    if (logUsageData.logsUsed <= 10) {
+      console.log('[useLogUsageTracking] 🛡️ ULTRA-SAFETY CHECK: User has low usage count:', logUsageData.logsUsed, '- allowing to completely prevent false positives');
+      return true;
+    }
+
+    // SANITY CHECK: If we have a suspiciously high log count for a free user, log it
+    if (logUsageData.plan === 'free' && logUsageData.logsUsed > 50) {
+      console.warn('[useLogUsageTracking] ⚠️ SUSPICIOUS: Free user has very high log count:', logUsageData.logsUsed, 'This may indicate corrupted data');
+    }
+    
     if (!user?.uid) {
-      console.log('[useLogUsageTracking] No user UID found, denying access');
+      console.log('[useLogUsageTracking] ❌ No user UID found, denying access');
       return false;
     }
 
     // If limit is -1, it means unlimited
     if (logUsageData.limit === -1) {
-      console.log('[useLogUsageTracking] Unlimited logs for this plan');
+      console.log('[useLogUsageTracking] ✅ Unlimited logs for this plan');
       return true;
     }
 
     if (!isOnline) {
       console.log('[useLogUsageTracking] Checking cached log usage limit due to offline status');
       const hasLogsRemaining = logUsageData.logsUsed < logUsageData.limit;
-      console.log('[useLogUsageTracking] Offline log limit check result:', hasLogsRemaining);
+      console.log('[useLogUsageTracking] Offline log limit check result:', hasLogsRemaining ? '✅ Has logs remaining' : '❌ No logs remaining');
       return hasLogsRemaining;
     }
 
@@ -222,6 +234,12 @@ export function useLogUsageTracking() {
           return true;
         }
         
+        // ADDITIONAL ULTRA-SAFETY CHECK: Never block users with low usage  
+        if (newLogUsageData.logsUsed <= 10) {
+          console.log('[useLogUsageTracking] 🛡️ ADDITIONAL ULTRA-SAFETY: Low usage count, allowing to prevent false positive:', newLogUsageData.logsUsed);
+          return true;
+        }
+
         return newLogUsageData.logsUsed < newLogUsageData.limit;
       };
       return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
