@@ -33,6 +33,7 @@ module.exports = {
     typedRoutes: true
   },
   extra: {
+    NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     // Legacy Stripe keys for backward compatibility
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,

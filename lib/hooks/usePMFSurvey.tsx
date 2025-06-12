@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection } from 'firebase/firestore';
+import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import { PMFSurveyResponse, PMFSurveyTriggerData, PMFSurveyState } from '../../types/pmf-survey';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
@@ -134,7 +135,7 @@ export function usePMFSurvey() {
           surveyResponse 
         });
         const pmfCollection = collection(db, 'pmf_survey_responses');
-        const docRef = await addDoc(pmfCollection, surveyResponse);
+        const docRef = await addDocWithEnv(pmfCollection, surveyResponse);
         console.log('PMF survey saved to Firebase successfully:', { 
           sessionId, 
           docId: docRef.id,

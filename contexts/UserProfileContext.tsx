@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { setDocWithEnv } from '@/lib/firestoreWithEnv';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfile, WarningLevel, getUserWarningLevel, getDisclaimerText } from '@/types/userProfile';
@@ -410,7 +411,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         });
         try {
           const docRef = doc(db, 'userProfiles', user.uid);
-          await setDoc(docRef, newProfile);
+          await setDocWithEnv(docRef, newProfile);
           console.log('User profile saved to Firebase');
           
           // Log detailed analytics for profile save to Firebase

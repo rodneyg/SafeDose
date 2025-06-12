@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
 import { Star, MessageSquare, X } from 'lucide-react-native';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
+import { addDocWithEnv } from '../../lib/firestoreWithEnv';
 import { db } from '../../lib/firebase';
 import { isMobileWeb } from '../../lib/utils';
 
@@ -131,7 +132,7 @@ export default function ReferenceScreen() {
     setIsSubmitting(true);
     try {
       // Store suggestion in Firebase
-      await addDoc(collection(db, 'compound-suggestions'), {
+      await addDocWithEnv(collection(db, 'compound-suggestions'), {
         compoundName: compoundName.trim(),
         dosageRange: dosageRange.trim(),
         notes: notes.trim(),

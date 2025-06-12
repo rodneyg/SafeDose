@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { setDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNetworkStateAsync } from 'expo-network';
@@ -95,7 +96,7 @@ export function useUsageTracking() {
             // Create new user document if it doesn't exist
             const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
             data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
-            await setDoc(userDocRef, data);
+            await setDocWithEnv(userDocRef, data);
             console.log('Created new user document:', data);
           } else {
             data = userDoc.data();
@@ -105,7 +106,7 @@ export function useUsageTracking() {
               const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
               data.lastReset = currentMonthStart;
               data.scansUsed = 0; // Reset scansUsed when adding lastReset
-              await setDoc(userDocRef, data, { merge: true });
+              await setDocWithEnv(userDocRef, data, { merge: true });
               console.log('Added lastReset to user document:', data);
             } else {
               // Monthly reset logic
@@ -116,7 +117,7 @@ export function useUsageTracking() {
               if (new Date(lastReset) < new Date(currentMonthStart)) {
                 data.scansUsed = 0;
                 data.lastReset = currentMonthStart;
-                await setDoc(userDocRef, data, { merge: true });
+                await setDocWithEnv(userDocRef, data, { merge: true });
                 console.log('Reset scansUsed to 0 for new month:', data);
               }
             }
@@ -176,7 +177,7 @@ export function useUsageTracking() {
           // Create new user document if it doesn't exist
           const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
           data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
-          await setDoc(userDocRef, data);
+          await setDocWithEnv(userDocRef, data);
           console.log('Created new user document:', data);
         } else {
           data = userDoc.data();
@@ -186,7 +187,7 @@ export function useUsageTracking() {
             const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
             data.lastReset = currentMonthStart;
             data.scansUsed = 0; // Reset scansUsed when adding lastReset
-            await setDoc(userDocRef, data, { merge: true });
+            await setDocWithEnv(userDocRef, data, { merge: true });
             console.log('Added lastReset to user document:', data);
           } else {
             // Monthly reset logic
@@ -199,7 +200,7 @@ export function useUsageTracking() {
             if (new Date(lastReset) < new Date(currentMonthStart)) {
               data.scansUsed = 0;
               data.lastReset = currentMonthStart;
-              await setDoc(userDocRef, data, { merge: true });
+              await setDocWithEnv(userDocRef, data, { merge: true });
               console.log('Reset scansUsed to 0 for new month:', data);
             }
           }
@@ -240,7 +241,7 @@ export function useUsageTracking() {
         if (!userDoc.exists()) {
           console.log('[useUsageTracking] User document does not exist, creating new one');
           const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-          await setDoc(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
+          await setDocWithEnv(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
           console.log('[useUsageTracking] Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
         }
         

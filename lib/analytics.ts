@@ -1,5 +1,6 @@
 import { logEvent, setUserProperties } from 'firebase/analytics';
 import { getAnalyticsInstance } from './firebase';
+import { isPreviewEnvironment } from './environment';
 
 // Custom event names as defined in the issue
 export const ANALYTICS_EVENTS = {
@@ -64,6 +65,12 @@ export const USER_PROPERTIES = {
 
 // Helper function to safely log analytics events
 export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
+  // Disable analytics in preview environment
+  if (isPreviewEnvironment()) {
+    console.log(`[Analytics] Preview environment - skipping event: ${eventName}`, parameters);
+    return;
+  }
+
   const analytics = getAnalyticsInstance();
   if (analytics) {
     try {
@@ -79,6 +86,12 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
 
 // Helper function to safely set user properties
 export const setAnalyticsUserProperties = (properties: Record<string, any>) => {
+  // Disable analytics in preview environment
+  if (isPreviewEnvironment()) {
+    console.log(`[Analytics] Preview environment - skipping user properties:`, properties);
+    return;
+  }
+
   const analytics = getAnalyticsInstance();
   if (analytics) {
     try {
