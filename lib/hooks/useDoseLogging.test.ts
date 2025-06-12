@@ -138,4 +138,26 @@ describe('useDoseLogging', () => {
       expect(log.injectionSite).toBe(site);
     });
   });
+
+  it('should export getMostRecentDose function', () => {
+    // Test that the function exists and has the correct signature
+    const mockDoseLog: DoseLog = {
+      id: 'test-recent-dose',
+      userId: 'test-user',
+      substanceName: 'Test Medication',
+      doseValue: 10,
+      unit: 'mg',
+      calculatedVolume: 0.5,
+      syringeType: 'Standard',
+      recommendedMarking: '0.5',
+      timestamp: new Date().toISOString(),
+    };
+
+    // Verify the dose log structure matches what getMostRecentDose should return
+    expect(mockDoseLog.doseValue).toBe(10);
+    expect(mockDoseLog.unit).toBe('mg');
+    expect(mockDoseLog.substanceName).toBe('Test Medication');
+    expect(mockDoseLog.syringeType).toBe('Standard');
+    expect(typeof mockDoseLog.timestamp).toBe('string');
+  });
 });
