@@ -8,6 +8,9 @@ import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
 
+// Import the minimum dose constant for safety checks
+const MIN_DOSES_FOR_PROMOTION = 4;
+
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
@@ -600,11 +603,19 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setShowLogLimitModal(true);
       return; // Stop here, don't proceed with navigation
     } else if (shouldShowPowerUserPromotion) {
-      console.log('[useDoseCalculator] ✅ Power user promotion criteria met, showing POWER USER PROMOTION modal');
-      await powerUserPromotion.markPromotionShown();
-      setLogLimitModalTriggerReason('power_user_promotion');
-      setShowLogLimitModal(true);
-      return; // Stop here, don't proceed with navigation
+      // FINAL SAFETY CHECK: Never show power user promotion if dose count is less than 4
+      // This prevents any race conditions or corrupted data from causing issues
+      const currentDoseCount = powerUserPromotion.promotionData.doseCount;
+      if (currentDoseCount < MIN_DOSES_FOR_PROMOTION) {
+        console.log('[useDoseCalculator] 🛡️ SAFETY CHECK: Preventing power user promotion with insufficient doses:', currentDoseCount, 'minimum:', MIN_DOSES_FOR_PROMOTION);
+        // Don't show modal, just continue with normal flow
+      } else {
+        console.log('[useDoseCalculator] ✅ Power user promotion criteria met, showing POWER USER PROMOTION modal');
+        await powerUserPromotion.markPromotionShown();
+        setLogLimitModalTriggerReason('power_user_promotion');
+        setShowLogLimitModal(true);
+        return; // Stop here, don't proceed with navigation
+      }
     }
     
     if (logResult.success) {

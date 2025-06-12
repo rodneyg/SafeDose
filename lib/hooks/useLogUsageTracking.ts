@@ -154,21 +154,26 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
+    // SANITY CHECK: If we have a suspiciously high log count for a free user, log it
+    if (logUsageData.plan === 'free' && logUsageData.logsUsed > 50) {
+      console.warn('[useLogUsageTracking] ⚠️ SUSPICIOUS: Free user has very high log count:', logUsageData.logsUsed, 'This may indicate corrupted data');
+    }
+    
     if (!user?.uid) {
-      console.log('[useLogUsageTracking] No user UID found, denying access');
+      console.log('[useLogUsageTracking] ❌ No user UID found, denying access');
       return false;
     }
 
     // If limit is -1, it means unlimited
     if (logUsageData.limit === -1) {
-      console.log('[useLogUsageTracking] Unlimited logs for this plan');
+      console.log('[useLogUsageTracking] ✅ Unlimited logs for this plan');
       return true;
     }
 
     if (!isOnline) {
       console.log('[useLogUsageTracking] Checking cached log usage limit due to offline status');
       const hasLogsRemaining = logUsageData.logsUsed < logUsageData.limit;
-      console.log('[useLogUsageTracking] Offline log limit check result:', hasLogsRemaining);
+      console.log('[useLogUsageTracking] Offline log limit check result:', hasLogsRemaining ? '✅ Has logs remaining' : '❌ No logs remaining');
       return hasLogsRemaining;
     }
 

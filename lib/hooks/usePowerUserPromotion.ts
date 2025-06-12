@@ -10,7 +10,7 @@ interface PowerUserPromotionData {
   plan: string;
 }
 
-const POWER_USER_STORAGE_KEY = 'powerUserPromotion';
+const POWER_USER_STORAGE_KEY = 'powerUserPromotion_v2'; // Added v2 to force fresh start
 const MIN_DOSES_FOR_PROMOTION = 4;
 const DAYS_BETWEEN_PROMOTIONS = 14; // 2 weeks
 
@@ -24,6 +24,26 @@ export function usePowerUserPromotion() {
     plan: 'free'
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Debug function to clear all promotion data (for troubleshooting)
+  const clearPromotionData = useCallback(async () => {
+    try {
+      const userId = user?.uid || 'anonymous';
+      const storageKey = `${POWER_USER_STORAGE_KEY}_${userId}`;
+      await AsyncStorage.removeItem(storageKey);
+      
+      const defaultData = {
+        doseCount: 0,
+        lastShownDate: null,
+        hasActiveSubscription: false,
+        plan: 'free'
+      };
+      setPromotionData(defaultData);
+      console.log('[PowerUserPromotion] ✅ Cleared all promotion data for user:', userId);
+    } catch (error) {
+      console.error('[PowerUserPromotion] ❌ Error clearing promotion data:', error);
+    }
+  }, [user]);
 
   // Load promotion data from storage
   const loadPromotionData = useCallback(async () => {
@@ -152,5 +172,6 @@ export function usePowerUserPromotion() {
     shouldShowPromotion,
     incrementDoseCount,
     markPromotionShown,
+    clearPromotionData, // Debug function
   };
 }
