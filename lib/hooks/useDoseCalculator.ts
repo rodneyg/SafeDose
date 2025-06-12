@@ -56,6 +56,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
   const [selectedInjectionSite, setSelectedInjectionSite] = useState<InjectionSite | null>(null);
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
+  const [isLastDoseFlow, setIsLastDoseFlow] = useState<boolean>(false);
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
@@ -107,26 +108,30 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     return true;
   }, [unit]);
 
-  const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
+  const resetFullForm = useCallback((startStep: ManualStep = 'dose', preserveLastDoseState: boolean = false) => {
     lastActionTimestamp.current = Date.now();
 
-    setDose('');
-    setUnit('mg');
-    setSubstanceName('');
-    setMedicationInputType('totalAmount');
-    setConcentrationAmount('');
-    setConcentrationUnit('mg/ml');
-    setTotalAmount('');
-    setSolutionVolume('');
-    setManualSyringe({ type: 'Standard', volume: '3 ml' });
-    setDoseValue(null);
-    setConcentration(null);
-    setCalculatedVolume(null);
-    setCalculatedConcentration(null);
-    setRecommendedMarking(null);
+    // If preserveLastDoseState is true, don't reset the current values (for use in last dose flows)
+    if (!preserveLastDoseState) {
+      setDose('');
+      setUnit('mg');
+      setSubstanceName('');
+      setMedicationInputType('totalAmount');
+      setConcentrationAmount('');
+      setConcentrationUnit('mg/ml');
+      setTotalAmount('');
+      setSolutionVolume('');
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setDoseValue(null);
+      setConcentration(null);
+      setCalculatedVolume(null);
+      setCalculatedConcentration(null);
+      setRecommendedMarking(null);
+    }
+    
+    // Always reset these regardless of preserveLastDoseState
     setCalculationError(null);
     setFormError(null);
-    // Reset new state variables
     setShowVolumeErrorModal(false);
     setVolumeErrorValue(null);
     setSubstanceNameHint(null);
@@ -560,7 +565,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, []);
 
   const handleFeedbackComplete = useCallback(async () => {
-    console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
+    console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext, isLastDoseFlow });
     if (!feedbackContext) return;
     
     // Automatically log the completed dose
@@ -594,10 +599,21 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.log('[useDoseCalculator] Start over - navigating to intro and clearing state');
       resetFullForm('dose');
       setLastActionType(null); // Clear the last action type
+      setIsLastDoseFlow(false); // Clear last dose flow flag
       setScreenStep('intro');
     } else if (nextAction === 'new_dose') {
       console.log('[useDoseCalculator] New dose - repeating last action type:', lastActionType);
-      // Reset form but preserve the last action type for tracking
+      
+      // Special handling for last dose flow - preserve state if we're in that context
+      if (isLastDoseFlow) {
+        console.log('[useDoseCalculator] In last dose flow, preserving calculation state');
+        // Don't reset the form state, just go back to final result to show the calculation
+        setManualStep('finalResult');
+        setScreenStep('manualEntry');
+        return;
+      }
+      
+      // Normal new dose flow - reset form but preserve the last action type for tracking
       resetFullForm('dose');
       
       if (lastActionType === 'scan') {
@@ -640,7 +656,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
+  }, [feedbackContext, isLastDoseFlow, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
 
   // PMF Survey handlers
   const handlePMFSurveyComplete = useCallback(async (responses: any) => {
@@ -741,22 +757,31 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       if (nextAction === 'start_over') {
         resetFullForm('dose');
         setLastActionType(null);
+        setIsLastDoseFlow(false);
         setScreenStep('intro');
       } else if (nextAction === 'new_dose') {
-        resetFullForm('dose');
-        if (lastActionType === 'scan') {
-          setScreenStep('scan');
-        } else if (lastActionType === 'manual') {
+        // Special handling for last dose flow - preserve state if we're in that context
+        if (isLastDoseFlow) {
+          console.log('[useDoseCalculator] In last dose flow, preserving calculation state (continue without saving)');
+          // Don't reset the form state, just go back to final result to show the calculation
+          setManualStep('finalResult');
           setScreenStep('manualEntry');
         } else {
-          setScreenStep('intro');
+          resetFullForm('dose');
+          if (lastActionType === 'scan') {
+            setScreenStep('scan');
+          } else if (lastActionType === 'manual') {
+            setScreenStep('manualEntry');
+          } else {
+            setScreenStep('intro');
+          }
         }
       } else {
         setScreenStep('intro');
       }
     }
     setShowLogLimitModal(false);
-  }, [feedbackContext, lastActionType, resetFullForm]);
+  }, [feedbackContext, lastActionType, isLastDoseFlow, resetFullForm]);
 
   // // Alternative implementation - reset to initial screen without navigation
   // // Uncomment if the above navigation logic causes issues
@@ -848,6 +873,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     validateConcentrationInput,
     // Last action tracking
     lastActionType,
+    // Last dose flow tracking
+    isLastDoseFlow,
+    setIsLastDoseFlow,
     // New state and handlers
     showVolumeErrorModal,
     volumeErrorValue,

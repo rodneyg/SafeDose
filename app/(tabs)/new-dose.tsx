@@ -223,6 +223,9 @@ export default function NewDoseScreen() {
       
       // Check if this is the streamlined last dose flow
       if (isLastDoseFlow === 'true') {
+        console.log('[NewDoseScreen] Setting last dose flow flag');
+        doseCalculator.setIsLastDoseFlow(true);
+        
         // If we have complete calculation results, go directly to final result for convenience
         if (lastCalculatedVolume && lastRecommendedMarking) {
           console.log('[NewDoseScreen] Complete calculation data available, going to final result');
@@ -368,6 +371,9 @@ export default function NewDoseScreen() {
     validateConcentrationInput,
     // Last action tracking
     lastActionType,
+    // Last dose flow tracking
+    isLastDoseFlow,
+    setIsLastDoseFlow,
     // Log limit modal
     showLogLimitModal,
     handleCloseLogLimitModal,
