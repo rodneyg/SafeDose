@@ -139,6 +139,45 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
   }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+
+  // Handle "Use Last Dose" prefill from IntroScreen
+  useEffect(() => {
+    const useLastDose = searchParams.useLastDose as string;
+    const lastDoseValue = searchParams.lastDoseValue as string;
+    const lastDoseUnit = searchParams.lastDoseUnit as string;
+    const lastSubstance = searchParams.lastSubstance as string;
+    const lastSyringeType = searchParams.lastSyringeType as string;
+    
+    // Only apply if we have the useLastDose flag and haven't already applied prefill, and doseCalculator is on intro screen
+    if (useLastDose === 'true' && lastDoseValue && lastDoseUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+      console.log('[NewDoseScreen] Applying "Use Last Dose" prefill');
+      prefillAppliedRef.current = true;
+      
+      // Set up the dose first
+      doseCalculator.setDose(lastDoseValue);
+      doseCalculator.setUnit(lastDoseUnit as any);
+      console.log('[NewDoseScreen] Prefilled dose from last dose:', lastDoseValue, lastDoseUnit);
+      
+      // Set substance name if available
+      if (lastSubstance) {
+        doseCalculator.setSubstanceName(lastSubstance);
+        console.log('[NewDoseScreen] Prefilled substance name:', lastSubstance);
+      }
+      
+      // Set syringe type if available
+      if (lastSyringeType && (lastSyringeType === 'Insulin' || lastSyringeType === 'Standard')) {
+        const defaultVolume = lastSyringeType === 'Insulin' ? '1 ml' : '3 ml';
+        doseCalculator.setManualSyringe({ type: lastSyringeType, volume: defaultVolume });
+        console.log('[NewDoseScreen] Prefilled syringe type:', lastSyringeType, defaultVolume);
+      }
+      
+      // Start from dose step so user can review and adjust the dose, then continue with concentration
+      doseCalculator.setManualStep('dose');
+      doseCalculator.setScreenStep('manualEntry');
+      
+      console.log('[NewDoseScreen] ✅ Use Last Dose prefill applied, starting from dose step');
+    }
+  }, [searchParams.useLastDose, searchParams.lastDoseValue, searchParams.lastDoseUnit, searchParams.lastSubstance, searchParams.lastSyringeType, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {

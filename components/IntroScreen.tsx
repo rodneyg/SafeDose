@@ -9,6 +9,7 @@ import {
   LogOut,
   Info,
   User,
+  RotateCcw,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -16,6 +17,7 @@ import { isMobileWeb } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
+import { useDoseLogging } from '../lib/hooks/useDoseLogging';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -44,11 +46,13 @@ export default function IntroScreen({
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
+  const { getMostRecentDose } = useDoseLogging();
   const router = useRouter();
 
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
+  const [hasRecentDose, setHasRecentDose] = useState(false);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -175,6 +179,21 @@ export default function IntroScreen({
     if (auto && user?.isAnonymous) handleSignInPress();
   }, [user, handleSignInPress]);
 
+  /* Check if user has recent dose logs for "Use Last Dose" button */
+  useEffect(() => {
+    const checkForRecentDose = async () => {
+      try {
+        const recentDose = await getMostRecentDose();
+        setHasRecentDose(!!recentDose);
+      } catch (error) {
+        console.error('[IntroScreen] Error checking for recent dose:', error);
+        setHasRecentDose(false);
+      }
+    };
+
+    checkForRecentDose();
+  }, [getMostRecentDose]);
+
   /* =========================================================================
      NAV HANDLERS
   ========================================================================= */
@@ -197,6 +216,37 @@ export default function IntroScreen({
     resetFullForm('dose');
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
+
+  const handleUseLastDosePress = useCallback(async () => {
+    try {
+      const recentDose = await getMostRecentDose();
+      if (!recentDose) {
+        console.warn('[IntroScreen] No recent dose found');
+        return;
+      }
+
+      console.log('[IntroScreen] Using last dose:', recentDose);
+      
+      // Navigate to new-dose screen and let it handle the prefill through a different mechanism
+      // We'll pass minimal parameters and set up a flag to prefill the dose info
+      const prefillParams = new URLSearchParams({
+        useLastDose: 'true',
+        lastDoseValue: recentDose.doseValue.toString(),
+        lastDoseUnit: recentDose.unit,
+        lastSubstance: recentDose.substanceName || '',
+      });
+
+      // Add syringe type if available
+      if (recentDose.syringeType) {
+        prefillParams.set('lastSyringeType', recentDose.syringeType);
+      }
+
+      console.log('[IntroScreen] Navigating to new-dose with last dose params:', Object.fromEntries(prefillParams));
+      router.push(`/(tabs)/new-dose?${prefillParams.toString()}`);
+    } catch (error) {
+      console.error('[IntroScreen] Error using last dose:', error);
+    }
+  }, [getMostRecentDose, router]);
 
   /* =========================================================================
      RENDER
@@ -244,6 +294,22 @@ export default function IntroScreen({
                   <Text style={styles.welcomeText}>Ready to get started?</Text>
                 )}
               </View>
+
+              {/* Use Last Dose button - only show if user has previous dose */}
+              {hasRecentDose && (
+                <View style={styles.lastDoseContainer}>
+                  <TouchableOpacity
+                    style={[styles.lastDoseButton, isMobileWeb && styles.lastDoseButtonMobile]}
+                    onPress={handleUseLastDosePress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use Last Dose"
+                    accessibilityHint="Repeat your most recent dose with the same settings"
+                  >
+                    <RotateCcw color="#10b981" size={16} />
+                    <Text style={styles.lastDoseButtonText}>Use Last Dose</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
                 {(() => {
@@ -504,6 +570,38 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#666',
     textAlign: 'center',
+  },
+
+  /* Use Last Dose button */
+  lastDoseContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  lastDoseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0fdf4',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  lastDoseButtonMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  lastDoseButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#10b981',
   },
 
   /* Action buttons */

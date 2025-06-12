@@ -106,6 +106,7 @@ export function useDoseLogging() {
       calculatedVolume: number | null;
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
+      injectionSite?: string | null;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -281,9 +282,21 @@ export function useDoseLogging() {
     }
   }, [user, saveDoseLogToFirestore]);
 
+  // Get the most recent dose log entry
+  const getMostRecentDose = useCallback(async (): Promise<DoseLog | null> => {
+    try {
+      const logs = await getDoseLogHistory();
+      return logs.length > 0 ? logs[0] : null; // logs are already sorted by timestamp desc
+    } catch (error) {
+      console.error('Error getting most recent dose:', error);
+      return null;
+    }
+  }, [getDoseLogHistory]);
+
   return {
     logDose,
     getDoseLogHistory,
+    getMostRecentDose,
     deleteDoseLog,
     syncLogsToFirestore,
     isLogging,
