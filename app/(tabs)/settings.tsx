@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { LogOut, CreditCard, User, AlertCircle } from 'lucide-react-native';
+import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { useRouter } from 'expo-router';
 
 interface SubscriptionStatus {
   hasActiveSubscription: boolean;
@@ -22,6 +23,7 @@ interface SubscriptionStatus {
 export default function SettingsScreen() {
   const { user, logout, isSigningOut } = useAuth();
   const { usageData } = useUsageTracking();
+  const router = useRouter();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
@@ -112,7 +114,7 @@ export default function SettingsScreen() {
     Alert.alert(
       'Sign Out',
       user?.isAnonymous 
-        ? 'Are you sure you want to start a new anonymous session? Your current usage will be reset.'
+        ? 'Are you sure you want to start a new guest session? Your current usage will be reset.'
         : 'Are you sure you want to sign out? You can sign back in anytime.',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -131,6 +133,10 @@ export default function SettingsScreen() {
         },
       ]
     );
+  };
+
+  const handleSignIn = () => {
+    router.push('/login');
   };
 
   const getPlanDisplayName = (plan: string) => {
@@ -160,7 +166,7 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             <Text style={styles.label}>Account Type</Text>
             <Text style={styles.value}>
-              {user?.isAnonymous ? 'Anonymous User' : 'Authenticated User'}
+              {user?.isAnonymous ? 'Guest' : 'Signed In'}
             </Text>
             
             {user?.email && (
@@ -248,24 +254,38 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Sign Out */}
+        {/* Sign In/Out */}
         <View style={styles.section}>
-          <TouchableOpacity 
-            style={[styles.signOutButton, isSigningOut && styles.disabledButton]} 
-            onPress={handleSignOut}
-            disabled={isSigningOut}
-          >
-            <View style={styles.buttonContent}>
-              {isSigningOut ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <LogOut size={20} color="#FFFFFF" />
-              )}
-              <Text style={styles.signOutButtonText}>
-                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          {user && !user.isAnonymous ? (
+            // Show sign out button for signed in users
+            <TouchableOpacity 
+              style={[styles.signOutButton, isSigningOut && styles.disabledButton]} 
+              onPress={handleSignOut}
+              disabled={isSigningOut}
+            >
+              <View style={styles.buttonContent}>
+                {isSigningOut ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <LogOut size={20} color="#FFFFFF" />
+                )}
+                <Text style={styles.signOutButtonText}>
+                  {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            // Show sign in button for guest users or not logged in
+            <TouchableOpacity 
+              style={styles.signInButton} 
+              onPress={handleSignIn}
+            >
+              <View style={styles.buttonContent}>
+                <LogIn size={20} color="#FFFFFF" />
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -356,11 +376,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  signInButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   signOutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  signInButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
