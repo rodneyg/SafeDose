@@ -4,7 +4,7 @@ import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-nativ
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
-import { useRouter } from 'expo-router';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 interface SubscriptionStatus {
   hasActiveSubscription: boolean;
@@ -21,12 +21,12 @@ interface SubscriptionStatus {
 }
 
 export default function SettingsScreen() {
-  const { user, logout, isSigningOut } = useAuth();
+  const { user, logout, isSigningOut, auth } = useAuth();
   const { usageData } = useUsageTracking();
-  const router = useRouter();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
     if (user && !user.isAnonymous) {
@@ -136,7 +136,35 @@ export default function SettingsScreen() {
   };
 
   const handleSignIn = () => {
-    router.push('/login');
+    setIsSigningIn(true);
+    const provider = new GoogleAuthProvider();
+    
+    logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
+    
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log('Google Sign-In successful', result.user);
+        if (user?.isAnonymous) {
+          // The anonymous account will be automatically linked to the signed-in account
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
+          console.log('Linked anonymous account with Google');
+        } else {
+          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
+          console.log('Signed in with Google');
+        }
+        Alert.alert('Signed In', 'You have been successfully signed in with Google.');
+      })
+      .catch((error) => {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
+          method: 'google', 
+          error: error.message 
+        });
+        console.error('Google sign-in error:', error);
+        Alert.alert('Sign In Error', error.message || 'Failed to sign in with Google');
+      })
+      .finally(() => {
+        setIsSigningIn(false);
+      });
   };
 
   const getPlanDisplayName = (plan: string) => {
@@ -277,12 +305,19 @@ export default function SettingsScreen() {
           ) : (
             // Show sign in button for guest users or not logged in
             <TouchableOpacity 
-              style={styles.signInButton} 
+              style={[styles.signInButton, isSigningIn && styles.disabledButton]} 
               onPress={handleSignIn}
+              disabled={isSigningIn}
             >
               <View style={styles.buttonContent}>
-                <LogIn size={20} color="#FFFFFF" />
-                <Text style={styles.signInButtonText}>Sign In</Text>
+                {isSigningIn ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <LogIn size={20} color="#FFFFFF" />
+                )}
+                <Text style={styles.signInButtonText}>
+                  {isSigningIn ? 'Signing In...' : 'Sign In with Google'}
+                </Text>
               </View>
             </TouchableOpacity>
           )}
