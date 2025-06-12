@@ -180,37 +180,26 @@ export default function IntroScreen({
   }, [user, handleSignInPress]);
 
   /* Check if user has recent dose logs for "Use Last Dose" button */
-  useEffect(() => {
-    const checkForRecentDose = async () => {
-      try {
-        const recentDose = await getMostRecentDose();
-        console.log('[IntroScreen] Recent dose check result:', !!recentDose);
-        setHasRecentDose(!!recentDose);
-      } catch (error) {
-        console.error('[IntroScreen] Error checking for recent dose:', error);
-        setHasRecentDose(false);
-      }
-    };
+  const checkForRecentDose = useCallback(async () => {
+    try {
+      const recentDose = await getMostRecentDose();
+      console.log('[IntroScreen] Recent dose check result:', !!recentDose, 'User:', user?.uid || 'anonymous');
+      setHasRecentDose(!!recentDose);
+    } catch (error) {
+      console.error('[IntroScreen] Error checking for recent dose:', error);
+      setHasRecentDose(false);
+    }
+  }, [getMostRecentDose, user?.uid]);
 
+  useEffect(() => {
     checkForRecentDose();
-  }, [getMostRecentDose]);
+  }, [checkForRecentDose]);
 
   /* Re-check for recent dose when screen becomes focused or user changes */
   useFocusEffect(
     React.useCallback(() => {
-      const recheckForRecentDose = async () => {
-        try {
-          const recentDose = await getMostRecentDose();
-          console.log('[IntroScreen] Focus recheck - Recent dose result:', !!recentDose);
-          setHasRecentDose(!!recentDose);
-        } catch (error) {
-          console.error('[IntroScreen] Error rechecking for recent dose on focus:', error);
-          setHasRecentDose(false);
-        }
-      };
-
-      recheckForRecentDose();
-    }, [getMostRecentDose])
+      checkForRecentDose();
+    }, [checkForRecentDose])
   );
 
   /* =========================================================================
