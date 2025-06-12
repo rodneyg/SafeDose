@@ -6,6 +6,7 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
 import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
+import { usePowerUserPromotion } from './usePowerUserPromotion';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -64,8 +65,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const whyAreYouHereTracking = useWhyAreYouHereTracking();
   const pmfSurvey = usePMFSurvey();
 
-  // Log limit modal state
+  // Initialize power user promotion tracking
+  const powerUserPromotion = usePowerUserPromotion();
+
+  // Log limit modal state (now used for both power user promotion and log limits)
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
+  const [logLimitModalTriggerReason, setLogLimitModalTriggerReason] = useState<'log_limit' | 'power_user_promotion'>('log_limit');
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -563,6 +568,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
     if (!feedbackContext) return;
     
+    // Increment dose count for power user promotion tracking
+    await powerUserPromotion.incrementDoseCount();
+    
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
     
@@ -571,8 +579,16 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       trackInteraction();
     }
     
+    // Check if we should show power user promotion (instead of just log limit)
     if (logResult.limitReached) {
       console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
+      setLogLimitModalTriggerReason('log_limit');
+      setShowLogLimitModal(true);
+      return; // Stop here, don't proceed with navigation
+    } else if (powerUserPromotion.shouldShowPromotion()) {
+      console.log('[useDoseCalculator] Power user promotion criteria met, showing upgrade modal');
+      await powerUserPromotion.markPromotionShown();
+      setLogLimitModalTriggerReason('power_user_promotion');
       setShowLogLimitModal(true);
       return; // Stop here, don't proceed with navigation
     }
@@ -640,7 +656,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction, powerUserPromotion]);
 
   // PMF Survey handlers
   const handlePMFSurveyComplete = useCallback(async (responses: any) => {
@@ -728,7 +744,31 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   // Handle log limit modal actions
   const handleCloseLogLimitModal = useCallback(() => {
     setShowLogLimitModal(false);
-  }, []);
+    
+    // If this was a power user promotion modal, continue with navigation
+    if (logLimitModalTriggerReason === 'power_user_promotion' && feedbackContext) {
+      const nextAction = feedbackContext.nextAction;
+      setFeedbackContext(null);
+      
+      // Navigate based on the next action, similar to handleFeedbackComplete
+      if (nextAction === 'start_over') {
+        resetFullForm('dose');
+        setLastActionType(null);
+        setScreenStep('intro');
+      } else if (nextAction === 'new_dose') {
+        resetFullForm('dose');
+        if (lastActionType === 'scan') {
+          setScreenStep('scan');
+        } else if (lastActionType === 'manual') {
+          setScreenStep('manualEntry');
+        } else {
+          setScreenStep('intro');
+        }
+      } else {
+        setScreenStep('intro');
+      }
+    }
+  }, [logLimitModalTriggerReason, feedbackContext, resetFullForm, lastActionType]);
 
   const handleContinueWithoutSaving = useCallback(() => {
     console.log('[useDoseCalculator] User chose to continue without saving dose');
@@ -863,6 +903,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     handleWhyAreYouHereSkip,
     // Log limit modal
     showLogLimitModal,
+    logLimitModalTriggerReason,
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,

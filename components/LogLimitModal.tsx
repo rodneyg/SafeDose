@@ -9,6 +9,7 @@ interface LogLimitModalProps {
   isPremium?: boolean;
   onClose: () => void;
   onContinueWithoutSaving: () => void;
+  triggerReason?: 'log_limit' | 'power_user_promotion';
 }
 
 export default function LogLimitModal({ 
@@ -16,36 +17,55 @@ export default function LogLimitModal({
   isAnonymous, 
   isPremium = false, 
   onClose,
-  onContinueWithoutSaving 
+  onContinueWithoutSaving,
+  triggerReason = 'log_limit'
 }: LogLimitModalProps) {
   const router = useRouter();
 
-  console.log('[LogLimitModal] Rendering', { visible, isAnonymous, isPremium });
+  console.log('[LogLimitModal] Rendering', { visible, isAnonymous, isPremium, triggerReason });
 
   React.useEffect(() => {
     if (visible) {
-      logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_VIEW, { type: 'log_limit' });
+      logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_VIEW, { type: triggerReason });
     }
-  }, [visible]);
+  }, [visible, triggerReason]);
 
   const handleUpgrade = () => {
     console.log('[LogLimitModal] Upgrade to Pro button pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade_pro', type: 'log_limit' });
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade_pro', type: triggerReason });
     router.push('/pricing');
     onClose();
   };
 
   const handleContinueWithoutSaving = () => {
     console.log('[LogLimitModal] Continue without saving pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'continue_without_saving', type: 'log_limit' });
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'continue_without_saving', type: triggerReason });
     onContinueWithoutSaving();
     onClose();
   };
 
   const handleCancel = () => {
     console.log('[LogLimitModal] Cancel button pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'cancel', type: 'log_limit' });
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'cancel', type: triggerReason });
     onClose();
+  };
+
+  // Determine content based on trigger reason
+  const isLogLimit = triggerReason === 'log_limit';
+  const isPowerUserPromotion = triggerReason === 'power_user_promotion';
+
+  const getTitle = () => {
+    if (isPowerUserPromotion) {
+      return "You've Become a SafeDose Power User!";
+    }
+    return "Unlock Your Full Dosing History";
+  };
+
+  const getMessage = () => {
+    if (isPowerUserPromotion) {
+      return "Great job on completing multiple doses! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
+    }
+    return "You've become a SafeDose power user! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
   };
 
   return (
@@ -58,18 +78,25 @@ export default function LogLimitModal({
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>
-            Unlock Your Full Dosing History
+            {getTitle()}
           </Text>
           <Text style={styles.message}>
-            You've become a SafeDose power user! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.
+            {getMessage()}
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
               <Text style={styles.buttonText}>Upgrade to Pro</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleContinueWithoutSaving}>
-              <Text style={styles.secondaryButtonText}>Continue without saving</Text>
-            </TouchableOpacity>
+            {isLogLimit && (
+              <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleContinueWithoutSaving}>
+                <Text style={styles.secondaryButtonText}>Continue without saving</Text>
+              </TouchableOpacity>
+            )}
+            {isPowerUserPromotion && (
+              <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+                <Text style={styles.secondaryButtonText}>Maybe later</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
