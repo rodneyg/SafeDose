@@ -601,8 +601,25 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20, gap: 10 },
-  actionButton: { paddingVertical: 14, borderRadius: 8, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginHorizontal: 5, minHeight: 50 },
+  buttonContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    width: '100%', 
+    marginTop: 20, 
+    gap: 8,
+    flexWrap: 'wrap'
+  },
+  actionButton: { 
+    paddingVertical: 14, 
+    borderRadius: 8, 
+    flex: 1, 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginHorizontal: 3, 
+    minHeight: 50,
+    minWidth: 100
+  },
   actionButtonMobile: { paddingVertical: 16, minHeight: 60 },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   errorTitle: { fontSize: 16, color: '#991B1B', textAlign: 'center', fontWeight: '600', marginVertical: 8 },
