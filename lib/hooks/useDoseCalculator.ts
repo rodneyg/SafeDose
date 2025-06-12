@@ -1,12 +1,17 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
+import { InjectionSite } from '../../types/doseLog';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
 import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
+import { usePowerUserPromotion } from './usePowerUserPromotion';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'postDoseFeedback' | 'pmfSurvey';
+// Import the minimum dose constant for safety checks
+const MIN_DOSES_FOR_PROMOTION = 4;
+
+type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -53,6 +58,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [syringeHint, setSyringeHint] = useState<string | null>(null);
   const [stateHealth, setStateHealth] = useState<'healthy' | 'recovering'>('healthy');
   const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
+  const [selectedInjectionSite, setSelectedInjectionSite] = useState<InjectionSite | null>(null);
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
 
   // Initialize dose logging hook
@@ -62,8 +68,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const whyAreYouHereTracking = useWhyAreYouHereTracking();
   const pmfSurvey = usePMFSurvey();
 
-  // Log limit modal state
+  // Initialize power user promotion tracking
+  const powerUserPromotion = usePowerUserPromotion();
+
+  // Log limit modal state (now used for both power user promotion and log limits)
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
+  const [logLimitModalTriggerReason, setLogLimitModalTriggerReason] = useState<'log_limit' | 'power_user_promotion'>('log_limit');
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
@@ -511,40 +521,113 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         calculatedVolume,
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
+        injectionSite: selectedInjectionSite,
       },
     });
     
+    // Always go to injection site selection first
+    setScreenStep('injectionSiteSelection');
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking]);
+
+  // Handle injection site selection completion
+  const handleInjectionSiteSelected = useCallback(async () => {
+    if (!feedbackContext) return;
+    
+    // Update feedback context with selected injection site
+    setFeedbackContext({
+      ...feedbackContext,
+      doseInfo: {
+        ...feedbackContext.doseInfo,
+        injectionSite: selectedInjectionSite,
+      },
+    });
+    
+    // Continue with the original flow logic
+    const sessionType = lastActionType === 'scan' ? 'scan' : 'manual';
+    
     // Check if we should show the "Why Are You Here?" prompt first
-    // This is a lighter micro-prompt that should come before PMF survey
     if (whyAreYouHereTracking.shouldShowPrompt()) {
       setScreenStep('whyAreYouHere');
-    } else if (triggerData.shouldShowSurvey) {
-      // If no WhyAreYouHere prompt, check for PMF survey
-      setScreenStep('pmfSurvey');
     } else {
-      // If neither prompt is needed, go directly to feedback
-      setScreenStep('postDoseFeedback');
+      // Re-check PMF survey status
+      const triggerData = await pmfSurvey.recordDoseSession(sessionType);
+      if (triggerData.shouldShowSurvey) {
+        setScreenStep('pmfSurvey');
+      } else {
+        setScreenStep('postDoseFeedback');
+      }
     }
-    
-    lastActionTimestamp.current = Date.now();
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, lastActionType, pmfSurvey, whyAreYouHereTracking]);
+  }, [feedbackContext, selectedInjectionSite, lastActionType, whyAreYouHereTracking, pmfSurvey]);
+
+  // Handle injection site selection cancellation
+  const handleInjectionSiteCancel = useCallback(() => {
+    setScreenStep('manualEntry');
+    setManualStep('finalResult');
+    setFeedbackContext(null);
+    setSelectedInjectionSite(null);
+  }, []);
 
   const handleFeedbackComplete = useCallback(async () => {
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
     if (!feedbackContext) return;
     
+    console.log('[useDoseCalculator] === DOSE COMPLETION FLOW DEBUG ===');
+    console.log('[useDoseCalculator] Current power user promotion data BEFORE increment:', powerUserPromotion.promotionData);
+    
+    // Increment dose count for power user promotion tracking
+    await powerUserPromotion.incrementDoseCount();
+    
+    console.log('[useDoseCalculator] Current power user promotion data AFTER increment:', powerUserPromotion.promotionData);
+    
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
+    
+    console.log('[useDoseCalculator] Log result:', logResult);
+    
+    // IMPORTANT: Add a small delay to ensure state updates have propagated
+    // This prevents race conditions between incrementDoseCount and shouldShowPromotion
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const shouldShowPowerUserPromotion = powerUserPromotion.shouldShowPromotion();
+    console.log('[useDoseCalculator] Should show power user promotion after delay?', shouldShowPowerUserPromotion);
     
     // Track interaction for sign-up prompt if log was successful
     if (logResult.success && trackInteraction) {
       trackInteraction();
     }
     
+    // ABSOLUTE SAFETY CHECK: NEVER show log limit modal for users with low usage
+    // This completely prevents false positives that frustrate users
+    const currentLogUsage = powerUserPromotion.promotionData.doseCount; // Use dose count as proxy for log usage
+    const MINIMUM_USAGE_FOR_LIMIT_MODAL = 10; // Require at least 10 completed doses before any limit modal
+    
+    // HARD BLOCK: Do not show log limit modal for users who haven't established significant usage
     if (logResult.limitReached) {
-      console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
-      setShowLogLimitModal(true);
-      return; // Stop here, don't proceed with navigation
+      if (currentLogUsage < MINIMUM_USAGE_FOR_LIMIT_MODAL) {
+        console.log('[useDoseCalculator] 🛡️ ABSOLUTE SAFETY: Blocking log limit modal - insufficient usage:', currentLogUsage, '< minimum:', MINIMUM_USAGE_FOR_LIMIT_MODAL);
+        // Completely skip modal and continue with normal flow
+      } else {
+        console.log('[useDoseCalculator] ❌ Log limit reached with sufficient usage, showing LOG LIMIT modal');
+        setLogLimitModalTriggerReason('log_limit');
+        setShowLogLimitModal(true);
+        return; // Stop here, don't proceed with navigation
+      }
+    }
+
+    if (shouldShowPowerUserPromotion) {
+      // FINAL SAFETY CHECK: Never show power user promotion if dose count is less than 4
+      // This prevents any race conditions or corrupted data from causing issues
+      const currentDoseCount = powerUserPromotion.promotionData.doseCount;
+      if (currentDoseCount < MIN_DOSES_FOR_PROMOTION) {
+        console.log('[useDoseCalculator] 🛡️ SAFETY CHECK: Preventing power user promotion with insufficient doses:', currentDoseCount, 'minimum:', MIN_DOSES_FOR_PROMOTION);
+        // Don't show modal, just continue with normal flow
+      } else {
+        console.log('[useDoseCalculator] ✅ Power user promotion criteria met, showing POWER USER PROMOTION modal');
+        await powerUserPromotion.markPromotionShown();
+        setLogLimitModalTriggerReason('power_user_promotion');
+        setShowLogLimitModal(true);
+        return; // Stop here, don't proceed with navigation
+      }
     }
     
     if (logResult.success) {
@@ -610,7 +693,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction, powerUserPromotion]);
 
   // PMF Survey handlers
   const handlePMFSurveyComplete = useCallback(async (responses: any) => {
@@ -698,7 +781,31 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   // Handle log limit modal actions
   const handleCloseLogLimitModal = useCallback(() => {
     setShowLogLimitModal(false);
-  }, []);
+    
+    // If this was a power user promotion modal, continue with navigation
+    if (logLimitModalTriggerReason === 'power_user_promotion' && feedbackContext) {
+      const nextAction = feedbackContext.nextAction;
+      setFeedbackContext(null);
+      
+      // Navigate based on the next action, similar to handleFeedbackComplete
+      if (nextAction === 'start_over') {
+        resetFullForm('dose');
+        setLastActionType(null);
+        setScreenStep('intro');
+      } else if (nextAction === 'new_dose') {
+        resetFullForm('dose');
+        if (lastActionType === 'scan') {
+          setScreenStep('scan');
+        } else if (lastActionType === 'manual') {
+          setScreenStep('manualEntry');
+        } else {
+          setScreenStep('intro');
+        }
+      } else {
+        setScreenStep('intro');
+      }
+    }
+  }, [logLimitModalTriggerReason, feedbackContext, resetFullForm, lastActionType]);
 
   const handleContinueWithoutSaving = useCallback(() => {
     console.log('[useDoseCalculator] User chose to continue without saving dose');
@@ -833,6 +940,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     handleWhyAreYouHereSkip,
     // Log limit modal
     showLogLimitModal,
+    logLimitModalTriggerReason,
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
@@ -840,5 +948,10 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     pmfSurveyTriggerData: pmfSurvey.triggerData,
     handlePMFSurveyComplete,
     handlePMFSurveySkip,
+    // Injection site selection
+    selectedInjectionSite,
+    setSelectedInjectionSite,
+    handleInjectionSiteSelected,
+    handleInjectionSiteCancel,
   };
 }

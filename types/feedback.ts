@@ -1,3 +1,5 @@
+import { InjectionSite } from './doseLog';
+
 export type FeedbackType = 'great' | 'mild_side_effects' | 'something_wrong';
 
 export interface DoseFeedback {
@@ -23,5 +25,6 @@ export interface FeedbackContextType {
     calculatedVolume: number | null;
     syringeType?: 'Insulin' | 'Standard' | null;
     recommendedMarking?: string | null;
+    injectionSite?: InjectionSite | null;
   };
 }

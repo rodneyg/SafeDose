@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
+import { addDocWithEnv } from '@/lib/firestoreWithEnv';
 import { db } from '@/lib/firebase';
 import { UserProfileAnswers } from '@/types/userProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -61,7 +62,7 @@ export function useOnboardingIntentStorage() {
 
       // Save to Firestore (no authentication required)
       const onboardingIntentCollection = collection(db, 'onboarding_intent_submissions');
-      const docRef = await addDoc(onboardingIntentCollection, intentData);
+      const docRef = await addDocWithEnv(onboardingIntentCollection, intentData);
       
       console.log('[OnboardingIntent] ✅ Intent data saved to Firestore with ID:', docRef.id);
 

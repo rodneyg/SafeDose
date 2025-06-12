@@ -36,3 +36,6 @@ yarn-error.*
 *.tsbuildinfo
 .env
 .vercel
+
+# Test validation scripts
+validate-*.js

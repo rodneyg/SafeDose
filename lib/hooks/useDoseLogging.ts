@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { getFirestore, collection, addDoc, doc, deleteDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog } from '../../types/doseLog';
@@ -41,7 +42,7 @@ export function useDoseLogging() {
 
     try {
       const doseLogsCollection = collection(db, 'dose_logs');
-      const docRef = await addDoc(doseLogsCollection, {
+      const docRef = await addDocWithEnv(doseLogsCollection, {
         ...doseLog,
         userId: user.uid,
       });
@@ -80,6 +81,9 @@ export function useDoseLogging() {
           doseValue: data.doseValue,
           unit: data.unit,
           calculatedVolume: data.calculatedVolume,
+          syringeType: data.syringeType,
+          recommendedMarking: data.recommendedMarking,
+          injectionSite: data.injectionSite,
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
@@ -133,6 +137,7 @@ export function useDoseLogging() {
         calculatedVolume: doseInfo.calculatedVolume,
         syringeType: doseInfo.syringeType || undefined,
         recommendedMarking: doseInfo.recommendedMarking || undefined,
+        injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
       };
