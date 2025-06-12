@@ -139,6 +139,121 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
   }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+
+  // Handle "Use Last Dose" prefill from IntroScreen - comprehensive restoration
+  useEffect(() => {
+    const useLastDose = searchParams.useLastDose as string;
+    const isLastDoseFlow = searchParams.isLastDoseFlow as string;
+    const lastDoseValue = searchParams.lastDoseValue as string;
+    const lastDoseUnit = searchParams.lastDoseUnit as string;
+    const lastSubstance = searchParams.lastSubstance as string;
+    const lastSyringeType = searchParams.lastSyringeType as string;
+    const lastSyringeVolume = searchParams.lastSyringeVolume as string;
+    const lastCalculatedVolume = searchParams.lastCalculatedVolume as string;
+    const lastRecommendedMarking = searchParams.lastRecommendedMarking as string;
+    const lastMedicationInputType = searchParams.lastMedicationInputType as string;
+    const lastConcentrationAmount = searchParams.lastConcentrationAmount as string;
+    const lastConcentrationUnit = searchParams.lastConcentrationUnit as string;
+    const lastTotalAmount = searchParams.lastTotalAmount as string;
+    const lastSolutionVolume = searchParams.lastSolutionVolume as string;
+    const lastCalculatedConcentration = searchParams.lastCalculatedConcentration as string;
+    
+    // Only apply if we have the useLastDose flag and essential data, and haven't already applied prefill
+    if (useLastDose === 'true' && lastDoseValue && lastDoseUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+      console.log('[NewDoseScreen] Applying comprehensive "Use Last Dose" prefill');
+      prefillAppliedRef.current = true;
+      
+      // Set up the basic dose information
+      doseCalculator.setDose(lastDoseValue);
+      doseCalculator.setUnit(lastDoseUnit as any);
+      console.log('[NewDoseScreen] Prefilled dose:', lastDoseValue, lastDoseUnit);
+      
+      // Set substance name
+      if (lastSubstance) {
+        doseCalculator.setSubstanceName(lastSubstance);
+        console.log('[NewDoseScreen] Prefilled substance name:', lastSubstance);
+      }
+      
+      // Set syringe information
+      if (lastSyringeType && (lastSyringeType === 'Insulin' || lastSyringeType === 'Standard')) {
+        const syringeVolume = lastSyringeVolume || (lastSyringeType === 'Insulin' ? '1 ml' : '3 ml');
+        doseCalculator.setManualSyringe({ type: lastSyringeType, volume: syringeVolume });
+        console.log('[NewDoseScreen] Prefilled syringe:', lastSyringeType, syringeVolume);
+      }
+      
+      // Set medication source information
+      if (lastMedicationInputType && (lastMedicationInputType === 'concentration' || lastMedicationInputType === 'totalAmount')) {
+        doseCalculator.setMedicationInputType(lastMedicationInputType);
+        console.log('[NewDoseScreen] Prefilled medication input type:', lastMedicationInputType);
+        
+        if (lastMedicationInputType === 'concentration') {
+          if (lastConcentrationAmount) {
+            doseCalculator.setConcentrationAmount(lastConcentrationAmount);
+            console.log('[NewDoseScreen] Prefilled concentration amount:', lastConcentrationAmount);
+          }
+          if (lastConcentrationUnit) {
+            doseCalculator.setConcentrationUnit(lastConcentrationUnit as any);
+            console.log('[NewDoseScreen] Prefilled concentration unit:', lastConcentrationUnit);
+          }
+        } else if (lastMedicationInputType === 'totalAmount') {
+          if (lastTotalAmount) {
+            doseCalculator.setTotalAmount(lastTotalAmount);
+            console.log('[NewDoseScreen] Prefilled total amount:', lastTotalAmount);
+          }
+          if (lastSolutionVolume) {
+            doseCalculator.setSolutionVolume(lastSolutionVolume);
+            console.log('[NewDoseScreen] Prefilled solution volume:', lastSolutionVolume);
+          }
+        }
+      }
+      
+      // Set calculated results if available - this allows the final step to work immediately
+      if (lastCalculatedVolume) {
+        doseCalculator.setCalculatedVolume(parseFloat(lastCalculatedVolume));
+        console.log('[NewDoseScreen] Prefilled calculated volume:', lastCalculatedVolume);
+      }
+      if (lastRecommendedMarking) {
+        doseCalculator.setRecommendedMarking(lastRecommendedMarking);
+        console.log('[NewDoseScreen] Prefilled recommended marking:', lastRecommendedMarking);
+      }
+      if (lastCalculatedConcentration) {
+        doseCalculator.setCalculatedConcentration(parseFloat(lastCalculatedConcentration));
+        console.log('[NewDoseScreen] Prefilled calculated concentration:', lastCalculatedConcentration);
+      }
+      
+      // Check if this is the streamlined last dose flow
+      if (isLastDoseFlow === 'true') {
+        console.log('[NewDoseScreen] Setting last dose flow flag');
+        doseCalculator.setIsLastDoseFlow(true);
+        
+        // If we have complete calculation results, go directly to final result for convenience
+        if (lastCalculatedVolume && lastRecommendedMarking) {
+          console.log('[NewDoseScreen] Complete calculation data available, going to final result');
+          doseCalculator.setManualStep('finalResult');
+        } else {
+          // Otherwise start from dose step with hint
+          console.log('[NewDoseScreen] Incomplete calculation data, starting from dose step');
+          doseCalculator.setManualStep('dose');
+        }
+      } else {
+        // Regular last dose flow - start from dose step  
+        doseCalculator.setManualStep('dose');
+      }
+      
+      doseCalculator.setScreenStep('manualEntry');
+      
+      console.log('[NewDoseScreen] ✅ Complete Use Last Dose prefill applied');
+    }
+  }, [
+    searchParams.useLastDose, searchParams.isLastDoseFlow, 
+    searchParams.lastDoseValue, searchParams.lastDoseUnit, 
+    searchParams.lastSubstance, searchParams.lastSyringeType, searchParams.lastSyringeVolume,
+    searchParams.lastCalculatedVolume, searchParams.lastRecommendedMarking,
+    searchParams.lastMedicationInputType, searchParams.lastConcentrationAmount, 
+    searchParams.lastConcentrationUnit, searchParams.lastTotalAmount,
+    searchParams.lastSolutionVolume, searchParams.lastCalculatedConcentration,
+    doseCalculator.screenStep
+  ]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
@@ -256,6 +371,9 @@ export default function NewDoseScreen() {
     validateConcentrationInput,
     // Last action tracking
     lastActionType,
+    // Last dose flow tracking
+    isLastDoseFlow,
+    setIsLastDoseFlow,
     // Log limit modal
     showLogLimitModal,
     handleCloseLogLimitModal,

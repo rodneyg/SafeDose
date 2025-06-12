@@ -26,6 +26,11 @@ type Props = {
   isMobileWeb: boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
   onTryAIScan?: () => void;
+  // Enhanced fields for complete dose logging
+  medicationInputType?: 'concentration' | 'totalAmount' | null;
+  concentrationAmount?: string;
+  totalAmount?: string;
+  solutionVolume?: string;
 };
 
 export default function FinalResultDisplay({
@@ -46,6 +51,11 @@ export default function FinalResultDisplay({
   isMobileWeb,
   usageData,
   onTryAIScan,
+  // Enhanced fields for complete dose logging
+  medicationInputType,
+  concentrationAmount,
+  totalAmount,
+  solutionVolume,
 }: Props) {
   const { disclaimerText } = useUserProfile();
   const { user, auth } = useAuth();
@@ -70,6 +80,14 @@ export default function FinalResultDisplay({
             calculatedVolume,
             syringeType: manualSyringe.type as 'Insulin' | 'Standard',
             recommendedMarking,
+            // Enhanced fields for complete dose recreation
+            medicationInputType,
+            concentrationAmount,
+            concentrationUnit,
+            totalAmount,
+            solutionVolume,
+            syringeVolume: manualSyringe.volume,
+            calculatedConcentration,
           };
 
           const result = await logDose(doseInfo);
@@ -146,6 +164,14 @@ export default function FinalResultDisplay({
         calculatedVolume,
         syringeType: manualSyringe.type as 'Insulin' | 'Standard',
         recommendedMarking,
+        // Enhanced fields for complete dose recreation
+        medicationInputType,
+        concentrationAmount,
+        concentrationUnit,
+        totalAmount,
+        solutionVolume,
+        syringeVolume: manualSyringe.volume,
+        calculatedConcentration,
       };
 
       const result = await logDose(doseInfo);

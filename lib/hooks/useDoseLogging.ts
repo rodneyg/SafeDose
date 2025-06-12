@@ -3,7 +3,7 @@ import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDoc
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DoseLog } from '../../types/doseLog';
+import { DoseLog, InjectionSite } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 export function useDoseLogging() {
@@ -87,6 +87,14 @@ export function useDoseLogging() {
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
+          // Enhanced fields for complete dose recreation
+          medicationInputType: data.medicationInputType,
+          concentrationAmount: data.concentrationAmount,
+          concentrationUnit: data.concentrationUnit,
+          totalAmount: data.totalAmount,
+          solutionVolume: data.solutionVolume,
+          syringeVolume: data.syringeVolume,
+          calculatedConcentration: data.calculatedConcentration,
         });
       });
       
@@ -107,6 +115,15 @@ export function useDoseLogging() {
       calculatedVolume: number | null;
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
+      injectionSite?: InjectionSite | null;
+      // Enhanced fields for complete dose recreation
+      medicationInputType?: 'concentration' | 'totalAmount' | null;
+      concentrationAmount?: string | null;
+      concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml' | null;
+      totalAmount?: string | null;
+      solutionVolume?: string | null;
+      syringeVolume?: string | null;
+      calculatedConcentration?: number | null;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -140,6 +157,14 @@ export function useDoseLogging() {
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
+        // Enhanced fields for complete dose recreation
+        medicationInputType: doseInfo.medicationInputType || undefined,
+        concentrationAmount: doseInfo.concentrationAmount || undefined,
+        concentrationUnit: doseInfo.concentrationUnit || undefined,
+        totalAmount: doseInfo.totalAmount || undefined,
+        solutionVolume: doseInfo.solutionVolume || undefined,
+        syringeVolume: doseInfo.syringeVolume || undefined,
+        calculatedConcentration: doseInfo.calculatedConcentration || undefined,
       };
 
       // Try to save to Firestore first (for authenticated users)
@@ -282,9 +307,21 @@ export function useDoseLogging() {
     }
   }, [user, saveDoseLogToFirestore]);
 
+  // Get the most recent dose log entry
+  const getMostRecentDose = useCallback(async (): Promise<DoseLog | null> => {
+    try {
+      const logs = await getDoseLogHistory();
+      return logs.length > 0 ? logs[0] : null; // logs are already sorted by timestamp desc
+    } catch (error) {
+      console.error('Error getting most recent dose:', error);
+      return null;
+    }
+  }, [getDoseLogHistory]);
+
   return {
     logDose,
     getDoseLogHistory,
+    getMostRecentDose,
     deleteDoseLog,
     syncLogsToFirestore,
     isLogging,

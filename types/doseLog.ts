@@ -22,6 +22,15 @@ export interface DoseLog {
   timestamp: string;
   notes?: string; // Optional notes entered by user at logging time
   firestoreId?: string; // Firestore document ID for sync purposes
+  
+  // Enhanced fields for complete dose recreation
+  medicationInputType?: 'concentration' | 'totalAmount' | null;
+  concentrationAmount?: string;
+  concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
+  totalAmount?: string;
+  solutionVolume?: string;
+  syringeVolume?: string; // Store the exact syringe volume used
+  calculatedConcentration?: number;
 }
 
 export interface DoseLogContext {
