@@ -22,6 +22,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -182,25 +183,68 @@ export default function IntroScreen({
   /* Check if user has recent dose logs for "Use Last Dose" button */
   const checkForRecentDose = useCallback(async () => {
     try {
+      console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
       const recentDose = await getMostRecentDose();
-      console.log('[IntroScreen] Recent dose check result:', !!recentDose, 'User:', user?.uid || 'anonymous');
-      setHasRecentDose(!!recentDose);
+      const hasRecentDoseValue = !!recentDose;
+      console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
+      setHasRecentDose(hasRecentDoseValue);
+      return hasRecentDoseValue;
     } catch (error) {
       console.error('[IntroScreen] Error checking for recent dose:', error);
       setHasRecentDose(false);
+      return false;
     }
   }, [getMostRecentDose, user?.uid]);
 
+  // Check for recent dose on mount and when dependencies change
   useEffect(() => {
+    console.log('[IntroScreen] Running initial recent dose check');
     checkForRecentDose();
   }, [checkForRecentDose]);
 
-  /* Re-check for recent dose when screen becomes focused or user changes */
+  /* Re-check for recent dose when screen becomes focused */
   useFocusEffect(
     React.useCallback(() => {
-      checkForRecentDose();
-    }, [checkForRecentDose])
+      console.log('[IntroScreen] Screen focused - re-checking for recent dose');
+      // Add a small delay to ensure any state changes from navigation have settled
+      const timeoutId = setTimeout(async () => {
+        try {
+          console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
+          const recentDose = await getMostRecentDose();
+          const hasRecentDoseValue = !!recentDose;
+          console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
+          setHasRecentDose(hasRecentDoseValue);
+        } catch (error) {
+          console.error('[IntroScreen] Error checking for recent dose:', error);
+          setHasRecentDose(false);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }, [getMostRecentDose, user?.uid]) // Use stable dependencies instead of the callback
   );
+
+  // Additional check when user state changes
+  useEffect(() => {
+    if (user) {
+      console.log('[IntroScreen] User state changed - re-checking for recent dose');
+      // Small delay to ensure user state has fully settled
+      const timeoutId = setTimeout(async () => {
+        try {
+          console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
+          const recentDose = await getMostRecentDose();
+          const hasRecentDoseValue = !!recentDose;
+          console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
+          setHasRecentDose(hasRecentDoseValue);
+        } catch (error) {
+          console.error('[IntroScreen] Error checking for recent dose:', error);
+          setHasRecentDose(false);
+        }
+      }, 200);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user?.uid, getMostRecentDose]);
 
   /* =========================================================================
      NAV HANDLERS
@@ -232,6 +276,18 @@ export default function IntroScreen({
         console.warn('[IntroScreen] No recent dose found');
         return;
       }
+
+      // Log analytics event with relevant parameters
+      logAnalyticsEvent(ANALYTICS_EVENTS.USE_LAST_DOSE_CLICKED, {
+        user_type: user?.isAnonymous ? 'anonymous' : 'authenticated',
+        substance_name: recentDose.substanceName || 'unknown',
+        dose_value: recentDose.doseValue,
+        dose_unit: recentDose.unit,
+        syringe_type: recentDose.syringeType || 'unknown',
+        medication_input_type: recentDose.medicationInputType || 'unknown',
+        has_calculation: !!(recentDose.calculatedVolume && recentDose.recommendedMarking),
+        timestamp: new Date().toISOString()
+      });
 
       console.log('[IntroScreen] Using last dose for complete recreation:', recentDose);
       

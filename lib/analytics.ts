@@ -50,6 +50,8 @@ export const ANALYTICS_EVENTS = {
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
   SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
+  // Use Last Dose events
+  USE_LAST_DOSE_CLICKED: 'use_last_dose_clicked',
 } as const;
 
 // User property names
