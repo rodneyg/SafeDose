@@ -593,7 +593,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     if (logResult.success) {
-      console.log('[useDoseCalculator] Dose automatically logged');
+      console.log('[useDoseCalculator] ✅ Dose automatically logged, adding delay for storage consistency');
+      // Add small delay to ensure dose is properly written to storage before navigation
+      await new Promise(resolve => setTimeout(resolve, 150));
     } else {
       console.warn('[useDoseCalculator] Failed to log dose, but continuing...');
     }
@@ -610,8 +612,13 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       resetFullForm('dose');
       setLastActionType(null); // Clear the last action type
       setIsLastDoseFlow(false); // Clear last dose flow flag
-      setIsCompletingFeedback(false);
-      setScreenStep('intro');
+      
+      // Add additional delay to ensure dose logging is complete before navigation
+      setTimeout(() => {
+        setIsCompletingFeedback(false);
+        setScreenStep('intro');
+        console.log('[useDoseCalculator] ✅ Start over navigation completed');
+      }, 100);
     } else if (nextAction === 'new_dose') {
       console.log('[useDoseCalculator] New dose - checking flow type');
       

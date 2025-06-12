@@ -181,70 +181,71 @@ export default function IntroScreen({
   }, [user, handleSignInPress]);
 
   /* Check if user has recent dose logs for "Use Last Dose" button */
-  const checkForRecentDose = useCallback(async () => {
+  const checkForRecentDose = useCallback(async (context = 'unknown') => {
     try {
-      console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
+      console.log(`[IntroScreen] Checking for recent dose (${context})... User:`, user?.uid || 'anonymous');
       const recentDose = await getMostRecentDose();
       const hasRecentDoseValue = !!recentDose;
-      console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
+      console.log(`[IntroScreen] Recent dose check result (${context}):`, hasRecentDoseValue, 'Dose ID:', recentDose?.id, 'User:', user?.uid || 'anonymous');
       setHasRecentDose(hasRecentDoseValue);
       return hasRecentDoseValue;
     } catch (error) {
-      console.error('[IntroScreen] Error checking for recent dose:', error);
+      console.error(`[IntroScreen] Error checking for recent dose (${context}):`, error);
       setHasRecentDose(false);
       return false;
     }
   }, [getMostRecentDose, user?.uid]);
 
-  // Check for recent dose on mount and when dependencies change
+  // Check for recent dose on mount 
   useEffect(() => {
-    console.log('[IntroScreen] Running initial recent dose check');
-    checkForRecentDose();
+    console.log('[IntroScreen] Running initial recent dose check on mount');
+    checkForRecentDose('mount');
   }, [checkForRecentDose]);
 
   /* Re-check for recent dose when screen becomes focused */
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[IntroScreen] Screen focused - re-checking for recent dose');
-      // Add a small delay to ensure any state changes from navigation have settled
-      const timeoutId = setTimeout(async () => {
-        try {
-          console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
-          const recentDose = await getMostRecentDose();
-          const hasRecentDoseValue = !!recentDose;
-          console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
-          setHasRecentDose(hasRecentDoseValue);
-        } catch (error) {
-          console.error('[IntroScreen] Error checking for recent dose:', error);
-          setHasRecentDose(false);
-        }
-      }, 100);
+      console.log('[IntroScreen] Screen focused - scheduling recent dose check');
+      // Use longer delay to ensure any dose logging from feedback completion has finished
+      const timeoutId = setTimeout(() => {
+        checkForRecentDose('focus');
+      }, 300); // Increased delay to ensure dose logging is complete
       
       return () => clearTimeout(timeoutId);
-    }, [getMostRecentDose, user?.uid]) // Use stable dependencies instead of the callback
+    }, [checkForRecentDose])
   );
 
-  // Additional check when user state changes
+  // Additional robust check when user state changes with multiple retry attempts
   useEffect(() => {
-    if (user) {
-      console.log('[IntroScreen] User state changed - re-checking for recent dose');
-      // Small delay to ensure user state has fully settled
-      const timeoutId = setTimeout(async () => {
-        try {
-          console.log('[IntroScreen] Checking for recent dose... User:', user?.uid || 'anonymous');
-          const recentDose = await getMostRecentDose();
-          const hasRecentDoseValue = !!recentDose;
-          console.log('[IntroScreen] Recent dose check result:', hasRecentDoseValue, 'User:', user?.uid || 'anonymous');
-          setHasRecentDose(hasRecentDoseValue);
-        } catch (error) {
-          console.error('[IntroScreen] Error checking for recent dose:', error);
-          setHasRecentDose(false);
-        }
-      }, 200);
+    if (user?.uid) {
+      console.log('[IntroScreen] User state changed - scheduling robust recent dose check');
+      let timeoutId: NodeJS.Timeout;
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      return () => clearTimeout(timeoutId);
+      const robustCheck = async () => {
+        try {
+          const hasRecentDose = await checkForRecentDose(`user-change-attempt-${retryCount + 1}`);
+          
+          // If no recent dose found and we haven't exhausted retries, try again with longer delay
+          if (!hasRecentDose && retryCount < maxRetries) {
+            retryCount++;
+            console.log(`[IntroScreen] No recent dose found, retrying in ${500 * retryCount}ms (attempt ${retryCount}/${maxRetries})`);
+            timeoutId = setTimeout(robustCheck, 500 * retryCount);
+          }
+        } catch (error) {
+          console.error('[IntroScreen] Error in robust recent dose check:', error);
+        }
+      };
+      
+      // Start the robust check after a small delay
+      timeoutId = setTimeout(robustCheck, 250);
+      
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     }
-  }, [user?.uid, getMostRecentDose]);
+  }, [user?.uid, checkForRecentDose]);
 
   /* =========================================================================
      NAV HANDLERS

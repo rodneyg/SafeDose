@@ -309,13 +309,21 @@ export function useDoseLogging() {
   // Get the most recent dose log entry
   const getMostRecentDose = useCallback(async (): Promise<DoseLog | null> => {
     try {
+      console.log('[useDoseLogging] getMostRecentDose called for user:', user?.uid || 'anonymous');
       const logs = await getDoseLogHistory();
-      return logs.length > 0 ? logs[0] : null; // logs are already sorted by timestamp desc
+      const recentDose = logs.length > 0 ? logs[0] : null; // logs are already sorted by timestamp desc
+      console.log('[useDoseLogging] getMostRecentDose result:', {
+        hasRecentDose: !!recentDose,
+        doseId: recentDose?.id,
+        totalLogs: logs.length,
+        user: user?.uid || 'anonymous'
+      });
+      return recentDose;
     } catch (error) {
-      console.error('Error getting most recent dose:', error);
+      console.error('[useDoseLogging] Error getting most recent dose:', error);
       return null;
     }
-  }, [getDoseLogHistory]);
+  }, [getDoseLogHistory, user?.uid]);
 
   return {
     logDose,
