@@ -596,20 +596,22 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       trackInteraction();
     }
     
-    // AGGRESSIVE SAFETY CHECK: Never show log limit modal for users with low usage
-    // This prevents false positives that frustrate users
+    // ABSOLUTE SAFETY CHECK: NEVER show log limit modal for users with low usage
+    // This completely prevents false positives that frustrate users
     const currentLogUsage = powerUserPromotion.promotionData.doseCount; // Use dose count as proxy for log usage
-    const hasReasonableUsage = currentLogUsage >= 8; // Only show after significant usage
-
-    // Check if we should show power user promotion (instead of just log limit)
-    if (logResult.limitReached && hasReasonableUsage) {
-      console.log('[useDoseCalculator] ❌ Log limit reached with reasonable usage, showing LOG LIMIT modal');
-      setLogLimitModalTriggerReason('log_limit');
-      setShowLogLimitModal(true);
-      return; // Stop here, don't proceed with navigation
-    } else if (logResult.limitReached) {
-      console.log('[useDoseCalculator] 🛡️ SAFETY CHECK: Log limit reached but user has low usage count:', currentLogUsage, '- NOT showing modal to prevent false positive');
-      // Don't show modal, just continue with normal flow
+    const MINIMUM_USAGE_FOR_LIMIT_MODAL = 10; // Require at least 10 completed doses before any limit modal
+    
+    // HARD BLOCK: Do not show log limit modal for users who haven't established significant usage
+    if (logResult.limitReached) {
+      if (currentLogUsage < MINIMUM_USAGE_FOR_LIMIT_MODAL) {
+        console.log('[useDoseCalculator] 🛡️ ABSOLUTE SAFETY: Blocking log limit modal - insufficient usage:', currentLogUsage, '< minimum:', MINIMUM_USAGE_FOR_LIMIT_MODAL);
+        // Completely skip modal and continue with normal flow
+      } else {
+        console.log('[useDoseCalculator] ❌ Log limit reached with sufficient usage, showing LOG LIMIT modal');
+        setLogLimitModalTriggerReason('log_limit');
+        setShowLogLimitModal(true);
+        return; // Stop here, don't proceed with navigation
+      }
     }
 
     if (shouldShowPowerUserPromotion) {

@@ -154,10 +154,10 @@ export function useLogUsageTracking() {
       plan: logUsageData.plan
     });
     
-    // AGGRESSIVE SAFETY CHECK: Always allow the first few logs to prevent false positives
-    // This prevents users from seeing limit modals on their very first doses
-    if (logUsageData.logsUsed <= 3) {
-      console.log('[useLogUsageTracking] 🛡️ SAFETY CHECK: User has very low usage count:', logUsageData.logsUsed, '- allowing to prevent false positive');
+    // ULTRA-AGGRESSIVE SAFETY CHECK: Always allow the first 10 logs to prevent ANY false positives
+    // This ensures new users will never see inappropriate limit modals
+    if (logUsageData.logsUsed <= 10) {
+      console.log('[useLogUsageTracking] 🛡️ ULTRA-SAFETY CHECK: User has low usage count:', logUsageData.logsUsed, '- allowing to completely prevent false positives');
       return true;
     }
 
@@ -234,9 +234,9 @@ export function useLogUsageTracking() {
           return true;
         }
         
-        // ADDITIONAL SAFETY CHECK: Never block users with very low usage
-        if (newLogUsageData.logsUsed <= 3) {
-          console.log('[useLogUsageTracking] 🛡️ ADDITIONAL SAFETY: Low usage count, allowing to prevent false positive:', newLogUsageData.logsUsed);
+        // ADDITIONAL ULTRA-SAFETY CHECK: Never block users with low usage  
+        if (newLogUsageData.logsUsed <= 10) {
+          console.log('[useLogUsageTracking] 🛡️ ADDITIONAL ULTRA-SAFETY: Low usage count, allowing to prevent false positive:', newLogUsageData.logsUsed);
           return true;
         }
 
