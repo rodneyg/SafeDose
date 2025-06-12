@@ -378,6 +378,11 @@ export default function ManualEntryScreen({
           isMobileWeb={isMobileWeb}
           usageData={usageData}
           onTryAIScan={onTryAIScan}
+          // Enhanced fields for complete dose logging
+          medicationInputType={medicationInputType}
+          concentrationAmount={concentrationAmount}
+          totalAmount={totalAmount}
+          solutionVolume={solutionVolume}
         />
       );
       progress = 1;

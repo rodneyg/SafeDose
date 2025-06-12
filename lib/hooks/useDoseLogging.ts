@@ -86,6 +86,14 @@ export function useDoseLogging() {
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
+          // Enhanced fields for complete dose recreation
+          medicationInputType: data.medicationInputType,
+          concentrationAmount: data.concentrationAmount,
+          concentrationUnit: data.concentrationUnit,
+          totalAmount: data.totalAmount,
+          solutionVolume: data.solutionVolume,
+          syringeVolume: data.syringeVolume,
+          calculatedConcentration: data.calculatedConcentration,
         });
       });
       
@@ -107,6 +115,14 @@ export function useDoseLogging() {
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
       injectionSite?: InjectionSite | null;
+      // Enhanced fields for complete dose recreation
+      medicationInputType?: 'concentration' | 'totalAmount' | null;
+      concentrationAmount?: string | null;
+      concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml' | null;
+      totalAmount?: string | null;
+      solutionVolume?: string | null;
+      syringeVolume?: string | null;
+      calculatedConcentration?: number | null;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -140,6 +156,14 @@ export function useDoseLogging() {
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
+        // Enhanced fields for complete dose recreation
+        medicationInputType: doseInfo.medicationInputType || undefined,
+        concentrationAmount: doseInfo.concentrationAmount || undefined,
+        concentrationUnit: doseInfo.concentrationUnit || undefined,
+        totalAmount: doseInfo.totalAmount || undefined,
+        solutionVolume: doseInfo.solutionVolume || undefined,
+        syringeVolume: doseInfo.syringeVolume || undefined,
+        calculatedConcentration: doseInfo.calculatedConcentration || undefined,
       };
 
       // Try to save to Firestore first (for authenticated users)

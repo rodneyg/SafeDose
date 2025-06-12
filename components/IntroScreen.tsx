@@ -225,23 +225,48 @@ export default function IntroScreen({
         return;
       }
 
-      console.log('[IntroScreen] Using last dose:', recentDose);
+      console.log('[IntroScreen] Using last dose for complete recreation:', recentDose);
       
-      // Navigate to new-dose screen and let it handle the prefill through a different mechanism
-      // We'll pass minimal parameters and set up a flag to prefill the dose info
+      // Navigate to new-dose screen with comprehensive prefill parameters
       const prefillParams = new URLSearchParams({
         useLastDose: 'true',
+        // Basic dose information
         lastDoseValue: recentDose.doseValue.toString(),
         lastDoseUnit: recentDose.unit,
         lastSubstance: recentDose.substanceName || '',
+        lastCalculatedVolume: recentDose.calculatedVolume.toString(),
+        lastRecommendedMarking: recentDose.recommendedMarking || '',
       });
 
-      // Add syringe type if available
+      // Add syringe information
       if (recentDose.syringeType) {
         prefillParams.set('lastSyringeType', recentDose.syringeType);
       }
+      if (recentDose.syringeVolume) {
+        prefillParams.set('lastSyringeVolume', recentDose.syringeVolume);
+      }
 
-      console.log('[IntroScreen] Navigating to new-dose with last dose params:', Object.fromEntries(prefillParams));
+      // Add medication source information
+      if (recentDose.medicationInputType) {
+        prefillParams.set('lastMedicationInputType', recentDose.medicationInputType);
+      }
+      if (recentDose.concentrationAmount) {
+        prefillParams.set('lastConcentrationAmount', recentDose.concentrationAmount);
+      }
+      if (recentDose.concentrationUnit) {
+        prefillParams.set('lastConcentrationUnit', recentDose.concentrationUnit);
+      }
+      if (recentDose.totalAmount) {
+        prefillParams.set('lastTotalAmount', recentDose.totalAmount);
+      }
+      if (recentDose.solutionVolume) {
+        prefillParams.set('lastSolutionVolume', recentDose.solutionVolume);
+      }
+      if (recentDose.calculatedConcentration) {
+        prefillParams.set('lastCalculatedConcentration', recentDose.calculatedConcentration.toString());
+      }
+
+      console.log('[IntroScreen] Navigating to new-dose with complete last dose params:', Object.fromEntries(prefillParams));
       router.push(`/(tabs)/new-dose?${prefillParams.toString()}`);
     } catch (error) {
       console.error('[IntroScreen] Error using last dose:', error);
