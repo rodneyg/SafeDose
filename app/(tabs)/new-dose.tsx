@@ -152,6 +152,11 @@ export default function NewDoseScreen() {
     doseCalculator.setScreenStep(step);
   }, [doseCalculator, setNavigatingFromIntro]);
   
+  // Preset handlers
+  const handlePresetSelected = useCallback((preset: any) => {
+    loadPreset(preset);
+  }, [loadPreset]);
+  
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
@@ -270,6 +275,8 @@ export default function NewDoseScreen() {
     setSelectedInjectionSite,
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
+    // Preset functionality
+    loadPreset,
   } = doseCalculator;
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -749,12 +756,6 @@ export default function NewDoseScreen() {
     console.log('[NewDoseScreen] About to call handleFeedbackComplete');
     handleFeedbackComplete();
   }, [handleFeedbackComplete]);
-
-  // Preset handlers
-  const handlePresetSelected = useCallback((preset: any) => {
-    console.log('[NewDoseScreen] Loading preset:', preset);
-    doseCalculator.loadPreset(preset);
-  }, [doseCalculator]);
 
   // Clean up camera resources when component unmounts
   useEffect(() => {

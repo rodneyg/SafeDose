@@ -1,18 +1,16 @@
 export interface DosePreset {
   id: string;
-  userId?: string;
   name: string;
   substanceName: string;
   doseValue: number;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
-  concentrationValue?: number | null;
+  concentrationValue?: number;
   concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
-  totalAmount?: number | null;
+  totalAmount?: number;
   totalAmountUnit?: 'mg' | 'mcg' | 'units';
-  solutionVolume?: number | null;
+  solutionVolume?: number;
   notes?: string;
   timestamp: string;
-  firestoreId?: string; // For future cloud sync if needed
 }
 
 export interface PresetFormData {

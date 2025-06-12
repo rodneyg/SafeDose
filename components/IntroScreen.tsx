@@ -37,7 +37,6 @@ interface IntroScreenProps {
       | 'finalResult',
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
-  // Preset loading functionality
   onPresetSelected?: (preset: DosePreset) => void;
 }
 
@@ -206,24 +205,15 @@ export default function IntroScreen({
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
 
   const handlePresetPress = useCallback(() => {
-    console.log('[IntroScreen] Preset button pressed');
     setShowPresetSelector(true);
-    console.log('[IntroScreen] showPresetSelector set to true');
   }, []);
 
   const handlePresetSelected = useCallback((preset: DosePreset) => {
-    console.log('[IntroScreen] Preset selected:', preset.name);
     setShowPresetSelector(false);
-    
     if (onPresetSelected) {
-      console.log('[IntroScreen] Calling onPresetSelected');
       setNavigatingFromIntro?.(true);
       onPresetSelected(preset);
       setScreenStep('manualEntry');
-      console.log('[IntroScreen] Navigation to manualEntry initiated');
-    } else {
-      console.error('[IntroScreen] onPresetSelected not configured');
-      Alert.alert('Error', 'Preset loading not configured');
     }
   }, [onPresetSelected, setNavigatingFromIntro, setScreenStep]);
 

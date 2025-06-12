@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Alert } from 'react-native';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
 import { InjectionSite } from '../../types/doseLog';
@@ -643,55 +642,36 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     lastActionTimestamp.current = Date.now();
   }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
 
-  // Preset loading functionality
+  // Load preset data
   const loadPreset = useCallback((preset: any) => {
-    console.log('[useDoseCalculator] Loading preset:', preset);
+    resetFullForm('dose');
     
-    try {
-      // Clear any existing state first
-      resetFullForm('dose');
-      
-      // Set basic dose information
-      setDose(preset.doseValue?.toString() || '');
-      setUnit(preset.unit || 'mg');
-      setSubstanceName(preset.substanceName || '');
-      setDoseValue(preset.doseValue || null);
-      
-      // Set concentration information if available
-      if (preset.concentrationValue && preset.concentrationUnit) {
-        setConcentrationAmount(preset.concentrationValue.toString());
-        setConcentrationUnit(preset.concentrationUnit);
-        setConcentration(preset.concentrationValue);
-        setMedicationInputType('concentration');
-      }
-      
-      // Set total amount information if available
-      if (preset.totalAmount && preset.totalAmountUnit) {
-        setTotalAmount(preset.totalAmount.toString());
-        // Derive the unit mapping (mcg doses use mg for total amount)
-        if (!preset.concentrationValue) {
-          setMedicationInputType('totalAmount');
-        }
-      }
-      
-      // Set solution volume if available
-      if (preset.solutionVolume) {
-        setSolutionVolume(preset.solutionVolume.toString());
-      }
-      
-      // Add preset hint
-      setSubstanceNameHint(`Loaded from preset: ${preset.name}`);
-      
-      // Set up for dose entry (user can still modify if needed)
-      setManualStep('dose');
-      setLastActionType('manual');
-      
-      console.log('[useDoseCalculator] ✅ Preset loaded successfully');
-    } catch (error) {
-      console.error('[useDoseCalculator] Error loading preset:', error);
-      Alert.alert('Error', 'Failed to load preset. Please try again.');
-      resetFullForm('dose');
+    setDose(preset.doseValue?.toString() || '');
+    setUnit(preset.unit || 'mg');
+    setSubstanceName(preset.substanceName || '');
+    setDoseValue(preset.doseValue || null);
+    
+    if (preset.concentrationValue && preset.concentrationUnit) {
+      setConcentrationAmount(preset.concentrationValue.toString());
+      setConcentrationUnit(preset.concentrationUnit);
+      setConcentration(preset.concentrationValue);
+      setMedicationInputType('concentration');
     }
+    
+    if (preset.totalAmount && preset.totalAmountUnit) {
+      setTotalAmount(preset.totalAmount.toString());
+      if (!preset.concentrationValue) {
+        setMedicationInputType('totalAmount');
+      }
+    }
+    
+    if (preset.solutionVolume) {
+      setSolutionVolume(preset.solutionVolume.toString());
+    }
+    
+    setSubstanceNameHint(`Loaded from preset: ${preset.name}`);
+    setManualStep('dose');
+    setLastActionType('manual');
   }, [resetFullForm]);
 
   // PMF Survey handlers
