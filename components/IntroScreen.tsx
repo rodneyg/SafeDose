@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
@@ -184,6 +184,7 @@ export default function IntroScreen({
     const checkForRecentDose = async () => {
       try {
         const recentDose = await getMostRecentDose();
+        console.log('[IntroScreen] Recent dose check result:', !!recentDose);
         setHasRecentDose(!!recentDose);
       } catch (error) {
         console.error('[IntroScreen] Error checking for recent dose:', error);
@@ -193,6 +194,24 @@ export default function IntroScreen({
 
     checkForRecentDose();
   }, [getMostRecentDose]);
+
+  /* Re-check for recent dose when screen becomes focused or user changes */
+  useFocusEffect(
+    React.useCallback(() => {
+      const recheckForRecentDose = async () => {
+        try {
+          const recentDose = await getMostRecentDose();
+          console.log('[IntroScreen] Focus recheck - Recent dose result:', !!recentDose);
+          setHasRecentDose(!!recentDose);
+        } catch (error) {
+          console.error('[IntroScreen] Error rechecking for recent dose on focus:', error);
+          setHasRecentDose(false);
+        }
+      };
+
+      recheckForRecentDose();
+    }, [getMostRecentDose])
+  );
 
   /* =========================================================================
      NAV HANDLERS
@@ -230,6 +249,7 @@ export default function IntroScreen({
       // Navigate to new-dose screen with comprehensive prefill parameters
       const prefillParams = new URLSearchParams({
         useLastDose: 'true',
+        isLastDoseFlow: 'true', // Add flag to indicate this is a special flow
         // Basic dose information
         lastDoseValue: recentDose.doseValue.toString(),
         lastDoseUnit: recentDose.unit,

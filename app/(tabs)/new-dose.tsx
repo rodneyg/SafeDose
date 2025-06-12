@@ -143,6 +143,7 @@ export default function NewDoseScreen() {
   // Handle "Use Last Dose" prefill from IntroScreen - comprehensive restoration
   useEffect(() => {
     const useLastDose = searchParams.useLastDose as string;
+    const isLastDoseFlow = searchParams.isLastDoseFlow as string;
     const lastDoseValue = searchParams.lastDoseValue as string;
     const lastDoseUnit = searchParams.lastDoseUnit as string;
     const lastSubstance = searchParams.lastSubstance as string;
@@ -206,7 +207,7 @@ export default function NewDoseScreen() {
         }
       }
       
-      // Set calculated results
+      // Set calculated results if available - this allows the final step to work immediately
       if (lastCalculatedVolume) {
         doseCalculator.setCalculatedVolume(parseFloat(lastCalculatedVolume));
         console.log('[NewDoseScreen] Prefilled calculated volume:', lastCalculatedVolume);
@@ -220,14 +221,29 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Prefilled calculated concentration:', lastCalculatedConcentration);
       }
       
-      // Go directly to final result screen instead of dose input
-      doseCalculator.setManualStep('finalResult');
+      // Check if this is the streamlined last dose flow
+      if (isLastDoseFlow === 'true') {
+        // If we have complete calculation results, go directly to final result for convenience
+        if (lastCalculatedVolume && lastRecommendedMarking) {
+          console.log('[NewDoseScreen] Complete calculation data available, going to final result');
+          doseCalculator.setManualStep('finalResult');
+        } else {
+          // Otherwise start from dose step with hint
+          console.log('[NewDoseScreen] Incomplete calculation data, starting from dose step');
+          doseCalculator.setManualStep('dose');
+        }
+      } else {
+        // Regular last dose flow - start from dose step  
+        doseCalculator.setManualStep('dose');
+      }
+      
       doseCalculator.setScreenStep('manualEntry');
       
-      console.log('[NewDoseScreen] ✅ Complete Use Last Dose prefill applied, showing final result');
+      console.log('[NewDoseScreen] ✅ Complete Use Last Dose prefill applied');
     }
   }, [
-    searchParams.useLastDose, searchParams.lastDoseValue, searchParams.lastDoseUnit, 
+    searchParams.useLastDose, searchParams.isLastDoseFlow, 
+    searchParams.lastDoseValue, searchParams.lastDoseUnit, 
     searchParams.lastSubstance, searchParams.lastSyringeType, searchParams.lastSyringeVolume,
     searchParams.lastCalculatedVolume, searchParams.lastRecommendedMarking,
     searchParams.lastMedicationInputType, searchParams.lastConcentrationAmount, 
