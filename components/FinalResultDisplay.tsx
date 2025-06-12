@@ -305,8 +305,7 @@ export default function FinalResultDisplay({
     doseValueType: typeof doseValue,
     substanceNameType: typeof substanceName,
     buttonDisabled: !doseValue || !substanceName,
-    isSavingPreset
-  });
+    isSavingPreset,
     manualSyringe,
     calculatedVolume,
     calculatedConcentration

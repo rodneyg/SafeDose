@@ -142,6 +142,25 @@ export function usePresetStorage() {
     }
   }, [user]);
 
+  // Helper to get presets from local storage only
+  const getPresetsFromLocal = useCallback(async (): Promise<DosePreset[]> => {
+    try {
+      const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
+      console.log('[usePresetStorage] Loading from storage key:', storageKey);
+      
+      const existingPresets = await AsyncStorage.getItem(storageKey);
+      console.log('[usePresetStorage] Raw storage data:', existingPresets ? 'found data' : 'no data');
+      
+      const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];
+      console.log('[usePresetStorage] Parsed', presetsList.length, 'presets from local storage');
+      
+      return presetsList;
+    } catch (error) {
+      console.error('[usePresetStorage] Error loading presets from local storage:', error);
+      return [];
+    }
+  }, [user]);
+
   // Get all presets from both local storage and Firestore, merging intelligently
   const getPresets = useCallback(async (): Promise<DosePreset[]> => {
     console.log('[usePresetStorage] Getting presets...');
@@ -187,25 +206,6 @@ export function usePresetStorage() {
       setIsLoading(false);
     }
   }, [user, getPresetsFromLocal, loadPresetsFromFirestore]);
-
-  // Helper to get presets from local storage only
-  const getPresetsFromLocal = useCallback(async (): Promise<DosePreset[]> => {
-    try {
-      const storageKey = `dose_presets_${user?.uid || 'anonymous'}`;
-      console.log('[usePresetStorage] Loading from storage key:', storageKey);
-      
-      const existingPresets = await AsyncStorage.getItem(storageKey);
-      console.log('[usePresetStorage] Raw storage data:', existingPresets ? 'found data' : 'no data');
-      
-      const presetsList: DosePreset[] = existingPresets ? JSON.parse(existingPresets) : [];
-      console.log('[usePresetStorage] Parsed', presetsList.length, 'presets from local storage');
-      
-      return presetsList;
-    } catch (error) {
-      console.error('[usePresetStorage] Error loading presets from local storage:', error);
-      return [];
-    }
-  }, [user]);
 
   // Delete a preset by ID
   const deletePreset = useCallback(async (presetId: string) => {
