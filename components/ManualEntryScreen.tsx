@@ -378,6 +378,10 @@ export default function ManualEntryScreen({
           isMobileWeb={isMobileWeb}
           usageData={usageData}
           onTryAIScan={onTryAIScan}
+          concentrationAmount={concentrationAmount}
+          totalAmount={totalAmount}
+          totalAmountUnit={unit === 'mcg' ? 'mg' : unit}
+          solutionVolume={solutionVolume}
         />
       );
       progress = 1;

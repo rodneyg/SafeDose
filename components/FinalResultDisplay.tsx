@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal, TextInput } from 'react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Bookmark } from 'lucide-react-native';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
+import { usePresetStorage } from '@/lib/hooks/usePresetStorage';
 
 type Props = {
   calculationError: string | null;
@@ -26,6 +27,11 @@ type Props = {
   isMobileWeb: boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
   onTryAIScan?: () => void;
+  // Additional props for preset functionality
+  concentrationAmount?: string;
+  totalAmount?: string;
+  totalAmountUnit?: 'mg' | 'mcg' | 'units';
+  solutionVolume?: string;
 };
 
 export default function FinalResultDisplay({
@@ -46,14 +52,22 @@ export default function FinalResultDisplay({
   isMobileWeb,
   usageData,
   onTryAIScan,
+  concentrationAmount,
+  totalAmount,
+  totalAmountUnit,
+  solutionVolume,
 }: Props) {
   const { disclaimerText } = useUserProfile();
   const { user, auth } = useAuth();
   const { logDose, isLogging } = useDoseLogging();
+  const { savePreset, isSaving: isSavingPreset } = usePresetStorage();
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
+  const [showPresetModal, setShowPresetModal] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetNotes, setPresetNotes] = useState('');
   
   // Effect to handle automatic saving after successful authentication
   useEffect(() => {
@@ -168,6 +182,58 @@ export default function FinalResultDisplay({
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking
   ]);
+  
+  // Handler for saving preset
+  const handleSavePreset = useCallback(() => {
+    setShowPresetModal(true);
+  }, []);
+
+  const handlePresetSave = useCallback(async () => {
+    if (!presetName.trim()) {
+      Alert.alert('Error', 'Please enter a name for the preset.');
+      return;
+    }
+
+    if (!doseValue || !substanceName) {
+      Alert.alert('Error', 'Unable to save preset - missing dose information.');
+      return;
+    }
+
+    try {
+      const presetData = {
+        name: presetName.trim(),
+        substanceName,
+        doseValue,
+        unit,
+        concentrationValue: concentration,
+        concentrationUnit,
+        totalAmount: totalAmount ? parseFloat(totalAmount) : null,
+        totalAmountUnit: totalAmountUnit === 'mcg' ? 'mg' : totalAmountUnit,
+        solutionVolume: solutionVolume ? parseFloat(solutionVolume) : null,
+        notes: presetNotes.trim() || undefined,
+      };
+
+      const result = await savePreset(presetData);
+      
+      if (result.success) {
+        Alert.alert('Preset Saved', `"${presetName}" has been saved as a preset.`);
+        setShowPresetModal(false);
+        setPresetName('');
+        setPresetNotes('');
+      } else {
+        Alert.alert('Save Failed', result.error || 'Unable to save preset.');
+      }
+    } catch (error) {
+      console.error('Error saving preset:', error);
+      Alert.alert('Save Failed', 'There was an error saving the preset. Please try again.');
+    }
+  }, [presetName, presetNotes, doseValue, substanceName, unit, concentration, concentrationUnit, totalAmount, totalAmountUnit, solutionVolume, savePreset]);
+
+  const handlePresetCancel = useCallback(() => {
+    setShowPresetModal(false);
+    setPresetName('');
+    setPresetNotes('');
+  }, []);
   
   // Helper function to get the calculation formula based on unit types
   const getCalculationFormula = () => {
@@ -389,6 +455,20 @@ export default function FinalResultDisplay({
         <TouchableOpacity 
           style={[
             styles.actionButton, 
+            { backgroundColor: isSavingPreset ? '#9CA3AF' : '#8B5CF6' }, 
+            isMobileWeb && styles.actionButtonMobile
+          ]} 
+          onPress={handleSavePreset}
+          disabled={isSavingPreset || !doseValue || !substanceName}
+        >
+          <Bookmark color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>
+            {isSavingPreset ? 'Saving...' : 'Save Preset'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
             { backgroundColor: isSaving ? '#9CA3AF' : '#3B82F6' }, 
             isMobileWeb && styles.actionButtonMobile
           ]} 
@@ -411,6 +491,77 @@ export default function FinalResultDisplay({
           <Text style={styles.buttonText}>New Dose</Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Preset Save Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showPresetModal}
+        onRequestClose={handlePresetCancel}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Save as Preset</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Preset Name *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={presetName}
+                onChangeText={setPresetName}
+                placeholder="Enter preset name"
+                maxLength={50}
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Notes (optional)</Text>
+              <TextInput
+                style={[styles.textInput, styles.notesInput]}
+                value={presetNotes}
+                onChangeText={setPresetNotes}
+                placeholder="Add any notes about this dose"
+                multiline={true}
+                numberOfLines={3}
+                maxLength={200}
+              />
+            </View>
+            
+            <View style={styles.presetSummary}>
+              <Text style={styles.presetSummaryTitle}>Preset will include:</Text>
+              <Text style={styles.presetSummaryText}>• Substance: {substanceName}</Text>
+              <Text style={styles.presetSummaryText}>• Dose: {doseValue} {unit}</Text>
+              {concentration && concentrationUnit && (
+                <Text style={styles.presetSummaryText}>• Concentration: {concentration} {concentrationUnit}</Text>
+              )}
+              {totalAmount && totalAmountUnit && (
+                <Text style={styles.presetSummaryText}>• Total Amount: {totalAmount} {totalAmountUnit}</Text>
+              )}
+              {solutionVolume && (
+                <Text style={styles.presetSummaryText}>• Solution Volume: {solutionVolume} ml</Text>
+              )}
+            </View>
+            
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={handlePresetCancel}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton, isSavingPreset && styles.saveButtonDisabled]} 
+                onPress={handlePresetSave}
+                disabled={isSavingPreset || !presetName.trim()}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSavingPreset ? 'Saving...' : 'Save Preset'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -535,5 +686,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  // Modal Styles for Preset Save
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#065F46',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  notesInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  presetSummary: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+  },
+  presetSummaryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  presetSummaryText: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  saveButton: {
+    backgroundColor: '#8B5CF6',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
 });

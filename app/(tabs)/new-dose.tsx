@@ -750,6 +750,12 @@ export default function NewDoseScreen() {
     handleFeedbackComplete();
   }, [handleFeedbackComplete]);
 
+  // Preset handlers
+  const handlePresetSelected = useCallback((preset: any) => {
+    console.log('[NewDoseScreen] Loading preset:', preset);
+    doseCalculator.loadPreset(preset);
+  }, [doseCalculator]);
+
   // Clean up camera resources when component unmounts
   useEffect(() => {
     return () => {
@@ -808,6 +814,7 @@ export default function NewDoseScreen() {
           setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
+          onPresetSelected={handlePresetSelected}
         />
       )}
       {screenStep === 'scan' && (
