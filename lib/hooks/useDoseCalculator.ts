@@ -520,12 +520,20 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
         injectionSite: selectedInjectionSite,
+        // Enhanced fields for complete dose recreation
+        medicationInputType,
+        concentrationAmount,
+        concentrationUnit,
+        totalAmount,
+        solutionVolume,
+        syringeVolume: manualSyringe?.volume || null,
+        calculatedConcentration,
       },
     });
     
     // Always go to injection site selection first
     setScreenStep('injectionSiteSelection');
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking, medicationInputType, concentrationAmount, concentrationUnit, totalAmount, solutionVolume, calculatedConcentration]);
 
   // Handle injection site selection completion
   const handleInjectionSiteSelected = useCallback(async () => {
@@ -566,7 +574,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, []);
 
   const handleFeedbackComplete = useCallback(async () => {
-    console.log('[useDoseCalculator] handleFeedbackComplete called', { 
+    console.log('[useDoseCalculator] 🎯 handleFeedbackComplete called', { 
       feedbackContext: !!feedbackContext, 
       isLastDoseFlow, 
       nextAction: feedbackContext?.nextAction,
@@ -577,8 +585,24 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     // Set flag to prevent interfering state changes during completion
     setIsCompletingFeedback(true);
     
+    // Log the dose info we're about to save for debugging
+    console.log('[useDoseCalculator] 🎯 About to log dose with info:', {
+      substanceName: feedbackContext.doseInfo.substanceName,
+      doseValue: feedbackContext.doseInfo.doseValue,
+      unit: feedbackContext.doseInfo.unit,
+      calculatedVolume: feedbackContext.doseInfo.calculatedVolume,
+      syringeType: feedbackContext.doseInfo.syringeType,
+      hasAllRequiredFields: !!(feedbackContext.doseInfo.doseValue && feedbackContext.doseInfo.calculatedVolume)
+    });
+    
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
+    
+    console.log('[useDoseCalculator] 🎯 Dose logging result:', {
+      success: logResult.success,
+      limitReached: logResult.limitReached,
+      nextAction: feedbackContext.nextAction
+    });
     
     // Track interaction for sign-up prompt if log was successful
     if (logResult.success && trackInteraction) {
@@ -608,7 +632,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     
     // Navigate to the intended destination
     if (nextAction === 'start_over') {
-      console.log('[useDoseCalculator] Start over - navigating to intro and clearing state');
+      console.log('[useDoseCalculator] 🎯 Start over - navigating to intro and clearing state');
+      console.log('[useDoseCalculator] 🎯 About to reset form and navigate to intro screen');
       resetFullForm('dose');
       setLastActionType(null); // Clear the last action type
       setIsLastDoseFlow(false); // Clear last dose flow flag
@@ -617,7 +642,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setTimeout(() => {
         setIsCompletingFeedback(false);
         setScreenStep('intro');
-        console.log('[useDoseCalculator] ✅ Start over navigation completed');
+        console.log('[useDoseCalculator] 🎯 ✅ Start over navigation completed - should now be on intro screen');
       }, 100);
     } else if (nextAction === 'new_dose') {
       console.log('[useDoseCalculator] New dose - checking flow type');

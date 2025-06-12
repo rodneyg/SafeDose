@@ -96,6 +96,15 @@ export default function NewDoseScreen() {
     };
   }, []);
 
+  // Add debug tracking for screenStep changes
+  useEffect(() => {
+    console.log('[NewDoseScreen] 🔄 ScreenStep changed to:', screenStep, {
+      timestamp: new Date().toISOString(),
+      isCompletingFeedback: doseCalculator.isCompletingFeedback,
+      stateHealth: doseCalculator.stateHealth
+    });
+  }, [screenStep, doseCalculator.isCompletingFeedback, doseCalculator.stateHealth]);
+
   // Handle prefill data from reconstitution planner - runs after doseCalculator is initialized
   useEffect(() => {
     const prefillTotalAmount = searchParams.prefillTotalAmount as string;
@@ -946,11 +955,14 @@ export default function NewDoseScreen() {
         )}
       </View>
       {screenStep === 'intro' && (
-        <IntroScreen
-          setScreenStep={handleSetScreenStep}
-          resetFullForm={resetFullForm}
-          setNavigatingFromIntro={setNavigatingFromIntro}
-        />
+        <>
+          {console.log('[NewDoseScreen] 🏠 Rendering IntroScreen as child component')}
+          <IntroScreen
+            setScreenStep={handleSetScreenStep}
+            resetFullForm={resetFullForm}
+            setNavigatingFromIntro={setNavigatingFromIntro}
+          />
+        </>
       )}
       {screenStep === 'scan' && (
         <ScanScreen
