@@ -58,14 +58,14 @@ export default function LogLimitModal({
     if (isPowerUserPromotion) {
       return "You've Become a SafeDose Power User!";
     }
-    return "Unlock Your Full Dosing History";
+    return "Dose History Storage Limit Reached";
   };
 
   const getMessage = () => {
     if (isPowerUserPromotion) {
       return "Great job on completing multiple doses! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
     }
-    return "You've become a SafeDose power user! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
+    return "You've reached your monthly dose logging limit. Upgrade to Pro to save unlimited dose logs, access the AI vial scanner, and support ongoing development.";
   };
 
   return (

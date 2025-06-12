@@ -568,11 +568,25 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     console.log('[useDoseCalculator] handleFeedbackComplete called', { feedbackContext });
     if (!feedbackContext) return;
     
+    console.log('[useDoseCalculator] === DOSE COMPLETION FLOW DEBUG ===');
+    console.log('[useDoseCalculator] Current power user promotion data BEFORE increment:', powerUserPromotion.promotionData);
+    
     // Increment dose count for power user promotion tracking
     await powerUserPromotion.incrementDoseCount();
     
+    console.log('[useDoseCalculator] Current power user promotion data AFTER increment:', powerUserPromotion.promotionData);
+    
     // Automatically log the completed dose
     const logResult = await logDose(feedbackContext.doseInfo);
+    
+    console.log('[useDoseCalculator] Log result:', logResult);
+    
+    // IMPORTANT: Add a small delay to ensure state updates have propagated
+    // This prevents race conditions between incrementDoseCount and shouldShowPromotion
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const shouldShowPowerUserPromotion = powerUserPromotion.shouldShowPromotion();
+    console.log('[useDoseCalculator] Should show power user promotion after delay?', shouldShowPowerUserPromotion);
     
     // Track interaction for sign-up prompt if log was successful
     if (logResult.success && trackInteraction) {
@@ -581,12 +595,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     
     // Check if we should show power user promotion (instead of just log limit)
     if (logResult.limitReached) {
-      console.log('[useDoseCalculator] Log limit reached, showing upgrade modal');
+      console.log('[useDoseCalculator] ❌ Log limit reached, showing LOG LIMIT modal');
       setLogLimitModalTriggerReason('log_limit');
       setShowLogLimitModal(true);
       return; // Stop here, don't proceed with navigation
-    } else if (powerUserPromotion.shouldShowPromotion()) {
-      console.log('[useDoseCalculator] Power user promotion criteria met, showing upgrade modal');
+    } else if (shouldShowPowerUserPromotion) {
+      console.log('[useDoseCalculator] ✅ Power user promotion criteria met, showing POWER USER PROMOTION modal');
       await powerUserPromotion.markPromotionShown();
       setLogLimitModalTriggerReason('power_user_promotion');
       setShowLogLimitModal(true);
