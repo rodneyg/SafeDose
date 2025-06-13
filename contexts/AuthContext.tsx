@@ -164,6 +164,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (firebaseUser) {
         console.log('[AuthContext] User found - setting user and clearing sign out state');
+        console.log('[AuthContext] New authenticated user:', {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName,
+          email: firebaseUser.email,
+          isAnonymous: firebaseUser.isAnonymous
+        });
         setUser(firebaseUser);
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
