@@ -62,17 +62,35 @@ export default function IntroScreen({
      HANDLERS
   ========================================================================= */
   const handleSignInPress = useCallback(() => {
+    console.log('[IntroScreen] ========== SIGN-IN INITIATED ==========');
+    console.log('[IntroScreen] Current user before sign-in:', user ? {
+      uid: user.uid,
+      isAnonymous: user.isAnonymous,
+      displayName: user.displayName
+    } : 'No user');
+    
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log('Google Sign-In OK:', result.user.uid);
+        console.log('[IntroScreen] ✅ Google Sign-In successful:', {
+          uid: result.user.uid,
+          displayName: result.user.displayName,
+          email: result.user.email,
+          isAnonymous: result.user.isAnonymous
+        });
+        console.log('[IntroScreen] AuthContext should update automatically via onAuthStateChanged');
       })
       .catch((error) => {
-        console.error('Google Sign-In error:', error.code, error.message);
+        console.error('[IntroScreen] ❌ Google Sign-In error:', error.code, error.message);
+        console.error('[IntroScreen] Sign-in error details:', {
+          code: error.code,
+          message: error.message,
+          name: error.name
+        });
       });
-  }, [auth]);
+  }, [auth, user]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');
