@@ -146,18 +146,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: user.displayName
       } : 'null');
       
-      // Clear any existing timeout when auth state changes
-      if (timeoutRef.current) {
-        console.log('[AuthContext] Clearing existing timeout due to auth state change');
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      
-      // Clear fallback timeout when auth state changes
-      if (fallbackTimeoutRef.current) {
-        console.log('[AuthContext] Clearing fallback timeout due to auth state change');
-        clearTimeout(fallbackTimeoutRef.current);
-        fallbackTimeoutRef.current = null;
+      // Only clear timeouts when user becomes authenticated, not when becoming null during logout
+      if (firebaseUser) {
+        // Clear timeouts when user signs in successfully
+        if (timeoutRef.current) {
+          console.log('[AuthContext] Clearing logout timeout - user signed in successfully');
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        
+        if (fallbackTimeoutRef.current) {
+          console.log('[AuthContext] Clearing fallback timeout - user signed in successfully');
+          clearTimeout(fallbackTimeoutRef.current);
+          fallbackTimeoutRef.current = null;
+        }
       }
       
       if (firebaseUser) {
@@ -201,37 +203,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt');
         } else {
           console.log('[AuthContext] Currently signing out - will sign in anonymously after 2 second delay');
-          // User has completed sign out, wait a moment to show they're signed out
-          // then sign them back in anonymously for app continuity
-          timeoutRef.current = setTimeout(() => {
-            console.log('[AuthContext] Timeout reached - resetting sign out state and signing in anonymously');
-            setIsSigningOut(false);
-            isSigningOutRef.current = false;
-            if (!isSigningInAnonymouslyRef.current) {
-              isSigningInAnonymouslyRef.current = true;
-              signInAnonymously(auth)
-                .then(() => {
-                  console.log('[AuthContext] ✅ Signed in anonymously after logout');
-                  isSigningInAnonymouslyRef.current = false;
-                })
-                .catch((error) => {
-                  console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
-                  console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
-                    message: error?.message || 'Unknown error',
-                    code: error?.code || 'No error code'
+          // Only set timeout if one isn't already set for logout
+          if (!timeoutRef.current) {
+            console.log('[AuthContext] Setting 2-second logout timeout');
+            timeoutRef.current = setTimeout(() => {
+              console.log('[AuthContext] Timeout reached - resetting sign out state and signing in anonymously');
+              setIsSigningOut(false);
+              isSigningOutRef.current = false;
+              if (!isSigningInAnonymouslyRef.current) {
+                isSigningInAnonymouslyRef.current = true;
+                signInAnonymously(auth)
+                  .then(() => {
+                    console.log('[AuthContext] ✅ Signed in anonymously after logout');
+                    isSigningInAnonymouslyRef.current = false;
+                  })
+                  .catch((error) => {
+                    console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
+                    console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
+                      message: error?.message || 'Unknown error',
+                      code: error?.code || 'No error code'
+                    });
+                    isSigningInAnonymouslyRef.current = false;
+                    // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck
+                    console.log('[AuthContext] Resetting signing out state due to anonymous sign-in failure');
+                    setIsSigningOut(false);
+                    isSigningOutRef.current = false;
                   });
-                  isSigningInAnonymouslyRef.current = false;
-                  // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck
-                  console.log('[AuthContext] Resetting signing out state due to anonymous sign-in failure');
-                  setIsSigningOut(false);
-                  isSigningOutRef.current = false;
-                });
-            } else {
-              console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt after timeout');
-            }
-            // Clear the timeout ref since it completed
-            timeoutRef.current = null;
-          }, 2000); // 2 second delay to show the sign out actually happened
+              } else {
+                console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt after timeout');
+              }
+              // Clear the timeout ref since it completed
+              timeoutRef.current = null;
+            }, 2000); // 2 second delay to show the sign out actually happened
+          } else {
+            console.log('[AuthContext] Logout timeout already set - skipping duplicate timeout');
+          }
         }
       }
       console.log('[AuthContext] Setting loading to false');
