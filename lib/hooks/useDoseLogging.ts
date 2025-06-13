@@ -136,15 +136,6 @@ export function useDoseLogging() {
         });
         return { success: false };
       }
-      
-      // Additional validation for required fields
-      if (!doseInfo.substanceName || !doseInfo.unit) {
-        console.warn('[useDoseLogging] Missing required fields, skipping dose logging:', {
-          substanceName: doseInfo.substanceName,
-          unit: doseInfo.unit
-        });
-        return { success: false };
-      }
 
       // Check if user has reached log limit
       const canLog = await checkLogUsageLimit();
