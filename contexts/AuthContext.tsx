@@ -20,6 +20,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const isSigningOutRef = useRef(false);
   const isSigningInAnonymouslyRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const logout = async () => {
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
@@ -36,6 +38,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsSigningOut(true);
       isSigningOutRef.current = true;
       console.log('[AuthContext] isSigningOut state and ref updated to true');
+      
+      // Set a fallback timeout to prevent being stuck in signing out state
+      fallbackTimeoutRef.current = setTimeout(() => {
+        console.log('[AuthContext] ⚠️ Fallback timeout reached - forcing sign out state reset');
+        setIsSigningOut(false);
+        isSigningOutRef.current = false;
+        fallbackTimeoutRef.current = null;
+        // Try to sign in anonymously as a fallback
+        if (!isSigningInAnonymouslyRef.current) {
+          isSigningInAnonymouslyRef.current = true;
+          signInAnonymously(auth)
+            .then(() => {
+              console.log('[AuthContext] ✅ Fallback anonymous sign-in successful');
+              isSigningInAnonymouslyRef.current = false;
+            })
+            .catch((error) => {
+              console.error('[AuthContext] ❌ Fallback anonymous sign-in failed:', error);
+              isSigningInAnonymouslyRef.current = false;
+            });
+        }
+      }, 10000); // 10 second fallback timeout
       
       console.log('[AuthContext] Calling Firebase signOut...');
       await signOut(auth);
@@ -88,6 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
       isSigningOutRef.current = false;
+      
+      // Clear fallback timeout on error
+      if (fallbackTimeoutRef.current) {
+        clearTimeout(fallbackTimeoutRef.current);
+        fallbackTimeoutRef.current = null;
+      }
+      
       throw error;
     }
   };
@@ -98,8 +128,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSigningOut]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
     // Subscribe to auth state changes on the single `auth` instance
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[AuthContext] ========== AUTH STATE CHANGED ==========');
@@ -118,6 +146,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: user.displayName
       } : 'null');
       
+      // Clear any existing timeout when auth state changes
+      if (timeoutRef.current) {
+        console.log('[AuthContext] Clearing existing timeout due to auth state change');
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Clear fallback timeout when auth state changes
+      if (fallbackTimeoutRef.current) {
+        console.log('[AuthContext] Clearing fallback timeout due to auth state change');
+        clearTimeout(fallbackTimeoutRef.current);
+        fallbackTimeoutRef.current = null;
+      }
+      
       if (firebaseUser) {
         console.log('[AuthContext] User found - setting user and clearing sign out state');
         setUser(firebaseUser);
@@ -126,13 +168,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isSigningOutRef.current = false;
         isSigningInAnonymouslyRef.current = false; // Reset anonymous sign-in flag when user is authenticated
         console.log('[AuthContext] isSigningOut state and ref cleared');
-        
-        // Clear any pending timeout if user signs in
-        if (timeoutId) {
-          console.log('[AuthContext] Clearing pending timeout - user signed in');
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
         
         // Set user properties for analytics
         setAnalyticsUserProperties({
@@ -168,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('[AuthContext] Currently signing out - will sign in anonymously after 2 second delay');
           // User has completed sign out, wait a moment to show they're signed out
           // then sign them back in anonymously for app continuity
-          timeoutId = setTimeout(() => {
+          timeoutRef.current = setTimeout(() => {
             console.log('[AuthContext] Timeout reached - resetting sign out state and signing in anonymously');
             setIsSigningOut(false);
             isSigningOutRef.current = false;
@@ -186,10 +221,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     code: error?.code || 'No error code'
                   });
                   isSigningInAnonymouslyRef.current = false;
+                  // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck
+                  console.log('[AuthContext] Resetting signing out state due to anonymous sign-in failure');
+                  setIsSigningOut(false);
+                  isSigningOutRef.current = false;
                 });
             } else {
               console.log('[AuthContext] Anonymous sign-in already in progress - skipping duplicate attempt after timeout');
             }
+            // Clear the timeout ref since it completed
+            timeoutRef.current = null;
           }, 2000); // 2 second delay to show the sign out actually happened
         }
       }
@@ -200,8 +241,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       unsubscribe();
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (fallbackTimeoutRef.current) {
+        clearTimeout(fallbackTimeoutRef.current);
+        fallbackTimeoutRef.current = null;
       }
     };
   }, []); // Remove isSigningOut dependency to prevent auth listener recreation
