@@ -73,6 +73,8 @@ export default function IntroScreen({
   const checkLastDoseAvailability = useCallback(async () => {
     try {
       console.log('[IntroScreen] Checking last dose availability...');
+      console.log('[IntroScreen] Current user:', user ? { uid: user.uid, isAnonymous: user.isAnonymous } : 'No user');
+      
       const doseHistory = await getDoseLogHistory();
       console.log('[IntroScreen] Dose history length:', doseHistory.length);
       
@@ -82,25 +84,29 @@ export default function IntroScreen({
           substanceName: doseHistory[0].substanceName,
           doseValue: doseHistory[0].doseValue,
           unit: doseHistory[0].unit,
+          calculatedVolume: doseHistory[0].calculatedVolume,
           timestamp: doseHistory[0].timestamp,
           hasSubstanceName: !!doseHistory[0].substanceName,
           hasDoseValue: !!doseHistory[0].doseValue,
           hasUnit: !!doseHistory[0].unit,
+          hasCalculatedVolume: !!doseHistory[0].calculatedVolume,
         });
       }
       
       // Check if we have at least one complete dose log
+      // Relaxed validation - just need doseValue and calculatedVolume to show the button
+      // This allows for cases where substanceName might be empty but we still have usable dose data
       const hasValidLastDose = doseHistory.length > 0 && 
         doseHistory[0].doseValue && 
-        doseHistory[0].substanceName && 
-        doseHistory[0].unit;
+        doseHistory[0].calculatedVolume;
       
       console.log('[IntroScreen] Has valid last dose:', hasValidLastDose);
       if (hasValidLastDose) {
         console.log('[IntroScreen] Last dose details:', {
-          substance: doseHistory[0].substanceName,
+          substance: doseHistory[0].substanceName || '(no name)',
           dose: doseHistory[0].doseValue,
-          unit: doseHistory[0].unit,
+          unit: doseHistory[0].unit || '(no unit)',
+          volume: doseHistory[0].calculatedVolume,
           timestamp: doseHistory[0].timestamp
         });
       }
@@ -110,12 +116,12 @@ export default function IntroScreen({
       console.error('[IntroScreen] Error checking last dose:', error);
       setHasLastDose(false);
     }
-  }, [getDoseLogHistory]);
+  }, [getDoseLogHistory, user]);
 
-  // Check for last dose on mount
+  // Check for last dose on mount and when user changes
   useEffect(() => {
     checkLastDoseAvailability();
-  }, [checkLastDoseAvailability]);
+  }, [checkLastDoseAvailability, user?.uid]);
 
   // Re-check when screen comes into focus (e.g., after completing a dose)
   useFocusEffect(

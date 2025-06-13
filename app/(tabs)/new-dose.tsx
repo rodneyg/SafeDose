@@ -570,8 +570,8 @@ export default function NewDoseScreen() {
       console.log('[applyLastDose] Found last dose:', lastDose);
       
       // Validate that we have the minimum required data
-      if (!lastDose.substanceName || !lastDose.doseValue || !lastDose.unit) {
-        console.log('[applyLastDose] Last dose missing required fields');
+      if (!lastDose.doseValue || !lastDose.calculatedVolume) {
+        console.log('[applyLastDose] Last dose missing required calculation fields');
         return false;
       }
 
@@ -583,11 +583,11 @@ export default function NewDoseScreen() {
       setShowVolumeErrorModal(false);
       setVolumeErrorValue(null);
       
-      // Apply basic dose information
-      setSubstanceName(lastDose.substanceName);
-      setSubstanceNameHint('From your last dose');
+      // Apply basic dose information with fallbacks for missing data
+      setSubstanceName(lastDose.substanceName || 'Previous Substance');
+      setSubstanceNameHint(lastDose.substanceName ? 'From your last dose' : 'Substance name was not saved - please update');
       setDose(lastDose.doseValue.toString());
-      setUnit(lastDose.unit as 'mg' | 'mcg' | 'units' | 'mL');
+      setUnit((lastDose.unit || 'mg') as 'mg' | 'mcg' | 'units' | 'mL');
       
       // Apply syringe information if available
       if (lastDose.syringeType) {
