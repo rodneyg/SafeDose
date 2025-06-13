@@ -176,20 +176,75 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       }
     } catch (error) {
       console.error('[useDoseCalculator] Error in safeSetScreenStep:', error);
-      resetFullForm();
+      // Call the reset directly without dependency to avoid infinite loops
+      setDose('');
+      setUnit('mg');
+      setSubstanceName('');
+      setMedicationInputType('totalAmount');
+      setConcentrationAmount('');
+      setConcentrationUnit('mg/ml');
+      setTotalAmount('');
+      setSolutionVolume('');
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setDoseValue(null);
+      setConcentration(null);
+      setCalculatedVolume(null);
+      setCalculatedConcentration(null);
+      setRecommendedMarking(null);
+      setCalculationError(null);
+      setFormError(null);
+      setShowVolumeErrorModal(false);
+      setVolumeErrorValue(null);
+      setSubstanceNameHint(null);
+      setConcentrationHint(null);
+      setTotalAmountHint(null);
+      setSyringeHint(null);
+      setFeedbackContext(null);
+      setSelectedInjectionSite(null);
+      setLastActionType(null);
+      setIsLastDoseFlow(false);
+      setManualStep('dose');
       setScreenStep('intro');
       setStateHealth('recovering');
     }
-  }, [resetFullForm, screenStep]);
+  }, [screenStep]);
 
   useEffect(() => {
     if (!isInitialized.current) {
-      resetFullForm('dose');
+      // Reset form state directly instead of calling resetFullForm
+      setDose('');
+      setUnit('mg');
+      setSubstanceName('');
+      setMedicationInputType('totalAmount');
+      setConcentrationAmount('');
+      setConcentrationUnit('mg/ml');
+      setTotalAmount('');
+      setSolutionVolume('');
+      setManualSyringe({ type: 'Standard', volume: '3 ml' });
+      setDoseValue(null);
+      setConcentration(null);
+      setCalculatedVolume(null);
+      setCalculatedConcentration(null);
+      setRecommendedMarking(null);
+      setCalculationError(null);
+      setFormError(null);
+      setShowVolumeErrorModal(false);
+      setVolumeErrorValue(null);
+      setSubstanceNameHint(null);
+      setConcentrationHint(null);
+      setTotalAmountHint(null);
+      setSyringeHint(null);
+      setFeedbackContext(null);
+      setSelectedInjectionSite(null);
+      setLastActionType(null);
+      setIsLastDoseFlow(false);
+      setManualStep('dose');
       
       // Ensure we start on intro screen
       setScreenStep('intro');
+      isInitialized.current = true;
     }
-  }, [resetFullForm]);
+  }, []);
 
   const handleNextDose = useCallback(() => {
     try {
@@ -488,15 +543,69 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, [manualStep, medicationInputType, resetFullForm]);
 
   const handleStartOver = useCallback(() => {
-    resetFullForm('dose');
+    // Call reset directly
+    setDose('');
+    setUnit('mg');
+    setSubstanceName('');
+    setMedicationInputType('totalAmount');
+    setConcentrationAmount('');
+    setConcentrationUnit('mg/ml');
+    setTotalAmount('');
+    setSolutionVolume('');
+    setManualSyringe({ type: 'Standard', volume: '3 ml' });
+    setDoseValue(null);
+    setConcentration(null);
+    setCalculatedVolume(null);
+    setCalculatedConcentration(null);
+    setRecommendedMarking(null);
+    setCalculationError(null);
+    setFormError(null);
+    setShowVolumeErrorModal(false);
+    setVolumeErrorValue(null);
+    setSubstanceNameHint(null);
+    setConcentrationHint(null);
+    setTotalAmountHint(null);
+    setSyringeHint(null);
+    setFeedbackContext(null);
+    setSelectedInjectionSite(null);
+    setLastActionType(null);
+    setIsLastDoseFlow(false);
+    setManualStep('dose');
     setScreenStep('intro');
     lastActionTimestamp.current = Date.now();
-  }, [resetFullForm]);
+  }, []);
 
   const handleGoHome = useCallback(() => {
     setScreenStep('intro');
-    resetFullForm('dose');
-  }, [resetFullForm]);
+    // Call reset directly
+    setDose('');
+    setUnit('mg');
+    setSubstanceName('');
+    setMedicationInputType('totalAmount');
+    setConcentrationAmount('');
+    setConcentrationUnit('mg/ml');
+    setTotalAmount('');
+    setSolutionVolume('');
+    setManualSyringe({ type: 'Standard', volume: '3 ml' });
+    setDoseValue(null);
+    setConcentration(null);
+    setCalculatedVolume(null);
+    setCalculatedConcentration(null);
+    setRecommendedMarking(null);
+    setCalculationError(null);
+    setFormError(null);
+    setShowVolumeErrorModal(false);
+    setVolumeErrorValue(null);
+    setSubstanceNameHint(null);
+    setConcentrationHint(null);
+    setTotalAmountHint(null);
+    setSyringeHint(null);
+    setFeedbackContext(null);
+    setSelectedInjectionSite(null);
+    setLastActionType(null);
+    setIsLastDoseFlow(false);
+    setManualStep('dose');
+  }, []);
 
   const handleGoToFeedback = useCallback(async (nextAction: 'new_dose' | 'scan_again' | 'start_over') => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_COMPLETED);
@@ -533,7 +642,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     
     // Always go to injection site selection first
     setScreenStep('injectionSiteSelection');
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking]);
+  }, [trackInteraction, lastActionType]);
 
   // Handle injection site selection completion
   const handleInjectionSiteSelected = useCallback(async () => {
@@ -711,7 +820,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, isLastDoseFlow, resetFullForm, checkUsageLimit, logDose, trackInteraction]);
+  }, [feedbackContext?.nextAction, feedbackContext?.doseInfo, isLastDoseFlow, lastActionType]);
 
   // PMF Survey handlers
   const handlePMFSurveyComplete = useCallback(async (responses: any) => {
@@ -760,6 +869,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   const handleCapture = useCallback(async () => {
     try {
+      // Call the function directly from the props instead of depending on it
       const canProceed = await checkUsageLimit();
       if (!canProceed) return false;
       setManualStep('dose');
@@ -769,21 +879,48 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleCapture:', error);
       return false;
     }
-  }, [checkUsageLimit]);
+  }, []);
 
   useEffect(() => {
     const checkStateHealth = () => {
       const now = Date.now();
       if (now - lastActionTimestamp.current > 10 * 60 * 1000) {
         console.log('[useDoseCalculator] Detected stale state, resetting');
-        resetFullForm();
+        // Call reset directly
+        setDose('');
+        setUnit('mg');
+        setSubstanceName('');
+        setMedicationInputType('totalAmount');
+        setConcentrationAmount('');
+        setConcentrationUnit('mg/ml');
+        setTotalAmount('');
+        setSolutionVolume('');
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setDoseValue(null);
+        setConcentration(null);
+        setCalculatedVolume(null);
+        setCalculatedConcentration(null);
+        setRecommendedMarking(null);
+        setCalculationError(null);
+        setFormError(null);
+        setShowVolumeErrorModal(false);
+        setVolumeErrorValue(null);
+        setSubstanceNameHint(null);
+        setConcentrationHint(null);
+        setTotalAmountHint(null);
+        setSyringeHint(null);
+        setFeedbackContext(null);
+        setSelectedInjectionSite(null);
+        setLastActionType(null);
+        setIsLastDoseFlow(false);
+        setManualStep('dose');
         setScreenStep('intro');
         setStateHealth('recovering');
       }
     };
     const intervalId = setInterval(checkStateHealth, 60000);
     return () => clearInterval(intervalId);
-  }, [resetFullForm]);
+  }, []);
 
   // The useEffect below was causing a navigation loop and has been removed
   // When users clicked "Scan" or "Enter Manually" from the intro screen,
@@ -810,9 +947,34 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       
       // Navigate based on the next action, just like in handleFeedbackComplete
       if (nextAction === 'start_over') {
-        resetFullForm('dose');
+        // Call reset directly
+        setDose('');
+        setUnit('mg');
+        setSubstanceName('');
+        setMedicationInputType('totalAmount');
+        setConcentrationAmount('');
+        setConcentrationUnit('mg/ml');
+        setTotalAmount('');
+        setSolutionVolume('');
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setDoseValue(null);
+        setConcentration(null);
+        setCalculatedVolume(null);
+        setCalculatedConcentration(null);
+        setRecommendedMarking(null);
+        setCalculationError(null);
+        setFormError(null);
+        setShowVolumeErrorModal(false);
+        setVolumeErrorValue(null);
+        setSubstanceNameHint(null);
+        setConcentrationHint(null);
+        setTotalAmountHint(null);
+        setSyringeHint(null);
+        setFeedbackContext(null);
+        setSelectedInjectionSite(null);
         setLastActionType(null);
         setIsLastDoseFlow(false);
+        setManualStep('dose');
         setScreenStep('intro');
       } else if (nextAction === 'new_dose') {
         // Special handling for last dose flow - preserve state if we're in that context
@@ -822,7 +984,35 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
           setManualStep('finalResult');
           setScreenStep('manualEntry');
         } else {
-          resetFullForm('dose');
+          // Call reset directly
+          setDose('');
+          setUnit('mg');
+          setSubstanceName('');
+          setMedicationInputType('totalAmount');
+          setConcentrationAmount('');
+          setConcentrationUnit('mg/ml');
+          setTotalAmount('');
+          setSolutionVolume('');
+          setManualSyringe({ type: 'Standard', volume: '3 ml' });
+          setDoseValue(null);
+          setConcentration(null);
+          setCalculatedVolume(null);
+          setCalculatedConcentration(null);
+          setRecommendedMarking(null);
+          setCalculationError(null);
+          setFormError(null);
+          setShowVolumeErrorModal(false);
+          setVolumeErrorValue(null);
+          setSubstanceNameHint(null);
+          setConcentrationHint(null);
+          setTotalAmountHint(null);
+          setSyringeHint(null);
+          setFeedbackContext(null);
+          setSelectedInjectionSite(null);
+          setLastActionType(null);
+          setIsLastDoseFlow(false);
+          setManualStep('dose');
+          
           if (lastActionType === 'scan') {
             setScreenStep('scan');
           } else if (lastActionType === 'manual') {
@@ -836,7 +1026,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       }
     }
     setShowLogLimitModal(false);
-  }, [feedbackContext, lastActionType, isLastDoseFlow, resetFullForm]);
+  }, [feedbackContext, lastActionType, isLastDoseFlow]);
 
   // // Alternative implementation - reset to initial screen without navigation
   // // Uncomment if the above navigation logic causes issues

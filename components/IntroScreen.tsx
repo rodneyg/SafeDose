@@ -190,7 +190,8 @@ export default function IntroScreen({
         isAnonymous: user?.isAnonymous ?? 'unknown'
       });
       
-      const recentDose = await getMostRecentDose();
+      const { getMostRecentDose: getRecentDose } = useDoseLogging();
+      const recentDose = await getRecentDose();
       const hasRecentDoseValue = !!recentDose;
       
       console.log(`[IntroScreen] 🔍 Recent dose check result (${context}):`, {
@@ -209,7 +210,7 @@ export default function IntroScreen({
       setHasRecentDose(false);
       return false;
     }
-  }, [user?.uid]); // Remove getMostRecentDose dependency to prevent infinite loops
+  }, []); // Remove user dependency to prevent infinite loops
 
   // Initial check on mount
   useEffect(() => {
@@ -217,7 +218,8 @@ export default function IntroScreen({
     // Call the function directly to avoid dependency issues
     (async () => {
       try {
-        const recentDose = await getMostRecentDose();
+        const { getMostRecentDose: getRecentDose } = useDoseLogging();
+        const recentDose = await getRecentDose();
         const hasRecentDoseValue = !!recentDose;
         console.log('[IntroScreen] 🔍 Mount check result:', {
           hasRecentDose: hasRecentDoseValue,
@@ -229,7 +231,7 @@ export default function IntroScreen({
         setHasRecentDose(false);
       }
     })();
-  }, [user?.uid]); // Only depend on user ID
+  }, []);
 
   // Check when screen becomes focused (simplified)
   useFocusEffect(
@@ -238,7 +240,8 @@ export default function IntroScreen({
       // Call the function directly to avoid dependency issues
       (async () => {
         try {
-          const recentDose = await getMostRecentDose();
+          const { getMostRecentDose: getRecentDose } = useDoseLogging();
+          const recentDose = await getRecentDose();
           const hasRecentDoseValue = !!recentDose;
           console.log('[IntroScreen] 🔍 Focus check result:', {
             hasRecentDose: hasRecentDoseValue,
@@ -250,7 +253,7 @@ export default function IntroScreen({
           setHasRecentDose(false);
         }
       })();
-    }, [user?.uid]) // Only depend on user ID
+    }, [])
   );
 
   /* =========================================================================
@@ -278,7 +281,8 @@ export default function IntroScreen({
 
   const handleUseLastDosePress = useCallback(async () => {
     try {
-      const recentDose = await getMostRecentDose();
+      const { getMostRecentDose: getRecentDose } = useDoseLogging();
+      const recentDose = await getRecentDose();
       if (!recentDose) {
         console.warn('[IntroScreen] No recent dose found');
         return;
@@ -343,7 +347,7 @@ export default function IntroScreen({
     } catch (error) {
       console.error('[IntroScreen] Error using last dose:', error);
     }
-  }, [getMostRecentDose, router]);
+  }, [router, user]);
 
   /* =========================================================================
      RENDER
