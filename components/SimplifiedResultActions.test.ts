@@ -1,6 +1,6 @@
 /**
  * Test for simplified result screen actions - Issue #219
- * Tests the new "Start Over" and "New Dose" (repeat last action) functionality
+ * Tests the new "Done" and "New Dose" (repeat last action) functionality
  */
 
 interface MockDoseCalculator {
@@ -33,7 +33,7 @@ describe('Simplified Result Screen Actions', () => {
     };
   });
 
-  describe('Start Over functionality', () => {
+  describe('Done functionality', () => {
     it('should clear state and navigate to intro when start_over is triggered', async () => {
       // Set up scenario where user is at final result after manual entry
       calculator.lastActionType = 'manual';
@@ -249,7 +249,7 @@ describe('Simplified Result Screen Actions', () => {
   });
 
   describe('UI button behavior', () => {
-    it('should show Start Over and New Dose buttons instead of old buttons', () => {
+    it('should show Done and New Dose buttons instead of old buttons', () => {
       // This test would be for the FinalResultDisplay component
       const mockProps = {
         calculationError: null,
@@ -267,11 +267,11 @@ describe('Simplified Result Screen Actions', () => {
       };
 
       // Verify that the component would call handleGoToFeedback with correct actions
-      // Start Over button should call: handleGoToFeedback('start_over')
+      // Done button should call: handleGoToFeedback('start_over')
       // New Dose button should call: handleGoToFeedback('new_dose')
       
       // This simulates button press behavior
-      mockProps.handleGoToFeedback('start_over'); // Start Over button
+      mockProps.handleGoToFeedback('start_over'); // Done button
       mockProps.handleGoToFeedback('new_dose');   // New Dose button
       
       expect(mockProps.handleGoToFeedback).toHaveBeenCalledWith('start_over');

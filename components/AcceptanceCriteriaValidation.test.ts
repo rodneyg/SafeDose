@@ -4,16 +4,16 @@
  */
 
 describe('Issue #219 Acceptance Criteria Validation', () => {
-  describe('AC1: Result screen displays Start Over and New Dose buttons', () => {
+  describe('AC1: Result screen displays Done and New Dose buttons', () => {
     it('should show two action buttons with correct labels', () => {
       // Simulating the FinalResultDisplay button container
       const buttons = [
-        { label: 'Start Over', icon: 'RotateCcw', backgroundColor: '#6B7280' },
+        { label: 'Done', icon: 'Check', backgroundColor: '#007AFF' },
         { label: 'New Dose', icon: 'Plus', backgroundColor: '#10B981' }
       ];
       
       expect(buttons).toHaveLength(2);
-      expect(buttons[0].label).toBe('Start Over');
+      expect(buttons[0].label).toBe('Done');
       expect(buttons[1].label).toBe('New Dose');
       
       // Verify old buttons are replaced
@@ -22,13 +22,13 @@ describe('Issue #219 Acceptance Criteria Validation', () => {
     });
   });
 
-  describe('AC2: Start Over navigates to intro and clears state', () => {
+  describe('AC2: Done navigates to intro and clears state', () => {
     it('should navigate to intro screen and clear previous result', () => {
       let screenStep = 'postDoseFeedback';
       let lastActionType: 'manual' | 'scan' | null = 'manual';
       let stateCleared = false;
 
-      // Simulate Start Over action
+      // Simulate Done action
       const handleStartOver = () => {
         stateCleared = true;
         lastActionType = null;
@@ -262,7 +262,7 @@ describe('Issue #219 Acceptance Criteria Validation', () => {
       // 2. Complete manual entry -> final result
       workflow.push('final_result');
 
-      // 3. Click Start Over
+      // 3. Click Done
       lastActionType = null;
       screenStep = 'intro';
       workflow.push('start_over');
