@@ -73,12 +73,26 @@ export default function IntroScreen({
   useEffect(() => {
     const checkLastDoseAvailability = async () => {
       try {
+        console.log('[IntroScreen] Checking last dose availability...');
         const doseHistory = await getDoseLogHistory();
+        console.log('[IntroScreen] Dose history length:', doseHistory.length);
+        
         // Check if we have at least one complete dose log
         const hasValidLastDose = doseHistory.length > 0 && 
           doseHistory[0].doseValue && 
           doseHistory[0].substanceName && 
           doseHistory[0].unit;
+        
+        console.log('[IntroScreen] Has valid last dose:', hasValidLastDose);
+        if (hasValidLastDose) {
+          console.log('[IntroScreen] Last dose details:', {
+            substance: doseHistory[0].substanceName,
+            dose: doseHistory[0].doseValue,
+            unit: doseHistory[0].unit,
+            timestamp: doseHistory[0].timestamp
+          });
+        }
+        
         setHasLastDose(!!hasValidLastDose);
       } catch (error) {
         console.error('[IntroScreen] Error checking last dose:', error);
@@ -250,14 +264,19 @@ export default function IntroScreen({
   const handleUseLastDosePress = useCallback(async () => {
     if (!applyLastDose || isLoadingLastDose) return;
     
+    console.log('[IntroScreen] Use Last Dose button pressed');
     setIsLoadingLastDose(true);
     setNavigatingFromIntro?.(true);
     
     try {
       const success = await applyLastDose();
+      console.log('[IntroScreen] Apply last dose result:', success);
+      
       if (success) {
+        console.log('[IntroScreen] Successfully applied last dose, navigating to manual entry');
         setScreenStep('manualEntry');
       } else {
+        console.log('[IntroScreen] Failed to apply last dose, falling back to manual entry');
         // If applying last dose failed, fall back to regular manual entry
         resetFullForm('dose');
         setScreenStep('manualEntry');
@@ -363,6 +382,9 @@ export default function IntroScreen({
                     ]}
                     onPress={handleUseLastDosePress}
                     disabled={isLoadingLastDose}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use Last Dose"
+                    accessibilityHint="Prefill form with values from your most recent dose"
                   >
                     <RotateCcw color="#fff" size={20} />
                     <Text style={styles.buttonText}>
@@ -371,6 +393,15 @@ export default function IntroScreen({
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* Use Last Dose Hint */}
+              {hasLastDose && (
+                <View style={styles.useLastDoseHintContainer}>
+                  <Text style={styles.useLastDoseHintText}>
+                    💡 "Use Last" prefills your most recent dose settings
+                  </Text>
+                </View>
+              )}
 
               {/* Plan Reconstitution Link */}
               <TouchableOpacity 
@@ -604,19 +635,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    gap: 20,
+    gap: 16, // Reduced gap to accommodate 3 buttons
+    flexWrap: 'wrap', // Allow wrapping on very small screens
   },
   actionButtonsContainerMobile: {
     marginBottom: 20, // Reduced margin for small screens
-    gap: 16, // Smaller gap between buttons
+    gap: 12, // Smaller gap between buttons for 3 buttons
   },
   button: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    width: 100,
-    height: 100,
+    width: 90, // Slightly smaller to fit 3 buttons
+    height: 90, // Slightly smaller to fit 3 buttons
     padding: 16,
     borderRadius: 16,
     shadowColor: '#000',
@@ -628,8 +660,8 @@ const styles = StyleSheet.create({
   buttonMobile: {
     paddingVertical: 12, // Reduced padding for small screens
     paddingHorizontal: 12, // Reduced padding for small screens
-    width: 90, // Smaller width for small screens
-    height: 90, // Smaller height for small screens
+    width: 80, // Smaller width for small screens with 3 buttons
+    height: 80, // Smaller height for small screens with 3 buttons
     gap: 6, // Smaller gap between icon and text
   },
   primaryButton: {
@@ -652,6 +684,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+
+  /* Use Last Dose Hint */
+  useLastDoseHintContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+    paddingHorizontal: 20,
+  },
+  useLastDoseHintText: {
+    fontSize: 12,
+    color: '#10b981',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 
   /* Scan status */
