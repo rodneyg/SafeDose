@@ -209,20 +209,48 @@ export default function IntroScreen({
       setHasRecentDose(false);
       return false;
     }
-  }, [getMostRecentDose, user?.uid]);
+  }, [user?.uid]); // Remove getMostRecentDose dependency to prevent infinite loops
 
   // Initial check on mount
   useEffect(() => {
     console.log('[IntroScreen] 🏠 Component mounted - checking for recent dose');
-    checkForRecentDose('mount');
-  }, [checkForRecentDose]);
+    // Call the function directly to avoid dependency issues
+    (async () => {
+      try {
+        const recentDose = await getMostRecentDose();
+        const hasRecentDoseValue = !!recentDose;
+        console.log('[IntroScreen] 🔍 Mount check result:', {
+          hasRecentDose: hasRecentDoseValue,
+          user: user?.uid || 'anonymous'
+        });
+        setHasRecentDose(hasRecentDoseValue);
+      } catch (error) {
+        console.error('[IntroScreen] ❌ Error checking for recent dose on mount:', error);
+        setHasRecentDose(false);
+      }
+    })();
+  }, [user?.uid]); // Only depend on user ID
 
   // Check when screen becomes focused (simplified)
   useFocusEffect(
     React.useCallback(() => {
       console.log('[IntroScreen] 👁️ Screen focused - checking for recent dose');
-      checkForRecentDose('focus');
-    }, [checkForRecentDose])
+      // Call the function directly to avoid dependency issues
+      (async () => {
+        try {
+          const recentDose = await getMostRecentDose();
+          const hasRecentDoseValue = !!recentDose;
+          console.log('[IntroScreen] 🔍 Focus check result:', {
+            hasRecentDose: hasRecentDoseValue,
+            user: user?.uid || 'anonymous'
+          });
+          setHasRecentDose(hasRecentDoseValue);
+        } catch (error) {
+          console.error('[IntroScreen] ❌ Error checking for recent dose on focus:', error);
+          setHasRecentDose(false);
+        }
+      })();
+    }, [user?.uid]) // Only depend on user ID
   );
 
   /* =========================================================================
