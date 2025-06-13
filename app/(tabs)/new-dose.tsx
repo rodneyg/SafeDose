@@ -576,122 +576,98 @@ export default function NewDoseScreen() {
         return false;
       }
 
-      console.log('[applyLastDose] ========== CLEARING CALCULATION STATE ==========');
-      // Clear calculation state first but preserve other form data during transition
-      setCalculatedVolume(null);
-      setRecommendedMarking(null);
-      setCalculationError(null);
-      setFormError(null);
-      setShowVolumeErrorModal(false);
-      setVolumeErrorValue(null);
+      console.log('[applyLastDose] ========== APPLYING DOSE DATA ==========');
       
-      console.log('[applyLastDose] ========== SETTING BASIC DOSE INFO ==========');
       // Apply basic dose information with fallbacks for missing data
       const substanceNameValue = lastDose.substanceName || 'Previous Substance';
       const doseValue = lastDose.doseValue.toString();
       const unitValue = (lastDose.unit || 'mg') as 'mg' | 'mcg' | 'units' | 'mL';
       
-      console.log('[applyLastDose] Values to set:', {
+      console.log('[applyLastDose] Applying values:', {
         substanceName: substanceNameValue,
         dose: doseValue,
-        unit: unitValue
+        unit: unitValue,
+        syringeType: lastDose.syringeType,
+        injectionSite: lastDose.injectionSite
       });
       
-      // Set values one by one with logging
-      console.log('[applyLastDose] Setting substance name...');
-      setSubstanceName(substanceNameValue);
-      console.log('[applyLastDose] Setting substance name hint...');
-      setSubstanceNameHint(lastDose.substanceName ? 'From your last dose' : 'Substance name was not saved - please update');
-      console.log('[applyLastDose] Setting dose...');
-      setDose(doseValue);
-      console.log('[applyLastDose] Setting unit...');
-      setUnit(unitValue);
-      
-      console.log('[applyLastDose] ========== SETTING SYRINGE INFO ==========');
-      // Apply syringe information if available
-      if (lastDose.syringeType) {
-        // We need to determine the volume from the last dose data
-        // For now, use default volumes but we could enhance this later
-        const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
-        console.log('[applyLastDose] Setting syringe:', { type: lastDose.syringeType, volume: defaultVolume });
-        setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
-        setSyringeHint('Syringe type from your last dose');
-      } else {
-        // Use default syringe if no previous syringe type
-        console.log('[applyLastDose] Setting default syringe');
-        setManualSyringe({ type: 'Standard', volume: '3 ml' });
-        setSyringeHint(null);
-      }
-      
-      console.log('[applyLastDose] ========== SETTING INJECTION SITE ==========');
-      // Set injection site if available
-      if (lastDose.injectionSite) {
-        console.log('[applyLastDose] Setting injection site:', lastDose.injectionSite);
-        setSelectedInjectionSite(lastDose.injectionSite);
-      }
-      
-      console.log('[applyLastDose] ========== SETTING CONCENTRATION INFO ==========');
-      // For concentration data, we'll need to make some assumptions since we don't store
-      // the original concentration values. We can calculate them from the dose and volume if available
-      if (lastDose.calculatedVolume && lastDose.doseValue) {
-        const calculatedConcentration = lastDose.doseValue / lastDose.calculatedVolume;
-        const concentrationAmountValue = calculatedConcentration.toString();
+      // Use startTransition to batch all state updates together
+      startTransition(() => {
+        // Clear calculation state first
+        setCalculatedVolume(null);
+        setRecommendedMarking(null);
+        setCalculationError(null);
+        setFormError(null);
+        setShowVolumeErrorModal(false);
+        setVolumeErrorValue(null);
         
-        console.log('[applyLastDose] Calculated concentration:', {
-          doseValue: lastDose.doseValue,
-          calculatedVolume: lastDose.calculatedVolume,
-          concentration: calculatedConcentration,
-          concentrationAmount: concentrationAmountValue
-        });
+        // Set basic dose information
+        setSubstanceName(substanceNameValue);
+        setSubstanceNameHint(lastDose.substanceName ? 'From your last dose' : 'Substance name was not saved - please update');
+        setDose(doseValue);
+        setUnit(unitValue);
         
-        console.log('[applyLastDose] Setting concentration amount...');
-        setConcentrationAmount(concentrationAmountValue);
-        console.log('[applyLastDose] Setting medication input type...');
-        setMedicationInputType('concentration');
-        console.log('[applyLastDose] Setting concentration hint...');
-        setConcentrationHint('Calculated from your last dose');
-        
-        // Set concentration unit based on dose unit
-        console.log('[applyLastDose] Setting concentration unit based on dose unit:', lastDose.unit);
-        if (lastDose.unit === 'mg') {
-          setConcentrationUnit('mg/ml');
-        } else if (lastDose.unit === 'mcg') {
-          setConcentrationUnit('mcg/ml');
-        } else if (lastDose.unit === 'units') {
-          setConcentrationUnit('units/ml');
+        // Apply syringe information if available
+        if (lastDose.syringeType) {
+          const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
+          setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
+          setSyringeHint('Syringe type from your last dose');
+        } else {
+          setManualSyringe({ type: 'Standard', volume: '3 ml' });
+          setSyringeHint(null);
         }
         
-        // Clear total amount fields when using concentration
-        console.log('[applyLastDose] Clearing total amount fields...');
-        setTotalAmount('');
-        setSolutionVolume('');
-        setTotalAmountHint(null);
-      } else {
-        // If we can't calculate concentration, default to total amount mode
-        console.log('[applyLastDose] Cannot calculate concentration, using total amount mode');
-        setMedicationInputType('totalAmount');
-        setConcentrationAmount('');
-        setConcentrationUnit('mg/ml');
-        setConcentrationHint(null);
-        setTotalAmountHint('Please enter the medication strength');
-        setTotalAmount('');
-        setSolutionVolume('');
-      }
+        // Set injection site if available
+        if (lastDose.injectionSite) {
+          setSelectedInjectionSite(lastDose.injectionSite);
+        }
+        
+        // Set concentration data based on last dose calculation
+        if (lastDose.calculatedVolume && lastDose.doseValue) {
+          const calculatedConcentration = lastDose.doseValue / lastDose.calculatedVolume;
+          const concentrationAmountValue = calculatedConcentration.toString();
+          
+          setConcentrationAmount(concentrationAmountValue);
+          setMedicationInputType('concentration');
+          setConcentrationHint('Calculated from your last dose');
+          
+          // Set concentration unit based on dose unit
+          if (lastDose.unit === 'mg') {
+            setConcentrationUnit('mg/ml');
+          } else if (lastDose.unit === 'mcg') {
+            setConcentrationUnit('mcg/ml');
+          } else if (lastDose.unit === 'units') {
+            setConcentrationUnit('units/ml');
+          }
+          
+          // Clear total amount fields when using concentration
+          setTotalAmount('');
+          setSolutionVolume('');
+          setTotalAmountHint(null);
+        } else {
+          // If we can't calculate concentration, default to total amount mode
+          setMedicationInputType('totalAmount');
+          setConcentrationAmount('');
+          setConcentrationUnit('mg/ml');
+          setConcentrationHint(null);
+          setTotalAmountHint('Please enter the medication strength');
+          setTotalAmount('');
+          setSolutionVolume('');
+        }
+        
+        // Set to dose step
+        setManualStep('dose');
+      });
       
-      console.log('[applyLastDose] ========== SETTING MANUAL STEP ==========');
-      // Navigate to the dose step in manual entry - do this AFTER all state is set
-      // Use a small delay to ensure all state updates are applied
-      console.log('[applyLastDose] Setting manual step to dose after delay...');
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setManualStep('dose');
-      console.log('[applyLastDose] Manual step set to dose');
+      // Add a small delay to ensure all batched updates are complete
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       console.log('[applyLastDose] ========== APPLY LAST DOSE COMPLETE ==========');
       console.log('[applyLastDose] Successfully applied last dose, final state should be:', {
         dose: doseValue,
         unit: unitValue,
         substanceName: substanceNameValue,
-        medicationInputType: 'concentration',
+        medicationInputType: lastDose.calculatedVolume ? 'concentration' : 'totalAmount',
         manualStep: 'dose'
       });
       

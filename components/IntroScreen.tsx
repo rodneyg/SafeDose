@@ -309,24 +309,24 @@ export default function IntroScreen({
           console.log('[IntroScreen] Screen step set to manualEntry after delay');
         }, 150);
       } else {
-        console.log('[IntroScreen] ========== FAILURE - FALLING BACK TO REGULAR MANUAL ENTRY ==========');
-        // If applying last dose failed, fall back to regular manual entry
-        resetFullForm('dose');
+        console.log('[IntroScreen] ========== FAILURE - USING MANUAL ENTRY WITHOUT RESET ==========');
+        // If applying last dose failed, just go to manual entry without resetting
+        // This preserves any partial state that might have been set
         setScreenStep('manualEntry');
-        console.log('[IntroScreen] Reset form and set screen step to manualEntry');
+        console.log('[IntroScreen] Set screen step to manualEntry without reset');
       }
     } catch (error) {
-      console.error('[IntroScreen] ========== ERROR - FALLING BACK TO REGULAR MANUAL ENTRY ==========');
+      console.error('[IntroScreen] ========== ERROR - USING MANUAL ENTRY WITHOUT RESET ==========');
       console.error('[IntroScreen] Error applying last dose:', error);
-      // Fall back to regular manual entry
-      resetFullForm('dose');
+      // On error, just go to manual entry without resetting
+      // This preserves any partial state that might have been set
       setScreenStep('manualEntry');
-      console.log('[IntroScreen] Reset form and set screen step to manualEntry after error');
+      console.log('[IntroScreen] Set screen step to manualEntry without reset after error');
     } finally {
       setIsLoadingLastDose(false);
       console.log('[IntroScreen] ========== USE LAST DOSE FLOW COMPLETE ==========');
     }
-  }, [applyLastDose, resetFullForm, setScreenStep, setNavigatingFromIntro, isLoadingLastDose]);
+  }, [applyLastDose, setScreenStep, setNavigatingFromIntro, isLoadingLastDose]);
 
   /* =========================================================================
      RENDER
