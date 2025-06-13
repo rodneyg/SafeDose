@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon } from 'lucide-react-native';
+import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
 import { syringeOptions } from "../lib/utils";
@@ -380,11 +380,11 @@ export default function FinalResultDisplay({
       
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
-          style={[styles.actionButton, { backgroundColor: '#6B7280' }, isMobileWeb && styles.actionButtonMobile]} 
+          style={[styles.actionButton, { backgroundColor: '#007AFF' }, isMobileWeb && styles.actionButtonMobile]} 
           onPress={() => handleGoToFeedback('start_over')}
         >
-          <RotateCcw color="#fff" size={18} style={{ marginRight: 8 }} />
-          <Text style={styles.buttonText}>Start Over</Text>
+          <Check color="#fff" size={18} style={{ marginRight: 8 }} />
+          <Text style={styles.buttonText}>Done</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[

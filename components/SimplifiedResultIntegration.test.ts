@@ -82,7 +82,7 @@ describe('Simplified Result Screen Integration', () => {
       // 3. User completes manual entry and sees final result
       // (This would normally happen through the manual entry steps)
       
-      // 4. User clicks "Start Over" button
+      // 4. User clicks "Done" button
       calculator.handleGoToFeedback('start_over');
       expect(calculator.feedbackContext()).toEqual({
         nextAction: 'start_over',
@@ -165,19 +165,19 @@ describe('Simplified Result Screen Integration', () => {
       expect(buttonActions.newDose).toBe('new_dose');
       
       // These would be the onClick handlers:
-      // Start Over: () => handleGoToFeedback('start_over')
+      // Done: () => handleGoToFeedback('start_over')
       // New Dose: () => handleGoToFeedback('new_dose')
     });
 
     it('should preserve button styling from original implementation', () => {
-      // Start Over button: gray background (replacing blue scan again)
+      // Done button: blue background (replacing gray start over)
       // New Dose button: green background (same as original)
       const buttonStyles = {
-        startOver: { backgroundColor: '#6B7280' }, // Gray
+        startOver: { backgroundColor: '#007AFF' }, // Blue
         newDose: { backgroundColor: '#10B981' }    // Green
       };
       
-      expect(buttonStyles.startOver.backgroundColor).toBe('#6B7280');
+      expect(buttonStyles.startOver.backgroundColor).toBe('#007AFF');
       expect(buttonStyles.newDose.backgroundColor).toBe('#10B981');
     });
   });
