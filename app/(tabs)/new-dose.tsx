@@ -575,8 +575,13 @@ export default function NewDoseScreen() {
         return false;
       }
 
-      // Reset form state first
-      resetFullForm();
+      // Clear calculation state first but preserve other form data during transition
+      setCalculatedVolume(null);
+      setRecommendedMarking(null);
+      setCalculationError(null);
+      setFormError(null);
+      setShowVolumeErrorModal(false);
+      setVolumeErrorValue(null);
       
       // Apply basic dose information
       setSubstanceName(lastDose.substanceName);
@@ -591,6 +596,10 @@ export default function NewDoseScreen() {
         const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
         setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
         setSyringeHint('Syringe type from your last dose');
+      } else {
+        // Use default syringe if no previous syringe type
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setSyringeHint(null);
       }
       
       // Set injection site if available
@@ -614,17 +623,21 @@ export default function NewDoseScreen() {
         } else if (lastDose.unit === 'units') {
           setConcentrationUnit('units/ml');
         }
+        
+        // Clear total amount fields when using concentration
+        setTotalAmount('');
+        setSolutionVolume('');
+        setTotalAmountHint(null);
       } else {
         // If we can't calculate concentration, default to total amount mode
         setMedicationInputType('totalAmount');
+        setConcentrationAmount('');
+        setConcentrationUnit('mg/ml');
+        setConcentrationHint(null);
         setTotalAmountHint('Please enter the medication strength');
+        setTotalAmount('');
+        setSolutionVolume('');
       }
-      
-      // Clear any calculation results so the user sees the form
-      setCalculatedVolume(null);
-      setRecommendedMarking(null);
-      setCalculationError(null);
-      setFormError(null);
       
       // Navigate to the dose step in manual entry
       setManualStep('dose');
