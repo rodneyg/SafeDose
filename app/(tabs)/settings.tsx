@@ -194,7 +194,7 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             <Text style={styles.label}>Account Type</Text>
             <Text style={styles.value}>
-              {user?.isAnonymous ? 'Guest' : 'Signed In'}
+              {user ? (user.isAnonymous ? 'Guest' : 'Signed In') : 'Guest'}
             </Text>
             
             {user?.email && (
