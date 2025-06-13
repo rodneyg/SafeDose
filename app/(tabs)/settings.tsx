@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -135,7 +135,15 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = useCallback(() => {
+    console.log('[SettingsScreen] ========== SIGN-IN INITIATED ==========');
+    console.log('[SettingsScreen] Current user before sign-in:', user ? {
+      uid: user.uid,
+      isAnonymous: user.isAnonymous,
+      displayName: user.displayName,
+      email: user.email
+    } : 'No user');
+    
     setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
     
@@ -143,29 +151,41 @@ export default function SettingsScreen() {
     
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log('Google Sign-In successful', result.user);
+        console.log('[SettingsScreen] ✅ Google Sign-In successful:', {
+          uid: result.user.uid,
+          displayName: result.user.displayName,
+          email: result.user.email,
+          isAnonymous: result.user.isAnonymous
+        });
+        console.log('[SettingsScreen] AuthContext should update automatically via onAuthStateChanged');
+        
         if (user?.isAnonymous) {
           // The anonymous account will be automatically linked to the signed-in account
           logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
-          console.log('Linked anonymous account with Google');
+          console.log('[SettingsScreen] Linked anonymous account with Google');
         } else {
           logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
-          console.log('Signed in with Google');
+          console.log('[SettingsScreen] Signed in with Google');
         }
         // Removed redundant success alert - the UI will update automatically
       })
       .catch((error) => {
+        console.error('[SettingsScreen] ❌ Google Sign-In error:', error.code, error.message);
+        console.error('[SettingsScreen] Sign-in error details:', {
+          code: error.code,
+          message: error.message,
+          name: error.name
+        });
         logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
           method: 'google', 
           error: error.message 
         });
-        console.error('Google sign-in error:', error);
         Alert.alert('Sign In Error', error.message || 'Failed to sign in with Google');
       })
       .finally(() => {
         setIsSigningIn(false);
       });
-  };
+  }, [auth, user]);
 
   const getPlanDisplayName = (plan: string) => {
     switch (plan) {
