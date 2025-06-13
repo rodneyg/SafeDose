@@ -124,7 +124,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await logout();
-              Alert.alert('Signed Out', 'You have been successfully signed out.');
+              // Removed redundant success alert - the UI will update automatically
             } catch (error) {
               console.error('Sign out error:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
@@ -152,7 +152,7 @@ export default function SettingsScreen() {
           logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
           console.log('Signed in with Google');
         }
-        Alert.alert('Signed In', 'You have been successfully signed in with Google.');
+        // Removed redundant success alert - the UI will update automatically
       })
       .catch((error) => {
         logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
@@ -205,11 +205,11 @@ export default function SettingsScreen() {
             )}
             
             <Text style={styles.label}>Current Plan</Text>
-            <Text style={styles.value}>{getPlanDisplayName(usageData.plan)}</Text>
+            <Text style={styles.value}>{getPlanDisplayName(usageData?.plan || 'free')}</Text>
             
             <Text style={styles.label}>Usage This Month</Text>
             <Text style={styles.value}>
-              {usageData.scansUsed} / {usageData.limit === Infinity ? '∞' : usageData.limit} scans
+              {usageData?.scansUsed || 0} / {usageData?.limit === Infinity ? '∞' : (usageData?.limit || 3)} scans
             </Text>
           </View>
         </View>
