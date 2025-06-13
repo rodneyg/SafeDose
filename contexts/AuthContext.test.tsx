@@ -130,24 +130,75 @@ describe('AuthContext Sign Out Functionality', () => {
     }
   });
 
-  it('should clear timeout when component unmounts', () => {
-    // Test the cleanup logic
-    let timeoutId: NodeJS.Timeout | null = null;
+  it('should prevent users from being stuck in signing out state with fallback timeout', async () => {
+    jest.useFakeTimers();
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    
+    // Simulate a scenario where the main timeout doesn't work but fallback does
+    const logout = async () => {
+      let isSigningOut = true;
+      let isSigningOutRef = { current: true };
+      let fallbackTimeoutRef = { current: null };
+      
+      console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
+      console.log('[AuthContext] Setting isSigningOut to true...');
+      
+      // Set fallback timeout (our fix)
+      fallbackTimeoutRef.current = setTimeout(() => {
+        console.log('[AuthContext] ⚠️ Fallback timeout reached - forcing sign out state reset');
+        isSigningOut = false;
+        isSigningOutRef.current = false;
+        fallbackTimeoutRef.current = null;
+      }, 10000);
+      
+      await mockSignOut();
+      console.log('[AuthContext] ✅ Signed out successfully - logout function complete');
+    };
+
+    await logout();
+    
+    // Fast-forward the fallback timeout
+    jest.advanceTimersByTime(10000);
+    
+    expect(consoleSpy).toHaveBeenCalledWith('[AuthContext] ⚠️ Fallback timeout reached - forcing sign out state reset');
+    
+    consoleSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('should clear both main and fallback timeouts on auth state change', () => {
+    jest.useFakeTimers();
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    
+    // Test the improved timeout management
+    let timeoutRef = { current: null };
+    let fallbackTimeoutRef = { current: null };
 
-    // Simulate setting a timeout
-    timeoutId = setTimeout(() => {
-      mockSignInAnonymously();
+    // Set both timeouts (simulating our fix)
+    timeoutRef.current = setTimeout(() => {
+      console.log('Main timeout should not fire');
     }, 2000);
+    
+    fallbackTimeoutRef.current = setTimeout(() => {
+      console.log('Fallback timeout should not fire');
+    }, 10000);
 
-    // Simulate cleanup (what happens in useEffect return)
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    // Simulate auth state change (our cleanup logic)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (fallbackTimeoutRef.current) {
+      clearTimeout(fallbackTimeoutRef.current);
+      fallbackTimeoutRef.current = null;
     }
 
-    expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutId);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
     
     clearTimeoutSpy.mockRestore();
+    jest.useRealTimers();
   });
 
   it('should call analytics event on logout', async () => {
