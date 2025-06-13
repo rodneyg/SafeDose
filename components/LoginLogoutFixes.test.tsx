@@ -91,7 +91,7 @@ describe('Login and Logout Fixes Validation', () => {
               console.log('⏰ Timeout reached - clearing sign out state');
               setIsSigningOut(false);
               timeoutRef.current = null;
-            }, 2000);
+            }, 500); // Updated to match AuthContext timeout
           } else {
             console.log('✅ Timeout already exists - skipping duplicate');
           }
@@ -118,7 +118,7 @@ describe('Login and Logout Fixes Validation', () => {
     console.log(`✅ Only created ${timeoutCount} timeout (should be 1)`);
     
     // Fast-forward to let timeout complete
-    jest.advanceTimersByTime(2000);
+    jest.advanceTimersByTime(500); // Updated to match AuthContext timeout
     
     expect(isSigningOut).toBe(false);
     console.log('✅ Logout completed without getting stuck');
@@ -144,7 +144,7 @@ describe('Login and Logout Fixes Validation', () => {
           timeoutRef.current = setTimeout(() => {
             setIsSigningOut(false);
             timeoutRef.current = null;
-          }, 2000);
+          }, 500); // Updated to match AuthContext timeout
         }
       }
     };
@@ -161,7 +161,7 @@ describe('Login and Logout Fixes Validation', () => {
     console.log(`✅ Even with 10 rapid changes, only ${timeoutSetCount} timeout was set`);
     
     // Let timeout complete
-    jest.advanceTimersByTime(2000);
+    jest.advanceTimersByTime(500); // Updated to match AuthContext timeout
     
     expect(isSigningOut).toBe(false);
     console.log('✅ Logout completed successfully');

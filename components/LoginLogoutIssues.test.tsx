@@ -156,9 +156,9 @@ describe('Login and Logout Issues', () => {
       authStateCallback(null);
     });
 
-    // Fast-forward through the 2-second timeout
+    // Fast-forward through the timeout (updated to 500ms)
     act(() => {
-      jest.advanceTimersByTime(2000);
+      jest.advanceTimersByTime(500);
     });
 
     // Should no longer show "Signing Out" and should be signed in anonymously
@@ -212,7 +212,7 @@ describe('Login and Logout Issues', () => {
 
     // Even with multiple rapid changes, should eventually clear
     act(() => {
-      jest.advanceTimersByTime(2000); // Let the last timeout complete
+      jest.advanceTimersByTime(500); // Let the last timeout complete (updated to 500ms)
     });
 
     await waitFor(() => {
