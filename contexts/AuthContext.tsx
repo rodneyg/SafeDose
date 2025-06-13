@@ -240,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
               // Clear the timeout ref since it completed
               timeoutRef.current = null;
-            }, 2000); // 2 second delay to show the sign out actually happened
+            }, 500); // Reduced delay from 2000ms to 500ms for better UX
           } else {
             console.log('[AuthContext] Logout timeout already set - skipping duplicate timeout');
           }
