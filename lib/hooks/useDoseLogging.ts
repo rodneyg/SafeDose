@@ -116,16 +116,40 @@ export function useDoseLogging() {
     setIsLogging(true);
     
     try {
+      console.log('[useDoseLogging] Attempting to log dose with info:', {
+        substanceName: doseInfo.substanceName,
+        doseValue: doseInfo.doseValue,
+        unit: doseInfo.unit,
+        calculatedVolume: doseInfo.calculatedVolume,
+        syringeType: doseInfo.syringeType,
+        hasSubstanceName: !!doseInfo.substanceName,
+        hasDoseValue: !!doseInfo.doseValue,
+        hasUnit: !!doseInfo.unit,
+        hasCalculatedVolume: !!doseInfo.calculatedVolume,
+      });
+      
       // Only proceed if we have valid dose info
       if (!doseInfo.doseValue || !doseInfo.calculatedVolume) {
-        console.warn('Incomplete dose info, skipping dose logging');
+        console.warn('[useDoseLogging] Incomplete dose info, skipping dose logging:', {
+          doseValue: doseInfo.doseValue,
+          calculatedVolume: doseInfo.calculatedVolume
+        });
+        return { success: false };
+      }
+      
+      // Additional validation for required fields
+      if (!doseInfo.substanceName || !doseInfo.unit) {
+        console.warn('[useDoseLogging] Missing required fields, skipping dose logging:', {
+          substanceName: doseInfo.substanceName,
+          unit: doseInfo.unit
+        });
         return { success: false };
       }
 
       // Check if user has reached log limit
       const canLog = await checkLogUsageLimit();
       if (!canLog) {
-        console.log('Log limit reached, cannot save dose log');
+        console.log('[useDoseLogging] Log limit reached, cannot save dose log');
         return { success: false, limitReached: true };
       }
 
@@ -142,6 +166,8 @@ export function useDoseLogging() {
         timestamp: new Date().toISOString(),
         notes,
       };
+
+      console.log('[useDoseLogging] Created dose log:', doseLog);
 
       // Try to save to Firestore first (for authenticated users)
       const firestoreId = await saveDoseLogToFirestore(doseLog);

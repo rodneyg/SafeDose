@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
@@ -70,38 +70,60 @@ export default function IntroScreen({
   /* =========================================================================
      LAST DOSE AVAILABILITY CHECK
   ========================================================================= */
-  useEffect(() => {
-    const checkLastDoseAvailability = async () => {
-      try {
-        console.log('[IntroScreen] Checking last dose availability...');
-        const doseHistory = await getDoseLogHistory();
-        console.log('[IntroScreen] Dose history length:', doseHistory.length);
-        
-        // Check if we have at least one complete dose log
-        const hasValidLastDose = doseHistory.length > 0 && 
-          doseHistory[0].doseValue && 
-          doseHistory[0].substanceName && 
-          doseHistory[0].unit;
-        
-        console.log('[IntroScreen] Has valid last dose:', hasValidLastDose);
-        if (hasValidLastDose) {
-          console.log('[IntroScreen] Last dose details:', {
-            substance: doseHistory[0].substanceName,
-            dose: doseHistory[0].doseValue,
-            unit: doseHistory[0].unit,
-            timestamp: doseHistory[0].timestamp
-          });
-        }
-        
-        setHasLastDose(!!hasValidLastDose);
-      } catch (error) {
-        console.error('[IntroScreen] Error checking last dose:', error);
-        setHasLastDose(false);
+  const checkLastDoseAvailability = useCallback(async () => {
+    try {
+      console.log('[IntroScreen] Checking last dose availability...');
+      const doseHistory = await getDoseLogHistory();
+      console.log('[IntroScreen] Dose history length:', doseHistory.length);
+      
+      // Debug: Log first few entries if they exist
+      if (doseHistory.length > 0) {
+        console.log('[IntroScreen] First dose log:', {
+          substanceName: doseHistory[0].substanceName,
+          doseValue: doseHistory[0].doseValue,
+          unit: doseHistory[0].unit,
+          timestamp: doseHistory[0].timestamp,
+          hasSubstanceName: !!doseHistory[0].substanceName,
+          hasDoseValue: !!doseHistory[0].doseValue,
+          hasUnit: !!doseHistory[0].unit,
+        });
       }
-    };
-
-    checkLastDoseAvailability();
+      
+      // Check if we have at least one complete dose log
+      const hasValidLastDose = doseHistory.length > 0 && 
+        doseHistory[0].doseValue && 
+        doseHistory[0].substanceName && 
+        doseHistory[0].unit;
+      
+      console.log('[IntroScreen] Has valid last dose:', hasValidLastDose);
+      if (hasValidLastDose) {
+        console.log('[IntroScreen] Last dose details:', {
+          substance: doseHistory[0].substanceName,
+          dose: doseHistory[0].doseValue,
+          unit: doseHistory[0].unit,
+          timestamp: doseHistory[0].timestamp
+        });
+      }
+      
+      setHasLastDose(!!hasValidLastDose);
+    } catch (error) {
+      console.error('[IntroScreen] Error checking last dose:', error);
+      setHasLastDose(false);
+    }
   }, [getDoseLogHistory]);
+
+  // Check for last dose on mount
+  useEffect(() => {
+    checkLastDoseAvailability();
+  }, [checkLastDoseAvailability]);
+
+  // Re-check when screen comes into focus (e.g., after completing a dose)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[IntroScreen] Screen focused, re-checking last dose availability...');
+      checkLastDoseAvailability();
+    }, [checkLastDoseAvailability])
+  );
 
   /* =========================================================================
      HANDLERS
