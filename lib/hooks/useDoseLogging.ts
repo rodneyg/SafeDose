@@ -3,7 +3,7 @@ import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDoc
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DoseLog } from '../../types/doseLog';
+import { DoseLog, InjectionSite } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 export function useDoseLogging() {
@@ -107,6 +107,7 @@ export function useDoseLogging() {
       calculatedVolume: number | null;
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
+      injectionSite?: InjectionSite | null;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
