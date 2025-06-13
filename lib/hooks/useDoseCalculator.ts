@@ -520,20 +520,20 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
         injectionSite: selectedInjectionSite,
-        // Enhanced fields for complete dose recreation
-        medicationInputType,
-        concentrationAmount,
-        concentrationUnit,
-        totalAmount,
-        solutionVolume,
+        // Enhanced fields for complete dose recreation - only include if they have valid values
+        medicationInputType: medicationInputType || null,
+        concentrationAmount: concentrationAmount || null,
+        concentrationUnit: concentrationUnit || 'mg/ml',
+        totalAmount: totalAmount || null,
+        solutionVolume: solutionVolume || null,
         syringeVolume: manualSyringe?.volume || null,
-        calculatedConcentration,
+        calculatedConcentration: calculatedConcentration || null,
       },
     });
     
     // Always go to injection site selection first
     setScreenStep('injectionSiteSelection');
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking, medicationInputType, concentrationAmount, concentrationUnit, totalAmount, solutionVolume, calculatedConcentration]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking]);
 
   // Handle injection site selection completion
   const handleInjectionSiteSelected = useCallback(async () => {
