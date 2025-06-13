@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, startTransition } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
@@ -680,8 +680,11 @@ export default function NewDoseScreen() {
       
       console.log('[applyLastDose] ========== SETTING MANUAL STEP ==========');
       // Navigate to the dose step in manual entry - do this AFTER all state is set
-      console.log('[applyLastDose] Setting manual step to dose...');
+      // Use a small delay to ensure all state updates are applied
+      console.log('[applyLastDose] Setting manual step to dose after delay...');
+      await new Promise(resolve => setTimeout(resolve, 100));
       setManualStep('dose');
+      console.log('[applyLastDose] Manual step set to dose');
       
       console.log('[applyLastDose] ========== APPLY LAST DOSE COMPLETE ==========');
       console.log('[applyLastDose] Successfully applied last dose, final state should be:', {

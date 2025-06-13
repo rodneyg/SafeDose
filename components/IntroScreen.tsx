@@ -303,8 +303,11 @@ export default function IntroScreen({
       
       if (success) {
         console.log('[IntroScreen] ========== SUCCESS - NAVIGATING TO MANUAL ENTRY ==========');
-        setScreenStep('manualEntry');
-        console.log('[IntroScreen] Screen step set to manualEntry');
+        // Add a small delay to ensure all state updates from applyLastDose are processed
+        setTimeout(() => {
+          setScreenStep('manualEntry');
+          console.log('[IntroScreen] Screen step set to manualEntry after delay');
+        }, 150);
       } else {
         console.log('[IntroScreen] ========== FAILURE - FALLING BACK TO REGULAR MANUAL ENTRY ==========');
         // If applying last dose failed, fall back to regular manual entry
