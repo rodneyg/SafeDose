@@ -122,19 +122,21 @@ export default function ManualEntryScreen({
 
   // Debug: Log the props being received to diagnose "Use Last Dose" prefill issue
   useEffect(() => {
+    console.log('[ManualEntryScreen] ========== PROPS RECEIVED ==========');
     console.log('[ManualEntryScreen] Props received:', {
       manualStep,
-      dose,
+      dose: dose || '(empty)',
       unit,
-      substanceName,
+      substanceName: substanceName || '(empty)',
       medicationInputType,
-      concentrationAmount,
+      concentrationAmount: concentrationAmount || '(empty)',
       concentrationUnit,
-      substanceNameHint,
-      concentrationHint,
-      syringeHint,
-      manualSyringe
+      substanceNameHint: substanceNameHint || '(none)',
+      concentrationHint: concentrationHint || '(none)',
+      syringeHint: syringeHint || '(none)',
+      manualSyringe: manualSyringe || '(none)'
     });
+    console.log('[ManualEntryScreen] ==========================================');
   }, [manualStep, dose, unit, substanceName, medicationInputType, concentrationAmount, concentrationUnit, substanceNameHint, concentrationHint, syringeHint, manualSyringe]);
 
   // Validation functions for each step

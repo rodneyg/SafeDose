@@ -558,6 +558,7 @@ export default function NewDoseScreen() {
   // Function to apply last dose from history to form state
   const applyLastDose = async (): Promise<boolean> => {
     try {
+      console.log('[applyLastDose] ========== STARTING APPLY LAST DOSE ==========');
       console.log('[applyLastDose] Getting dose history...');
       const doseHistory = await getDoseLogHistory();
       
@@ -567,7 +568,7 @@ export default function NewDoseScreen() {
       }
       
       const lastDose = doseHistory[0];
-      console.log('[applyLastDose] Found last dose:', lastDose);
+      console.log('[applyLastDose] Found last dose:', JSON.stringify(lastDose, null, 2));
       
       // Validate that we have the minimum required data
       if (!lastDose.doseValue || !lastDose.calculatedVolume) {
@@ -575,6 +576,7 @@ export default function NewDoseScreen() {
         return false;
       }
 
+      console.log('[applyLastDose] ========== CLEARING CALCULATION STATE ==========');
       // Clear calculation state first but preserve other form data during transition
       setCalculatedVolume(null);
       setRecommendedMarking(null);
@@ -583,43 +585,52 @@ export default function NewDoseScreen() {
       setShowVolumeErrorModal(false);
       setVolumeErrorValue(null);
       
+      console.log('[applyLastDose] ========== SETTING BASIC DOSE INFO ==========');
       // Apply basic dose information with fallbacks for missing data
       const substanceNameValue = lastDose.substanceName || 'Previous Substance';
       const doseValue = lastDose.doseValue.toString();
       const unitValue = (lastDose.unit || 'mg') as 'mg' | 'mcg' | 'units' | 'mL';
       
-      console.log('[applyLastDose] About to set values:', {
+      console.log('[applyLastDose] Values to set:', {
         substanceName: substanceNameValue,
         dose: doseValue,
         unit: unitValue
       });
       
+      // Set values one by one with logging
+      console.log('[applyLastDose] Setting substance name...');
       setSubstanceName(substanceNameValue);
+      console.log('[applyLastDose] Setting substance name hint...');
       setSubstanceNameHint(lastDose.substanceName ? 'From your last dose' : 'Substance name was not saved - please update');
+      console.log('[applyLastDose] Setting dose...');
       setDose(doseValue);
+      console.log('[applyLastDose] Setting unit...');
       setUnit(unitValue);
       
+      console.log('[applyLastDose] ========== SETTING SYRINGE INFO ==========');
       // Apply syringe information if available
       if (lastDose.syringeType) {
         // We need to determine the volume from the last dose data
         // For now, use default volumes but we could enhance this later
         const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
+        console.log('[applyLastDose] Setting syringe:', { type: lastDose.syringeType, volume: defaultVolume });
         setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
         setSyringeHint('Syringe type from your last dose');
-        console.log('[applyLastDose] Set syringe:', { type: lastDose.syringeType, volume: defaultVolume });
       } else {
         // Use default syringe if no previous syringe type
+        console.log('[applyLastDose] Setting default syringe');
         setManualSyringe({ type: 'Standard', volume: '3 ml' });
         setSyringeHint(null);
-        console.log('[applyLastDose] Set default syringe');
       }
       
+      console.log('[applyLastDose] ========== SETTING INJECTION SITE ==========');
       // Set injection site if available
       if (lastDose.injectionSite) {
+        console.log('[applyLastDose] Setting injection site:', lastDose.injectionSite);
         setSelectedInjectionSite(lastDose.injectionSite);
-        console.log('[applyLastDose] Set injection site:', lastDose.injectionSite);
       }
       
+      console.log('[applyLastDose] ========== SETTING CONCENTRATION INFO ==========');
       // For concentration data, we'll need to make some assumptions since we don't store
       // the original concentration values. We can calculate them from the dose and volume if available
       if (lastDose.calculatedVolume && lastDose.doseValue) {
@@ -633,11 +644,15 @@ export default function NewDoseScreen() {
           concentrationAmount: concentrationAmountValue
         });
         
+        console.log('[applyLastDose] Setting concentration amount...');
         setConcentrationAmount(concentrationAmountValue);
+        console.log('[applyLastDose] Setting medication input type...');
         setMedicationInputType('concentration');
+        console.log('[applyLastDose] Setting concentration hint...');
         setConcentrationHint('Calculated from your last dose');
         
         // Set concentration unit based on dose unit
+        console.log('[applyLastDose] Setting concentration unit based on dose unit:', lastDose.unit);
         if (lastDose.unit === 'mg') {
           setConcentrationUnit('mg/ml');
         } else if (lastDose.unit === 'mcg') {
@@ -647,6 +662,7 @@ export default function NewDoseScreen() {
         }
         
         // Clear total amount fields when using concentration
+        console.log('[applyLastDose] Clearing total amount fields...');
         setTotalAmount('');
         setSolutionVolume('');
         setTotalAmountHint(null);
@@ -662,23 +678,23 @@ export default function NewDoseScreen() {
         setSolutionVolume('');
       }
       
+      console.log('[applyLastDose] ========== SETTING MANUAL STEP ==========');
       // Navigate to the dose step in manual entry - do this AFTER all state is set
-      // Use setTimeout to ensure all state updates are processed first
-      setTimeout(() => {
-        setManualStep('dose');
-        console.log('[applyLastDose] Manual step set to dose after timeout');
-      }, 0);
+      console.log('[applyLastDose] Setting manual step to dose...');
+      setManualStep('dose');
       
-      console.log('[applyLastDose] Successfully applied last dose, current state should be:', {
+      console.log('[applyLastDose] ========== APPLY LAST DOSE COMPLETE ==========');
+      console.log('[applyLastDose] Successfully applied last dose, final state should be:', {
         dose: doseValue,
         unit: unitValue,
         substanceName: substanceNameValue,
         medicationInputType: 'concentration',
-        manualStep: 'dose (will be set after timeout)'
+        manualStep: 'dose'
       });
       
       return true;
     } catch (error) {
+      console.error('[applyLastDose] ========== ERROR IN APPLY LAST DOSE ==========');
       console.error('[applyLastDose] Error applying last dose:', error);
       return false;
     }

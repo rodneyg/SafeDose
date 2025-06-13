@@ -292,30 +292,36 @@ export default function IntroScreen({
   const handleUseLastDosePress = useCallback(async () => {
     if (!applyLastDose || isLoadingLastDose) return;
     
-    console.log('[IntroScreen] Use Last Dose button pressed');
+    console.log('[IntroScreen] ========== USE LAST DOSE BUTTON PRESSED ==========');
     setIsLoadingLastDose(true);
     setNavigatingFromIntro?.(true);
     
     try {
+      console.log('[IntroScreen] Calling applyLastDose...');
       const success = await applyLastDose();
       console.log('[IntroScreen] Apply last dose result:', success);
       
       if (success) {
-        console.log('[IntroScreen] Successfully applied last dose, navigating to manual entry');
+        console.log('[IntroScreen] ========== SUCCESS - NAVIGATING TO MANUAL ENTRY ==========');
         setScreenStep('manualEntry');
+        console.log('[IntroScreen] Screen step set to manualEntry');
       } else {
-        console.log('[IntroScreen] Failed to apply last dose, falling back to manual entry');
+        console.log('[IntroScreen] ========== FAILURE - FALLING BACK TO REGULAR MANUAL ENTRY ==========');
         // If applying last dose failed, fall back to regular manual entry
         resetFullForm('dose');
         setScreenStep('manualEntry');
+        console.log('[IntroScreen] Reset form and set screen step to manualEntry');
       }
     } catch (error) {
+      console.error('[IntroScreen] ========== ERROR - FALLING BACK TO REGULAR MANUAL ENTRY ==========');
       console.error('[IntroScreen] Error applying last dose:', error);
       // Fall back to regular manual entry
       resetFullForm('dose');
       setScreenStep('manualEntry');
+      console.log('[IntroScreen] Reset form and set screen step to manualEntry after error');
     } finally {
       setIsLoadingLastDose(false);
+      console.log('[IntroScreen] ========== USE LAST DOSE FLOW COMPLETE ==========');
     }
   }, [applyLastDose, resetFullForm, setScreenStep, setNavigatingFromIntro, isLoadingLastDose]);
 
