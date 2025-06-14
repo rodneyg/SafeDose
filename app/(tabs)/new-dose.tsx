@@ -139,6 +139,43 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
   }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+
+  // Prefill data from last logged dose
+  useEffect(() => {
+    const applyLastDose = async () => {
+      if (searchParams.prefillLastDose !== 'true') return;
+      if (prefillAppliedRef.current) return;
+      if (doseCalculator.screenStep !== 'intro') return;
+
+      try {
+        const logs = await getDoseLogHistory();
+        if (!logs || logs.length === 0) return;
+        const last = logs[0];
+        prefillAppliedRef.current = true;
+
+        doseCalculator.setDose(last.doseValue.toString());
+        doseCalculator.setUnit(last.unit as any);
+        doseCalculator.setSubstanceName(last.substanceName);
+        doseCalculator.setMedicationInputType('concentration');
+        if (last.unit !== 'mL' && last.calculatedVolume) {
+          const conc = last.doseValue / last.calculatedVolume;
+          const unit = `${last.unit}/ml` as 'mg/ml' | 'mcg/ml' | 'units/ml';
+          doseCalculator.setConcentrationAmount(conc.toString());
+          doseCalculator.setConcentrationUnit(unit);
+        }
+        if (last.syringeType) {
+          doseCalculator.setManualSyringe({ type: last.syringeType, volume: last.syringeType === 'Insulin' ? '1 ml' : '3 ml' });
+        }
+
+        doseCalculator.setManualStep('dose');
+        doseCalculator.setScreenStep('manualEntry');
+      } catch (error) {
+        console.error('Error applying last dose prefill:', error);
+      }
+    };
+
+    applyLastDose();
+  }, [searchParams.prefillLastDose, doseCalculator.screenStep, getDoseLogHistory]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {

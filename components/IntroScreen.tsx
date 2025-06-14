@@ -9,6 +9,7 @@ import {
   LogOut,
   Info,
   User,
+  History,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -16,6 +17,7 @@ import { isMobileWeb } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
+import { useDoseLogging } from '../lib/hooks/useDoseLogging';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -216,6 +218,23 @@ export default function IntroScreen({
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
 
+  const { getDoseLogHistory } = useDoseLogging();
+
+  const handleUseLastDosePress = useCallback(async () => {
+    try {
+      const logs = await getDoseLogHistory();
+      if (!logs || logs.length === 0) {
+        Alert.alert('No Logged Doses', 'You have not logged any doses yet.');
+        return;
+      }
+      setNavigatingFromIntro?.(true);
+      router.push('/(tabs)/new-dose?prefillLastDose=true');
+    } catch (error) {
+      console.error('Error loading last dose:', error);
+      Alert.alert('Error', 'Unable to load previous dose.');
+    }
+  }, [getDoseLogHistory, router, setNavigatingFromIntro]);
+
   /* =========================================================================
      RENDER
   ========================================================================= */
@@ -295,6 +314,18 @@ export default function IntroScreen({
                 >
                   <Pill color="#fff" size={20} />
                   <Text style={styles.buttonText}>Manual</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.lastDoseButton,
+                    isMobileWeb && styles.buttonMobile,
+                  ]}
+                  onPress={handleUseLastDosePress}
+                >
+                  <History color="#fff" size={20} />
+                  <Text style={styles.buttonText}>Use Last Dose</Text>
                 </TouchableOpacity>
               </View>
 
@@ -566,6 +597,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#6366f1',
+  },
+  lastDoseButton: {
+    backgroundColor: '#10b981',
   },
   buttonText: {
     color: '#fff',
