@@ -3,7 +3,7 @@ import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDoc
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DoseLog } from '../../types/doseLog';
+import { DoseLog, InjectionSite } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 export function useDoseLogging() {
@@ -16,8 +16,12 @@ export function useDoseLogging() {
   const saveDoseLogLocally = useCallback(async (doseLog: DoseLog) => {
     try {
       const storageKey = `dose_logs_${user?.uid || 'anonymous'}`;
+      console.log('[useDoseLogging] Saving dose log locally with key:', storageKey);
+      
       const existingLogs = await AsyncStorage.getItem(storageKey);
       const logsList: DoseLog[] = existingLogs ? JSON.parse(existingLogs) : [];
+      
+      console.log('[useDoseLogging] Existing logs count:', logsList.length);
       
       logsList.unshift(doseLog); // Add to beginning for recent-first order
       
@@ -27,9 +31,18 @@ export function useDoseLogging() {
       }
       
       await AsyncStorage.setItem(storageKey, JSON.stringify(logsList));
-      console.log('Dose log saved locally:', doseLog.id);
+      console.log('[useDoseLogging] Dose log saved locally:', doseLog.id, 'Total logs:', logsList.length);
+      
+      // Verify the save worked by immediately reading it back
+      const verification = await AsyncStorage.getItem(storageKey);
+      if (verification) {
+        const verifiedLogs = JSON.parse(verification);
+        console.log('[useDoseLogging] Verification: saved logs count =', verifiedLogs.length);
+      } else {
+        console.warn('[useDoseLogging] Warning: Verification failed - no data found after save');
+      }
     } catch (error) {
-      console.error('Error saving dose log locally:', error);
+      console.error('[useDoseLogging] Error saving dose log locally:', error);
     }
   }, [user]);
 
@@ -87,6 +100,13 @@ export function useDoseLogging() {
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
+          
+          // Original user inputs for "Use Last Dose" feature (may not exist in older logs)
+          medicationInputType: data.medicationInputType,
+          concentrationAmount: data.concentrationAmount,
+          concentrationUnit: data.concentrationUnit,
+          totalAmount: data.totalAmount,
+          solutionVolume: data.solutionVolume,
         });
       });
       
@@ -107,6 +127,14 @@ export function useDoseLogging() {
       calculatedVolume: number | null;
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
+      injectionSite?: InjectionSite | null;
+      
+      // Original user inputs for "Use Last Dose" feature
+      medicationInputType?: 'concentration' | 'totalAmount' | null;
+      concentrationAmount?: string;
+      concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
+      totalAmount?: string;
+      solutionVolume?: string;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -115,16 +143,31 @@ export function useDoseLogging() {
     setIsLogging(true);
     
     try {
+      console.log('[useDoseLogging] Attempting to log dose with info:', {
+        substanceName: doseInfo.substanceName,
+        doseValue: doseInfo.doseValue,
+        unit: doseInfo.unit,
+        calculatedVolume: doseInfo.calculatedVolume,
+        syringeType: doseInfo.syringeType,
+        hasSubstanceName: !!doseInfo.substanceName,
+        hasDoseValue: !!doseInfo.doseValue,
+        hasUnit: !!doseInfo.unit,
+        hasCalculatedVolume: !!doseInfo.calculatedVolume,
+      });
+      
       // Only proceed if we have valid dose info
       if (!doseInfo.doseValue || !doseInfo.calculatedVolume) {
-        console.warn('Incomplete dose info, skipping dose logging');
+        console.warn('[useDoseLogging] Incomplete dose info, skipping dose logging:', {
+          doseValue: doseInfo.doseValue,
+          calculatedVolume: doseInfo.calculatedVolume
+        });
         return { success: false };
       }
 
       // Check if user has reached log limit
       const canLog = await checkLogUsageLimit();
       if (!canLog) {
-        console.log('Log limit reached, cannot save dose log');
+        console.log('[useDoseLogging] Log limit reached, cannot save dose log');
         return { success: false, limitReached: true };
       }
 
@@ -140,7 +183,16 @@ export function useDoseLogging() {
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
+        
+        // Original user inputs for "Use Last Dose" feature
+        medicationInputType: doseInfo.medicationInputType || undefined,
+        concentrationAmount: doseInfo.concentrationAmount || undefined,
+        concentrationUnit: doseInfo.concentrationUnit || undefined,
+        totalAmount: doseInfo.totalAmount || undefined,
+        solutionVolume: doseInfo.solutionVolume || undefined,
       };
+
+      console.log('[useDoseLogging] Created dose log:', doseLog);
 
       // Try to save to Firestore first (for authenticated users)
       const firestoreId = await saveDoseLogToFirestore(doseLog);
@@ -171,13 +223,18 @@ export function useDoseLogging() {
   const getDoseLogHistory = useCallback(async (): Promise<DoseLog[]> => {
     try {
       const storageKey = `dose_logs_${user?.uid || 'anonymous'}`;
+      console.log('[useDoseLogging] Loading dose history with key:', storageKey);
       
       // Load from local storage
       const localLogData = await AsyncStorage.getItem(storageKey);
+      console.log('[useDoseLogging] Raw local storage data:', localLogData ? 'found' : 'not found');
+      
       const localLogs: DoseLog[] = localLogData ? JSON.parse(localLogData) : [];
+      console.log('[useDoseLogging] Parsed local logs count:', localLogs.length);
       
       // Load from Firestore for authenticated users
       const firestoreLogs = await loadDoseLogsFromFirestore();
+      console.log('[useDoseLogging] Firestore logs count:', firestoreLogs.length);
       
       // Merge logs, avoiding duplicates (prioritize local logs)
       const mergedLogs = new Map<string, DoseLog>();
@@ -197,14 +254,29 @@ export function useDoseLogging() {
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
       
+      console.log('[useDoseLogging] Final merged logs count:', allLogs.length);
+      
+      // For debugging - log the first few entries
+      if (allLogs.length > 0) {
+        console.log('[useDoseLogging] First log entry:', {
+          id: allLogs[0].id,
+          substanceName: allLogs[0].substanceName,
+          doseValue: allLogs[0].doseValue,
+          unit: allLogs[0].unit,
+          calculatedVolume: allLogs[0].calculatedVolume,
+          timestamp: allLogs[0].timestamp
+        });
+      }
+      
       // Update local storage with merged logs (for offline access)
       if (firestoreLogs.length > 0) {
         await AsyncStorage.setItem(storageKey, JSON.stringify(allLogs.slice(0, 100)));
+        console.log('[useDoseLogging] Updated local storage with merged logs');
       }
       
       return allLogs;
     } catch (error) {
-      console.error('Error loading dose log history:', error);
+      console.error('[useDoseLogging] Error loading dose log history:', error);
       return [];
     }
   }, [user, loadDoseLogsFromFirestore]);

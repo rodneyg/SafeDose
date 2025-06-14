@@ -22,6 +22,13 @@ export interface DoseLog {
   timestamp: string;
   notes?: string; // Optional notes entered by user at logging time
   firestoreId?: string; // Firestore document ID for sync purposes
+  
+  // Original user inputs for "Use Last Dose" feature
+  medicationInputType?: 'concentration' | 'totalAmount'; // How user entered medication data
+  concentrationAmount?: string; // Original concentration amount entered
+  concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Original concentration unit
+  totalAmount?: string; // Original total amount in vial
+  solutionVolume?: string; // Original solution volume entered
 }
 
 export interface DoseLogContext {
@@ -32,4 +39,11 @@ export interface DoseLogContext {
   syringeType?: 'Insulin' | 'Standard' | null;
   recommendedMarking?: string | null;
   injectionSite?: InjectionSite | null;
+  
+  // Original user inputs for "Use Last Dose" feature
+  medicationInputType?: 'concentration' | 'totalAmount' | null;
+  concentrationAmount?: string;
+  concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
+  totalAmount?: string;
+  solutionVolume?: string;
 }

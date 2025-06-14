@@ -120,6 +120,25 @@ export default function ManualEntryScreen({
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
   }, []); // Empty dependency array ensures this runs only on mount
 
+  // Debug: Log the props being received to diagnose "Use Last Dose" prefill issue
+  useEffect(() => {
+    console.log('[ManualEntryScreen] ========== PROPS RECEIVED ==========');
+    console.log('[ManualEntryScreen] Props received:', {
+      manualStep,
+      dose: dose || '(empty)',
+      unit,
+      substanceName: substanceName || '(empty)',
+      medicationInputType,
+      concentrationAmount: concentrationAmount || '(empty)',
+      concentrationUnit,
+      substanceNameHint: substanceNameHint || '(none)',
+      concentrationHint: concentrationHint || '(none)',
+      syringeHint: syringeHint || '(none)',
+      manualSyringe: manualSyringe || '(none)'
+    });
+    console.log('[ManualEntryScreen] ==========================================');
+  }, [manualStep, dose, unit, substanceName, medicationInputType, concentrationAmount, concentrationUnit, substanceNameHint, concentrationHint, syringeHint, manualSyringe]);
+
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
     return Boolean(dose && !isNaN(parseFloat(dose)));

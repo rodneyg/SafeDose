@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Camera as CameraIcon,
   Pill,
@@ -9,6 +10,7 @@ import {
   LogOut,
   Info,
   User,
+  RotateCcw,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -16,7 +18,8 @@ import { isMobileWeb } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
-import { useRouter } from 'expo-router';
+import { useDoseLogging } from '../lib/hooks/useDoseLogging';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
@@ -34,21 +37,28 @@ interface IntroScreenProps {
       | 'finalResult',
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
+  applyLastDose?: () => Promise<boolean>;
 }
 
 export default function IntroScreen({
   setScreenStep,
   resetFullForm,
   setNavigatingFromIntro,
+  applyLastDose,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
+  const { getDoseLogHistory } = useDoseLogging();
   const router = useRouter();
 
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
+  
+  // State for last dose functionality
+  const [hasLastDose, setHasLastDose] = useState(false);
+  const [isLoadingLastDose, setIsLoadingLastDose] = useState(false);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -57,6 +67,81 @@ export default function IntroScreen({
     console.log('[IntroScreen] mounted');
     return () => console.log('[IntroScreen] unmounted');
   }, []);
+
+  /* =========================================================================
+     LAST DOSE AVAILABILITY CHECK
+  ========================================================================= */
+  const checkLastDoseAvailability = useCallback(async () => {
+    try {
+      console.log('[IntroScreen] Checking last dose availability...');
+      console.log('[IntroScreen] Current user:', user ? { uid: user.uid, isAnonymous: user.isAnonymous } : 'No user');
+      
+      // First check if onboarding is complete - only show "Use Last Dose" if onboarding is done
+      // This prevents the scenario where users have dose history but get redirected to onboarding
+      const onboardingComplete = await AsyncStorage.getItem('onboardingComplete');
+      console.log('[IntroScreen] Onboarding complete status:', onboardingComplete);
+      
+      if (onboardingComplete !== 'true') {
+        console.log('[IntroScreen] Onboarding not complete, hiding Use Last Dose button');
+        setHasLastDose(false);
+        return;
+      }
+      
+      const doseHistory = await getDoseLogHistory();
+      console.log('[IntroScreen] Dose history length:', doseHistory.length);
+      
+      // Debug: Log first few entries if they exist
+      if (doseHistory.length > 0) {
+        console.log('[IntroScreen] First dose log:', {
+          substanceName: doseHistory[0].substanceName,
+          doseValue: doseHistory[0].doseValue,
+          unit: doseHistory[0].unit,
+          calculatedVolume: doseHistory[0].calculatedVolume,
+          timestamp: doseHistory[0].timestamp,
+          hasSubstanceName: !!doseHistory[0].substanceName,
+          hasDoseValue: !!doseHistory[0].doseValue,
+          hasUnit: !!doseHistory[0].unit,
+          hasCalculatedVolume: !!doseHistory[0].calculatedVolume,
+        });
+      }
+      
+      // Check if we have at least one complete dose log
+      // Relaxed validation - just need doseValue and calculatedVolume to show the button
+      // This allows for cases where substanceName might be empty but we still have usable dose data
+      const hasValidLastDose = doseHistory.length > 0 && 
+        doseHistory[0].doseValue && 
+        doseHistory[0].calculatedVolume;
+      
+      console.log('[IntroScreen] Has valid last dose:', hasValidLastDose);
+      if (hasValidLastDose) {
+        console.log('[IntroScreen] Last dose details:', {
+          substance: doseHistory[0].substanceName || '(no name)',
+          dose: doseHistory[0].doseValue,
+          unit: doseHistory[0].unit || '(no unit)',
+          volume: doseHistory[0].calculatedVolume,
+          timestamp: doseHistory[0].timestamp
+        });
+      }
+      
+      setHasLastDose(!!hasValidLastDose);
+    } catch (error) {
+      console.error('[IntroScreen] Error checking last dose:', error);
+      setHasLastDose(false);
+    }
+  }, [getDoseLogHistory, user]);
+
+  // Check for last dose on mount and when user changes
+  useEffect(() => {
+    checkLastDoseAvailability();
+  }, [checkLastDoseAvailability, user?.uid]);
+
+  // Re-check when screen comes into focus (e.g., after completing a dose)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[IntroScreen] Screen focused, re-checking last dose availability...');
+      checkLastDoseAvailability();
+    }, [checkLastDoseAvailability])
+  );
 
   /* =========================================================================
      HANDLERS
@@ -216,6 +301,45 @@ export default function IntroScreen({
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
 
+  const handleUseLastDosePress = useCallback(async () => {
+    if (!applyLastDose || isLoadingLastDose) return;
+    
+    console.log('[IntroScreen] ========== USE LAST DOSE BUTTON PRESSED ==========');
+    setIsLoadingLastDose(true);
+    setNavigatingFromIntro?.(true);
+    
+    try {
+      console.log('[IntroScreen] Calling applyLastDose...');
+      const success = await applyLastDose();
+      console.log('[IntroScreen] Apply last dose result:', success);
+      
+      if (success) {
+        console.log('[IntroScreen] ========== SUCCESS - NAVIGATING TO MANUAL ENTRY ==========');
+        // Add a longer delay to ensure all state updates from applyLastDose are processed
+        setTimeout(() => {
+          setScreenStep('manualEntry');
+          console.log('[IntroScreen] Screen step set to manualEntry after delay');
+        }, 250);
+      } else {
+        console.log('[IntroScreen] ========== FAILURE - USING MANUAL ENTRY WITHOUT RESET ==========');
+        // If applying last dose failed, just go to manual entry without resetting
+        // This preserves any partial state that might have been set
+        setScreenStep('manualEntry');
+        console.log('[IntroScreen] Set screen step to manualEntry without reset');
+      }
+    } catch (error) {
+      console.error('[IntroScreen] ========== ERROR - USING MANUAL ENTRY WITHOUT RESET ==========');
+      console.error('[IntroScreen] Error applying last dose:', error);
+      // On error, just go to manual entry without resetting
+      // This preserves any partial state that might have been set
+      setScreenStep('manualEntry');
+      console.log('[IntroScreen] Set screen step to manualEntry without reset after error');
+    } finally {
+      setIsLoadingLastDose(false);
+      console.log('[IntroScreen] ========== USE LAST DOSE FLOW COMPLETE ==========');
+    }
+  }, [applyLastDose, setScreenStep, setNavigatingFromIntro, isLoadingLastDose]);
+
   /* =========================================================================
      RENDER
   ========================================================================= */
@@ -296,7 +420,37 @@ export default function IntroScreen({
                   <Pill color="#fff" size={20} />
                   <Text style={styles.buttonText}>Manual</Text>
                 </TouchableOpacity>
+
+                {hasLastDose && (
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.tertiaryButton,
+                      isMobileWeb && styles.buttonMobile,
+                      isLoadingLastDose && styles.buttonDisabled,
+                    ]}
+                    onPress={handleUseLastDosePress}
+                    disabled={isLoadingLastDose}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use Last Dose"
+                    accessibilityHint="Prefill form with values from your most recent dose"
+                  >
+                    <RotateCcw color="#fff" size={20} />
+                    <Text style={styles.buttonText}>
+                      {isLoadingLastDose ? 'Loading...' : 'Use Last'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
+
+              {/* Use Last Dose Hint */}
+              {hasLastDose && (
+                <View style={styles.useLastDoseHintContainer}>
+                  <Text style={styles.useLastDoseHintText}>
+                    💡 "Use Last" prefills your most recent dose settings
+                  </Text>
+                </View>
+              )}
 
               {/* Plan Reconstitution Link */}
               <TouchableOpacity 
@@ -530,19 +684,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    gap: 20,
+    gap: 16, // Reduced gap to accommodate 3 buttons
+    flexWrap: 'wrap', // Allow wrapping on very small screens
   },
   actionButtonsContainerMobile: {
     marginBottom: 20, // Reduced margin for small screens
-    gap: 16, // Smaller gap between buttons
+    gap: 12, // Smaller gap between buttons for 3 buttons
   },
   button: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    width: 100,
-    height: 100,
+    width: 90, // Slightly smaller to fit 3 buttons
+    height: 90, // Slightly smaller to fit 3 buttons
     padding: 16,
     borderRadius: 16,
     shadowColor: '#000',
@@ -554,8 +709,8 @@ const styles = StyleSheet.create({
   buttonMobile: {
     paddingVertical: 12, // Reduced padding for small screens
     paddingHorizontal: 12, // Reduced padding for small screens
-    width: 90, // Smaller width for small screens
-    height: 90, // Smaller height for small screens
+    width: 80, // Smaller width for small screens with 3 buttons
+    height: 80, // Smaller height for small screens with 3 buttons
     gap: 6, // Smaller gap between icon and text
   },
   primaryButton: {
@@ -567,11 +722,31 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#6366f1',
   },
+  tertiaryButton: {
+    backgroundColor: '#10b981',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+
+  /* Use Last Dose Hint */
+  useLastDoseHintContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+    paddingHorizontal: 20,
+  },
+  useLastDoseHintText: {
+    fontSize: 12,
+    color: '#10b981',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 
   /* Scan status */

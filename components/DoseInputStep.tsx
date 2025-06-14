@@ -12,6 +12,17 @@ type Props = {
 };
 
 export default function DoseInputStep({ dose, setDose, unit, setUnit, formError, validateInput }: Props) {
+  // Debug: Log when dose values change
+  React.useEffect(() => {
+    console.log('[DoseInputStep] ========== DOSE INPUT STEP RENDERED ==========');
+    console.log('[DoseInputStep] Received props:', { 
+      dose: dose || '(empty)', 
+      unit,
+      formError: formError || '(none)'
+    });
+    console.log('[DoseInputStep] ================================================');
+  }, [dose, unit, formError]);
+
   // Validate dose input on change
   const handleDoseChange = (value: string) => {
     setDose(value);
