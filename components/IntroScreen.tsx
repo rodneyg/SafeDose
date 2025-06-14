@@ -7,6 +7,7 @@ import {
   Syringe,
   LogIn,
   LogOut,
+  RotateCcw,
   Info,
   User,
 } from 'lucide-react-native';
@@ -16,6 +17,7 @@ import { isMobileWeb } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
+import { useDoseLogging } from '../lib/hooks/useDoseLogging';
 import { useRouter } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -49,6 +51,8 @@ export default function IntroScreen({
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showWebLogoutModal, setShowWebLogoutModal] = useState(false);
+  const { getDoseLogHistory } = useDoseLogging();
+  const [lastDose, setLastDose] = useState<import('../types/doseLog').DoseLog | null>(null);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -57,6 +61,20 @@ export default function IntroScreen({
     console.log('[IntroScreen] mounted');
     return () => console.log('[IntroScreen] unmounted');
   }, []);
+
+  useEffect(() => {
+    const loadLastDose = async () => {
+      try {
+        const history = await getDoseLogHistory();
+        if (history.length > 0) {
+          setLastDose(history[0]);
+        }
+      } catch (error) {
+        console.error('Error loading last dose:', error);
+      }
+    };
+    loadLastDose();
+  }, [getDoseLogHistory]);
 
   /* =========================================================================
      HANDLERS
@@ -216,6 +234,12 @@ export default function IntroScreen({
     setScreenStep('manualEntry');
   }, [resetFullForm, setScreenStep, setNavigatingFromIntro]);
 
+  const handleUseLastDosePress = useCallback(() => {
+    setNavigatingFromIntro?.(true);
+    resetFullForm('dose');
+    router.push('/(tabs)/new-dose?repeatLast=1');
+  }, [resetFullForm, router, setNavigatingFromIntro]);
+
   /* =========================================================================
      RENDER
   ========================================================================= */
@@ -296,6 +320,20 @@ export default function IntroScreen({
                   <Pill color="#fff" size={20} />
                   <Text style={styles.buttonText}>Manual</Text>
                 </TouchableOpacity>
+
+                {lastDose && (
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.secondaryButton,
+                      isMobileWeb && styles.buttonMobile,
+                    ]}
+                    onPress={handleUseLastDosePress}
+                  >
+                    <RotateCcw color="#fff" size={20} />
+                    <Text style={styles.buttonText}>Use Last Dose</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Plan Reconstitution Link */}

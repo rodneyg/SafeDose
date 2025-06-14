@@ -139,6 +139,42 @@ export default function NewDoseScreen() {
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
   }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+
+  // Handle prefill from the most recent dose log
+  useEffect(() => {
+    const repeatLast = searchParams.repeatLast as string;
+
+    if (repeatLast && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+      const applyLastDose = async () => {
+        try {
+          const history = await getDoseLogHistory();
+          if (history.length === 0) return;
+          const last = history[0];
+
+          doseCalculator.setDose(String(last.doseValue));
+          doseCalculator.setDoseValue(last.doseValue);
+          doseCalculator.setUnit(last.unit as any);
+          doseCalculator.setSubstanceName(last.substanceName);
+          doseCalculator.setCalculatedVolume(last.calculatedVolume);
+          if (last.recommendedMarking) {
+            doseCalculator.setRecommendedMarking(last.recommendedMarking);
+          }
+          if (last.syringeType) {
+            const defaultVolume = last.syringeType === 'Insulin' ? '1 ml' : '3 ml';
+            doseCalculator.setManualSyringe({ type: last.syringeType, volume: defaultVolume });
+          }
+
+          prefillAppliedRef.current = true;
+          doseCalculator.setManualStep('finalResult');
+          doseCalculator.setScreenStep('manualEntry');
+        } catch (error) {
+          console.error('Error applying last dose prefill:', error);
+        }
+      };
+
+      applyLastDose();
+    }
+  }, [searchParams.repeatLast, doseCalculator.screenStep, getDoseLogHistory]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
