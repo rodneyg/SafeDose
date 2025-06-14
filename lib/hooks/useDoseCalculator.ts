@@ -525,6 +525,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
         injectionSite: selectedInjectionSite,
+        // Add original user inputs for "Use Last Dose" feature
+        medicationInputType,
+        concentrationAmount,
+        concentrationUnit,
+        totalAmount,
+        solutionVolume,
       },
     });
     

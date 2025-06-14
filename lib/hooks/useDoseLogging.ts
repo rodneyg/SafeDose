@@ -100,6 +100,13 @@ export function useDoseLogging() {
           timestamp: data.timestamp,
           notes: data.notes,
           firestoreId: doc.id, // Store the Firestore document ID
+          
+          // Original user inputs for "Use Last Dose" feature (may not exist in older logs)
+          medicationInputType: data.medicationInputType,
+          concentrationAmount: data.concentrationAmount,
+          concentrationUnit: data.concentrationUnit,
+          totalAmount: data.totalAmount,
+          solutionVolume: data.solutionVolume,
         });
       });
       
@@ -121,6 +128,13 @@ export function useDoseLogging() {
       syringeType?: 'Insulin' | 'Standard' | null;
       recommendedMarking?: string | null;
       injectionSite?: InjectionSite | null;
+      
+      // Original user inputs for "Use Last Dose" feature
+      medicationInputType?: 'concentration' | 'totalAmount' | null;
+      concentrationAmount?: string;
+      concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
+      totalAmount?: string;
+      solutionVolume?: string;
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean }> => {
@@ -169,6 +183,13 @@ export function useDoseLogging() {
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
+        
+        // Original user inputs for "Use Last Dose" feature
+        medicationInputType: doseInfo.medicationInputType || undefined,
+        concentrationAmount: doseInfo.concentrationAmount || undefined,
+        concentrationUnit: doseInfo.concentrationUnit || undefined,
+        totalAmount: doseInfo.totalAmount || undefined,
+        solutionVolume: doseInfo.solutionVolume || undefined,
       };
 
       console.log('[useDoseLogging] Created dose log:', doseLog);

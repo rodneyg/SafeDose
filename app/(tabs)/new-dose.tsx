@@ -590,7 +590,14 @@ export default function NewDoseScreen() {
         dose: doseValue,
         unit: unitValue,
         syringeType: lastDose.syringeType,
-        injectionSite: lastDose.injectionSite
+        injectionSite: lastDose.injectionSite,
+        medicationInputType: lastDose.medicationInputType,
+        originalData: {
+          concentrationAmount: lastDose.concentrationAmount,
+          concentrationUnit: lastDose.concentrationUnit,
+          totalAmount: lastDose.totalAmount,
+          solutionVolume: lastDose.solutionVolume,
+        }
       });
       
       // Clear calculation state first
@@ -622,37 +629,77 @@ export default function NewDoseScreen() {
         setSelectedInjectionSite(lastDose.injectionSite);
       }
       
-      // Set concentration data based on last dose calculation
-      if (lastDose.calculatedVolume && lastDose.doseValue) {
-        const calculatedConcentration = lastDose.doseValue / lastDose.calculatedVolume;
-        const concentrationAmountValue = calculatedConcentration.toString();
-        
-        setConcentrationAmount(concentrationAmountValue);
+      // Restore original medication input method and values if available
+      if (lastDose.medicationInputType && lastDose.medicationInputType === 'concentration') {
+        // User originally entered concentration
         setMedicationInputType('concentration');
-        setConcentrationHint('Calculated from your last dose');
+        setConcentrationAmount(lastDose.concentrationAmount || '');
+        setConcentrationUnit((lastDose.concentrationUnit || 'mg/ml') as 'mg/ml' | 'mcg/ml' | 'units/ml');
+        setConcentrationHint('From your last dose');
         
-        // Set concentration unit based on dose unit
-        if (lastDose.unit === 'mg') {
-          setConcentrationUnit('mg/ml');
-        } else if (lastDose.unit === 'mcg') {
-          setConcentrationUnit('mcg/ml');
-        } else if (lastDose.unit === 'units') {
-          setConcentrationUnit('units/ml');
-        }
-        
-        // Clear total amount fields when using concentration
+        // Clear total amount fields
         setTotalAmount('');
         setSolutionVolume('');
         setTotalAmountHint(null);
-      } else {
-        // If we can't calculate concentration, default to total amount mode
+        
+        console.log('[applyLastDose] Restored concentration inputs:', {
+          amount: lastDose.concentrationAmount,
+          unit: lastDose.concentrationUnit
+        });
+        
+      } else if (lastDose.medicationInputType && lastDose.medicationInputType === 'totalAmount') {
+        // User originally entered total amount
         setMedicationInputType('totalAmount');
+        setTotalAmount(lastDose.totalAmount || '');
+        setSolutionVolume(lastDose.solutionVolume || '');
+        setTotalAmountHint('From your last dose');
+        
+        // Clear concentration fields
         setConcentrationAmount('');
         setConcentrationUnit('mg/ml');
         setConcentrationHint(null);
-        setTotalAmountHint('Please enter the medication strength');
-        setTotalAmount('');
-        setSolutionVolume('');
+        
+        console.log('[applyLastDose] Restored total amount inputs:', {
+          totalAmount: lastDose.totalAmount,
+          solutionVolume: lastDose.solutionVolume
+        });
+        
+      } else {
+        // Fallback for older logs without original input data
+        // Try to calculate concentration from dose/volume ratio as before
+        console.log('[applyLastDose] No original input data found, falling back to calculated concentration');
+        
+        if (lastDose.calculatedVolume && lastDose.doseValue) {
+          const calculatedConcentration = lastDose.doseValue / lastDose.calculatedVolume;
+          const concentrationAmountValue = calculatedConcentration.toString();
+          
+          setConcentrationAmount(concentrationAmountValue);
+          setMedicationInputType('concentration');
+          setConcentrationHint('Calculated from your last dose (original input not available)');
+          
+          // Set concentration unit based on dose unit
+          if (lastDose.unit === 'mg') {
+            setConcentrationUnit('mg/ml');
+          } else if (lastDose.unit === 'mcg') {
+            setConcentrationUnit('mcg/ml');
+          } else if (lastDose.unit === 'units') {
+            setConcentrationUnit('units/ml');
+          }
+          
+          // Clear total amount fields
+          setTotalAmount('');
+          setSolutionVolume('');
+          setTotalAmountHint(null);
+        } else {
+          // If we can't calculate concentration, default to total amount mode
+          setMedicationInputType('totalAmount');
+          setConcentrationAmount('');
+          setConcentrationUnit('mg/ml');
+          setConcentrationHint(null);
+          setTotalAmountHint('Please enter the medication strength');
+          setTotalAmount('');
+          setSolutionVolume('');
+        }
       }
       
       // Set to dose step
@@ -666,14 +713,14 @@ export default function NewDoseScreen() {
         dose: doseValue,
         unit: unitValue,
         substanceName: substanceNameValue,
-        medicationInputType: lastDose.calculatedVolume ? 'concentration' : 'totalAmount',
+        medicationInputType: lastDose.medicationInputType || 'concentration',
         manualStep: 'dose'
       });
       
       // Additional debug: Log current state after delay
       console.log('[applyLastDose] 🔍 STATE CHECK: Current dose value after delay:', dose);
       console.log('[applyLastDose] 🔍 STATE CHECK: Current substanceName after delay:', substanceName);
-      console.log('[applyLastDose] 🔍 STATE CHECK: Current concentrationAmount after delay:', concentrationAmount);
+      console.log('[applyLastDose] 🔍 STATE CHECK: Current medicationInputType after delay:', medicationInputType);
       
       return true;
     } catch (error) {
