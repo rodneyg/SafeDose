@@ -184,14 +184,17 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
   }, [resetFullForm, screenStep]);
 
+  // Only initialize once on very first mount
   useEffect(() => {
     if (!isInitialized.current) {
-      resetFullForm('dose');
-      
-      // Ensure we start on intro screen
+      console.log('[useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook');
+      isInitialized.current = true;
       setScreenStep('intro');
+      // Don't reset form here - keep the initial state values
+    } else {
+      console.log('[useDoseCalculator] ✅ Already initialized, skipping setup');
     }
-  }, [resetFullForm]);
+  }, []); // Empty dependency array to run only once
 
   const handleNextDose = useCallback(() => {
     try {
