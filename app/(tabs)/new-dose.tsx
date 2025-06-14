@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -151,6 +151,51 @@ export default function NewDoseScreen() {
     
     doseCalculator.setScreenStep(step);
   }, [doseCalculator, setNavigatingFromIntro]);
+
+  const handleUseLastDose = useCallback(async () => {
+    try {
+      const history = await getDoseLogHistory();
+      if (!history || history.length === 0) {
+        Alert.alert('No Saved Doses', 'You have no previous doses to reuse.');
+        return;
+      }
+
+      const last = history[0];
+
+      setNavigatingFromIntro(true);
+
+      resetFullForm('finalResult');
+
+      setDose(last.doseValue.toString());
+      setDoseValue(last.doseValue);
+      setUnit(last.unit as any);
+      setSubstanceName(last.substanceName);
+      setCalculatedVolume(last.calculatedVolume);
+      setRecommendedMarking(last.recommendedMarking || null);
+
+      setManualSyringe({
+        type: last.syringeType || 'Standard',
+        volume: last.syringeType === 'Insulin' ? '1 ml' : '3 ml',
+      });
+
+      if (last.calculatedVolume) {
+        const conc = last.doseValue / last.calculatedVolume;
+        setConcentration(conc);
+        setCalculatedConcentration(conc);
+        setConcentrationAmount(conc.toString());
+        setMedicationInputType('concentration');
+        if (last.unit === 'mg') setConcentrationUnit('mg/ml');
+        else if (last.unit === 'mcg') setConcentrationUnit('mcg/ml');
+        else if (last.unit === 'units') setConcentrationUnit('units/ml');
+      }
+
+      setManualStep('finalResult');
+      doseCalculator.setScreenStep('manualEntry');
+    } catch (error) {
+      console.error('Error applying last dose', error);
+      Alert.alert('Error', 'Failed to load last dose');
+    }
+  }, [getDoseLogHistory, resetFullForm, setNavigatingFromIntro, setDose, setDoseValue, setUnit, setSubstanceName, setCalculatedVolume, setRecommendedMarking, setManualSyringe, setConcentration, setCalculatedConcentration, setConcentrationAmount, setMedicationInputType, setConcentrationUnit, setManualStep, doseCalculator]);
   
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
@@ -809,6 +854,7 @@ export default function NewDoseScreen() {
           setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
+          onUseLastDose={handleUseLastDose}
         />
       )}
       {screenStep === 'scan' && (
