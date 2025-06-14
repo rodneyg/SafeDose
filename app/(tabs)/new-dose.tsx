@@ -242,7 +242,9 @@ export default function NewDoseScreen() {
     handleCapture,
     // Destructure new state and handlers
     showVolumeErrorModal,
+    setShowVolumeErrorModal,
     volumeErrorValue,
+    setVolumeErrorValue,
     handleCloseVolumeErrorModal,
     handleReEnterVialData,
     // Feedback context

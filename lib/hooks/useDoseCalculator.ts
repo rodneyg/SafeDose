@@ -930,7 +930,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     lastActionType,
     // New state and handlers
     showVolumeErrorModal,
+    setShowVolumeErrorModal,
     volumeErrorValue,
+    setVolumeErrorValue,
     handleCloseVolumeErrorModal,
     handleReEnterVialData,
     // Feedback context
