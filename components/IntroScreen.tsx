@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Camera as CameraIcon,
   Pill,
@@ -74,6 +75,17 @@ export default function IntroScreen({
     try {
       console.log('[IntroScreen] Checking last dose availability...');
       console.log('[IntroScreen] Current user:', user ? { uid: user.uid, isAnonymous: user.isAnonymous } : 'No user');
+      
+      // First check if onboarding is complete - only show "Use Last Dose" if onboarding is done
+      // This prevents the scenario where users have dose history but get redirected to onboarding
+      const onboardingComplete = await AsyncStorage.getItem('onboardingComplete');
+      console.log('[IntroScreen] Onboarding complete status:', onboardingComplete);
+      
+      if (onboardingComplete !== 'true') {
+        console.log('[IntroScreen] Onboarding not complete, hiding Use Last Dose button');
+        setHasLastDose(false);
+        return;
+      }
       
       const doseHistory = await getDoseLogHistory();
       console.log('[IntroScreen] Dose history length:', doseHistory.length);
