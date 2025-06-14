@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -673,6 +673,20 @@ export default function NewDoseScreen() {
     setScreenStep('scan');
   }, [doseCalculator, setScreenStep]);
 
+  const handleUseLastDose = useCallback(async () => {
+    try {
+      const history = await getDoseLogHistory();
+      if (history && history.length > 0) {
+        doseCalculator.applyDoseLog(history[0]);
+        setNavigatingFromIntro(true);
+      } else {
+        Alert.alert('No Previous Dose', 'You have not logged any doses yet.');
+      }
+    } catch (err) {
+      console.error('[NewDoseScreen] Failed to apply last dose:', err);
+    }
+  }, [getDoseLogHistory, doseCalculator, setNavigatingFromIntro]);
+
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
     
@@ -809,6 +823,7 @@ export default function NewDoseScreen() {
           setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
+          onUseLastDose={handleUseLastDose}
         />
       )}
       {screenStep === 'scan' && (

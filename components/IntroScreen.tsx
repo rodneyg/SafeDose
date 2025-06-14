@@ -9,6 +9,7 @@ import {
   LogOut,
   Info,
   User,
+  RotateCcw,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -34,12 +35,14 @@ interface IntroScreenProps {
       | 'finalResult',
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
+  onUseLastDose?: () => void;
 }
 
 export default function IntroScreen({
   setScreenStep,
   resetFullForm,
   setNavigatingFromIntro,
+  onUseLastDose,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
@@ -296,6 +299,20 @@ export default function IntroScreen({
                   <Pill color="#fff" size={20} />
                   <Text style={styles.buttonText}>Manual</Text>
                 </TouchableOpacity>
+
+                {onUseLastDose && (
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.secondaryButton,
+                      isMobileWeb && styles.buttonMobile,
+                    ]}
+                    onPress={onUseLastDose}
+                  >
+                    <RotateCcw color="#fff" size={20} />
+                    <Text style={styles.buttonText}>Use Last Dose</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Plan Reconstitution Link */}

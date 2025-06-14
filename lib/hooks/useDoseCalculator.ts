@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
-import { InjectionSite } from '../../types/doseLog';
+import { InjectionSite, DoseLog } from '../../types/doseLog';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import { useDoseLogging } from './useDoseLogging';
 import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
@@ -183,6 +183,34 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setStateHealth('recovering');
     }
   }, [resetFullForm, screenStep]);
+
+  const applyDoseLog = useCallback(
+    (log: DoseLog) => {
+      try {
+        setDose(String(log.doseValue));
+        setDoseValue(log.doseValue);
+        setUnit(log.unit as 'mg' | 'mcg' | 'units' | 'mL');
+        setSubstanceName(log.substanceName);
+        setCalculatedVolume(log.calculatedVolume);
+        if (log.recommendedMarking) {
+          setRecommendedMarking(log.recommendedMarking);
+        }
+        if (log.syringeType) {
+          const defaultVolume = log.syringeType === 'Insulin' ? '1 ml' : '3 ml';
+          setManualSyringe({ type: log.syringeType, volume: defaultVolume });
+        }
+        if (log.injectionSite) {
+          setSelectedInjectionSite(log.injectionSite);
+        }
+        setManualStep('finalResult');
+        safeSetScreenStep('manualEntry');
+        setLastActionType('manual');
+      } catch (error) {
+        console.error('[useDoseCalculator] Error applying dose log:', error);
+      }
+    },
+    [safeSetScreenStep]
+  );
 
   useEffect(() => {
     if (!isInitialized.current) {
@@ -953,5 +981,6 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setSelectedInjectionSite,
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
+    applyDoseLog,
   };
 }
