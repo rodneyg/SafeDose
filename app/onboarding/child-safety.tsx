@@ -8,19 +8,22 @@ import { isMobileWeb } from '@/lib/utils';
 
 export default function ChildSafety() {
   const router = useRouter();
-  const { age } = useLocalSearchParams<{ age: string }>();
+  const { age, birthDate } = useLocalSearchParams<{ age: string; birthDate?: string }>();
 
   const handleContinue = useCallback(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.CHILD_SAFETY_CONTINUE, {
       age: age ? parseInt(age) : null
     });
     
-    // Continue to demo with age information
+    // Continue to demo with age and birth date information
     router.push({
       pathname: '/onboarding/demo',
-      params: { age: age || '' }
+      params: { 
+        age: age || '',
+        birthDate: birthDate || ''
+      }
     });
-  }, [age, router]);
+  }, [age, birthDate, router]);
 
   const handleSeekHelp = useCallback(async () => {
     logAnalyticsEvent(ANALYTICS_EVENTS.CHILD_SAFETY_SEEK_HELP, {

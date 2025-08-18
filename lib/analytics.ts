@@ -51,7 +51,11 @@ export const ANALYTICS_EVENTS = {
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
   SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
-  // Age collection and safety events
+  // Birth date collection and safety events
+  BIRTH_DATE_COLLECTION_SHOWN: 'birth_date_collection_shown',
+  BIRTH_DATE_COLLECTION_COMPLETED: 'birth_date_collection_completed',
+  BIRTH_DATE_COLLECTION_SKIPPED: 'birth_date_collection_skipped',
+  // Legacy age collection events (for backwards compatibility)
   AGE_COLLECTION_SHOWN: 'age_collection_shown',
   AGE_COLLECTION_COMPLETED: 'age_collection_completed',
   AGE_COLLECTION_SKIPPED: 'age_collection_skipped',

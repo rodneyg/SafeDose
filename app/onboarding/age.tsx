@@ -1,59 +1,112 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react-native';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { isMobileWeb } from '@/lib/utils';
+import DatePickerSelect from '@/components/ui/DatePickerSelect';
+import {
+  calculateAge,
+  validateBirthDate,
+  getMonthOptions,
+  getDayOptions,
+  getYearOptions,
+  formatBirthDateForDisplay
+} from '@/lib/birthDateUtils';
 
-export default function AgeCollection() {
+export default function BirthDateCollection() {
   const router = useRouter();
-  const [age, setAge] = useState('');
-  const [isValid, setIsValid] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [validationError, setValidationError] = useState('');
 
-  const handleAgeChange = useCallback((text: string) => {
-    // Only allow numbers
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setAge(numericValue);
+  // Calculate if current selection is valid
+  const isComplete = selectedMonth && selectedDay && selectedYear;
+  const birthDate = isComplete ? `${selectedYear}-${selectedMonth}-${selectedDay}` : '';
+  const validation = isComplete ? validateBirthDate(birthDate) : { isValid: false };
+  const isValid = validation.isValid;
+
+  const handleMonthChange = useCallback((month: string) => {
+    setSelectedMonth(month);
+    setValidationError('');
     
-    // Validate age (reasonable range 13-120)
-    const ageNum = parseInt(numericValue);
-    setIsValid(ageNum >= 13 && ageNum <= 120);
+    // Reset day if it's invalid for the new month
+    if (selectedDay && selectedYear && month) {
+      const daysInMonth = getDayOptions(month, selectedYear);
+      const dayExists = daysInMonth.some(day => day.value === selectedDay);
+      if (!dayExists) {
+        setSelectedDay('');
+      }
+    }
+  }, [selectedDay, selectedYear]);
+
+  const handleDayChange = useCallback((day: string) => {
+    setSelectedDay(day);
+    setValidationError('');
   }, []);
 
-  const handleContinue = useCallback(() => {
-    const ageNum = parseInt(age);
+  const handleYearChange = useCallback((year: string) => {
+    setSelectedYear(year);
+    setValidationError('');
     
-    if (!isValid || !ageNum) {
-      Alert.alert('Invalid Age', 'Please enter a valid age between 13 and 120.');
+    // Reset day if it's invalid for the new year (e.g., Feb 29 in non-leap year)
+    if (selectedDay && selectedMonth && year) {
+      const daysInMonth = getDayOptions(selectedMonth, year);
+      const dayExists = daysInMonth.some(day => day.value === selectedDay);
+      if (!dayExists) {
+        setSelectedDay('');
+      }
+    }
+  }, [selectedDay, selectedMonth]);
+
+  const handleContinue = useCallback(() => {
+    if (!isComplete) {
+      setValidationError('Please select your complete birth date');
       return;
     }
 
+    if (!isValid) {
+      setValidationError(validation.error || 'Please enter a valid birth date');
+      return;
+    }
+
+    const age = calculateAge(birthDate);
+    
     // Log analytics
-    logAnalyticsEvent(ANALYTICS_EVENTS.AGE_COLLECTION_COMPLETED, {
-      age: ageNum,
-      age_range: ageNum < 18 ? 'minor' : ageNum < 65 ? 'adult' : 'senior'
+    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED, {
+      age,
+      birth_year: selectedYear,
+      birth_month: selectedMonth,
+      age_range: age < 18 ? 'minor' : age < 65 ? 'adult' : 'senior'
     });
 
-    // Store age temporarily and route based on age
-    if (ageNum < 18) {
+    // Route based on age (same logic as before)
+    if (age < 18) {
       // Route to child safety screen for minors
       router.push({
         pathname: '/onboarding/child-safety',
-        params: { age: ageNum.toString() }
+        params: { 
+          age: age.toString(),
+          birthDate: birthDate
+        }
       });
     } else {
       // Route to demo for adults
       router.push({
         pathname: '/onboarding/demo',
-        params: { age: ageNum.toString() }
+        params: { 
+          age: age.toString(),
+          birthDate: birthDate
+        }
       });
     }
-  }, [age, isValid, router]);
+  }, [isComplete, isValid, validation, birthDate, selectedYear, selectedMonth, router]);
 
   const handleSkip = useCallback(() => {
-    logAnalyticsEvent(ANALYTICS_EVENTS.AGE_COLLECTION_SKIPPED);
-    // Continue to demo without age information
+    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
+    // Continue to demo without birth date information
     router.push('/onboarding/demo');
   }, [router]);
 
@@ -62,8 +115,17 @@ export default function AgeCollection() {
   }, [router]);
 
   React.useEffect(() => {
-    logAnalyticsEvent(ANALYTICS_EVENTS.AGE_COLLECTION_SHOWN);
+    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SHOWN);
   }, []);
+
+  // Progressive disclosure: only show day picker after month is selected
+  const showDayPicker = selectedMonth !== '';
+  // Only show year picker after both month and day are selected (optional UX choice)
+  const showYearPicker = true; // We'll show all three for better UX
+
+  const monthOptions = getMonthOptions();
+  const dayOptions = getDayOptions(selectedMonth, selectedYear);
+  const yearOptions = getYearOptions();
 
   return (
     <View style={styles.container}>
@@ -76,37 +138,73 @@ export default function AgeCollection() {
             Welcome to SafeDose
           </Text>
           <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
-            To provide you with the most appropriate guidance, could you please share your age?
+            To provide you with the most appropriate guidance, could you please share your birth date?
           </Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.inputSection}>
-          <View style={[styles.inputContainer, isMobileWeb && styles.inputContainerMobile]}>
-            <Text style={[styles.inputLabel, isMobileWeb && styles.inputLabelMobile]}>
-              Age
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                isMobileWeb && styles.inputMobile,
-                !isValid && age.length > 0 && styles.inputError
-              ]}
-              value={age}
-              onChangeText={handleAgeChange}
-              placeholder="Enter your age"
-              placeholderTextColor="#8E8E93"
-              keyboardType="numeric"
-              maxLength={3}
-              autoFocus={!isMobileWeb}
-              accessibilityLabel="Age input"
-              accessibilityHint="Enter your age to continue"
-            />
-            {age.length > 0 && !isValid && (
-              <Text style={[styles.errorText, isMobileWeb && styles.errorTextMobile]}>
-                Please enter a valid age (13-120)
-              </Text>
-            )}
+          <View style={[styles.datePickerContainer, isMobileWeb && styles.datePickerContainerMobile]}>
+            {/* Month Picker */}
+            <View style={styles.pickerWrapper}>
+              <DatePickerSelect
+                label="Month"
+                value={selectedMonth}
+                onValueChange={handleMonthChange}
+                items={monthOptions}
+                placeholder="Select month"
+              />
+            </View>
+
+            {/* Day Picker - Progressive disclosure */}
+            <View style={styles.pickerWrapper}>
+              <DatePickerSelect
+                label="Day"
+                value={selectedDay}
+                onValueChange={handleDayChange}
+                items={dayOptions}
+                placeholder="Select day"
+                disabled={!showDayPicker}
+              />
+            </View>
+
+            {/* Year Picker */}
+            <View style={styles.pickerWrapper}>
+              <DatePickerSelect
+                label="Year"
+                value={selectedYear}
+                onValueChange={handleYearChange}
+                items={yearOptions}
+                placeholder="Select year"
+                disabled={!showYearPicker}
+              />
+            </View>
           </View>
+
+          {/* Birth Date Preview */}
+          {isComplete && (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.previewContainer}>
+              <Text style={[styles.previewLabel, isMobileWeb && styles.previewLabelMobile]}>
+                Birth Date:
+              </Text>
+              <Text style={[styles.previewDate, isMobileWeb && styles.previewDateMobile]}>
+                {formatBirthDateForDisplay(birthDate)}
+              </Text>
+              {isValid && (
+                <Text style={[styles.ageText, isMobileWeb && styles.ageTextMobile]}>
+                  Age: {calculateAge(birthDate)} years
+                </Text>
+              )}
+            </Animated.View>
+          )}
+
+          {/* Error Message */}
+          {validationError && (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.errorContainer}>
+              <Text style={[styles.errorText, isMobileWeb && styles.errorTextMobile]}>
+                {validationError}
+              </Text>
+            </Animated.View>
+          )}
           
           <Text style={[styles.privacyNote, isMobileWeb && styles.privacyNoteMobile]}>
             This information helps us provide age-appropriate guidance and safety features.
@@ -123,7 +221,7 @@ export default function AgeCollection() {
             onPress={handleContinue}
             disabled={!isValid}
             accessibilityRole="button"
-            accessibilityLabel="Continue with age"
+            accessibilityLabel="Continue with birth date"
             accessibilityHint="Proceed to next step"
           >
             <Text style={[
@@ -140,8 +238,8 @@ export default function AgeCollection() {
             style={[styles.skipButton, isMobileWeb && styles.skipButtonMobile]}
             onPress={handleSkip}
             accessibilityRole="button"
-            accessibilityLabel="Skip age entry"
-            accessibilityHint="Continue without providing age"
+            accessibilityLabel="Skip birth date entry"
+            accessibilityHint="Continue without providing birth date"
           >
             <Text style={[styles.skipButtonText, isMobileWeb && styles.skipButtonTextMobile]}>
               Prefer not to answer
@@ -205,38 +303,48 @@ const styles = StyleSheet.create({
   inputSection: {
     alignItems: 'center',
   },
-  inputContainer: {
+  datePickerContainer: {
     width: '100%',
-    maxWidth: 300,
+    maxWidth: 350,
     marginBottom: 24,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+  pickerWrapper: {
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#F9F9F9',
-    borderWidth: 2,
-    borderColor: '#E5E5EA',
+  previewContainer: {
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  previewDate: {
     fontSize: 18,
     fontWeight: '600',
-    textAlign: 'center',
     color: '#000000',
+    marginBottom: 4,
   },
-  inputError: {
-    borderColor: '#FF3B30',
-    backgroundColor: '#FFF5F5',
+  ageText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#007AFF',
+  },
+  errorContainer: {
+    marginBottom: 16,
   },
   errorText: {
     fontSize: 14,
     color: '#FF3B30',
     textAlign: 'center',
-    marginTop: 8,
+    fontWeight: '500',
   },
   privacyNote: {
     fontSize: 14,
@@ -313,17 +421,18 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: '90%',
   },
-  inputContainerMobile: {
-    maxWidth: 280,
+  datePickerContainerMobile: {
+    maxWidth: 320,
     marginBottom: 20,
   },
-  inputLabelMobile: {
-    fontSize: 15,
-    marginBottom: 6,
+  previewLabelMobile: {
+    fontSize: 13,
   },
-  inputMobile: {
-    paddingVertical: 14,
+  previewDateMobile: {
     fontSize: 16,
+  },
+  ageTextMobile: {
+    fontSize: 13,
   },
   errorTextMobile: {
     fontSize: 13,
