@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
@@ -16,11 +16,13 @@ export default function UserTypeSegmentation() {
   const { user } = useAuth();
   const { saveProfile } = useUserProfile();
   const { submitOnboardingIntent } = useOnboardingIntentStorage();
+  const { age } = useLocalSearchParams<{ age: string }>();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<UserProfileAnswers>({
     isLicensedProfessional: null,
     isPersonalUse: null,
     isCosmeticUse: null,
+    age: age ? parseInt(age) : null,
   });
 
   // Log analytics when step starts
@@ -107,6 +109,7 @@ export default function UserTypeSegmentation() {
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
+        age: answers.age || undefined, // Include age if provided
         dateCreated: new Date().toISOString(),
         userId: user?.uid,
       };
@@ -128,7 +131,9 @@ export default function UserTypeSegmentation() {
         isLicensedProfessional: profile.isLicensedProfessional,
         isPersonalUse: profile.isPersonalUse,
         isCosmeticUse: profile.isCosmeticUse,
-        skipped_personal_use: answers.isPersonalUse === null
+        skipped_personal_use: answers.isPersonalUse === null,
+        age: profile.age,
+        age_range: profile.age ? (profile.age < 18 ? 'minor' : profile.age < 65 ? 'adult' : 'senior') : 'unknown'
       });
       console.log('[UserType] ✅ Analytics event logged');
       

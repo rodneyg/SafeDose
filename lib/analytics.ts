@@ -51,6 +51,13 @@ export const ANALYTICS_EVENTS = {
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
   SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
+  // Age collection and safety events
+  AGE_COLLECTION_SHOWN: 'age_collection_shown',
+  AGE_COLLECTION_COMPLETED: 'age_collection_completed',
+  AGE_COLLECTION_SKIPPED: 'age_collection_skipped',
+  CHILD_SAFETY_SCREEN_SHOWN: 'child_safety_screen_shown',
+  CHILD_SAFETY_CONTINUE: 'child_safety_continue',
+  CHILD_SAFETY_SEEK_HELP: 'child_safety_seek_help',
 } as const;
 
 // User property names

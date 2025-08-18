@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +14,7 @@ export default function Demo() {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { age } = useLocalSearchParams<{ age: string }>();
 
   const handleNext = useCallback(async () => {
     if (step < 2) {
@@ -22,15 +23,21 @@ export default function Demo() {
       try {
         // Persist onboarding completion status
         await AsyncStorage.setItem('onboardingComplete', 'true');
-        // Navigate to user type segmentation screen
-        router.replace('/onboarding/userType');
+        // Navigate to user type segmentation screen with age
+        router.replace({
+          pathname: '/onboarding/userType',
+          params: { age: age || '' }
+        });
       } catch (e) {
         console.warn('Error completing onboarding:', e);
         // Fallback navigation in case of error
-        router.replace('/onboarding/userType');
+        router.replace({
+          pathname: '/onboarding/userType',
+          params: { age: age || '' }
+        });
       }
     }
-  }, [step, router]);
+  }, [step, router, age]);
 
   const handleImageError = useCallback(() => {
     setImageError(true);

@@ -2,6 +2,7 @@ export interface UserProfile {
   isLicensedProfessional: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  age?: number; // Age of the user for safety and personalization
   dateCreated: string;
   userId?: string; // Optional field to track which user this profile belongs to
 }
@@ -10,6 +11,7 @@ export type UserProfileAnswers = {
   isLicensedProfessional: boolean | null;
   isPersonalUse: boolean | null;
   isCosmeticUse: boolean | null;
+  age: number | null;
 };
 
 export enum WarningLevel {
