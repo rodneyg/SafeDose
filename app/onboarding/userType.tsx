@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
-import { Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Check, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,11 +16,18 @@ export default function UserTypeSegmentation() {
   const { user } = useAuth();
   const { saveProfile } = useUserProfile();
   const { submitOnboardingIntent } = useOnboardingIntentStorage();
+  const { age, limitedFunctionality, reason } = useLocalSearchParams<{ 
+    age: string;
+    limitedFunctionality: string;
+    reason: string;
+  }>();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<UserProfileAnswers>({
     isLicensedProfessional: null,
     isPersonalUse: null,
     isCosmeticUse: null,
+    age: age ? parseInt(age) : null,
+    birthDate: null,
   });
 
   // Log analytics when step starts
@@ -107,6 +114,7 @@ export default function UserTypeSegmentation() {
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
+        age: answers.age || undefined, // Include age if provided
         dateCreated: new Date().toISOString(),
         userId: user?.uid,
       };
@@ -128,7 +136,9 @@ export default function UserTypeSegmentation() {
         isLicensedProfessional: profile.isLicensedProfessional,
         isPersonalUse: profile.isPersonalUse,
         isCosmeticUse: profile.isCosmeticUse,
-        skipped_personal_use: answers.isPersonalUse === null
+        skipped_personal_use: answers.isPersonalUse === null,
+        age: profile.age,
+        age_range: profile.age ? (profile.age < 18 ? 'minor' : profile.age < 65 ? 'adult' : 'senior') : 'unknown'
       });
       console.log('[UserType] ✅ Analytics event logged');
       
@@ -388,6 +398,23 @@ export default function UserTypeSegmentation() {
           </View>
         </Animated.View>
 
+        {/* Limited Functionality Warning Banner */}
+        {limitedFunctionality === 'true' && (
+          <Animated.View entering={FadeIn.delay(200)} style={[styles.warningBanner, isMobileWeb && styles.warningBannerMobile]}>
+            <View style={styles.warningIcon}>
+              <AlertTriangle size={18} color="#D97706" />
+            </View>
+            <View style={styles.warningContent}>
+              <Text style={[styles.warningTitle, isMobileWeb && styles.warningTitleMobile]}>
+                Limited Functionality Active
+              </Text>
+              <Text style={[styles.warningText, isMobileWeb && styles.warningTextMobile]}>
+                Some safety features are limited since birth date wasn't provided. Guidance will be more generic.
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
         {renderCurrentStep()}
       </ScrollView>
 
@@ -450,6 +477,36 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
     alignItems: 'center',
+  },
+  // Warning banner styles
+  warningBanner: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    marginHorizontal: 24,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  warningIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  warningContent: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#92400E',
+    lineHeight: 20,
   },
   title: {
     fontSize: 28,
@@ -620,6 +677,20 @@ const styles = StyleSheet.create({
   },
   headerMobile: {
     marginBottom: 16,
+  },
+  // Mobile warning styles
+  warningBannerMobile: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 12,
+  },
+  warningTitleMobile: {
+    fontSize: 15,
+    marginBottom: 3,
+  },
+  warningTextMobile: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   titleMobile: {
     fontSize: 24,

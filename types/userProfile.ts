@@ -2,6 +2,8 @@ export interface UserProfile {
   isLicensedProfessional: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  age?: number; // Age of the user for safety and personalization (calculated from birthDate)
+  birthDate?: string; // Birth date in YYYY-MM-DD format for more precise age calculation
   dateCreated: string;
   userId?: string; // Optional field to track which user this profile belongs to
 }
@@ -10,6 +12,8 @@ export type UserProfileAnswers = {
   isLicensedProfessional: boolean | null;
   isPersonalUse: boolean | null;
   isCosmeticUse: boolean | null;
+  age: number | null;
+  birthDate: string | null; // Birth date in YYYY-MM-DD format
 };
 
 export enum WarningLevel {
