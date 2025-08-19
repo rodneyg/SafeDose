@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { ArrowRight, ArrowLeft, Calendar, Shield, X } from 'lucide-react-native';
@@ -113,8 +113,14 @@ export default function BirthDateCollection() {
   const handleConfirmSkip = useCallback(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
     setShowSafetyModal(false);
-    // Continue to demo without birth date information
-    router.push('/onboarding/demo');
+    // Continue to demo with limited functionality flag
+    router.push({
+      pathname: '/onboarding/demo',
+      params: { 
+        limitedFunctionality: 'true',
+        reason: 'no_birth_date'
+      }
+    });
   }, [router]);
 
   const handleCancelSkip = useCallback(() => {
@@ -280,77 +286,111 @@ export default function BirthDateCollection() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, isMobileWeb && styles.modalContentMobile]}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={handleCancelSkip}
-                accessibilityRole="button"
-                accessibilityLabel="Close modal"
-              >
-                <X size={24} color="#8E8E93" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.modalIconContainer, isMobileWeb && styles.modalIconContainerMobile]}>
-              <Shield size={isMobileWeb ? 32 : 40} color="#007AFF" />
-            </View>
-
-            <Text style={[styles.modalTitle, isMobileWeb && styles.modalTitleMobile]}>
-              Why We Ask for Your Birth Date
-            </Text>
-
-            <Text style={[styles.modalText, isMobileWeb && styles.modalTextMobile]}>
-              We ask for your birth date to ensure your safety, not for data collection or marketing purposes.
-            </Text>
-
-            <View style={[styles.safetyReasons, isMobileWeb && styles.safetyReasonsMobile]}>
-              <View style={styles.reasonItem}>
-                <Text style={styles.bulletPoint}>•</Text>
-                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                  <Text style={styles.boldText}>Age-appropriate guidance:</Text> Different age groups require different safety considerations for medications
-                </Text>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              <View style={styles.modalHeader}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCancelSkip}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close modal"
+                >
+                  <X size={24} color="#8E8E93" />
+                </TouchableOpacity>
               </View>
-              <View style={styles.reasonItem}>
-                <Text style={styles.bulletPoint}>•</Text>
-                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                  <Text style={styles.boldText}>Safety features:</Text> Minors receive additional safety resources and guidance
-                </Text>
+
+              <View style={[styles.modalIconContainer, isMobileWeb && styles.modalIconContainerMobile]}>
+                <Shield size={isMobileWeb ? 32 : 40} color="#007AFF" />
               </View>
-              <View style={styles.reasonItem}>
-                <Text style={styles.bulletPoint}>•</Text>
-                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                  <Text style={styles.boldText}>Medical accuracy:</Text> Dosing recommendations can vary by age group
+
+              <Text style={[styles.modalTitle, isMobileWeb && styles.modalTitleMobile]}>
+                Why We Ask for Your Birth Date
+              </Text>
+
+              <Text style={[styles.modalText, isMobileWeb && styles.modalTextMobile]}>
+                We ask for your birth date to ensure your safety, not for data collection or marketing purposes.
+              </Text>
+
+              <Text style={[styles.modalWarning, isMobileWeb && styles.modalWarningMobile]}>
+                <Text style={styles.boldText}>Important:</Text> Without your birth date, SafeDose will have limited functionality to ensure your safety.
+              </Text>
+
+              <View style={[styles.safetyReasons, isMobileWeb && styles.safetyReasonsMobile]}>
+                <Text style={[styles.limitationsTitle, isMobileWeb && styles.limitationsTitleMobile]}>
+                  Why birth date is important:
                 </Text>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.bulletPoint}>•</Text>
+                  <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                    <Text style={styles.boldText}>Age-appropriate guidance:</Text> Different age groups require different safety considerations for medications
+                  </Text>
+                </View>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.bulletPoint}>•</Text>
+                  <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                    <Text style={styles.boldText}>Safety features:</Text> Minors receive additional safety resources and guidance
+                  </Text>
+                </View>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.bulletPoint}>•</Text>
+                  <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                    <Text style={styles.boldText}>Medical accuracy:</Text> Dosing recommendations can vary by age group
+                  </Text>
+                </View>
+                
+                <Text style={[styles.limitationsTitle, isMobileWeb && styles.limitationsTitleMobile, styles.limitationsSection]}>
+                  Without birth date, you'll have:
+                </Text>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.limitationPoint}>⚠</Text>
+                  <Text style={[styles.limitationText, isMobileWeb && styles.limitationTextMobile]}>
+                    Limited safety warnings and age-specific guidance
+                  </Text>
+                </View>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.limitationPoint}>⚠</Text>
+                  <Text style={[styles.limitationText, isMobileWeb && styles.limitationTextMobile]}>
+                    Generic dosing information instead of age-appropriate recommendations
+                  </Text>
+                </View>
+                <View style={styles.reasonItem}>
+                  <Text style={styles.limitationPoint}>⚠</Text>
+                  <Text style={[styles.limitationText, isMobileWeb && styles.limitationTextMobile]}>
+                    Reduced personalized safety features
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <Text style={[styles.modalDisclaimer, isMobileWeb && styles.modalDisclaimerMobile]}>
-              Your privacy is important to us. This information is only used to provide you with safer, more appropriate guidance.
-            </Text>
+              <Text style={[styles.modalDisclaimer, isMobileWeb && styles.modalDisclaimerMobile]}>
+                Your privacy is important to us. This information is only used to provide you with safer, more appropriate guidance.
+              </Text>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.goBackButton, isMobileWeb && styles.goBackButtonMobile]}
-                onPress={handleCancelSkip}
-                accessibilityRole="button"
-                accessibilityLabel="Go back to provide birth date"
-              >
-                <Text style={[styles.goBackButtonText, isMobileWeb && styles.goBackButtonTextMobile]}>
-                  I'll Provide My Birth Date
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.goBackButton, isMobileWeb && styles.goBackButtonMobile]}
+                  onPress={handleCancelSkip}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back to provide birth date"
+                >
+                  <Text style={[styles.goBackButtonText, isMobileWeb && styles.goBackButtonTextMobile]}>
+                    I'll Provide My Birth Date
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.proceedButton, isMobileWeb && styles.proceedButtonMobile]}
-                onPress={handleConfirmSkip}
-                accessibilityRole="button"
-                accessibilityLabel="Continue without providing birth date"
-              >
-                <Text style={[styles.proceedButtonText, isMobileWeb && styles.proceedButtonTextMobile]}>
-                  Continue Without Sharing
-                </Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={[styles.proceedButton, isMobileWeb && styles.proceedButtonMobile]}
+                  onPress={handleConfirmSkip}
+                  accessibilityRole="button"
+                  accessibilityLabel="Continue without providing birth date"
+                >
+                  <Text style={[styles.proceedButtonText, isMobileWeb && styles.proceedButtonTextMobile]}>
+                    Accept Limited Functionality
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -572,7 +612,10 @@ const styles = StyleSheet.create({
     padding: 24,
     maxWidth: 400,
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '85%',
+  },
+  modalScrollContent: {
+    paddingBottom: 10,
   },
   modalHeader: {
     alignItems: 'flex-end',
@@ -603,15 +646,58 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 24,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalWarning: {
+    fontSize: 15,
+    color: '#D97706',
+    lineHeight: 22,
+    textAlign: 'center',
     marginBottom: 20,
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
   },
   safetyReasons: {
     marginBottom: 20,
+  },
+  limitationsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  limitationsSection: {
+    marginTop: 16,
+  },
+  limitationPoint: {
+    fontSize: 16,
+    color: '#D97706',
+    fontWeight: '600',
+    marginRight: 8,
+    marginTop: 2,
+  },
+  limitationText: {
+    fontSize: 15,
+    color: '#D97706',
+    lineHeight: 22,
+    flex: 1,
+    fontWeight: '500',
   },
   reasonItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 12,
+  },
+  bulletPoint: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginRight: 8,
+    marginTop: 2,
   },
   reasonText: {
     fontSize: 15,
@@ -679,10 +765,23 @@ const styles = StyleSheet.create({
   modalTextMobile: {
     fontSize: 15,
     lineHeight: 22,
+    marginBottom: 14,
+  },
+  modalWarningMobile: {
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 18,
   },
   safetyReasonsMobile: {
     marginBottom: 18,
+  },
+  limitationsTitleMobile: {
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  limitationTextMobile: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   reasonTextMobile: {
     fontSize: 14,

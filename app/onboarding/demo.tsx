@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
-import { Camera, Check, ArrowRight } from 'lucide-react-native';
+import { Camera, Check, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isMobileWeb } from '../../lib/utils';
 
@@ -14,7 +14,11 @@ export default function Demo() {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { age } = useLocalSearchParams<{ age: string }>();
+  const { age, limitedFunctionality, reason } = useLocalSearchParams<{ 
+    age: string;
+    limitedFunctionality: string;
+    reason: string;
+  }>();
 
   const handleNext = useCallback(async () => {
     if (step < 2) {
@@ -23,17 +27,25 @@ export default function Demo() {
       try {
         // Persist onboarding completion status
         await AsyncStorage.setItem('onboardingComplete', 'true');
-        // Navigate to user type segmentation screen with age
+        // Navigate to user type segmentation screen with age and limitations info
         router.replace({
           pathname: '/onboarding/userType',
-          params: { age: age || '' }
+          params: { 
+            age: age || '',
+            limitedFunctionality: limitedFunctionality || '',
+            reason: reason || ''
+          }
         });
       } catch (e) {
         console.warn('Error completing onboarding:', e);
         // Fallback navigation in case of error
         router.replace({
           pathname: '/onboarding/userType',
-          params: { age: age || '' }
+          params: { 
+            age: age || '',
+            limitedFunctionality: limitedFunctionality || '',
+            reason: reason || ''
+          }
         });
       }
     }
@@ -125,6 +137,27 @@ export default function Demo() {
         <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>How It Works</Text>
       </Animated.View>
 
+      {/* Limited Functionality Warning Banner */}
+      {limitedFunctionality === 'true' && (
+        <Animated.View entering={FadeIn.delay(200)} style={[styles.warningBanner, isMobileWeb && styles.warningBannerMobile]}>
+          <View style={styles.warningIcon}>
+            {Platform.OS === "web" ? (
+              <Text style={{ color: '#D97706', fontSize: 18 }}>⚠</Text>
+            ) : (
+              <AlertTriangle size={18} color="#D97706" />
+            )}
+          </View>
+          <View style={styles.warningContent}>
+            <Text style={[styles.warningTitle, isMobileWeb && styles.warningTitleMobile]}>
+              Limited Functionality Mode
+            </Text>
+            <Text style={[styles.warningText, isMobileWeb && styles.warningTextMobile]}>
+              Without birth date information, some safety features will be limited to ensure appropriate medical guidance.
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+
       <View style={styles.content}>
         {renderStep()}
       </View>
@@ -185,6 +218,36 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '700',
     color: '#000000',
+  },
+  // Warning banner styles
+  warningBanner: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    margin: 16,
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  warningIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  warningContent: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#92400E',
+    lineHeight: 20,
   },
   content: {
     flex: 1,
@@ -315,5 +378,19 @@ const styles = StyleSheet.create({
   },
   headerTitleMobile: {
     fontSize: 28, // Smaller header on mobile
+  },
+  // Mobile warning styles
+  warningBannerMobile: {
+    margin: 12,
+    marginTop: 6,
+    padding: 12,
+  },
+  warningTitleMobile: {
+    fontSize: 15,
+    marginBottom: 3,
+  },
+  warningTextMobile: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
