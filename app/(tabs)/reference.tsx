@@ -129,16 +129,28 @@ export default function ReferenceScreen() {
       return;
     }
 
+    console.log('[SuggestCompound] Starting submission...', {
+      compoundName: compoundName.trim(),
+      dosageRange: dosageRange.trim(),
+      notes: notes.trim(),
+    });
+
     setIsSubmitting(true);
     try {
       // Store suggestion in Firebase
-      await addDocWithEnv(collection(db, 'compound-suggestions'), {
+      const docData = {
         compoundName: compoundName.trim(),
         dosageRange: dosageRange.trim(),
         notes: notes.trim(),
         timestamp: new Date(),
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-      });
+      };
+
+      console.log('[SuggestCompound] Submitting to Firebase...', docData);
+      
+      const docRef = await addDocWithEnv(collection(db, 'compound-suggestions'), docData);
+      
+      console.log('[SuggestCompound] Successfully submitted to Firebase', { docId: docRef.id });
 
       Alert.alert(
         'Thank you!',
@@ -151,7 +163,13 @@ export default function ReferenceScreen() {
       setDosageRange('');
       setNotes('');
     } catch (error) {
-      console.error('Error submitting compound suggestion:', error);
+      console.error('[SuggestCompound] Error submitting compound suggestion:', error);
+      console.error('[SuggestCompound] Error details:', {
+        message: (error as Error)?.message || 'Unknown error',
+        stack: (error as Error)?.stack,
+        name: (error as Error)?.name || 'Error'
+      });
+      
       Alert.alert(
         'Error',
         'Failed to submit suggestion. Please try again later.',
@@ -264,71 +282,86 @@ export default function ReferenceScreen() {
       {/* Feedback Modal */}
       <Modal
         visible={showFeedbackModal}
-        animationType="slide"
-        presentationStyle="formSheet"
+        animationType="fade"
+        transparent
         onRequestClose={handleCloseFeedbackModal}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Suggest a Compound</Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={handleCloseFeedbackModal}
-            >
-              <X size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalDescription}>
-              Help us expand our reference list by suggesting a compound and its common dosage information.
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Compound Name *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={compoundName}
-                onChangeText={setCompoundName}
-                placeholder="e.g., GHRP-6"
-                placeholderTextColor="#9ca3af"
-              />
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, isMobileWeb && styles.modalContainerMobile]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Suggest a Compound</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={handleCloseFeedbackModal}
+              >
+                <X size={24} color="#666" />
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Common Dosage Range</Text>
-              <TextInput
-                style={styles.textInput}
-                value={dosageRange}
-                onChangeText={setDosageRange}
-                placeholder="e.g., 100-200mcg 2x/day"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Notes / Use Cases</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="e.g., Growth hormone releasing peptide"
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-              onPress={handleSubmitSuggestion}
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
-                {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalDescription}>
+                Help us expand our reference list by suggesting a compound and its common dosage information.
               </Text>
-            </TouchableOpacity>
-          </ScrollView>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Compound Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={compoundName}
+                  onChangeText={setCompoundName}
+                  placeholder="e.g., GHRP-6"
+                  placeholderTextColor="#9ca3af"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Common Dosage Range</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={dosageRange}
+                  onChangeText={setDosageRange}
+                  placeholder="e.g., 100-200mcg 2x/day"
+                  placeholderTextColor="#9ca3af"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Notes / Use Cases</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="e.g., Growth hormone releasing peptide"
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.cancelButton]}
+                  onPress={handleCloseFeedbackModal}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+                  onPress={handleSubmitSuggestion}
+                  disabled={isSubmitting}
+                >
+                  <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -513,79 +546,136 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   // Modal styles
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    margin: 20,
+    maxWidth: 500,
+    width: '90%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalContainerMobile: {
+    margin: 16,
+    width: '95%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
-    ...(!isMobileWeb && {
-      paddingTop: 50, // Account for status bar on mobile
-    }),
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000',
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
+    marginRight: -8,
   },
   modalContent: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   modalDescription: {
     fontSize: 16,
     color: '#666',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 24,
+    marginBottom: 28,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000',
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1.5,
     borderColor: '#E5E5EA',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
     color: '#000',
+    lineHeight: 20,
   },
   textArea: {
-    height: 80,
+    height: 90,
     textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EA',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
   },
   submitButton: {
+    flex: 1.2,
     backgroundColor: '#007AFF',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   submitButtonDisabled: {
     backgroundColor: '#C7C7CC',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitButtonTextDisabled: {
     color: '#8E8E93',
