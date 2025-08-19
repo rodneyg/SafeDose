@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 24,
   },
   cancelButton: {
     flex: 1,
