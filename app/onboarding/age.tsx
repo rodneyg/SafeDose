@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { ArrowRight, ArrowLeft, Calendar } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, Calendar, Shield, X } from 'lucide-react-native';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { isMobileWeb } from '@/lib/utils';
 import DatePickerSelect from '@/components/ui/DatePickerSelect';
@@ -21,6 +21,7 @@ export default function BirthDateCollection() {
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [validationError, setValidationError] = useState('');
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   // Calculate if current selection is valid
   const isComplete = selectedMonth && selectedDay && selectedYear;
@@ -105,10 +106,20 @@ export default function BirthDateCollection() {
   }, [isComplete, isValid, validation, birthDate, selectedYear, selectedMonth, router]);
 
   const handleSkip = useCallback(() => {
+    // Show safety explanation modal instead of directly skipping
+    setShowSafetyModal(true);
+  }, []);
+
+  const handleConfirmSkip = useCallback(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
+    setShowSafetyModal(false);
     // Continue to demo without birth date information
     router.push('/onboarding/demo');
   }, [router]);
+
+  const handleCancelSkip = useCallback(() => {
+    setShowSafetyModal(false);
+  }, []);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -259,6 +270,90 @@ export default function BirthDateCollection() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Safety Information Modal */}
+      <Modal
+        visible={showSafetyModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleCancelSkip}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, isMobileWeb && styles.modalContentMobile]}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleCancelSkip}
+                accessibilityRole="button"
+                accessibilityLabel="Close modal"
+              >
+                <X size={24} color="#8E8E93" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.modalIconContainer, isMobileWeb && styles.modalIconContainerMobile]}>
+              <Shield size={isMobileWeb ? 32 : 40} color="#007AFF" />
+            </View>
+
+            <Text style={[styles.modalTitle, isMobileWeb && styles.modalTitleMobile]}>
+              Why We Ask for Your Birth Date
+            </Text>
+
+            <Text style={[styles.modalText, isMobileWeb && styles.modalTextMobile]}>
+              We ask for your birth date to ensure your safety, not for data collection or marketing purposes.
+            </Text>
+
+            <View style={[styles.safetyReasons, isMobileWeb && styles.safetyReasonsMobile]}>
+              <View style={styles.reasonItem}>
+                <Text style={styles.bulletPoint}>•</Text>
+                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                  <Text style={styles.boldText}>Age-appropriate guidance:</Text> Different age groups require different safety considerations for medications
+                </Text>
+              </View>
+              <View style={styles.reasonItem}>
+                <Text style={styles.bulletPoint}>•</Text>
+                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                  <Text style={styles.boldText}>Safety features:</Text> Minors receive additional safety resources and guidance
+                </Text>
+              </View>
+              <View style={styles.reasonItem}>
+                <Text style={styles.bulletPoint}>•</Text>
+                <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
+                  <Text style={styles.boldText}>Medical accuracy:</Text> Dosing recommendations can vary by age group
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.modalDisclaimer, isMobileWeb && styles.modalDisclaimerMobile]}>
+              Your privacy is important to us. This information is only used to provide you with safer, more appropriate guidance.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.goBackButton, isMobileWeb && styles.goBackButtonMobile]}
+                onPress={handleCancelSkip}
+                accessibilityRole="button"
+                accessibilityLabel="Go back to provide birth date"
+              >
+                <Text style={[styles.goBackButtonText, isMobileWeb && styles.goBackButtonTextMobile]}>
+                  I'll Provide My Birth Date
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.proceedButton, isMobileWeb && styles.proceedButtonMobile]}
+                onPress={handleConfirmSkip}
+                accessibilityRole="button"
+                accessibilityLabel="Continue without providing birth date"
+              >
+                <Text style={[styles.proceedButtonText, isMobileWeb && styles.proceedButtonTextMobile]}>
+                  Continue Without Sharing
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -460,6 +555,156 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   backButtonTextMobile: {
+    fontSize: 15,
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 400,
+    width: '100%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  safetyReasons: {
+    marginBottom: 20,
+  },
+  reasonItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  reasonText: {
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+    flex: 1,
+  },
+  boldText: {
+    fontWeight: '600',
+    color: '#000000',
+  },
+  modalDisclaimer: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    gap: 12,
+  },
+  goBackButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  goBackButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  proceedButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  proceedButtonText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
+  // Mobile modal styles
+  modalContentMobile: {
+    padding: 20,
+    maxWidth: '100%',
+  },
+  modalIconContainerMobile: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginBottom: 16,
+  },
+  modalTitleMobile: {
+    fontSize: 20,
+    marginBottom: 14,
+  },
+  modalTextMobile: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 18,
+  },
+  safetyReasonsMobile: {
+    marginBottom: 18,
+  },
+  reasonTextMobile: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  modalDisclaimerMobile: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  goBackButtonMobile: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  goBackButtonTextMobile: {
+    fontSize: 15,
+  },
+  proceedButtonMobile: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  proceedButtonTextMobile: {
     fontSize: 15,
   },
 });
