@@ -29,43 +29,52 @@ To run the open-source version locally:
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/your-org/rodneyg-safedose.git
-cd rodneyg-safedose
+git clone https://github.com/rodneyg/SafeDose.git
+cd SafeDose
+```
 
-2. Install dependencies
-
+### 2. Install dependencies
+```bash
 npm install
+```
 
-3. iOS (Xcode required)
+### 3. Running the app
 
-npx pod-install
-npx expo run:ios
+**Web (easiest setup):**
+```bash
+npm run web
+```
 
-4. Android (Android Studio required)
+**Mobile (iOS/Android):**
+For mobile development, see our detailed [Mobile Setup Guide](./MOBILE_SETUP.md) which covers:
+- Using Expo Go (recommended for testing)
+- Development builds (advanced)  
+- Troubleshooting common issues
 
-npx expo run:android
+Quick start for mobile testing:
+```bash
+# For Expo Go app testing
+npm run start:expo-go
 
-5. Web (experimental)
+# For development builds (requires Android Studio/Xcode)
+npm run android  # or npm run ios
+```
 
-npx expo start --web
+### 4. Environment Setup
 
-Note: To use the AI-powered scan feature, you’ll need your own OpenAI API Key.
-
-⸻
-
-🔧 Environment Setup
-
-Create a .env file in the root:
-
+Create a `.env` file in the root directory:
+```bash
 OPENAI_API_KEY=your-openai-key-here
+```
 
+Note: To use the AI-powered scan feature, you'll need your own OpenAI API Key.
 
+---
 
-⸻
+## 📁 Directory Structure
 
-📁 Directory Structure
-
-rodneyg-safedose/
+```
+SafeDose/
 ├── app/                 # Screens and navigation
 ├── hooks/               # Camera + system hooks
 ├── assets/              # Icons and images
@@ -77,31 +86,30 @@ rodneyg-safedose/
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration
 ├── tsconfig.json        # TypeScript settings
+└── MOBILE_SETUP.md      # Mobile development guide
+```
 
+---
 
-
-⸻
-
-🤝 Contributing
+## 🤝 Contributing
 
 We welcome contributions focused on safety, accessibility, and clarity.
 
 Steps:
-	•	Fork the repo
-	•	Create a branch (git checkout -b your-feature)
-	•	Commit your changes
-	•	Submit a pull request
+- Fork the repo
+- Create a branch (`git checkout -b your-feature`)
+- Commit your changes
+- Submit a pull request
 
 Please avoid introducing breaking changes or external dependencies unless necessary.
 
-⸻
+---
 
-🛡 License
+## 🛡 License
 
 MIT License.
 By using this project, you agree not to market it as a certified medical device without independent validation and regulatory approval.
 
-⸻
+---
 
 Built by SafeLab — advancing open tools for human systems.
-
