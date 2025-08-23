@@ -136,9 +136,16 @@ describe('Before First Scan Feature', () => {
       });
     });
 
+    it('should emphasize that more items = better results', () => {
+      const materialsTitle = 'Have these ready (more items = better results):';
+      expect(materialsTitle).toContain('more items');
+      expect(materialsTitle).toContain('better results');
+    });
+
     it('should include general rule about baseline requirement', () => {
-      const generalRule = 'SafeDose works best with at least one solid baseline reference';
+      const generalRule = 'SafeDose works best with multiple items in the photo, but requires at least one solid baseline reference';
       expect(generalRule).toContain('baseline');
+      expect(generalRule).toContain('multiple items');
     });
   });
 });

@@ -36,7 +36,7 @@ export default function BeforeFirstScanScreen({
 
           {/* Materials list */}
           <View style={styles.materialsContainer}>
-            <Text style={styles.materialsTitle}>Have at least one of these ready:</Text>
+            <Text style={styles.materialsTitle}>Have these ready (more items = better results):</Text>
             
             <View style={styles.materialsList}>
               <View style={styles.materialItem}>
@@ -59,7 +59,7 @@ export default function BeforeFirstScanScreen({
             <View style={styles.ruleContainer}>
               <Text style={styles.ruleTitle}>General rule:</Text>
               <Text style={styles.ruleText}>
-                SafeDose works best with at least one solid baseline reference. 
+                SafeDose works best with multiple items in the photo, but requires at least one solid baseline reference. 
                 Clear text and markings help ensure accurate readings.
               </Text>
             </View>
