@@ -7,11 +7,12 @@ import { useDoseLogging } from './useDoseLogging';
 import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
+import { useBeforeFirstScanPrompt } from './useBeforeFirstScanPrompt';
 
 // Import the minimum dose constant for safety checks
 const MIN_DOSES_FOR_PROMOTION = 4;
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
@@ -70,6 +71,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Initialize power user promotion tracking
   const powerUserPromotion = usePowerUserPromotion();
+
+  // Initialize before first scan prompt tracking
+  const beforeFirstScanPrompt = useBeforeFirstScanPrompt();
 
   // Log limit modal state (now used for both power user promotion and log limits)
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -749,6 +753,51 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
   }, [whyAreYouHereTracking, pmfSurvey]);
 
+  // Handle scan navigation with before first scan prompt check
+  const handleScanNavigation = useCallback(async () => {
+    console.log('[useDoseCalculator] Checking if before first scan prompt should be shown');
+    
+    if (beforeFirstScanPrompt.shouldShowPrompt()) {
+      console.log('[useDoseCalculator] Showing before first scan prompt');
+      setScreenStep('beforeFirstScan');
+    } else {
+      console.log('[useDoseCalculator] Going directly to scan');
+      setScreenStep('scan');
+    }
+  }, [beforeFirstScanPrompt]);
+
+  // Handle before first scan prompt continue
+  const handleBeforeFirstScanContinue = useCallback(async () => {
+    console.log('[useDoseCalculator] Before first scan continue pressed');
+    
+    // Mark prompt as shown and continue to scan
+    await beforeFirstScanPrompt.markPromptAsShown();
+    
+    // Log analytics event
+    logAnalyticsEvent(ANALYTICS_EVENTS.BEFORE_FIRST_SCAN_CONTINUE, {
+      showCount: beforeFirstScanPrompt.showCount + 1,
+    });
+    
+    setScreenStep('scan');
+  }, [beforeFirstScanPrompt]);
+
+  // Handle before first scan "don't show again"
+  const handleBeforeFirstScanDontShowAgain = useCallback(async () => {
+    console.log('[useDoseCalculator] Before first scan dont show again pressed');
+    
+    // Mark as don't show again and continue to scan
+    await beforeFirstScanPrompt.markDontShowAgain();
+    await beforeFirstScanPrompt.markPromptAsShown();
+    
+    setScreenStep('scan');
+  }, [beforeFirstScanPrompt]);
+
+  // Handle before first scan back
+  const handleBeforeFirstScanBack = useCallback(() => {
+    console.log('[useDoseCalculator] Before first scan back pressed');
+    setScreenStep('intro');
+  }, []);
+
   const handleCapture = useCallback(async () => {
     try {
       const canProceed = await checkUsageLimit();
@@ -949,6 +998,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     // WhyAreYouHere handlers
     handleWhyAreYouHereSubmit,
     handleWhyAreYouHereSkip,
+    // Before First Scan handlers
+    handleScanNavigation,
+    handleBeforeFirstScanContinue,
+    handleBeforeFirstScanDontShowAgain,
+    handleBeforeFirstScanBack,
+    beforeFirstScanPrompt,
     // Log limit modal
     showLogLimitModal,
     logLimitModalTriggerReason,

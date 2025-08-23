@@ -62,6 +62,10 @@ export const ANALYTICS_EVENTS = {
   CHILD_SAFETY_SCREEN_SHOWN: 'child_safety_screen_shown',
   CHILD_SAFETY_CONTINUE: 'child_safety_continue',
   CHILD_SAFETY_SEEK_HELP: 'child_safety_seek_help',
+  // Before First Scan prompt events
+  BEFORE_FIRST_SCAN_PROMPT_SHOWN: 'before_first_scan_prompt_shown',
+  BEFORE_FIRST_SCAN_DONT_SHOW_AGAIN: 'before_first_scan_dont_show_again',
+  BEFORE_FIRST_SCAN_CONTINUE: 'before_first_scan_continue',
 } as const;
 
 // User property names

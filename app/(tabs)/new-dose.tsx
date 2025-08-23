@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
+import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
@@ -26,7 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
   const { user } = useAuth();
@@ -946,6 +947,7 @@ export default function NewDoseScreen() {
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
+            {screenStep === 'beforeFirstScan' && 'Before You Scan'}
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
             {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
@@ -985,6 +987,19 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
+          onScanPress={doseCalculator.handleScanNavigation}
+        />
+      )}
+      {screenStep === 'beforeFirstScan' && (
+        <BeforeFirstScanScreen
+          onContinue={doseCalculator.handleBeforeFirstScanContinue}
+          onBack={doseCalculator.handleBeforeFirstScanBack}
+          onDontShowAgain={
+            doseCalculator.beforeFirstScanPrompt.showCount > 0
+              ? doseCalculator.handleBeforeFirstScanDontShowAgain
+              : undefined
+          }
+          showDontShowAgain={doseCalculator.beforeFirstScanPrompt.showCount > 0}
         />
       )}
       {screenStep === 'scan' && (

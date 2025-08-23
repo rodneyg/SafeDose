@@ -38,6 +38,7 @@ interface IntroScreenProps {
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
   applyLastDose?: () => Promise<boolean>;
+  onScanPress?: () => void;
 }
 
 export default function IntroScreen({
@@ -45,6 +46,7 @@ export default function IntroScreen({
   resetFullForm,
   setNavigatingFromIntro,
   applyLastDose,
+  onScanPress,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
@@ -274,8 +276,9 @@ export default function IntroScreen({
 
   /* Dev helper: auto-login if TEST_LOGIN flag set */
   useEffect(() => {
-    const auto = Constants.expoConfig?.extra?.TEST_LOGIN === true;
-    if (auto && user?.isAnonymous) handleSignInPress();
+    // TODO: Fix Constants API usage
+    // const auto = Constants.expoConfig?.extra?.TEST_LOGIN === true;
+    // if (auto && user?.isAnonymous) handleSignInPress();
   }, [user, handleSignInPress]);
 
   /* =========================================================================
@@ -292,8 +295,14 @@ export default function IntroScreen({
     }
     
     setNavigatingFromIntro?.(true);
-    setScreenStep('scan');
-  }, [setScreenStep, setNavigatingFromIntro, usageData, router]);
+    
+    // Use custom scan handler if provided, otherwise default behavior
+    if (onScanPress) {
+      onScanPress();
+    } else {
+      setScreenStep('scan');
+    }
+  }, [setScreenStep, setNavigatingFromIntro, usageData, router, onScanPress]);
 
   const handleManualEntryPress = useCallback(() => {
     setNavigatingFromIntro?.(true);
