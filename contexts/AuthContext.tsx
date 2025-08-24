@@ -22,6 +22,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSigningInAnonymouslyRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const authInitializedRef = useRef(false);
 
   const logout = async () => {
     console.log('[AuthContext] ========== LOGOUT INITIATED ==========');
@@ -104,9 +106,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AuthContext] ❌ Error signing out:', error);
       console.error('[AuthContext] Error details:', {
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'No error code',
-        name: error?.name || 'Unknown error type'
+        message: (error as any)?.message || 'Unknown error',
+        code: (error as any)?.code || 'No error code',
+        name: (error as any)?.name || 'Unknown error type'
       });
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
@@ -128,6 +130,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSigningOut]);
 
   useEffect(() => {
+    console.log('[AuthContext] Setting up authentication listener...');
+    
+    // Set a timeout to ensure loading doesn't hang indefinitely on mobile
+    initTimeoutRef.current = setTimeout(() => {
+      if (!authInitializedRef.current) {
+        console.warn('[AuthContext] Auth initialization timeout - forcing loading to false');
+        setLoading(false);
+        authInitializedRef.current = true;
+      }
+    }, 10000); // 10 second timeout for mobile platforms
+    
     // Subscribe to auth state changes on the single `auth` instance
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[AuthContext] ========== AUTH STATE CHANGED ==========');
@@ -248,6 +261,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       console.log('[AuthContext] Setting loading to false');
       setLoading(false);
+      
+      // Mark auth as initialized and clear timeout
+      if (!authInitializedRef.current) {
+        authInitializedRef.current = true;
+        if (initTimeoutRef.current) {
+          clearTimeout(initTimeoutRef.current);
+          initTimeoutRef.current = null;
+        }
+      }
+      
       console.log('[AuthContext] ========== AUTH STATE CHANGE COMPLETE ==========');
     });
 
@@ -260,6 +283,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fallbackTimeoutRef.current) {
         clearTimeout(fallbackTimeoutRef.current);
         fallbackTimeoutRef.current = null;
+      }
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
       }
     };
   }, []); // Remove isSigningOut dependency to prevent auth listener recreation

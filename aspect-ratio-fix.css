@@ -1,0 +1,41 @@
+/* CSS utilities to prevent aspect-ratio parsing errors in react-native-css-interop */
+
+/* Override any problematic aspect-ratio values that might cause parsing errors */
+.aspect-auto {
+  /* Convert 'auto' to a valid ratio to prevent parseDeclaration errors */
+  aspect-ratio: 1;
+}
+
+.aspect-square {
+  aspect-ratio: 1;
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-content {
+  /* Replace with valid ratio */
+  aspect-ratio: 1;
+}
+
+/* Prevent empty or invalid aspect-ratio values */
+[style*="aspect-ratio:"],
+[style*="aspectRatio:"] {
+  /* Ensure minimum valid value */
+  min-height: 1px;
+}
+
+/* React Native specific fixes for aspect-ratio */
+@media (react-native) {
+  .aspect-auto {
+    /* Use explicit width/height for RN instead of aspect-ratio */
+    width: 100%;
+    height: auto;
+  }
+  
+  /* Disable aspect-ratio on React Native to prevent parsing issues */
+  * {
+    aspect-ratio: unset !important;
+  }
+}

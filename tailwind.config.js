@@ -31,7 +31,18 @@ module.exports = {
         borderRadius: {
           DEFAULT: "0.5rem",
         },
+        // Ensure aspectRatio values are always valid numbers to prevent parsing errors
+        aspectRatio: {
+          'auto': '1', // Replace 'auto' with a valid ratio
+          '1': '1',
+          'square': '1',
+          'video': '16 / 9',
+        },
       },
+    },
+    corePlugins: {
+      // Explicitly disable aspect-ratio if causing issues with react-native-css-interop
+      aspectRatio: false,
     },
     plugins: [],
   };

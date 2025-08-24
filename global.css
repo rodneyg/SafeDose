@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import aspect-ratio fixes to prevent parsing errors */
+@import url('./aspect-ratio-fix.css');
+
 /* Define custom variables without overriding NativeWind defaults */
 @layer base {
   :root {

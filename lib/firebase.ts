@@ -3,17 +3,40 @@ import { getAuth, Auth } from "firebase/auth";
 import { getAnalytics, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
-// Firebase configuration from app.config.js
-const firebaseConfig = Constants.expoConfig?.extra?.firebase || {
-  apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
-  authDomain: "safedose-e320d.firebaseapp.com",
-  projectId: "safedose-e320d",
-  storageBucket: "safedose-e320d.firebasestorage.app",
-  messagingSenderId: "704055775889",
-  appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
-  measurementId: "G-WRY88Q57KK",
+// Firebase configuration with mobile-friendly access
+const getFirebaseConfig = () => {
+  // Try to get from expo config first
+  let config = (Constants as any).expoConfig?.extra?.firebase;
+  
+  if (!config) {
+    console.log('[Firebase] Config not found in Constants.expoConfig, trying manifest...');
+    // Fallback to manifest (for older Expo versions or different build targets)
+    config = (Constants as any).manifest?.extra?.firebase;
+  }
+  
+  if (!config) {
+    console.log('[Firebase] Config not found in manifest, using fallback configuration');
+    // Fallback configuration
+    config = {
+      apiKey: "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
+      authDomain: "safedose-e320d.firebaseapp.com",
+      projectId: "safedose-e320d",
+      storageBucket: "safedose-e320d.firebasestorage.app",
+      messagingSenderId: "704055775889",
+      appId: "1:704055775889:web:6ff0d3de5fea40b5b56530",
+      measurementId: "G-WRY88Q57KK",
+    };
+  }
+  
+  console.log('[Firebase] Using configuration for platform:', Platform.OS);
+  console.log('[Firebase] Config keys available:', Object.keys(config));
+  
+  return config;
 };
+
+const firebaseConfig = getFirebaseConfig();
 
 // Lazy initialization - nothing is initialized at module load time
 let app: FirebaseApp | undefined = undefined;
@@ -30,9 +53,9 @@ const getFirebaseApp = (): FirebaseApp => {
     } catch (error) {
       console.error('[Firebase] Failed to initialize Firebase app:', error);
       console.error('[Firebase] Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        name: (error as any)?.name
       });
       throw error;
     }
@@ -69,6 +92,12 @@ export const getDbInstance = (): Firestore => {
 };
 
 export const getAnalyticsInstance = (): Analytics | undefined => {
+  // Analytics is primarily for web - handle mobile platforms gracefully
+  if (Platform.OS !== 'web') {
+    console.log('[Firebase] Analytics not initializing - mobile platform detected:', Platform.OS);
+    return undefined;
+  }
+  
   if (typeof window === "undefined") {
     console.log('[Firebase] Analytics not available - not in browser environment');
     return undefined;
@@ -82,9 +111,9 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
     } catch (error) {
       console.error('[Firebase] Analytics initialization failed:', error);
       console.error('[Firebase] Analytics error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        name: (error as any)?.name
       });
       return undefined;
     }
