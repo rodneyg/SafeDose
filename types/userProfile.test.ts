@@ -7,6 +7,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: false,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -21,6 +22,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: false,
       isPersonalUse: true,
       isCosmeticUse: false,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -35,6 +37,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: false,
       isPersonalUse: true,
       isCosmeticUse: true,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -49,6 +52,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: false,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -62,6 +66,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: true,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -75,6 +80,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: true,
       isPersonalUse: false,
       isCosmeticUse: false,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -89,6 +95,7 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: true,
       isPersonalUse: true,
       isCosmeticUse: true,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
@@ -102,11 +109,57 @@ describe('User Profile Warning System', () => {
       isProfessionalAthlete: true,
       isPersonalUse: false,
       isCosmeticUse: false,
+      isPerformanceUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
     };
     
     expect(getUserWarningLevel(profile)).toBe(WarningLevel.MINIMAL);
     expect(getDisclaimerText(profile)).toContain('Professional use');
     expect(getDisclaimerText(profile)).not.toContain('sports medicine');
+  });
+
+  test('performance use gets moderate warnings', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: false,
+      isProfessionalAthlete: false,
+      isPersonalUse: false,
+      isCosmeticUse: false,
+      isPerformanceUse: true,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MODERATE);
+    expect(getDisclaimerText(profile)).toContain('Performance use');
+    expect(getDisclaimerText(profile)).toContain('performance enhancement protocols');
+  });
+
+  test('professional athlete status overrides performance use', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: false,
+      isProfessionalAthlete: true,
+      isPersonalUse: false,
+      isCosmeticUse: false,
+      isPerformanceUse: true,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MODERATE);
+    expect(getDisclaimerText(profile)).toContain('Professional athlete use');
+    expect(getDisclaimerText(profile)).toContain('sports medicine team');
+  });
+
+  test('licensed professional takes precedence over performance use', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: true,
+      isProfessionalAthlete: false,
+      isPersonalUse: false,
+      isCosmeticUse: false,
+      isPerformanceUse: true,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MINIMAL);
+    expect(getDisclaimerText(profile)).toContain('Professional use');
+    expect(getDisclaimerText(profile)).toContain('Verify calculations independently');
   });
 });

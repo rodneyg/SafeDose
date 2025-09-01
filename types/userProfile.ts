@@ -3,6 +3,7 @@ export interface UserProfile {
   isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  isPerformanceUse: boolean;
   age?: number; // Age of the user for safety and personalization (calculated from birthDate)
   birthDate?: string; // Birth date in YYYY-MM-DD format for more precise age calculation
   dateCreated: string;
@@ -14,6 +15,7 @@ export type UserProfileAnswers = {
   isProfessionalAthlete: boolean | null;
   isPersonalUse: boolean | null;
   isCosmeticUse: boolean | null;
+  isPerformanceUse: boolean | null;
   age: number | null;
   birthDate: string | null; // Birth date in YYYY-MM-DD format
 };
@@ -32,6 +34,11 @@ export const getUserWarningLevel = (profile: UserProfile): WarningLevel => {
   
   // Professional athletes get moderate warnings
   if (profile.isProfessionalAthlete) {
+    return WarningLevel.MODERATE;
+  }
+  
+  // Performance use gets moderate warnings
+  if (profile.isPerformanceUse) {
     return WarningLevel.MODERATE;
   }
   
@@ -54,6 +61,10 @@ export const getDisclaimerText = (profile: UserProfile): string => {
   
   if (profile.isProfessionalAthlete) {
     return "Professional athlete use: Double-check calculations and consult with your sports medicine team or healthcare provider.";
+  }
+  
+  if (profile.isPerformanceUse) {
+    return "Performance use: Double-check calculations and consult with a healthcare provider familiar with performance enhancement protocols.";
   }
   
   switch (warningLevel) {

@@ -76,6 +76,7 @@ export const USER_PROPERTIES = {
   IS_PROFESSIONAL_ATHLETE: 'is_professional_athlete',
   IS_PERSONAL_USE: 'is_personal_use',
   IS_COSMETIC_USE: 'is_cosmetic_use',
+  IS_PERFORMANCE_USE: 'is_performance_use',
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
@@ -129,6 +130,8 @@ export const setPersonalizationUserProperties = (profile: any) => {
     userSegment = 'healthcare_professional';
   } else if (profile.isProfessionalAthlete) {
     userSegment = 'professional_athlete';
+  } else if (profile.isPerformanceUse) {
+    userSegment = 'performance_user';
   } else if (profile.isCosmeticUse) {
     userSegment = 'cosmetic_user';
   } else if (profile.isPersonalUse) {
@@ -140,6 +143,7 @@ export const setPersonalizationUserProperties = (profile: any) => {
     [USER_PROPERTIES.IS_PROFESSIONAL_ATHLETE]: profile.isProfessionalAthlete,
     [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
     [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
+    [USER_PROPERTIES.IS_PERFORMANCE_USE]: profile.isPerformanceUse,
     [USER_PROPERTIES.USER_SEGMENT]: userSegment,
   });
 };

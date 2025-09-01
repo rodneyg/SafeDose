@@ -27,6 +27,7 @@ export default function UserTypeSegmentation() {
     isProfessionalAthlete: null,
     isPersonalUse: null,
     isCosmeticUse: null,
+    isPerformanceUse: null,
     age: age ? parseInt(age) : null,
     birthDate: null,
   });
@@ -57,6 +58,13 @@ export default function UserTypeSegmentation() {
         newAnswers.isProfessionalAthlete = false;
       } else if (question === 'isProfessionalAthlete' && value === true) {
         newAnswers.isLicensedProfessional = false;
+      }
+      
+      // Handle mutual exclusivity for use type questions
+      if (question === 'isCosmeticUse' && value === true) {
+        newAnswers.isPerformanceUse = false;
+      } else if (question === 'isPerformanceUse' && value === true) {
+        newAnswers.isCosmeticUse = false;
       }
       
       return newAnswers;
@@ -143,6 +151,7 @@ export default function UserTypeSegmentation() {
         isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
+        isPerformanceUse: answers.isPerformanceUse ?? false,
         age: answers.age || undefined, // Include age if provided
         dateCreated: new Date().toISOString(),
         userId: user?.uid,
@@ -166,6 +175,7 @@ export default function UserTypeSegmentation() {
         isProfessionalAthlete: profile.isProfessionalAthlete,
         isPersonalUse: profile.isPersonalUse,
         isCosmeticUse: profile.isCosmeticUse,
+        isPerformanceUse: profile.isPerformanceUse,
         skipped_personal_use: answers.isPersonalUse === null,
         age: profile.age,
         age_range: profile.age ? (profile.age < 18 ? 'minor' : profile.age < 65 ? 'adult' : 'senior') : 'unknown'
@@ -206,7 +216,7 @@ export default function UserTypeSegmentation() {
   const isCurrentStepComplete = (): boolean => {
     switch (currentStep) {
       case 0: return answers.isLicensedProfessional !== null || answers.isProfessionalAthlete !== null;
-      case 1: return answers.isCosmeticUse !== null;
+      case 1: return answers.isCosmeticUse !== null || answers.isPerformanceUse !== null;
       case 2: return true; // This step is always "complete" since it can be skipped
       default: return false;
     }
@@ -304,17 +314,20 @@ export default function UserTypeSegmentation() {
           style={[
             styles.optionCard,
             isMobileWeb && styles.optionCardMobile,
-            answers.isCosmeticUse === false && styles.optionCardSelected,
+            answers.isCosmeticUse === false && answers.isPerformanceUse === false && styles.optionCardSelected,
           ]}
-          onPress={() => handleAnswerChange('isCosmeticUse', false)}
+          onPress={() => {
+            handleAnswerChange('isCosmeticUse', false);
+            setAnswers(prev => ({ ...prev, isPerformanceUse: false }));
+          }}
           accessibilityRole="button"
           accessibilityLabel="Medical/Prescribed"
         >
-          {answers.isCosmeticUse === false && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+          {answers.isCosmeticUse === false && answers.isPerformanceUse === false && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
           <Text style={[
             styles.optionTitle,
             isMobileWeb && styles.optionTitleMobile,
-            answers.isCosmeticUse === false && styles.optionTitleSelected,
+            answers.isCosmeticUse === false && answers.isPerformanceUse === false && styles.optionTitleSelected,
           ]}>
             Medical/Prescribed
           </Text>
@@ -322,6 +335,32 @@ export default function UserTypeSegmentation() {
             Doctor-prescribed medications or medical treatments
           </Text>
         </TouchableOpacity>
+
+        {/* Show Performance option only for professional athletes */}
+        {answers.isProfessionalAthlete === true && (
+          <TouchableOpacity
+            style={[
+              styles.optionCard,
+              isMobileWeb && styles.optionCardMobile,
+              answers.isPerformanceUse === true && styles.optionCardSelected,
+            ]}
+            onPress={() => handleAnswerChange('isPerformanceUse', true)}
+            accessibilityRole="button"
+            accessibilityLabel="Performance"
+          >
+            {answers.isPerformanceUse === true && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+            <Text style={[
+              styles.optionTitle,
+              isMobileWeb && styles.optionTitleMobile,
+              answers.isPerformanceUse === true && styles.optionTitleSelected,
+            ]}>
+              Performance
+            </Text>
+            <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
+              Performance enhancement and athletic optimization
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[

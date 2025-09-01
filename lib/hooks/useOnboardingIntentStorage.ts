@@ -11,6 +11,7 @@ export interface OnboardingIntentData {
   isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  isPerformanceUse: boolean;
   user_segment: string;
   device_id?: string;
 }
@@ -21,6 +22,7 @@ const getUserSegment = (answers: {
   isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  isPerformanceUse: boolean;
 }): string => {
   if (answers.isLicensedProfessional) {
     return 'healthcare_professional';
@@ -28,6 +30,10 @@ const getUserSegment = (answers: {
   
   if (answers.isProfessionalAthlete) {
     return 'professional_athlete';
+  }
+  
+  if (answers.isPerformanceUse) {
+    return 'performance_user';
   }
   
   if (answers.isCosmeticUse) {
@@ -57,11 +63,13 @@ export function useOnboardingIntentStorage() {
         isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
+        isPerformanceUse: answers.isPerformanceUse ?? false,
         user_segment: getUserSegment({
           isLicensedProfessional: answers.isLicensedProfessional ?? false,
           isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
+          isPerformanceUse: answers.isPerformanceUse ?? false,
         }),
         device_id: generateDeviceId(),
       };
@@ -104,11 +112,13 @@ export function useOnboardingIntentStorage() {
           isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
+          isPerformanceUse: answers.isPerformanceUse ?? false,
           user_segment: getUserSegment({
             isLicensedProfessional: answers.isLicensedProfessional ?? false,
             isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
             isPersonalUse: answers.isPersonalUse ?? true,
             isCosmeticUse: answers.isCosmeticUse ?? false,
+            isPerformanceUse: answers.isPerformanceUse ?? false,
           }),
           device_id: generateDeviceId(),
         };
