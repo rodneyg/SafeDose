@@ -4,6 +4,7 @@ export interface UserProfile {
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
   isPerformanceUse: boolean;
+  isRecoveryUse: boolean;
   age?: number; // Age of the user for safety and personalization (calculated from birthDate)
   birthDate?: string; // Birth date in YYYY-MM-DD format for more precise age calculation
   dateCreated: string;
@@ -16,6 +17,7 @@ export type UserProfileAnswers = {
   isPersonalUse: boolean | null;
   isCosmeticUse: boolean | null;
   isPerformanceUse: boolean | null;
+  isRecoveryUse: boolean | null;
   age: number | null;
   birthDate: string | null; // Birth date in YYYY-MM-DD format
 };
@@ -42,6 +44,11 @@ export const getUserWarningLevel = (profile: UserProfile): WarningLevel => {
     return WarningLevel.MODERATE;
   }
   
+  // Recovery use gets moderate warnings
+  if (profile.isRecoveryUse) {
+    return WarningLevel.MODERATE;
+  }
+  
   // Personal, prescribed use gets moderate warnings
   if (profile.isPersonalUse && !profile.isCosmeticUse) {
     return WarningLevel.MODERATE;
@@ -65,6 +72,10 @@ export const getDisclaimerText = (profile: UserProfile): string => {
   
   if (profile.isPerformanceUse) {
     return "Performance use: Double-check calculations and consult with a healthcare provider familiar with performance enhancement protocols.";
+  }
+  
+  if (profile.isRecoveryUse) {
+    return "Recovery use: Double-check calculations and consult with a healthcare provider familiar with recovery and injury healing protocols.";
   }
   
   switch (warningLevel) {
