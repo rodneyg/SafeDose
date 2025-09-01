@@ -4,6 +4,7 @@ describe('User Profile Warning System', () => {
   test('licensed professional gets minimal warnings', () => {
     const profile: UserProfile = {
       isLicensedProfessional: true,
+      isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
@@ -17,6 +18,7 @@ describe('User Profile Warning System', () => {
   test('personal prescribed use gets moderate warnings', () => {
     const profile: UserProfile = {
       isLicensedProfessional: false,
+      isProfessionalAthlete: false,
       isPersonalUse: true,
       isCosmeticUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
@@ -30,6 +32,7 @@ describe('User Profile Warning System', () => {
   test('cosmetic use gets strict warnings', () => {
     const profile: UserProfile = {
       isLicensedProfessional: false,
+      isProfessionalAthlete: false,
       isPersonalUse: true,
       isCosmeticUse: true,
       dateCreated: '2024-01-01T00:00:00.000Z',
@@ -43,6 +46,7 @@ describe('User Profile Warning System', () => {
   test('non-professional non-personal use gets strict warnings', () => {
     const profile: UserProfile = {
       isLicensedProfessional: false,
+      isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: false,
       dateCreated: '2024-01-01T00:00:00.000Z',
@@ -55,6 +59,7 @@ describe('User Profile Warning System', () => {
   test('professional status overrides other settings', () => {
     const profile: UserProfile = {
       isLicensedProfessional: true,
+      isProfessionalAthlete: false,
       isPersonalUse: false,
       isCosmeticUse: true,
       dateCreated: '2024-01-01T00:00:00.000Z',
@@ -62,5 +67,46 @@ describe('User Profile Warning System', () => {
     
     expect(getUserWarningLevel(profile)).toBe(WarningLevel.MINIMAL);
     expect(getDisclaimerText(profile)).toContain('Professional use');
+  });
+
+  test('professional athlete gets moderate warnings', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: false,
+      isProfessionalAthlete: true,
+      isPersonalUse: false,
+      isCosmeticUse: false,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MODERATE);
+    expect(getDisclaimerText(profile)).toContain('Professional athlete use');
+    expect(getDisclaimerText(profile)).toContain('sports medicine team');
+  });
+
+  test('professional athlete overrides personal use settings', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: false,
+      isProfessionalAthlete: true,
+      isPersonalUse: true,
+      isCosmeticUse: true,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MODERATE);
+    expect(getDisclaimerText(profile)).toContain('Professional athlete use');
+  });
+
+  test('licensed professional takes precedence over professional athlete', () => {
+    const profile: UserProfile = {
+      isLicensedProfessional: true,
+      isProfessionalAthlete: true,
+      isPersonalUse: false,
+      isCosmeticUse: false,
+      dateCreated: '2024-01-01T00:00:00.000Z',
+    };
+    
+    expect(getUserWarningLevel(profile)).toBe(WarningLevel.MINIMAL);
+    expect(getDisclaimerText(profile)).toContain('Professional use');
+    expect(getDisclaimerText(profile)).not.toContain('sports medicine');
   });
 });

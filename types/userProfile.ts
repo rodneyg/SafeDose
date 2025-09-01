@@ -1,5 +1,6 @@
 export interface UserProfile {
   isLicensedProfessional: boolean;
+  isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
   age?: number; // Age of the user for safety and personalization (calculated from birthDate)
@@ -10,6 +11,7 @@ export interface UserProfile {
 
 export type UserProfileAnswers = {
   isLicensedProfessional: boolean | null;
+  isProfessionalAthlete: boolean | null;
   isPersonalUse: boolean | null;
   isCosmeticUse: boolean | null;
   age: number | null;
@@ -28,6 +30,11 @@ export const getUserWarningLevel = (profile: UserProfile): WarningLevel => {
     return WarningLevel.MINIMAL;
   }
   
+  // Professional athletes get moderate warnings
+  if (profile.isProfessionalAthlete) {
+    return WarningLevel.MODERATE;
+  }
+  
   // Personal, prescribed use gets moderate warnings
   if (profile.isPersonalUse && !profile.isCosmeticUse) {
     return WarningLevel.MODERATE;
@@ -39,6 +46,15 @@ export const getUserWarningLevel = (profile: UserProfile): WarningLevel => {
 
 export const getDisclaimerText = (profile: UserProfile): string => {
   const warningLevel = getUserWarningLevel(profile);
+  
+  // Check for specific user types first
+  if (profile.isLicensedProfessional) {
+    return "Professional use: Verify calculations independently for patient safety.";
+  }
+  
+  if (profile.isProfessionalAthlete) {
+    return "Professional athlete use: Double-check calculations and consult with your sports medicine team or healthcare provider.";
+  }
   
   switch (warningLevel) {
     case WarningLevel.MINIMAL:

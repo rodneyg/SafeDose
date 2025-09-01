@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface OnboardingIntentData {
   timestamp: string;
   isLicensedProfessional: boolean;
+  isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
   user_segment: string;
@@ -17,11 +18,16 @@ export interface OnboardingIntentData {
 // Function to determine user segment based on answers
 const getUserSegment = (answers: {
   isLicensedProfessional: boolean;
+  isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
 }): string => {
   if (answers.isLicensedProfessional) {
     return 'healthcare_professional';
+  }
+  
+  if (answers.isProfessionalAthlete) {
+    return 'professional_athlete';
   }
   
   if (answers.isCosmeticUse) {
@@ -48,10 +54,12 @@ export function useOnboardingIntentStorage() {
       const intentData: OnboardingIntentData = {
         timestamp: new Date().toISOString(),
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
+        isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
         user_segment: getUserSegment({
           isLicensedProfessional: answers.isLicensedProfessional ?? false,
+          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
         }),
@@ -93,10 +101,12 @@ export function useOnboardingIntentStorage() {
         const fallbackData: OnboardingIntentData = {
           timestamp: new Date().toISOString(),
           isLicensedProfessional: answers.isLicensedProfessional ?? false,
+          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
           user_segment: getUserSegment({
             isLicensedProfessional: answers.isLicensedProfessional ?? false,
+            isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
             isPersonalUse: answers.isPersonalUse ?? true,
             isCosmeticUse: answers.isCosmeticUse ?? false,
           }),
