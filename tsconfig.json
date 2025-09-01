@@ -19,5 +19,10 @@
     "env.d.ts",
     "nativewind-env.d.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "node_modules"
   ]
 }

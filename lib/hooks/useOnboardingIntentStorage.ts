@@ -8,8 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface OnboardingIntentData {
   timestamp: string;
   isLicensedProfessional: boolean;
+  isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  isPerformanceUse: boolean;
   user_segment: string;
   device_id?: string;
 }
@@ -17,11 +19,21 @@ export interface OnboardingIntentData {
 // Function to determine user segment based on answers
 const getUserSegment = (answers: {
   isLicensedProfessional: boolean;
+  isProfessionalAthlete: boolean;
   isPersonalUse: boolean;
   isCosmeticUse: boolean;
+  isPerformanceUse: boolean;
 }): string => {
   if (answers.isLicensedProfessional) {
     return 'healthcare_professional';
+  }
+  
+  if (answers.isProfessionalAthlete) {
+    return 'professional_athlete';
+  }
+  
+  if (answers.isPerformanceUse) {
+    return 'performance_user';
   }
   
   if (answers.isCosmeticUse) {
@@ -48,12 +60,16 @@ export function useOnboardingIntentStorage() {
       const intentData: OnboardingIntentData = {
         timestamp: new Date().toISOString(),
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
+        isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
+        isPerformanceUse: answers.isPerformanceUse ?? false,
         user_segment: getUserSegment({
           isLicensedProfessional: answers.isLicensedProfessional ?? false,
+          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
+          isPerformanceUse: answers.isPerformanceUse ?? false,
         }),
         device_id: generateDeviceId(),
       };
@@ -93,12 +109,16 @@ export function useOnboardingIntentStorage() {
         const fallbackData: OnboardingIntentData = {
           timestamp: new Date().toISOString(),
           isLicensedProfessional: answers.isLicensedProfessional ?? false,
+          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
           isPersonalUse: answers.isPersonalUse ?? true,
           isCosmeticUse: answers.isCosmeticUse ?? false,
+          isPerformanceUse: answers.isPerformanceUse ?? false,
           user_segment: getUserSegment({
             isLicensedProfessional: answers.isLicensedProfessional ?? false,
+            isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
             isPersonalUse: answers.isPersonalUse ?? true,
             isCosmeticUse: answers.isCosmeticUse ?? false,
+            isPerformanceUse: answers.isPerformanceUse ?? false,
           }),
           device_id: generateDeviceId(),
         };
