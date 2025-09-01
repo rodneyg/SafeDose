@@ -28,6 +28,7 @@ export default function UserTypeSegmentation() {
     isPersonalUse: null,
     isCosmeticUse: null,
     isPerformanceUse: null,
+    isRecoveryUse: null,
     age: age ? parseInt(age) : null,
     birthDate: null,
   });
@@ -63,8 +64,13 @@ export default function UserTypeSegmentation() {
       // Handle mutual exclusivity for use type questions
       if (question === 'isCosmeticUse' && value === true) {
         newAnswers.isPerformanceUse = false;
+        newAnswers.isRecoveryUse = false;
       } else if (question === 'isPerformanceUse' && value === true) {
         newAnswers.isCosmeticUse = false;
+        newAnswers.isRecoveryUse = false;
+      } else if (question === 'isRecoveryUse' && value === true) {
+        newAnswers.isCosmeticUse = false;
+        newAnswers.isPerformanceUse = false;
       }
       
       return newAnswers;
@@ -152,6 +158,7 @@ export default function UserTypeSegmentation() {
         isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
         isCosmeticUse: answers.isCosmeticUse ?? false,
         isPerformanceUse: answers.isPerformanceUse ?? false,
+        isRecoveryUse: answers.isRecoveryUse ?? false,
         age: answers.age || undefined, // Include age if provided
         dateCreated: new Date().toISOString(),
         userId: user?.uid,
@@ -176,6 +183,7 @@ export default function UserTypeSegmentation() {
         isPersonalUse: profile.isPersonalUse,
         isCosmeticUse: profile.isCosmeticUse,
         isPerformanceUse: profile.isPerformanceUse,
+        isRecoveryUse: profile.isRecoveryUse,
         skipped_personal_use: answers.isPersonalUse === null,
         age: profile.age,
         age_range: profile.age ? (profile.age < 18 ? 'minor' : profile.age < 65 ? 'adult' : 'senior') : 'unknown'
@@ -216,7 +224,7 @@ export default function UserTypeSegmentation() {
   const isCurrentStepComplete = (): boolean => {
     switch (currentStep) {
       case 0: return answers.isLicensedProfessional !== null || answers.isProfessionalAthlete !== null;
-      case 1: return answers.isCosmeticUse !== null || answers.isPerformanceUse !== null;
+      case 1: return answers.isCosmeticUse !== null || answers.isPerformanceUse !== null || answers.isRecoveryUse !== null;
       case 2: return true; // This step is always "complete" since it can be skipped
       default: return false;
     }
@@ -314,20 +322,20 @@ export default function UserTypeSegmentation() {
           style={[
             styles.optionCard,
             isMobileWeb && styles.optionCardMobile,
-            answers.isCosmeticUse === false && answers.isPerformanceUse === false && styles.optionCardSelected,
+            answers.isCosmeticUse === false && answers.isPerformanceUse === false && answers.isRecoveryUse === false && styles.optionCardSelected,
           ]}
           onPress={() => {
             handleAnswerChange('isCosmeticUse', false);
-            setAnswers(prev => ({ ...prev, isPerformanceUse: false }));
+            setAnswers(prev => ({ ...prev, isPerformanceUse: false, isRecoveryUse: false }));
           }}
           accessibilityRole="button"
           accessibilityLabel="Medical/Prescribed"
         >
-          {answers.isCosmeticUse === false && answers.isPerformanceUse === false && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+          {answers.isCosmeticUse === false && answers.isPerformanceUse === false && answers.isRecoveryUse === false && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
           <Text style={[
             styles.optionTitle,
             isMobileWeb && styles.optionTitleMobile,
-            answers.isCosmeticUse === false && answers.isPerformanceUse === false && styles.optionTitleSelected,
+            answers.isCosmeticUse === false && answers.isPerformanceUse === false && answers.isRecoveryUse === false && styles.optionTitleSelected,
           ]}>
             Medical/Prescribed
           </Text>
@@ -358,6 +366,32 @@ export default function UserTypeSegmentation() {
             </Text>
             <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
               Performance enhancement and athletic optimization
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Show Recovery option for professional athletes and general users (not healthcare professionals) */}
+        {answers.isLicensedProfessional !== true && (
+          <TouchableOpacity
+            style={[
+              styles.optionCard,
+              isMobileWeb && styles.optionCardMobile,
+              answers.isRecoveryUse === true && styles.optionCardSelected,
+            ]}
+            onPress={() => handleAnswerChange('isRecoveryUse', true)}
+            accessibilityRole="button"
+            accessibilityLabel="Recovery"
+          >
+            {answers.isRecoveryUse === true && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+            <Text style={[
+              styles.optionTitle,
+              isMobileWeb && styles.optionTitleMobile,
+              answers.isRecoveryUse === true && styles.optionTitleSelected,
+            ]}>
+              Recovery
+            </Text>
+            <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
+              Injury healing, tissue repair, and recovery optimization
             </Text>
           </TouchableOpacity>
         )}
