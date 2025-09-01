@@ -110,6 +110,59 @@ const COMMON_DOSES: CommonDose[] = [
     dosageRange: '1.6mg 2x/week',
     notes: 'Immune support and anti-aging peptide',
   },
+  // Stem Cell and Advanced Recovery Therapies
+  {
+    compound: 'NAD+',
+    dosageRange: '50–500mg IV',
+    notes: 'Cellular energy and anti-aging (clinical administration)',
+    isPopular: true,
+  },
+  {
+    compound: 'Exosomes',
+    dosageRange: 'Clinical protocols vary',
+    notes: 'Regenerative therapy (professional administration only)',
+  },
+  {
+    compound: 'PRP (Platelet-Rich Plasma)',
+    dosageRange: 'Clinical protocols vary',
+    notes: 'Autologous healing therapy (medical procedure)',
+  },
+  // Performance and Recovery Compounds
+  {
+    compound: 'Cerebrolysin',
+    dosageRange: '5–30ml IV',
+    notes: 'Neuroprotection and cognitive support (clinical use)',
+  },
+  {
+    compound: 'Thymosin Beta-4',
+    dosageRange: '2–5mg weekly',
+    notes: 'Advanced tissue repair and recovery',
+  },
+  {
+    compound: 'Follistatin 344',
+    dosageRange: '100mcg daily',
+    notes: 'Muscle growth and myostatin inhibition',
+  },
+  {
+    compound: 'AOD 9604',
+    dosageRange: '300mcg daily',
+    notes: 'Fat loss peptide derived from growth hormone',
+  },
+  {
+    compound: 'MOTS-c',
+    dosageRange: '5–10mg weekly',
+    notes: 'Mitochondrial peptide for metabolic enhancement',
+  },
+  {
+    compound: 'Humanin',
+    dosageRange: '2–5mg weekly',
+    notes: 'Mitochondrial-derived longevity peptide',
+  },
+  {
+    compound: 'Dihexa',
+    dosageRange: '1–10mg daily',
+    notes: 'Cognitive enhancement and neuroprotection',
+  },
 ];
 
 export default function ReferenceScreen() {
@@ -214,7 +267,7 @@ export default function ReferenceScreen() {
       {/* Fixed Disclaimer */}
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerText}>
-          ⚠️ This information is for educational purposes only. SafeDose does not provide medical advice. Always consult a healthcare professional before using any compound.
+          ⚠️ This information is for educational purposes only. SafeDose does not provide medical advice. Many of these interventions require professional medical supervision. Always consult a healthcare professional before using any compound or therapy.
         </Text>
       </View>
 
@@ -224,9 +277,9 @@ export default function ReferenceScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Common Peptide Doses</Text>
+          <Text style={styles.title}>Performance & Recovery Reference</Text>
           <Text style={styles.subtitle}>
-            Reference information for popular compounds
+            Peptides, hormones, stem cells, and advanced interventions
           </Text>
         </View>
 
@@ -274,7 +327,13 @@ export default function ReferenceScreen() {
             • Frequency and timing may vary by compound and individual goals
           </Text>
           <Text style={styles.infoText}>
+            • Many advanced therapies require clinical administration
+          </Text>
+          <Text style={styles.infoText}>
             • Always verify compound purity and authenticity
+          </Text>
+          <Text style={styles.infoText}>
+            • Professional athletic use may be subject to anti-doping regulations
           </Text>
         </View>
       </ScrollView>
