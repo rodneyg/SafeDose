@@ -336,8 +336,8 @@ export default function UserTypeSegmentation() {
           </Text>
         </TouchableOpacity>
 
-        {/* Show Performance option only for professional athletes */}
-        {answers.isProfessionalAthlete === true && (
+        {/* Show Performance option for professional athletes and general users (not healthcare professionals) */}
+        {answers.isLicensedProfessional !== true && (
           <TouchableOpacity
             style={[
               styles.optionCard,
