@@ -11,6 +11,8 @@ import {
   Info,
   User,
   RotateCcw,
+  Calendar,
+  Clock,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -19,6 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
+import { useProtocolStorage } from '../lib/hooks/useProtocolStorage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -52,6 +55,7 @@ export default function IntroScreen({
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
+  const { getActiveProtocol, getNextDoses } = useProtocolStorage();
   const router = useRouter();
 
   // State for logout functionality
@@ -61,6 +65,10 @@ export default function IntroScreen({
   // State for last dose functionality
   const [hasLastDose, setHasLastDose] = useState(false);
   const [isLoadingLastDose, setIsLoadingLastDose] = useState(false);
+  
+  // State for protocol functionality
+  const [activeProtocol, setActiveProtocol] = useState<any>(null);
+  const [nextDoses, setNextDoses] = useState<any[]>([]);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -132,17 +140,42 @@ export default function IntroScreen({
     }
   }, [getDoseLogHistory, user]);
 
+  /* =========================================================================
+     PROTOCOL AVAILABILITY CHECK
+  ========================================================================= */
+  const checkProtocolAvailability = useCallback(async () => {
+    try {
+      const protocol = getActiveProtocol();
+      const nextScheduledDoses = getNextDoses().slice(0, 2); // Get next 2 doses
+      
+      console.log('[IntroScreen] Protocol check:', {
+        hasActiveProtocol: !!protocol,
+        nextDosesCount: nextScheduledDoses.length,
+        protocolName: protocol?.compoundName || 'none'
+      });
+      
+      setActiveProtocol(protocol);
+      setNextDoses(nextScheduledDoses);
+    } catch (error) {
+      console.error('[IntroScreen] Error checking protocol:', error);
+      setActiveProtocol(null);
+      setNextDoses([]);
+    }
+  }, [getActiveProtocol, getNextDoses]);
+
   // Check for last dose on mount and when user changes
   useEffect(() => {
     checkLastDoseAvailability();
-  }, [checkLastDoseAvailability, user?.uid]);
+    checkProtocolAvailability();
+  }, [checkLastDoseAvailability, checkProtocolAvailability, user?.uid]);
 
   // Re-check when screen comes into focus (e.g., after completing a dose)
   useFocusEffect(
     useCallback(() => {
       console.log('[IntroScreen] Screen focused, re-checking last dose availability...');
       checkLastDoseAvailability();
-    }, [checkLastDoseAvailability])
+      checkProtocolAvailability();
+    }, [checkLastDoseAvailability, checkProtocolAvailability])
   );
 
   /* =========================================================================
