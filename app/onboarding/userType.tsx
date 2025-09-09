@@ -208,10 +208,10 @@ export default function UserTypeSegmentation() {
         parsedProfile: storedProfile ? JSON.parse(storedProfile) : null
       });
       
-      // Navigate directly to intro screen instead of relying on index.tsx routing
-      console.log('[UserType] 🚀 NAVIGATING DIRECTLY TO INTRO - calling router.replace("/(tabs)/new-dose")');
-      console.log('[UserType] ========== BYPASSING INDEX.TSX ROUTING ==========');
-      router.replace('/(tabs)/new-dose');
+      // Navigate to protocol setup instead of directly to intro screen
+      console.log('[UserType] 🚀 NAVIGATING TO PROTOCOL SETUP - calling router.replace("/onboarding/protocol")');
+      console.log('[UserType] ========== GOING TO PROTOCOL SETUP ==========');
+      router.replace('/onboarding/protocol');
     } catch (error) {
       console.error('[UserType] ❌ ERROR during completion:', error);
       console.error('[UserType] Error stack:', error instanceof Error ? error.stack : 'No stack');

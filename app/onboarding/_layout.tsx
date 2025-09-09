@@ -9,6 +9,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="demo" options={{ headerShown: false }} />
         <Stack.Screen name="features" options={{ headerShown: false }} />
+        <Stack.Screen name="protocol" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
