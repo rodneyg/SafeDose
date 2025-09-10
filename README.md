@@ -1,21 +1,19 @@
 # SafeDose
 
-**An educational, AI-assisted dose calculation learning tool for injectable compounds.**  
-Created by **SafeLab**, SafeDose transforms complex calculations into clear, visual educational demonstrations.
+**A visual, AI-assisted dose calculator for injectable medications.**  
+Created by **SafeLab**, SafeDose transforms confusing math and manual conversions into clear, visual dosing guidance.
 
-Whether you're learning about mg/ml conversions, reconstitution principles, or understanding syringe measurements, SafeDose helps you visualize and understand these educational concepts.
+Whether you're working with mg/ml, reconstituted peptides, or insulin units, SafeDose helps you calculate and visualize your exact syringe draw.
 
 ---
 
-## ⚠️ Educational Tool Disclaimer
+## ⚠️ Disclaimer
 
-> **This is an educational calculation tool for informational purposes only.**
+> **This tool is a research preview and educational utility.**
 >
-> SafeDose is an educational utility designed to help users understand injection dose calculations. It is NOT a medical device and is NOT intended to diagnose, treat, prescribe, or provide medical advice. This tool should NEVER be used as a substitute for professional medical judgment or consultation.
+> SafeDose is not a medical device and is not intended to diagnose, treat, or prescribe. It should not be used as a substitute for professional medical judgment. All results must be independently verified by a licensed medical professional.
 >
-> **All calculations must be independently verified by qualified professionals before any use.** This educational tool is designed to supplement learning and understanding, not replace professional guidance.
->
-> Use is strictly at your own risk. SafeLab and contributors assume no responsibility for misuse, and users acknowledge this is for educational purposes only.
+> Use at your own risk. SafeLab and contributors assume no responsibility for misuse.
 
 ---
 
@@ -101,7 +99,7 @@ Please avoid introducing breaking changes or external dependencies unless necess
 🛡 License
 
 MIT License.
-By using this project, you agree not to market it as a medical device without independent validation and regulatory approval. This educational tool is designed for learning purposes only and all calculations must be verified by qualified professionals.
+By using this project, you agree not to market it as a certified medical device without independent validation and regulatory approval.
 
 ⸻
 

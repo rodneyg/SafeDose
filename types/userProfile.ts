@@ -61,34 +61,31 @@ export const getUserWarningLevel = (profile: UserProfile): WarningLevel => {
 export const getDisclaimerText = (profile: UserProfile): string => {
   const warningLevel = getUserWarningLevel(profile);
   
-  // Educational-first disclaimers to avoid medical device classification
-  const baseEducationalText = "This is an educational calculation tool only. All results must be independently verified by qualified professionals. SafeDose is not intended for direct medical use and should not replace professional medical judgment.";
-  
   // Check for specific user types first
   if (profile.isLicensedProfessional) {
-    return `${baseEducationalText} Professional note: Always verify calculations independently and follow your professional protocols.`;
+    return "Professional use: Verify calculations independently for patient safety.";
   }
   
   if (profile.isProfessionalAthlete) {
-    return `${baseEducationalText} Athletic note: Consult with your sports medicine team before using any compounds.`;
+    return "Professional athlete use: Double-check calculations and consult with your sports medicine team or healthcare provider.";
   }
   
   if (profile.isPerformanceUse) {
-    return `${baseEducationalText} Performance note: Educational calculations should be reviewed with qualified professionals familiar with your specific protocols.`;
+    return "Performance use: Double-check calculations and consult with a healthcare provider familiar with performance enhancement protocols.";
   }
   
   if (profile.isRecoveryUse) {
-    return `${baseEducationalText} Recovery note: Educational calculations should be reviewed with qualified professionals familiar with recovery protocols.`;
+    return "Recovery use: Double-check calculations and consult with a healthcare provider familiar with recovery and injury healing protocols.";
   }
   
   switch (warningLevel) {
     case WarningLevel.MINIMAL:
-      return `${baseEducationalText} Professional note: Always verify calculations independently and follow your professional protocols.`;
+      return "Professional use: Verify calculations independently for patient safety.";
     case WarningLevel.MODERATE:
-      return `${baseEducationalText} Personal note: This educational tool should supplement, not replace, professional guidance.`;
+      return "Personal use: Double-check calculations and consult your healthcare provider.";
     case WarningLevel.STRICT:
-      return `${baseEducationalText} **Important**: This is strictly for educational and informational purposes. Always consult qualified professionals before using any compounds.`;
+      return "**Critical**: This information is for educational purposes only. Always consult a licensed healthcare professional before administering any medication.";
     default:
-      return `${baseEducationalText} Always consult qualified professionals before using any compounds.`;
+      return "Always consult a licensed healthcare professional before administering any medication.";
   }
 };
