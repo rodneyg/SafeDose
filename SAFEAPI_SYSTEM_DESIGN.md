@@ -1,6 +1,6 @@
-# SafeAPI & SafeDoseAPI System Design
+# SafeAPI System Design
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Date:** January 2025  
 **Status:** Design Planning Phase
 
@@ -8,580 +8,254 @@
 
 ## Overview
 
-This document outlines the system design for **SafeAPI** - a generic, privacy-first API service built on Firebase and PGP encryption - and **SafeDoseAPI** - a specialized layer that SafeDose developers would build using SafeAPI as the foundation.
+SafeAPI is a horizontal privacy-first API platform built on Firebase with PGP encryption. Think of it as the privacy layer that any developer can drop into their application when they need client-side encryption, compliance tooling, and audit trails.
 
-SafeAPI is designed as a discoverable, third-party service that any health/privacy application could adopt for comprehensive data protection and legal compliance.
+The core philosophy: **Always make an API, good things happen when you do.** SafeAPI provides the privacy and compliance primitives that developers can compose into domain-specific solutions.
+
+**What it does:**
+- Client-side PGP encryption for any data type
+- Compliance tooling (HIPAA/GDPR-eligible deployment possible)  
+- Firebase integration with privacy layer
+- Audit trails and consent management
+- Anonymous and authenticated data operations
+
+**What it doesn't do:**
+- Domain-specific business logic
+- UI components or user experience
+- Industry-specific features
+- Compliance guarantees (provides tools, not promises)
 
 ---
 
-## SafeAPI: Generic Privacy & Compliance API
+## Core Architecture
 
-### Core Architecture
-
-SafeAPI is a standalone service that provides privacy-first data operations, legal compliance tools, and encrypted storage using Firebase as the scalable backend with PGP encryption as the privacy layer.
+SafeAPI is designed as a composable set of privacy primitives that work with any Firebase project:
 
 ```
-SafeAPI Architecture
+SafeAPI Core
 ├── Privacy Layer
-│   ├── PGP Encryption/Decryption
-│   ├── Key Management (Client-Side)
-│   ├── Anonymous Data Operations
-│   └── Biometric Authentication Integration
-├── Compliance Layer
-│   ├── Legal Standards Tracking
-│   ├── Consent Management
-│   ├── Audit Trail Generation
-│   ├── Data Minimization Tools
-│   └── Regulatory Reporting
-├── Firebase Integration Layer
-│   ├── Encrypted Firestore Operations
-│   ├── Authentication Management
-│   ├── Cloud Functions (Server-Side)
-│   └── Real-time Synchronization
-└── API Gateway
-    ├── Rate Limiting
-    ├── Usage Analytics
-    ├── Billing Integration
-    └── Developer Authentication
+│   ├── Client-side PGP encryption/decryption
+│   ├── Key management and rotation
+│   ├── Anonymous data operations
+│   └── Encrypted field-level operations
+├── Compliance Tools
+│   ├── Audit trail generation
+│   ├── Consent tracking
+│   ├── Data classification helpers
+│   └── Retention policy automation
+├── Firebase Integration
+│   ├── Encrypted Firestore operations
+│   ├── Authentication wrappers
+│   ├── Real-time sync with encryption
+│   └── Cloud Functions integration
+└── Developer Tools
+    ├── Usage analytics (privacy-preserving)
+    ├── Testing utilities
+    ├── Performance monitoring
+    └── Error reporting (PII-sanitized)
 ```
 
 ### API Reference
 
-#### Authentication & Setup
+#### Core Privacy Operations
 
 ```typescript
-// Initialize SafeAPI
-const safeAPI = new SafeAPI({
-  apiKey: 'your-safeapi-key',
-  firebaseConfig: {
-    // Your Firebase config or use SafeAPI's shared instance
-  },
-  encryptionMode: 'client-side', // 'client-side' | 'hybrid'
-  complianceLevel: 'healthcare' // 'basic' | 'healthcare' | 'financial'
+// Basic encryption/decryption
+const encrypted = await safeAPI.encrypt({ 
+  name: "John", 
+  email: "john@example.com" 
+})
+const decrypted = await safeAPI.decrypt(encrypted)
+
+// Anonymous data (no encryption needed)
+const anonId = await safeAPI.createAnonymous('calculations', {
+  type: 'demo',
+  result: '2 + 2 = 4',
+  timestamp: Date.now()
 })
 
-// User authentication (supports anonymous and authenticated modes)
-await safeAPI.auth.signInAnonymously()
-await safeAPI.auth.signInWithProvider('google' | 'email' | 'biometric')
-```
+// Encrypted personal data
+const encryptedId = await safeAPI.createEncrypted('personal_notes', {
+  content: "Private medical notes",
+  tags: ["important", "review"]
+})
 
-#### Privacy & Encryption Operations
-
-```typescript
-interface SafeAPIPrivacy {
-  // Client-side PGP encryption
-  encrypt<T>(data: T, keyId?: string): Promise<EncryptedPayload<T>>
-  decrypt<T>(payload: EncryptedPayload<T>): Promise<T>
-  
-  // Anonymous data operations (no encryption needed)
-  createAnonymousRecord<T>(collection: string, data: T): Promise<string>
-  getAnonymousRecords<T>(collection: string, filters?: Filter[]): Promise<T[]>
-  
-  // Encrypted personal data operations
-  createEncryptedRecord<T>(collection: string, data: T): Promise<string>
-  getEncryptedRecords<T>(collection: string, filters?: Filter[]): Promise<T[]>
-  updateEncryptedRecord<T>(collection: string, id: string, data: Partial<T>): Promise<void>
-  deleteEncryptedRecord(collection: string, id: string): Promise<void>
-  
-  // Data export and portability
-  exportUserData(format: 'json' | 'csv' | 'encrypted-backup'): Promise<ExportResult>
-  importUserData(data: ExportResult): Promise<ImportResult>
-  
-  // Key management
-  generateUserKeys(): Promise<KeyPair>
-  rotateKeys(newKeyPair: KeyPair): Promise<void>
-  backupKeys(recoveryMethod: 'phrase' | 'biometric' | 'email'): Promise<BackupResult>
-}
-```
-
-#### Compliance & Legal Operations
-
-```typescript
-interface SafeAPICompliance {
-  // Consent management
-  recordConsent(type: ConsentType, granted: boolean, metadata?: any): Promise<void>
-  getConsentHistory(): Promise<ConsentRecord[]>
-  updateConsent(type: ConsentType, granted: boolean): Promise<void>
-  
-  // Audit trail (automatic and manual)
-  logAction(action: string, resourceType: string, resourceId: string, metadata?: any): Promise<void>
-  getAuditTrail(filters?: AuditFilter[]): Promise<AuditRecord[]>
-  generateComplianceReport(standard: 'HIPAA' | 'GDPR' | 'CCPA'): Promise<ComplianceReport>
-  
-  // Data minimization
-  anonymizeData<T>(data: T, fields: string[]): Promise<AnonymizedData<T>>
-  purgeExpiredData(retentionPolicy: RetentionPolicy): Promise<PurgeReport>
-  validateDataNecessity<T>(data: T, purpose: string): Promise<ValidationResult>
-  
-  // Legal standards tracking
-  markDataAsHealthInfo(recordId: string): Promise<void>
-  markDataAsEducational(recordId: string): Promise<void>
-  classifyDataSensitivity(data: any): Promise<SensitivityClassification>
-}
-```
-
-#### Firebase Integration Layer
-
-```typescript
-interface SafeAPIFirebase {
-  // Enhanced Firestore operations with automatic encryption
-  collections: {
-    create<T>(name: string, encryptionLevel: 'none' | 'field' | 'document'): Collection<T>
-    get<T>(name: string): Collection<T>
-  }
-  
-  // Real-time updates with encryption
-  subscribe<T>(collection: string, callback: (data: T[]) => void): Subscription
-  
-  // Cloud functions integration
-  callFunction<TRequest, TResponse>(name: string, data: TRequest): Promise<TResponse>
-  
-  // Batch operations
-  batch(): BatchOperation
-  
-  // Advanced querying with privacy protection
-  query<T>(collection: string, constraints: QueryConstraint[]): Promise<T[]>
-}
-```
-
-#### Developer Tools & Analytics
-
-```typescript
-interface SafeAPIDevTools {
-  // Usage analytics (privacy-preserving)
-  trackUsage(event: string, metadata?: any): Promise<void>
-  getUsageStats(timeframe: TimeFrame): Promise<UsageStats>
-  
-  // Performance monitoring
-  startPerformanceTrace(name: string): PerformanceTrace
-  
-  // Error reporting (with PII protection)
-  reportError(error: Error, context?: any): Promise<void>
-  
-  // A/B testing
-  getFeatureFlag(flagName: string): Promise<boolean>
-  recordConversion(experimentId: string, variant: string): Promise<void>
-}
-```
-
-### What Stands Out About SafeAPI
-
-#### 1. **Privacy by Design** 🔐
-- **Client-side PGP encryption**: All sensitive data encrypted before leaving the device
-- **Zero-knowledge architecture**: SafeAPI never sees unencrypted sensitive data
-- **Anonymous-first**: Full functionality without requiring personal information
-
-**Why this matters**: Healthcare apps need bulletproof privacy. SafeAPI makes HIPAA compliance achievable without sacrificing functionality.
-
-**Implementation**: 
-```typescript
-// All sensitive operations happen client-side
-const encryptedRecord = await safeAPI.privacy.encrypt(userHealthData)
-await safeAPI.privacy.createEncryptedRecord('health_records', encryptedRecord)
-```
-
-#### 2. **Legal Compliance Automation** ⚖️
-- **Built-in audit trails**: Every action automatically logged for regulatory review
-- **Consent management**: Granular consent tracking with immutable history
-- **Data classification**: Automatic PHI detection and handling
-- **Compliance reporting**: Generate reports for HIPAA, GDPR, CCPA audits
-
-**Why this matters**: Compliance is complex and expensive. SafeAPI handles it automatically.
-
-**Implementation**:
-```typescript
-// Compliance happens automatically
-await safeAPI.compliance.recordConsent('health_data_processing', true)
-const auditReport = await safeAPI.compliance.generateComplianceReport('HIPAA')
-```
-
-#### 3. **Firebase + Privacy = Scalability + Security** 🚀
-- **Scalable backend**: Firebase handles millions of users
-- **Encrypted storage**: Firestore stores only encrypted data
-- **Real-time sync**: Encrypted real-time updates across devices
-- **Offline-first**: Works without internet, syncs when available
-
-**Why this matters**: Most privacy solutions don't scale. SafeAPI gives you both.
-
-**Implementation**:
-```typescript
-// Scale to millions while maintaining privacy
-const healthData = await safeAPI.firebase.query('encrypted_health_records', [
+// Query operations (works with encrypted data)
+const results = await safeAPI.query('personal_notes', [
   where('userId', '==', currentUser.uid),
   orderBy('timestamp', 'desc'),
-  limit(100)
+  limit(10)
 ])
 ```
 
-#### 4. **Developer Experience Focus** 🛠️
-- **Simple API**: Complex privacy operations made simple
-- **TypeScript support**: Full type safety for all operations
-- **Comprehensive docs**: Every method documented with examples
-- **Testing tools**: Built-in mocks and testing utilities
+#### Compliance Tools
 
-**Why this matters**: Privacy shouldn't be hard to implement.
-
-**Implementation**:
 ```typescript
-// Simple API for complex operations
-const result = await safeAPI.privacy.createEncryptedRecord('user_data', {
-  name: 'John Doe',
-  condition: 'Diabetes',
-  notes: 'Weekly insulin tracking'
-}) // Automatically encrypted, stored, and audit-logged
+// Audit trails (automatic for all operations)
+await safeAPI.logAction('data_created', 'personal_notes', recordId)
+const auditTrail = await safeAPI.getAuditTrail({
+  userId: currentUser.uid,
+  startDate: lastMonth,
+  actions: ['data_created', 'data_updated', 'data_deleted']
+})
+
+// Consent management
+await safeAPI.recordConsent('data_processing', true, {
+  method: 'explicit_click',
+  timestamp: Date.now()
+})
+
+// Data classification
+const classification = await safeAPI.classifyData({
+  email: "john@example.com",
+  notes: "Patient shows improvement"
+})
+// Returns: { containsPII: true, containsPHI: true, riskLevel: 'high' }
 ```
 
-### Getting Started with SafeAPI
+---
 
-#### Quick Start (5 minutes)
+## Quickstart
 
-**Step 1: Installation**
+**Step 1: Install**
 ```bash
 npm install @safeapi/sdk
-# or
-yarn add @safeapi/sdk
 ```
 
-**Step 2: Account Setup**
-1. Sign up at [safeapi.dev](https://safeapi.dev)
-2. Create a new project
-3. Choose compliance level: Basic ($29/mo) | Healthcare ($99/mo) | Financial ($199/mo)
-4. Get your API key
-
-**Step 3: Basic Implementation**
+**Step 2: Initialize** 
 ```typescript
 import { SafeAPI } from '@safeapi/sdk'
 
 const api = new SafeAPI({
-  apiKey: 'sk_live_...',
-  complianceLevel: 'healthcare'
-})
-
-// Anonymous user (educational mode)
-await api.auth.signInAnonymously()
-const recordId = await api.privacy.createAnonymousRecord('calculations', {
-  type: 'educational_demo',
-  calculation: '10mg in 2ml = 5mg/ml',
-  timestamp: Date.now()
-})
-
-// Authenticated user (personal mode)
-await api.auth.signInWithProvider('google')
-const encryptedId = await api.privacy.createEncryptedRecord('personal_data', {
-  medication: 'Insulin',
-  dose: '10 units',
-  timestamp: Date.now()
+  apiKey: 'sk_test_...',
+  firebaseConfig: yourFirebaseConfig // or use shared instance
 })
 ```
 
-#### Essential Setup
-
-**1. Firebase Configuration**
+**Step 3: First encrypted record**
 ```typescript
-// Option A: Use SafeAPI's shared Firebase (recommended)
-const api = new SafeAPI({
-  apiKey: 'your-key',
-  useSharedFirebase: true
+// Anonymous mode (no keys needed)
+const recordId = await api.createAnonymous('demo_data', {
+  message: "Hello world",
+  public: true
 })
 
-// Option B: Use your own Firebase project
-const api = new SafeAPI({
-  apiKey: 'your-key',
-  firebaseConfig: {
-    apiKey: "your-firebase-api-key",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id"
-  }
+// Authenticated mode (auto-generates keys)
+await api.auth.signIn('google')
+const encryptedId = await api.createEncrypted('private_data', {
+  secret: "This will be encrypted",
+  personal: true
 })
 ```
 
-**2. Encryption Setup**
-```typescript
-// Automatic key generation (recommended for most apps)
-const keyPair = await api.privacy.generateUserKeys()
-
-// Manual key management (advanced use cases)
-const customKeys = await generatePGPKeys()
-await api.privacy.setCustomKeys(customKeys)
-```
-
-**3. Compliance Configuration**
-```typescript
-await api.compliance.configure({
-  dataRetentionDays: 365,
-  auditLogRetentionYears: 7,
-  consentRequired: ['health_data', 'analytics', 'marketing'],
-  hipaaCompliant: true,
-  gdprCompliant: true
-})
-```
-
-### Rate Limiting & Pricing
-
-#### Rate Limits
-
-| Plan | API Calls/min | Storage | Users | Compliance |
-|------|---------------|---------|--------|------------|
-| **Developer** | 100 | 1GB | 100 | Basic |
-| **Startup** | 1,000 | 10GB | 1,000 | Healthcare |
-| **Business** | 10,000 | 100GB | 10,000 | Full |
-| **Enterprise** | Custom | Custom | Unlimited | Custom |
-
-#### Pricing Structure
-
-**Developer Plan: Free**
-- 100 API calls/minute
-- 1GB encrypted storage
-- Up to 100 users
-- Basic compliance features
-- Community support
-
-**Startup Plan: $99/month**
-- 1,000 API calls/minute
-- 10GB encrypted storage
-- Up to 1,000 users
-- Full HIPAA compliance
-- Email support
-- Includes Business Associate Agreement
-
-**Business Plan: $299/month**
-- 10,000 API calls/minute
-- 100GB encrypted storage
-- Up to 10,000 users
-- Full compliance (HIPAA, GDPR, CCPA)
-- Phone + email support
-- Custom compliance reporting
-- 99.9% SLA
-
-**Enterprise Plan: Custom**
-- Unlimited API calls
-- Custom storage limits
-- Unlimited users
-- Custom compliance requirements
-- Dedicated support team
-- On-premises deployment options
-- Custom BAAs and legal agreements
-
-#### Overage Pricing
-- API calls: $0.001 per additional call
-- Storage: $0.10 per GB per month
-- Users: $0.50 per additional user per month
+That's it. You now have encrypted storage with audit trails.
 
 ---
 
-## SafeDoseAPI: Educational Dosing Application Layer
+## What Stands Out
 
-SafeDoseAPI is the application-specific layer that SafeDose developers would build on top of SafeAPI. It handles dose calculation logic while leveraging SafeAPI for all privacy, compliance, and data operations.
-
-### Architecture
-
-```
-SafeDoseAPI (Built on SafeAPI)
-├── Educational Positioning Layer
-│   ├── Non-Medical Disclaimers
-│   ├── Educational Language Enforcement
-│   ├── Professional Verification Requirements
-│   └── Learning Outcome Tracking
-├── Dose Calculation Engine
-│   ├── Educational Calculation Logic
-│   ├── Validation & Error Checking
-│   ├── Visual Reference Generation
-│   └── Calculation History
-├── User Experience Layer
-│   ├── Anonymous Educational Mode
-│   ├── Authenticated Personal Mode
-│   ├── Success-Focused Onboarding
-│   └── Progressive Feature Disclosure
-└── SafeAPI Integration
-    ├── Encrypted Personal Data Storage
-    ├── Anonymous Educational Data
-    ├── Compliance Automation
-    └── Privacy-First Operations
-```
-
-### API Reference
-
-#### Educational Operations
+### 1. **Encryption Without Complexity**
+Most developers avoid encryption because it's complicated. SafeAPI makes it a one-liner:
 
 ```typescript
-interface SafeDoseEducationalAPI {
-  // Anonymous educational calculations (no PHI)
-  calculateEducationalDose(params: EducationalDoseParams): Promise<EducationalResult>
-  getCalculationExample(category: string): Promise<CalculationExample>
-  validateEducationalInput(input: DoseInput): Promise<ValidationResult>
-  
-  // Learning progress tracking (anonymous)
-  recordLearningProgress(topic: string, success: boolean): Promise<void>
-  getLearningStats(): Promise<AnonymousLearningStats>
-  
-  // Reference materials
-  getEducationalContent(topic: string): Promise<EducationalContent>
-  searchReferences(query: string): Promise<ReferenceResult[]>
-}
+// Traditional approach: 50+ lines of PGP setup, key management, etc.
+// SafeAPI approach: 
+const encrypted = await safeAPI.encrypt(sensitiveData)
 ```
 
-#### Personal Mode Operations (Built on SafeAPI)
+The encryption happens client-side, keys are managed automatically, and Firebase never sees unencrypted data.
+
+### 2. **Compliance as Code** 
+Instead of manual compliance processes, SafeAPI makes it programmable:
 
 ```typescript
-interface SafeDosePersonalAPI {
-  // Encrypted personal calculations
-  savePersonalCalculation(calculation: DoseCalculation): Promise<string>
-  getCalculationHistory(limit?: number): Promise<DoseCalculation[]>
-  updateCalculationNotes(id: string, notes: string): Promise<void>
-  deleteCalculation(id: string): Promise<void>
-  
-  // Encrypted schedule management
-  createDoseSchedule(schedule: DoseSchedule): Promise<string>
-  getActiveSchedules(): Promise<DoseSchedule[]>
-  markScheduleCompleted(id: string, timestamp: Date): Promise<void>
-  
-  // Encrypted adherence tracking
-  recordDoseAdherence(scheduleId: string, taken: boolean, notes?: string): Promise<void>
-  getAdherenceStats(timeframe: TimeFrame): Promise<EncryptedAdherenceStats>
-  
-  // Data export (encrypted)
-  exportPersonalData(format: 'json' | 'pdf' | 'csv'): Promise<EncryptedExport>
-}
+// Audit trails happen automatically
+await safeAPI.createEncrypted('user_profile', profileData)
+// ^ This automatically logs: user_created, data_encrypted, consent_verified
+
+// Generate compliance reports programmatically  
+const hipaaReport = await safeAPI.generateAuditReport('HIPAA', lastQuarter)
 ```
 
-#### Medical Device Avoidance Features
+### 3. **Firebase + Privacy**
+Firebase is great for scaling, terrible for privacy. SafeAPI fixes that:
 
 ```typescript
-interface SafeDoseLegalAPI {
-  // Educational positioning enforcement
-  enforceEducationalDisclaimer(calculation: any): Promise<DisclaimerResult>
-  requireProfessionalVerification(result: CalculationResult): Promise<VerificationRequirement>
-  
-  // Non-medical language validation
-  validateLanguageCompliance(content: string): Promise<LanguageValidation>
-  suggestEducationalAlternative(medicalTerm: string): Promise<string>
-  
-  // Legal compliance tracking
-  recordEducationalIntent(action: string): Promise<void>
-  generateLegalComplianceReport(): Promise<LegalReport>
-}
+// Firebase operations, but encrypted
+const results = await safeAPI.query('encrypted_health_data', [
+  where('patientId', '==', 'encrypted_id'),
+  orderBy('timestamp', 'desc')
+]) // Firebase scales to millions, data stays encrypted
 ```
 
-### Implementation Example
-
-Here's how SafeDose developers would implement their API using SafeAPI:
+### 4. **Anonymous + Authenticated Modes**
+Many apps need both anonymous experimentation and authenticated storage:
 
 ```typescript
-class SafeDoseAPI {
-  private safeAPI: SafeAPI
-  
-  constructor(config: SafeDoseConfig) {
-    this.safeAPI = new SafeAPI({
-      apiKey: config.safeApiKey,
-      complianceLevel: 'healthcare'
-    })
-  }
-  
-  // Educational calculation (anonymous, no PHI)
-  async calculateEducationalDose(params: EducationalDoseParams): Promise<EducationalResult> {
-    // Validate educational context
-    await this.enforceEducationalDisclaimer()
-    
-    // Perform calculation logic
-    const calculation = this.performDoseCalculation(params)
-    
-    // Store anonymous educational data
-    await this.safeAPI.privacy.createAnonymousRecord('educational_calculations', {
-      type: 'educational',
-      calculationType: params.type,
-      timestamp: Date.now(),
-      // No PHI stored
-    })
-    
-    // Log educational intent for legal compliance
-    await this.safeAPI.compliance.logAction('educational_calculation', 'calculation', calculation.id)
-    
-    return {
-      ...calculation,
-      disclaimer: "Educational calculation only. Must be verified by qualified professional.",
-      educationalContext: true
-    }
-  }
-  
-  // Personal calculation (encrypted PHI)
-  async savePersonalCalculation(calculation: DoseCalculation): Promise<string> {
-    // Ensure user is authenticated
-    if (!this.safeAPI.auth.isAuthenticated()) {
-      throw new Error('Personal calculations require authentication')
-    }
-    
-    // Record consent for personal data processing
-    await this.safeAPI.compliance.recordConsent('personal_health_data', true)
-    
-    // Store encrypted personal calculation
-    const encryptedId = await this.safeAPI.privacy.createEncryptedRecord('personal_calculations', {
-      substanceName: calculation.substanceName, // PHI - will be encrypted
-      doseValue: calculation.doseValue, // PHI - will be encrypted
-      notes: calculation.notes, // PHI - will be encrypted
-      timestamp: Date.now(),
-      calculationMethod: calculation.method
-    })
-    
-    return encryptedId
-  }
-}
+// Anonymous user exploring features
+await safeAPI.createAnonymous('demo_calculations', demoData)
+
+// Same user, now authenticated, wants to save personal data
+await safeAPI.auth.signIn()
+await safeAPI.createEncrypted('personal_calculations', personalData)
 ```
 
-### Key Benefits of This Architecture
-
-#### 1. **Medical Device Classification Avoidance**
-- Educational-first positioning built into the API
-- Automatic disclaimer enforcement
-- Professional verification requirements
-- Learning outcome focus vs. medical outcomes
-
-#### 2. **HIPAA Compliance by Design**
-- All PHI automatically encrypted via SafeAPI
-- Anonymous mode for educational use
-- Comprehensive audit trails
-- Business Associate Agreements handled by SafeAPI
-
-#### 3. **Scalable Privacy**
-- Client-side encryption for all personal data
-- Anonymous educational mode scales infinitely
-- Real-time sync across devices without PHI exposure
-
-#### 4. **Developer Productivity**
-- Complex privacy/compliance handled by SafeAPI
-- Focus on domain logic (dose calculations)
-- Built-in testing and development tools
-- Type-safe operations
-
-### Estimated Development Timeline
-
-**Week 1-2: SafeAPI Integration**
-- Set up SafeAPI account and configuration
-- Implement basic authentication flows
-- Set up encrypted storage for personal data
-
-**Week 3-4: Educational API Layer**
-- Build anonymous educational calculation methods
-- Implement disclaimer and verification systems
-- Create learning progress tracking
-
-**Week 5-6: Personal API Layer**
-- Build encrypted personal calculation storage
-- Implement schedule and adherence tracking
-- Add data export capabilities
-
-**Week 7-8: Legal Compliance**
-- Integrate medical device avoidance features
-- Implement educational language enforcement
-- Create compliance reporting
-
-**Total Investment**: 6-8 weeks + $99-299/month SafeAPI subscription
-
-This architecture gives SafeDose developers a production-ready, legally compliant, privacy-first foundation while allowing them to focus on their core dose calculation and educational user experience.
+The API is identical, encryption happens seamlessly.
 
 ---
 
-## Summary
+## Rate Limiting & Pricing
 
-**SafeAPI** provides the generic privacy, encryption, and compliance foundation that any health/privacy application could discover and adopt. **SafeDoseAPI** demonstrates how SafeDose developers would build their educational dosing application on top of this solid foundation.
+| Plan | API Calls/min | Storage | Features |
+|------|---------------|---------|----------|
+| **Playground** | 100 | 1GB | Basic encryption, audit logs |
+| **Production** | 1,000 | 10GB | Full compliance tools, BAA available |
+| **Scale** | 10,000 | 100GB | Advanced analytics, custom retention |
+| **Enterprise** | Custom | Custom | On-premises, custom compliance |
 
-The key innovation is separating the complex privacy/compliance layer (SafeAPI) from the domain-specific logic (SafeDoseAPI), making both more maintainable and allowing SafeAPI to serve multiple applications beyond SafeDose.
+**Pricing**: $0 → $99 → $299 → Custom  
+**Overage**: $0.001/call, $0.10/GB
+
+---
+
+## Integration Patterns
+
+### Pattern 1: Drop-in Privacy Layer
+```typescript
+// Existing Firebase app
+const userData = { name, email, phone }
+await setDoc(doc(db, 'users', uid), userData) // ❌ Unencrypted
+
+// With SafeAPI
+await safeAPI.createEncrypted('users', userData) // ✅ Encrypted + audited
+```
+
+### Pattern 2: Hybrid Anonymous/Personal
+```typescript
+class MyApp {
+  // Anonymous features (no encryption needed)
+  async createDemo() {
+    return safeAPI.createAnonymous('demos', demoData)
+  }
+  
+  // Personal features (automatic encryption)
+  async savePersonal() {
+    return safeAPI.createEncrypted('personal', personalData)
+  }
+}
+```
+
+### Pattern 3: Compliance Automation
+```typescript
+// Manual compliance
+await logAuditEvent('user_login', userId, timestamp)
+await checkConsentStatus(userId)
+await classifyDataSensitivity(userData)
+
+// SafeAPI compliance
+await safeAPI.auth.signIn() // Audit, consent, classification automatic
+```
+
+---
+
+SafeAPI gives you the privacy and compliance foundation. Build your domain logic on top.
