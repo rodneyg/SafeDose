@@ -14,6 +14,8 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 > SafeDose is not a medical device and is not intended to diagnose, treat, or prescribe. It should not be used as a substitute for professional medical judgment. All results must be independently verified by a licensed medical professional.
 >
 > Use at your own risk. SafeLab and contributors assume no responsibility for misuse.
+>
+> Always consult a healthcare professional before administering any medication.
 
 ---
 
