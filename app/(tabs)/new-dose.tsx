@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
@@ -280,7 +280,7 @@ export default function NewDoseScreen() {
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
+  const [processingMessage, setProcessingMessage] = useState<string>('Processing your scan...');
   const [scanError, setScanError] = useState<string | null>(null);
   const [doseHistory, setDoseHistory] = useState<import('../../types/doseLog').DoseLog[]>([]);
   const [webFlashlightEnabled, setWebFlashlightEnabled] = useState(false);
@@ -1152,6 +1152,7 @@ export default function NewDoseScreen() {
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
       )}
@@ -1177,7 +1178,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', color: '#000000', textAlign: 'center' },
   subtitle: { fontSize: 16, color: '#8E8E93', textAlign: 'center', marginTop: 8 },
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1000 },
-  loadingText: { color: '#fff', marginTop: 15, fontSize: 16 },
+  loadingText: { color: '#fff', marginTop: 20, fontSize: 18, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
   recoveryButton: { backgroundColor: '#ff3b30', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, marginTop: 8, alignSelf: 'center' },
   recoveryButtonText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
 });
