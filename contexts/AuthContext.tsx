@@ -275,6 +275,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Custom hook for accessing authentication state and methods.
+ * 
+ * Provides access to the current user, authentication instance, logout functionality,
+ * and sign-out status. Must be used within an AuthProvider component.
+ * 
+ * @returns {AuthContextType} The authentication context object
+ * @returns {User | null} returns.user - The current Firebase user object, or null if not authenticated
+ * @returns {Auth} returns.auth - The Firebase Auth instance for authentication operations
+ * @returns {() => Promise<void>} returns.logout - Async function to sign out the current user and clear cached data
+ * @returns {boolean} returns.isSigningOut - Flag indicating whether a sign-out operation is currently in progress
+ * 
+ * @throws {Error} Throws an error if used outside of an AuthProvider component
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { user, logout, isSigningOut } = useAuth();
+ *   
+ *   if (!user) {
+ *     return <Text>Not authenticated</Text>;
+ *   }
+ *   
+ *   return (
+ *     <View>
+ *       <Text>Welcome, {user.displayName || 'Anonymous User'}</Text>
+ *       <Button 
+ *         title={isSigningOut ? "Signing out..." : "Sign Out"} 
+ *         onPress={logout}
+ *         disabled={isSigningOut}
+ *       />
+ *     </View>
+ *   );
+ * }
+ * ```
+ */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
