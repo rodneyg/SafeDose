@@ -44,7 +44,6 @@ export default function ReconstitutionScanStep({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Scan Vial Label</Text>
       <Text style={styles.subtitle}>
         Position your vial label clearly in the camera view and tap to capture
       </Text>
@@ -119,13 +118,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
