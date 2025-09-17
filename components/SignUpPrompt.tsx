@@ -52,7 +52,7 @@ export default function SignUpPrompt({ visible, onSignUp, onDismiss, onShow }: S
 
   const handleSignUp = () => {
     onSignUp();
-    router.push('/login');
+    router.push('/(auth)/signup');
   };
 
   if (!visible) return null;
