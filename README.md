@@ -9,19 +9,24 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ## 🔮 VisionOS Vision
 
-SafeDose today is a mobile-first product that guides users step by step in drawing safe and accurate doses from syringes and vials. This works by analyzing the initial camera capture and then moving the user through a structured flow, both because the accuracy of real-time continuous detection is not yet at the needed threshold, and because guidance (not replacement) is the safer paradigm for high-risk health tasks.
+SafeDose today works in two steps:
 
-**The final vision, however, is a VisionOS-native experience:**
+1. **Specify Dose**: The user first specifies their prescribed dose (e.g., "2.5 mg Semaglutide")
+2. **Photo & Guidance**: They then take a photo of their supplies. The app identifies the syringe and vial from that capture and guides them step by step to prepare the correct dose
 
-- **Smart Recognition**: Glasses identify the syringe type (e.g., 1 mL) and label it visually in the user's field of view.
+This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided flow because continuous recognition isn't reliable enough yet for dosing safety.
 
-- **Medication Verification**: Glasses identify the vial or ampule (e.g., insulin) and confirm the match.
+**The longer-term vision is a glasses-native workflow:**
 
-- **Dynamic Guidance**: As the plunger is drawn, SafeDose overlays a dynamic guide: showing the exact target graduation, signaling when to stop, and highlighting overdrawn amounts with color and text cues.
+1. **Specify Dose**: The user enters their drug + dose (e.g., "2.5 mg Semaglutide")
 
-- **Hands-Free Operation**: The user keeps their eyes up and hands on the tools, with no phone juggling, no guesswork, and no dependence on memory.
+2. **Automatic Identification**: SafeDose labels the syringe type and confirms the vial in the user's field of view
 
-The goal is **user-led dosing**: visual proof at the moment that matters, in the same way WHOOP gives a live view of physiology or Function Health puts labs in your pocket.
+3. **Guided Drawing**: As the plunger moves, overlays show where to stop, confirm when correct, and flag any overdraw
+
+4. **Confirmation**: The correct dose is confirmed in real time, with optional logging for tracking
+
+The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time system** that recognizes tools directly in front of the user and provides immediate, unambiguous guidance.
 
 ---
 
