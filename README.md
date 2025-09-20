@@ -7,6 +7,24 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ---
 
+## 🔮 VisionOS Vision
+
+SafeDose today is a mobile-first product that guides users step by step in drawing safe and accurate doses from syringes and vials. This works by analyzing the initial camera capture and then moving the user through a structured flow, both because the accuracy of real-time continuous detection is not yet at the needed threshold, and because guidance (not replacement) is the safer paradigm for high-risk health tasks.
+
+**The final vision, however, is a VisionOS-native experience:**
+
+- **Smart Recognition**: Glasses identify the syringe type (e.g., 1 mL) and label it visually in the user's field of view.
+
+- **Medication Verification**: Glasses identify the vial or ampule (e.g., insulin) and confirm the match.
+
+- **Dynamic Guidance**: As the plunger is drawn, SafeDose overlays a dynamic guide: showing the exact target graduation, signaling when to stop, and highlighting overdrawn amounts with color and text cues.
+
+- **Hands-Free Operation**: The user keeps their eyes up and hands on the tools, with no phone juggling, no guesswork, and no dependence on memory.
+
+The goal is **user-led dosing**: visual proof at the moment that matters, in the same way WHOOP gives a live view of physiology or Function Health puts labs in your pocket.
+
+---
+
 ## ⚠️ Disclaimer
 
 > **This tool is a research preview and educational utility.**
