@@ -927,6 +927,37 @@ export default function NewDoseScreen() {
     handleFeedbackComplete();
   }, [handleFeedbackComplete]);
 
+  // Recommendation handlers
+  const handleAcceptRecommendation = useCallback((recommendation: any) => {
+    console.log('[NewDoseScreen] User accepted AI recommendation', recommendation);
+    
+    // Apply the recommended dose to the current calculation
+    if (recommendation.suggestedDose && recommendation.suggestedUnit) {
+      setDose(recommendation.suggestedDose.toString());
+      setUnit(recommendation.suggestedUnit);
+      
+      // Optionally, trigger a recalculation
+      handleCalculateFinal();
+    }
+    
+    // Log analytics event
+    logAnalyticsEvent(ANALYTICS_EVENTS.AI_RECOMMENDATION_ACCEPTED, {
+      recommendedDose: recommendation.suggestedDose,
+      confidence: recommendation.confidence,
+      substanceName: recommendation.substanceName
+    });
+  }, [setDose, setUnit, handleCalculateFinal]);
+
+  const handleProvideFeedback = useCallback(() => {
+    console.log('[NewDoseScreen] User wants to provide feedback on recommendation');
+    
+    // For now, navigate to the standard feedback screen
+    // In the future, this could be a specialized recommendation feedback screen
+    if (feedbackContext) {
+      setScreenStep('postDoseFeedback');
+    }
+  }, [feedbackContext, setScreenStep]);
+
   // Clean up camera resources when component unmounts
   useEffect(() => {
     return () => {
@@ -1087,6 +1118,8 @@ export default function NewDoseScreen() {
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
+          onAcceptRecommendation={handleAcceptRecommendation}
+          onProvideFeedback={handleProvideFeedback}
         />
       )}
       {screenStep === 'whyAreYouHere' && (

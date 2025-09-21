@@ -63,6 +63,8 @@ interface ManualEntryScreenProps {
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
   onTryAIScan?: () => void;
+  onAcceptRecommendation?: (recommendation: any) => void;
+  onProvideFeedback?: () => void;
 }
 
 export default function ManualEntryScreen({
@@ -115,6 +117,8 @@ export default function ManualEntryScreen({
   validateConcentrationInput,
   usageData,
   onTryAIScan,
+  onAcceptRecommendation,
+  onProvideFeedback,
 }: ManualEntryScreenProps) {
   useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
@@ -368,6 +372,8 @@ export default function ManualEntryScreen({
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
           calculationError={calculationError}
+          onAcceptRecommendation={onAcceptRecommendation}
+          onProvideFeedback={onProvideFeedback}
         />
       );
       progress = 0.95; // Almost complete but not fully
