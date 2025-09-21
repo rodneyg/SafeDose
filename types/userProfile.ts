@@ -9,6 +9,8 @@ export interface UserProfile {
   birthDate?: string; // Birth date in YYYY-MM-DD format for more precise age calculation
   dateCreated: string;
   userId?: string; // Optional field to track which user this profile belongs to
+  followsProtocol: boolean; // Whether user follows a structured medication protocol
+  hasSetupProtocol?: boolean; // Whether user has completed protocol setup
 }
 
 export type UserProfileAnswers = {
@@ -20,6 +22,7 @@ export type UserProfileAnswers = {
   isRecoveryUse: boolean | null;
   age: number | null;
   birthDate: string | null; // Birth date in YYYY-MM-DD format
+  followsProtocol: boolean | null; // Whether user follows a structured medication protocol
 };
 
 export enum WarningLevel {
