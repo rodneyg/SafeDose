@@ -108,9 +108,15 @@ export default function ProtocolSetup() {
   const handleComplete = useCallback(async () => {
     try {
       console.log('[ProtocolSetup] Starting protocol completion...');
+      console.log('[ProtocolSetup] Setup data:', setupData);
       
       // Validate required fields
       if (!setupData.type || !setupData.medication || !setupData.dosage) {
+        console.log('[ProtocolSetup] Validation failed:', {
+          type: setupData.type,
+          medication: setupData.medication,
+          dosage: setupData.dosage
+        });
         Alert.alert(
           'Missing Information',
           'Please fill in all required fields to complete your protocol setup.',
@@ -118,6 +124,8 @@ export default function ProtocolSetup() {
         );
         return;
       }
+
+      console.log('[ProtocolSetup] Validation passed, creating protocol...');
 
       // Create protocol object
       const protocol: Protocol = {
@@ -134,22 +142,31 @@ export default function ProtocolSetup() {
         userId: user?.uid,
       };
 
+      console.log('[ProtocolSetup] Protocol created:', protocol);
+
       // Save protocol to storage
+      console.log('[ProtocolSetup] Saving protocol to AsyncStorage...');
       const existingProtocols = await AsyncStorage.getItem('userProtocols');
       const protocols = existingProtocols ? JSON.parse(existingProtocols) : [];
       protocols.push(protocol);
       await AsyncStorage.setItem('userProtocols', JSON.stringify(protocols));
+      console.log('[ProtocolSetup] Protocol saved to AsyncStorage');
 
       // Update user profile to indicate protocol setup is complete
+      console.log('[ProtocolSetup] Updating user profile...');
       if (profile) {
         const updatedProfile = {
           ...profile,
           hasSetupProtocol: true,
         };
         await saveProfile(updatedProfile);
+        console.log('[ProtocolSetup] User profile updated');
+      } else {
+        console.log('[ProtocolSetup] No profile found, skipping profile update');
       }
 
       // Log completion
+      console.log('[ProtocolSetup] Logging analytics...');
       logAnalyticsEvent('protocol_setup_complete', {
         protocol_type: setupData.type,
         medication: setupData.medication,
@@ -159,11 +176,14 @@ export default function ProtocolSetup() {
       });
 
       console.log('[ProtocolSetup] Protocol setup completed successfully');
+      console.log('[ProtocolSetup] Navigating to main app...');
       
       // Navigate to main app
       router.replace('/(tabs)/new-dose');
+      console.log('[ProtocolSetup] Navigation initiated');
     } catch (error) {
       console.error('[ProtocolSetup] Error completing protocol setup:', error);
+      console.error('[ProtocolSetup] Error stack:', error instanceof Error ? error.stack : 'No stack available');
       Alert.alert(
         'Setup Error',
         'There was an error saving your protocol. Please try again.',
@@ -174,9 +194,22 @@ export default function ProtocolSetup() {
 
   const isCurrentStepComplete = (): boolean => {
     switch (currentStep) {
-      case 0: return setupData.type !== null;
-      case 1: return setupData.medication.trim() !== '' && setupData.dosage.trim() !== '';
-      default: return false;
+      case 0: 
+        const step0Complete = setupData.type !== null;
+        console.log('[ProtocolSetup] Step 0 validation:', { type: setupData.type, complete: step0Complete });
+        return step0Complete;
+      case 1: 
+        const step1Complete = setupData.medication.trim() !== '' && setupData.dosage.trim() !== '';
+        console.log('[ProtocolSetup] Step 1 validation:', { 
+          medication: setupData.medication, 
+          dosage: setupData.dosage, 
+          medicationEmpty: setupData.medication.trim() === '', 
+          dosageEmpty: setupData.dosage.trim() === '',
+          complete: step1Complete 
+        });
+        return step1Complete;
+      default: 
+        return false;
     }
   };
 
