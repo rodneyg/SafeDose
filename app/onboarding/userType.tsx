@@ -121,7 +121,7 @@ export default function UserTypeSegmentation() {
     } else {
       handleComplete();
     }
-  }, [currentStep, handleComplete]);
+  }, [currentStep]);
 
   const handleNext = useCallback(() => {
     if (currentStep < 3) {
@@ -129,7 +129,7 @@ export default function UserTypeSegmentation() {
     } else {
       handleComplete();
     }
-  }, [currentStep, handleComplete]);
+  }, [currentStep]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {

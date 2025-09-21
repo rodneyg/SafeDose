@@ -68,7 +68,7 @@ export default function ProtocolSetup() {
     } else {
       handleComplete();
     }
-  }, [currentStep, handleComplete]);
+  }, [currentStep]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {
