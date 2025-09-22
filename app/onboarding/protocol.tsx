@@ -24,6 +24,9 @@ export default function ProtocolSetup() {
   const { user } = useAuth();
   const { profile, saveProfile } = useUserProfile();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [setupData, setSetupData] = useState<ProtocolSetupData>({
     type: null,
     medication: '',
@@ -107,24 +110,29 @@ export default function ProtocolSetup() {
 
   const handleComplete = useCallback(async () => {
     try {
+      setIsCompleting(true);
+      setErrorMessage(null);
       console.log('[ProtocolSetup] Starting protocol completion...');
       
       // Validate required fields
-      if (!setupData.type || !setupData.medication || !setupData.dosage) {
-        Alert.alert(
-          'Missing Information',
-          'Please fill in all required fields to complete your protocol setup.',
-          [{ text: 'OK' }]
-        );
+      const validation = validateCurrentStep();
+      if (!validation.isValid) {
+        setFieldErrors(validation.errors);
+        setErrorMessage('Please fix the errors below before continuing.');
+        setIsCompleting(false);
         return;
       }
+
+      // Clear any previous errors
+      setFieldErrors({});
+      setErrorMessage(null);
 
       // Create protocol object
       const protocol: Protocol = {
         id: `protocol_${Date.now()}`,
         name: PROTOCOL_TEMPLATES.find(t => t.type === setupData.type)?.name || 'Custom Protocol',
-        medication: setupData.medication,
-        dosage: setupData.dosage,
+        medication: setupData.medication.trim(),
+        dosage: setupData.dosage.trim(),
         unit: setupData.unit,
         frequency: setupData.frequency,
         customFrequencyDays: setupData.customFrequencyDays,
@@ -160,24 +168,62 @@ export default function ProtocolSetup() {
 
       console.log('[ProtocolSetup] Protocol setup completed successfully');
       
+      // Small delay to show completion state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Navigate to main app
       router.replace('/(tabs)/new-dose');
     } catch (error) {
       console.error('[ProtocolSetup] Error completing protocol setup:', error);
-      Alert.alert(
-        'Setup Error',
-        'There was an error saving your protocol. Please try again.',
-        [{ text: 'OK' }]
-      );
+      
+      let errorMsg = 'An unexpected error occurred. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMsg = 'Connection error. Please check your internet and try again.';
+        } else if (error.message.includes('storage') || error.message.includes('quota')) {
+          errorMsg = 'Storage error. Please try clearing some space and try again.';
+        }
+      }
+      
+      setErrorMessage(errorMsg);
+      setIsCompleting(false);
     }
-  }, [setupData, user?.uid, profile, saveProfile, router]);
+  }, [setupData, user?.uid, profile, saveProfile, router, validateCurrentStep]);
+
+  const validateCurrentStep = (): { isValid: boolean; errors: {[key: string]: string} } => {
+    const errors: {[key: string]: string} = {};
+    
+    switch (currentStep) {
+      case 0:
+        if (!setupData.type) {
+          errors.type = 'Please select a protocol type';
+        }
+        break;
+      case 1:
+        if (!setupData.medication.trim()) {
+          errors.medication = 'Medication name is required';
+        }
+        if (!setupData.dosage.trim()) {
+          errors.dosage = 'Dosage amount is required';
+        } else {
+          // Validate that dosage is a valid number
+          const dosageNum = parseFloat(setupData.dosage.trim());
+          if (isNaN(dosageNum) || dosageNum <= 0) {
+            errors.dosage = 'Please enter a valid dosage amount';
+          }
+        }
+        break;
+    }
+    
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors
+    };
+  };
 
   const isCurrentStepComplete = (): boolean => {
-    switch (currentStep) {
-      case 0: return setupData.type !== null;
-      case 1: return setupData.medication.trim() !== '' && setupData.dosage.trim() !== '';
-      default: return false;
-    }
+    const validation = validateCurrentStep();
+    return validation.isValid;
   };
 
   const getSelectedTemplate = (): ProtocolTemplate | null => {
@@ -244,17 +290,37 @@ export default function ProtocolSetup() {
           Enter your medication details to complete your {selectedTemplate?.name} protocol setup.
         </Text>
         
+        {/* Error Message Display */}
+        {errorMessage && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          </View>
+        )}
+        
         <View style={[styles.formContainer, isMobileWeb && styles.formContainerMobile]}>
           {/* Medication Name */}
           <View style={styles.fieldContainer}>
             <Text style={[styles.fieldLabel, isMobileWeb && styles.fieldLabelMobile]}>Medication Name</Text>
             <TextInput
-              style={[styles.textInput, isMobileWeb && styles.textInputMobile]}
+              style={[
+                styles.textInput, 
+                isMobileWeb && styles.textInputMobile,
+                fieldErrors.medication && styles.textInputError
+              ]}
               value={setupData.medication}
-              onChangeText={(text) => setSetupData(prev => ({ ...prev, medication: text }))}
+              onChangeText={(text) => {
+                setSetupData(prev => ({ ...prev, medication: text }));
+                // Clear error when user starts typing
+                if (fieldErrors.medication) {
+                  setFieldErrors(prev => ({ ...prev, medication: '' }));
+                }
+              }}
               placeholder={selectedTemplate?.commonMedications[0] || "Enter medication name"}
               placeholderTextColor="#A1A1A1"
             />
+            {fieldErrors.medication && (
+              <Text style={styles.fieldErrorText}>{fieldErrors.medication}</Text>
+            )}
           </View>
 
           {/* Dosage */}
@@ -262,9 +328,20 @@ export default function ProtocolSetup() {
             <Text style={[styles.fieldLabel, isMobileWeb && styles.fieldLabelMobile]}>Standard Dose</Text>
             <View style={styles.dosageContainer}>
               <TextInput
-                style={[styles.textInput, styles.dosageInput, isMobileWeb && styles.textInputMobile]}
+                style={[
+                  styles.textInput, 
+                  styles.dosageInput, 
+                  isMobileWeb && styles.textInputMobile,
+                  fieldErrors.dosage && styles.textInputError
+                ]}
                 value={setupData.dosage}
-                onChangeText={(text) => setSetupData(prev => ({ ...prev, dosage: text }))}
+                onChangeText={(text) => {
+                  setSetupData(prev => ({ ...prev, dosage: text }));
+                  // Clear error when user starts typing
+                  if (fieldErrors.dosage) {
+                    setFieldErrors(prev => ({ ...prev, dosage: '' }));
+                  }
+                }}
                 placeholder="0.5"
                 placeholderTextColor="#A1A1A1"
                 keyboardType="decimal-pad"
@@ -289,6 +366,9 @@ export default function ProtocolSetup() {
                 ))}
               </View>
             </View>
+            {fieldErrors.dosage && (
+              <Text style={styles.fieldErrorText}>{fieldErrors.dosage}</Text>
+            )}
           </View>
 
           {/* Frequency */}
@@ -383,24 +463,32 @@ export default function ProtocolSetup() {
               style={[
                 styles.nextButton,
                 isMobileWeb && styles.nextButtonMobile,
-                !isCurrentStepComplete() && styles.nextButtonDisabled,
+                (!isCurrentStepComplete() || isCompleting) && styles.nextButtonDisabled,
               ]}
               onPress={handleNext}
-              disabled={!isCurrentStepComplete()}
+              disabled={!isCurrentStepComplete() || isCompleting}
               accessibilityRole="button"
               accessibilityLabel={currentStep === 1 ? "Complete setup" : "Next step"}
             >
               <Text style={[
                 styles.nextButtonText,
                 isMobileWeb && styles.nextButtonTextMobile,
-                !isCurrentStepComplete() && styles.nextButtonTextDisabled,
+                (!isCurrentStepComplete() || isCompleting) && styles.nextButtonTextDisabled,
               ]}>
-                {currentStep === 1 ? 'Complete' : 'Next'}
+                {isCompleting ? 'Saving...' : (currentStep === 1 ? 'Complete' : 'Next')}
               </Text>
-              <ArrowRight 
-                size={isMobileWeb ? 18 : 20} 
-                color={isCurrentStepComplete() ? "#FFFFFF" : "#A1A1A1"} 
-              />
+              {!isCompleting && (
+                <ArrowRight 
+                  size={isMobileWeb ? 18 : 20} 
+                  color={isCurrentStepComplete() ? "#FFFFFF" : "#A1A1A1"} 
+                />
+              )}
+              {isCompleting && (
+                <View style={styles.loadingSpinner}>
+                  {/* Simple loading indicator */}
+                  <Text style={styles.loadingText}>⏳</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -739,5 +827,36 @@ const styles = StyleSheet.create({
   },
   privacyTextMobile: {
     fontSize: 11,
+  },
+  // Error and loading styles
+  errorContainer: {
+    backgroundColor: '#FFF2F2',
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#D63031',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  textInputError: {
+    borderColor: '#FF6B6B',
+    borderWidth: 2,
+  },
+  fieldErrorText: {
+    color: '#D63031',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  loadingSpinner: {
+    marginLeft: 8,
+  },
+  loadingText: {
+    fontSize: 16,
   },
 });
