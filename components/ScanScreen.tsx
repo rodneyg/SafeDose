@@ -1,6 +1,6 @@
-import React, { RefObject, useEffect, useRef, useState } from 'react';
+import React, { RefObject, useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import { Camera as CameraIcon, Flashlight } from 'lucide-react-native';
+import { Camera as CameraIcon, Flashlight, Zap, ZapOff } from 'lucide-react-native';
 import { CameraView, FlashMode } from 'expo-camera';
 import { isMobileWeb, isWeb } from '../lib/utils';
 
@@ -81,6 +81,14 @@ export default function ScanScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
   const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
+  
+  // Autocapture state
+  const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(false);
+  const [autoCaptureCountdown, setAutoCaptureCountdown] = useState<number | null>(null);
+  const [qualityScore, setQualityScore] = useState(0);
+  const [qualityIndicator, setQualityIndicator] = useState<'poor' | 'good' | 'excellent'>('poor');
+  const autocaptureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const qualityCheckIntervalRef = useRef<number | null>(null);
 
   // Debug component mount and initial state
   useEffect(() => {
@@ -155,6 +163,160 @@ export default function ScanScreen({
     setFlashMode(current => current === 'off' ? 'on' : 'off');
   };
 
+  // Autocapture functionality
+  const analyzeImageQuality = useCallback(async () => {
+    try {
+      if (!autoCaptureEnabled || isProcessing) return;
+
+      let score = 0;
+      
+      if (isWeb && webCameraStream && videoRef.current) {
+        // Web-based quality analysis
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) return;
+        
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Calculate brightness
+        let brightness = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        }
+        brightness = brightness / (data.length / 4);
+        
+        // Brightness score (optimal range: 80-180)
+        if (brightness >= 80 && brightness <= 180) {
+          score += 50;
+        } else if (brightness >= 60 && brightness <= 200) {
+          score += 25;
+        }
+        
+        // Basic stability check (simplified - could be enhanced with motion vectors)
+        score += 30; // Assume reasonable stability for simplicity
+        
+        // Edge detection for focus (simplified)
+        let edgeStrength = 0;
+        for (let i = 0; i < data.length - 8; i += 4) {
+          const current = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          const next = (data[i + 4] + data[i + 5] + data[i + 6]) / 3;
+          edgeStrength += Math.abs(current - next);
+        }
+        edgeStrength = edgeStrength / (data.length / 4);
+        
+        // Focus score
+        if (edgeStrength > 10) score += 20;
+      } else {
+        // Native platform - use simplified scoring based on available info
+        score = 70; // Assume good conditions for native platforms
+      }
+      
+      setQualityScore(score);
+      
+      // Update quality indicator
+      if (score >= 80) {
+        setQualityIndicator('excellent');
+      } else if (score >= 60) {
+        setQualityIndicator('good');
+      } else {
+        setQualityIndicator('poor');
+      }
+      
+      // Trigger autocapture if quality is excellent
+      if (score >= 80 && !autoCaptureCountdown) {
+        // Use a local countdown to avoid dependency
+        if (autoCaptureCountdown || isProcessing) return;
+        
+        console.log('[Autocapture] Starting countdown');
+        setAutoCaptureCountdown(3);
+        
+        const countdown = (remaining: number) => {
+          if (remaining <= 0) {
+            setAutoCaptureCountdown(null);
+            // Trigger capture by calling onCapture directly
+            if (typeof onCapture === 'function') {
+              onCapture();
+            } else {
+              console.error('[Autocapture] onCapture is not a function', onCapture);
+            }
+            return;
+          }
+          
+          autocaptureTimeoutRef.current = setTimeout(() => {
+            setAutoCaptureCountdown(remaining - 1);
+            countdown(remaining - 1);
+          }, 1000);
+        };
+        
+        countdown(3);
+      }
+    } catch (error) {
+      console.error('[Autocapture] Error analyzing image quality:', error);
+    }
+  }, [autoCaptureEnabled, isProcessing, webCameraStream, autoCaptureCountdown, onCapture]);
+
+  const cancelAutocapture = useCallback(() => {
+    if (autocaptureTimeoutRef.current) {
+      clearTimeout(autocaptureTimeoutRef.current);
+      autocaptureTimeoutRef.current = null;
+    }
+    setAutoCaptureCountdown(null);
+  }, []);
+
+  const toggleAutocapture = useCallback(() => {
+    setAutoCaptureEnabled(prev => {
+      const newValue = !prev;
+      console.log('[Autocapture] Toggled to:', newValue);
+      
+      if (!newValue) {
+        // Cancel any ongoing autocapture
+        cancelAutocapture();
+        if (qualityCheckIntervalRef.current) {
+          clearInterval(qualityCheckIntervalRef.current);
+          qualityCheckIntervalRef.current = null;
+        }
+      }
+      
+      return newValue;
+    });
+  }, [cancelAutocapture]);
+
+  // Quality checking interval
+  useEffect(() => {
+    if (autoCaptureEnabled && permission?.status === 'granted') {
+      qualityCheckIntervalRef.current = setInterval(analyzeImageQuality, 500) as unknown as number;
+    } else {
+      if (qualityCheckIntervalRef.current) {
+        clearInterval(qualityCheckIntervalRef.current);
+        qualityCheckIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (qualityCheckIntervalRef.current) {
+        clearInterval(qualityCheckIntervalRef.current);
+        qualityCheckIntervalRef.current = null;
+      }
+    };
+  }, [autoCaptureEnabled, permission?.status, analyzeImageQuality]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cancelAutocapture();
+      if (qualityCheckIntervalRef.current) {
+        clearInterval(qualityCheckIntervalRef.current);
+      }
+    };
+  }, [cancelAutocapture]);
+
   if (isWeb) {
     if (permissionStatus === 'undetermined') {
       return (
@@ -215,8 +377,38 @@ export default function ScanScreen({
         )}
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          
+          {/* Autocapture status */}
+          {autoCaptureEnabled && (
+            <View style={styles.autocaptureStatus}>
+              <View style={[styles.qualityIndicator, styles[`quality${qualityIndicator.charAt(0).toUpperCase() + qualityIndicator.slice(1)}`]]}>
+                <Text style={styles.qualityText}>
+                  {qualityIndicator === 'excellent' ? 'Perfect!' : 
+                   qualityIndicator === 'good' ? 'Good' : 'Poor'}
+                </Text>
+              </View>
+              {autoCaptureCountdown && (
+                <View style={styles.countdownContainer}>
+                  <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
+                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton}>
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          
           <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
           <View style={styles.captureRow}>
+            {/* Autocapture toggle button */}
+            <TouchableOpacity
+              style={[styles.flashlightButton, autoCaptureEnabled && styles.flashlightButtonActive]}
+              onPress={toggleAutocapture}
+              disabled={isProcessing}
+            >
+              {autoCaptureEnabled ? <Zap color="#000" size={18} /> : <ZapOff color="#fff" size={18} />}
+            </TouchableOpacity>
+            
             {/* Flashlight button for mobile web - only show if supported */}
             {toggleWebFlashlight && webFlashlightSupported && (
               <TouchableOpacity
@@ -234,8 +426,8 @@ export default function ScanScreen({
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
-            {/* Spacer to center the capture button when flashlight is present */}
-            {toggleWebFlashlight && webFlashlightSupported && <View style={styles.spacer} />}
+            {/* Spacer to center the capture button when other buttons are present */}
+            <View style={styles.spacer} />
           </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
@@ -296,8 +488,38 @@ export default function ScanScreen({
         />
         <View style={styles.overlayBottom}>
           {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          
+          {/* Autocapture status */}
+          {autoCaptureEnabled && (
+            <View style={styles.autocaptureStatus}>
+              <View style={[styles.qualityIndicator, styles[`quality${qualityIndicator.charAt(0).toUpperCase() + qualityIndicator.slice(1)}`]]}>
+                <Text style={styles.qualityText}>
+                  {qualityIndicator === 'excellent' ? 'Perfect!' : 
+                   qualityIndicator === 'good' ? 'Good' : 'Poor'}
+                </Text>
+              </View>
+              {autoCaptureCountdown && (
+                <View style={styles.countdownContainer}>
+                  <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
+                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton}>
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          
           <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
           <View style={styles.captureRow}>
+            {/* Autocapture toggle button */}
+            <TouchableOpacity
+              style={[styles.flashlightButton, autoCaptureEnabled && styles.flashlightButtonActive]}
+              onPress={toggleAutocapture}
+              disabled={isProcessing}
+            >
+              {autoCaptureEnabled ? <Zap color="#000" size={18} /> : <ZapOff color="#fff" size={18} />}
+            </TouchableOpacity>
+            
             {/* Flashlight button - only show on mobile, not web */}
             {!isMobileWeb && (
               <TouchableOpacity
@@ -320,8 +542,8 @@ export default function ScanScreen({
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
-            {/* Spacer to center the capture button when flashlight is present */}
-            {!isMobileWeb && <View style={styles.spacer} />}
+            {/* Spacer to center the capture button when other buttons are present */}
+            <View style={styles.spacer} />
           </View>
           <View style={styles.bottomButtons}>
             <TouchableOpacity
@@ -410,4 +632,53 @@ const styles = StyleSheet.create({
   backButtonText: { color: '#fff', fontSize: 12, fontWeight: '500' },
   buttonText: { color: '#f8fafc', fontSize: 16, fontWeight: '500', textAlign: 'center' },
   disabledButton: { backgroundColor: '#C7C7CC' },
+  
+  // Autocapture styles
+  autocaptureStatus: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  qualityIndicator: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  qualityPoor: {
+    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+  },
+  qualityGood: {
+    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+  },
+  qualityExcellent: {
+    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+  },
+  qualityText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  countdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  countdownText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    minWidth: 30,
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
 });
