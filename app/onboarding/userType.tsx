@@ -117,19 +117,33 @@ export default function UserTypeSegmentation() {
     
     // Move to next step or complete
     if (currentStep < 3) {
+      // Special case: if user selected "I follow a protocol" in step 2, skip step 3 and go directly to completion
+      if (currentStep === 2 && answers.followsProtocol === true) {
+        console.log('[UserType] User selected protocol - skipping personal use step and completing directly');
+        handleComplete();
+        return;
+      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
     }
-  }, [currentStep]);
+  }, [currentStep, answers.followsProtocol, handleComplete]);
 
   const handleNext = useCallback(() => {
     if (currentStep < 3) {
+      // Special case: if user selected "I follow a protocol" in step 2, skip step 3 and go directly to completion
+      if (currentStep === 2 && answers.followsProtocol === true) {
+        console.log('[UserType] User selected protocol - skipping personal use step and completing directly');
+        handleComplete();
+        return;
+      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
     }
-  }, [currentStep]);
+  }, [currentStep, answers.followsProtocol, handleComplete]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {
@@ -142,6 +156,7 @@ export default function UserTypeSegmentation() {
       console.log('[UserType] ========== ONBOARDING COMPLETION START ==========');
       console.log('[UserType] Current answers:', answers);
       console.log('[UserType] Current user:', user?.uid || 'No user');
+      console.log('[UserType] followsProtocol value:', answers.followsProtocol);
       
       // Submit onboarding intent data (for analytics and data collection)
       // This happens first and independently of profile saving
@@ -567,7 +582,9 @@ export default function UserTypeSegmentation() {
   };
 
   const getProgressWidth = () => {
-    return ((currentStep + 1) / 4) * 100;
+    // If user selected protocol in step 2, we skip step 3, so total steps is 3 instead of 4
+    const totalSteps = (currentStep >= 2 && answers.followsProtocol === true) ? 3 : 4;
+    return ((currentStep + 1) / totalSteps) * 100;
   };
 
   return (
@@ -576,7 +593,7 @@ export default function UserTypeSegmentation() {
         <Animated.View entering={FadeIn.delay(100).duration(800)} style={[styles.header, isMobileWeb && styles.headerMobile]}>
           <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Let's Personalize Your Experience</Text>
           <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
-            Step {currentStep + 1} of 4
+            Step {currentStep + 1} of {(currentStep >= 2 && answers.followsProtocol === true) ? 3 : 4}
           </Text>
           
           {/* Progress bar */}
