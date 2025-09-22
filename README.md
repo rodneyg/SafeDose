@@ -7,6 +7,29 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 ---
 
+## 🔮 VisionOS Vision
+
+SafeDose today works in two steps:
+
+1. **Specify Dose**: The user first specifies their prescribed dose (e.g., "2.5 mg Semaglutide")
+2. **Photo & Guidance**: They then take a photo of their supplies. The app identifies the syringe and vial from that capture and guides them step by step to prepare the correct dose
+
+This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided flow because continuous recognition isn't reliable enough yet for dosing safety.
+
+**The longer-term vision is a glasses-native workflow:**
+
+1. **Specify Dose**: The user enters their drug + dose (e.g., "2.5 mg Semaglutide")
+
+2. **Automatic Identification**: SafeDose labels the syringe type and confirms the vial in the user's field of view
+
+3. **Guided Drawing**: As the plunger moves, overlays show where to stop, confirm when correct, and flag any overdraw
+
+4. **Confirmation**: The correct dose is confirmed in real time, with optional logging for tracking
+
+The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time system** that recognizes tools directly in front of the user and provides immediate, unambiguous guidance.
+
+---
+
 ## ⚠️ Disclaimer
 
 > **This tool is a research preview and educational utility.**
