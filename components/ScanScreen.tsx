@@ -83,7 +83,7 @@ export default function ScanScreen({
   const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
   
   // Autocapture state
-  const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(false);
+  const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(true);
   const [autoCaptureCountdown, setAutoCaptureCountdown] = useState<number | null>(null);
   const [qualityScore, setQualityScore] = useState(0);
   const [qualityIndicator, setQualityIndicator] = useState<'poor' | 'good' | 'excellent'>('poor');
@@ -387,6 +387,17 @@ export default function ScanScreen({
                    qualityIndicator === 'good' ? 'Good' : 'Poor'}
                 </Text>
               </View>
+              {/* Quality improvement tips */}
+              {qualityIndicator === 'poor' && (
+                <Text style={styles.qualityTips}>
+                  💡 Try better lighting, hold steady, or move closer
+                </Text>
+              )}
+              {qualityIndicator === 'good' && (
+                <Text style={styles.qualityTips}>
+                  Almost there! Keep steady for auto-capture
+                </Text>
+              )}
               {autoCaptureCountdown && (
                 <View style={styles.countdownContainer}>
                   <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
@@ -398,7 +409,11 @@ export default function ScanScreen({
             </View>
           )}
           
-          <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
+          <Text style={styles.scanText}>
+            {autoCaptureEnabled 
+              ? 'Auto-capture is ON - will capture when conditions are perfect' 
+              : 'Position both syringe and vial clearly in view'}
+          </Text>
           <View style={styles.captureRow}>
             {/* Autocapture toggle button */}
             <TouchableOpacity
@@ -498,6 +513,17 @@ export default function ScanScreen({
                    qualityIndicator === 'good' ? 'Good' : 'Poor'}
                 </Text>
               </View>
+              {/* Quality improvement tips */}
+              {qualityIndicator === 'poor' && (
+                <Text style={styles.qualityTips}>
+                  💡 Try better lighting, hold steady, or move closer
+                </Text>
+              )}
+              {qualityIndicator === 'good' && (
+                <Text style={styles.qualityTips}>
+                  Almost there! Keep steady for auto-capture
+                </Text>
+              )}
               {autoCaptureCountdown && (
                 <View style={styles.countdownContainer}>
                   <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
@@ -509,7 +535,11 @@ export default function ScanScreen({
             </View>
           )}
           
-          <Text style={styles.scanText}>Position both syringe and vial clearly in view</Text>
+          <Text style={styles.scanText}>
+            {autoCaptureEnabled 
+              ? 'Auto-capture is ON - will capture when conditions are perfect' 
+              : 'Position both syringe and vial clearly in view'}
+          </Text>
           <View style={styles.captureRow}>
             {/* Autocapture toggle button */}
             <TouchableOpacity
@@ -657,6 +687,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  qualityTips: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 4,
+    opacity: 0.9,
   },
   countdownContainer: {
     flexDirection: 'row',
