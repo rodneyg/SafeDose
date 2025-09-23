@@ -1,24 +1,55 @@
 // app/onboarding/_layout.tsx
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ErrorBoundary } from 'react-error-boundary';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 
-function OnboardingErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class OnboardingErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[OnboardingErrorBoundary] Error caught:', error);
+    console.error('[OnboardingErrorBoundary] Error info:', errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <OnboardingErrorFallback error={this.state.error} onRetry={() => this.setState({ hasError: false, error: null })} />;
+    }
+
+    return this.props.children;
+  }
+}
+
+function OnboardingErrorFallback({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
   const router = useRouter();
   
-  console.error('[OnboardingErrorBoundary] Error caught:', error);
-  console.error('[OnboardingErrorBoundary] Error stack:', error.stack);
+  console.error('[OnboardingErrorFallback] Rendering error fallback for:', error?.message);
 
   const handleGoHome = () => {
-    console.log('[OnboardingErrorBoundary] Navigating to home');
+    console.log('[OnboardingErrorFallback] Navigating to home');
     router.replace('/');
   };
 
   const handleRetry = () => {
-    console.log('[OnboardingErrorBoundary] Retrying onboarding');
-    resetErrorBoundary();
+    console.log('[OnboardingErrorFallback] Retrying onboarding');
+    onRetry();
   };
 
   return (
@@ -27,9 +58,11 @@ function OnboardingErrorFallback({ error, resetErrorBoundary }: { error: Error; 
       <Text style={styles.errorMessage}>
         We encountered an issue while loading the onboarding screen.
       </Text>
-      <Text style={styles.errorDetails}>
-        Error: {error.message}
-      </Text>
+      {error && (
+        <Text style={styles.errorDetails}>
+          Error: {error.message}
+        </Text>
+      )}
       
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
@@ -50,13 +83,7 @@ function OnboardingErrorFallback({ error, resetErrorBoundary }: { error: Error; 
 
 export default function OnboardingLayout() {
   return (
-    <ErrorBoundary 
-      FallbackComponent={OnboardingErrorFallback}
-      onError={(error, errorInfo) => {
-        console.error('[OnboardingLayout] Error boundary triggered:', error);
-        console.error('[OnboardingLayout] Error info:', errorInfo);
-      }}
-    >
+    <OnboardingErrorBoundary>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="age" options={{ headerShown: false }} />
@@ -67,7 +94,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="protocol" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
-    </ErrorBoundary>
+    </OnboardingErrorBoundary>
   );
 }
 
