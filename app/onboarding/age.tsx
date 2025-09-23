@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -22,6 +22,26 @@ export default function BirthDateCollection() {
   const [selectedYear, setSelectedYear] = useState('');
   const [validationError, setValidationError] = useState('');
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log('[BirthDateCollection] Component mounted');
+    setDebugInfo(['Birth date collection screen loaded']);
+  }, []);
+
+  const addDebugInfo = useCallback((info: string) => {
+    console.log(`[BirthDateCollection] ${info}`);
+    setDebugInfo(prev => [...prev, `${new Date().toISOString()}: ${info}`]);
+  }, []);
+
+  const showDebugInfo = useCallback(() => {
+    Alert.alert(
+      'Debug Information',
+      debugInfo.slice(-10).join('\n'),
+      [{ text: 'OK' }]
+    );
+  }, [debugInfo]);
 
   // Calculate if current selection is valid
   const isComplete = selectedMonth && selectedDay && selectedYear;
@@ -62,7 +82,7 @@ export default function BirthDateCollection() {
     }
   }, [selectedDay, selectedMonth]);
 
-  const handleContinue = useCallback(() => {
+  const handleContinue = useCallback(async () => {
     if (!isComplete) {
       setValidationError('Please select your complete birth date');
       return;
@@ -73,37 +93,63 @@ export default function BirthDateCollection() {
       return;
     }
 
-    const age = calculateAge(birthDate);
-    
-    // Log analytics
-    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED, {
-      age,
-      birth_year: selectedYear,
-      birth_month: selectedMonth,
-      age_range: age < 18 ? 'minor' : age < 65 ? 'adult' : 'senior'
-    });
+    try {
+      setIsNavigating(true);
+      setValidationError('');
+      
+      const age = calculateAge(birthDate);
+      addDebugInfo(`User age calculated: ${age}`);
+      
+      // Log analytics
+      logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED, {
+        age,
+        birth_year: selectedYear,
+        birth_month: selectedMonth,
+        age_range: age < 18 ? 'minor' : age < 65 ? 'adult' : 'senior'
+      });
 
-    // Route based on age (same logic as before)
-    if (age < 18) {
-      // Route to child safety screen for minors
-      router.push({
-        pathname: '/onboarding/child-safety',
-        params: { 
-          age: age.toString(),
-          birthDate: birthDate
-        }
-      });
-    } else {
-      // Route to demo for adults
-      router.push({
-        pathname: '/onboarding/demo',
-        params: { 
-          age: age.toString(),
-          birthDate: birthDate
-        }
-      });
+      addDebugInfo(`Analytics logged for age: ${age}`);
+
+      // Route based on age with error handling
+      if (age < 18) {
+        addDebugInfo('Routing to child safety screen (minor)');
+        router.push({
+          pathname: '/onboarding/child-safety',
+          params: { 
+            age: age.toString(),
+            birthDate: birthDate
+          }
+        });
+      } else {
+        addDebugInfo('Routing to demo screen (adult)');
+        router.push({
+          pathname: '/onboarding/demo',
+          params: { 
+            age: age.toString(),
+            birthDate: birthDate
+          }
+        });
+      }
+      
+      addDebugInfo('Navigation call completed successfully');
+      
+    } catch (error) {
+      setIsNavigating(false);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      addDebugInfo(`Navigation error: ${errorMessage}`);
+      console.error('[BirthDateCollection] Navigation error:', error);
+      
+      Alert.alert(
+        'Navigation Error',
+        `Failed to continue: ${errorMessage}\n\nWould you like to try again or report this issue?`,
+        [
+          { text: 'Retry', onPress: () => handleContinue() },
+          { text: 'Report Issue', onPress: () => showDebugInfo() },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
     }
-  }, [isComplete, isValid, validation, birthDate, selectedYear, selectedMonth, router]);
+  }, [isComplete, isValid, validation, birthDate, selectedYear, selectedMonth, router, addDebugInfo, isNavigating]);
 
   const handleSkip = useCallback(() => {
     // Show safety explanation modal instead of directly skipping
@@ -233,10 +279,10 @@ export default function BirthDateCollection() {
             style={[
               styles.continueButton,
               isMobileWeb && styles.continueButtonMobile,
-              !isValid && styles.continueButtonDisabled
+              (!isValid || isNavigating) && styles.continueButtonDisabled
             ]}
             onPress={handleContinue}
-            disabled={!isValid}
+            disabled={!isValid || isNavigating}
             accessibilityRole="button"
             accessibilityLabel="Continue with birth date"
             accessibilityHint="Proceed to next step"
@@ -244,11 +290,11 @@ export default function BirthDateCollection() {
             <Text style={[
               styles.continueButtonText,
               isMobileWeb && styles.continueButtonTextMobile,
-              !isValid && styles.continueButtonTextDisabled
+              (!isValid || isNavigating) && styles.continueButtonTextDisabled
             ]}>
-              Continue
+              {isNavigating ? 'Loading...' : 'Continue'}
             </Text>
-            <ArrowRight size={isMobileWeb ? 18 : 20} color={isValid ? "#FFFFFF" : "#8E8E93"} />
+            {!isNavigating && <ArrowRight size={isMobileWeb ? 18 : 20} color={isValid ? "#FFFFFF" : "#8E8E93"} />}
           </TouchableOpacity>
 
           <TouchableOpacity

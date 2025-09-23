@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } from 'react-native';
+import { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity, Alert } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
@@ -11,14 +11,60 @@ export default function Welcome() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
-  const handleStart = useCallback(() => {
-    router.push('/onboarding/age');
-  }, [router]);
+  useEffect(() => {
+    console.log('[Welcome] Component mounted');
+    setDebugInfo(prev => [...prev, `Welcome screen loaded at ${new Date().toISOString()}`]);
+  }, []);
+
+  const addDebugInfo = useCallback((info: string) => {
+    console.log(`[Welcome] ${info}`);
+    setDebugInfo(prev => [...prev, `${new Date().toISOString()}: ${info}`]);
+  }, []);
+
+  const handleStart = useCallback(async () => {
+    try {
+      setIsNavigating(true);
+      addDebugInfo('User clicked Try Now button');
+      
+      // Add a small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      addDebugInfo('Attempting navigation to /onboarding/age');
+      router.push('/onboarding/age');
+      addDebugInfo('Navigation call completed');
+      
+    } catch (error) {
+      setIsNavigating(false);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      addDebugInfo(`Navigation error: ${errorMessage}`);
+      console.error('[Welcome] Navigation error:', error);
+      
+      Alert.alert(
+        'Navigation Error',
+        `Failed to start onboarding: ${errorMessage}\n\nDebug info:\n${debugInfo.slice(-3).join('\n')}`,
+        [
+          { text: 'Retry', onPress: () => handleStart() },
+          { text: 'Report Issue', onPress: () => showDebugInfo() }
+        ]
+      );
+    }
+  }, [router, addDebugInfo, debugInfo]);
 
   const handleImageError = useCallback(() => {
+    addDebugInfo('Main image failed to load, using fallback');
     setImageError(true);
-  }, []);
+  }, [addDebugInfo]);
+
+  const showDebugInfo = useCallback(() => {
+    Alert.alert(
+      'Debug Information',
+      debugInfo.slice(-10).join('\n'),
+      [{ text: 'OK' }]
+    );
+  }, [debugInfo]);
 
   return (
     <View style={styles.container}>
@@ -46,15 +92,33 @@ export default function Welcome() {
 
         <Animated.View entering={FadeInUp.delay(900).duration(800)} style={[styles.footer, isMobileWeb && styles.footerMobile]}>
           <TouchableOpacity 
-            style={[styles.button, isMobileWeb && styles.buttonMobile]} 
+            style={[
+              styles.button, 
+              isMobileWeb && styles.buttonMobile,
+              isNavigating && styles.buttonDisabled
+            ]} 
             onPress={handleStart}
+            disabled={isNavigating}
             accessibilityRole="button"
             accessibilityLabel="Start demo"
             accessibilityHint="Begins the SafeDose app demonstration">
-            <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
-            <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
+            <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>
+              {isNavigating ? 'Starting...' : 'Try Now'}
+            </Text>
+            {!isNavigating && <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />}
           </TouchableOpacity>
           <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed</Text>
+          
+          {/* Debug button for development */}
+          {__DEV__ && (
+            <TouchableOpacity 
+              style={styles.debugButton} 
+              onPress={showDebugInfo}
+              accessibilityLabel="Show debug information"
+            >
+              <Text style={styles.debugButtonText}>Debug Info ({debugInfo.length})</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </View>
     </View>
@@ -128,6 +192,21 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  debugButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+  },
+  debugButtonText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 12,
     textAlign: 'center',
   },
   // Mobile-specific styles

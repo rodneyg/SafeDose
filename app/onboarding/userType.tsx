@@ -16,7 +16,7 @@ export default function UserTypeSegmentation() {
   const { user } = useAuth();
   const { saveProfile } = useUserProfile();
   const { submitOnboardingIntent } = useOnboardingIntentStorage();
-  const { age, limitedFunctionality, reason } = useLocalSearchParams<{ 
+  const { age, limitedFunctionality } = useLocalSearchParams<{ 
     age: string;
     limitedFunctionality: string;
     reason: string;
@@ -31,6 +31,7 @@ export default function UserTypeSegmentation() {
     isRecoveryUse: null,
     age: age ? parseInt(age) : null,
     birthDate: null,
+    followsProtocol: null,
   });
 
   // Log analytics when step starts
@@ -45,7 +46,8 @@ export default function UserTypeSegmentation() {
     switch (step) {
       case 0: return 'background';
       case 1: return 'use_type';
-      case 2: return 'personal_use';
+      case 2: return 'protocol_decision';
+      case 3: return 'personal_use';
       default: return 'unknown';
     }
   };
@@ -108,26 +110,40 @@ export default function UserTypeSegmentation() {
       step_name: getStepName(currentStep)
     });
     
-    if (currentStep === 2) {
+    if (currentStep === 3) {
       // For personal use question, set to null when skipped
       setAnswers(prev => ({ ...prev, isPersonalUse: null }));
     }
     
     // Move to next step or complete
-    if (currentStep < 2) {
+    if (currentStep < 3) {
+      // Special case: if user selected "I follow a protocol" in step 2, skip step 3 and go directly to completion
+      if (currentStep === 2 && answers.followsProtocol === true) {
+        console.log('[UserType] User selected protocol - skipping personal use step and completing directly');
+        handleComplete();
+        return;
+      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
     }
-  }, [currentStep]);
+  }, [currentStep, answers.followsProtocol, handleComplete]);
 
   const handleNext = useCallback(() => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
+      // Special case: if user selected "I follow a protocol" in step 2, skip step 3 and go directly to completion
+      if (currentStep === 2 && answers.followsProtocol === true) {
+        console.log('[UserType] User selected protocol - skipping personal use step and completing directly');
+        handleComplete();
+        return;
+      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
     }
-  }, [currentStep]);
+  }, [currentStep, answers.followsProtocol, handleComplete]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {
@@ -140,6 +156,7 @@ export default function UserTypeSegmentation() {
       console.log('[UserType] ========== ONBOARDING COMPLETION START ==========');
       console.log('[UserType] Current answers:', answers);
       console.log('[UserType] Current user:', user?.uid || 'No user');
+      console.log('[UserType] followsProtocol value:', answers.followsProtocol);
       
       // Submit onboarding intent data (for analytics and data collection)
       // This happens first and independently of profile saving
@@ -162,6 +179,8 @@ export default function UserTypeSegmentation() {
         age: answers.age || undefined, // Include age if provided
         dateCreated: new Date().toISOString(),
         userId: user?.uid,
+        followsProtocol: answers.followsProtocol ?? false,
+        hasSetupProtocol: false, // Will be set to true after protocol setup
       };
 
       console.log('[UserType] Created profile object:', profile);
@@ -184,6 +203,7 @@ export default function UserTypeSegmentation() {
         isCosmeticUse: profile.isCosmeticUse,
         isPerformanceUse: profile.isPerformanceUse,
         isRecoveryUse: profile.isRecoveryUse,
+        followsProtocol: profile.followsProtocol,
         skipped_personal_use: answers.isPersonalUse === null,
         age: profile.age,
         age_range: profile.age ? (profile.age < 18 ? 'minor' : profile.age < 65 ? 'adult' : 'senior') : 'unknown'
@@ -208,10 +228,15 @@ export default function UserTypeSegmentation() {
         parsedProfile: storedProfile ? JSON.parse(storedProfile) : null
       });
       
-      // Navigate directly to intro screen instead of relying on index.tsx routing
-      console.log('[UserType] 🚀 NAVIGATING DIRECTLY TO INTRO - calling router.replace("/(tabs)/new-dose")');
-      console.log('[UserType] ========== BYPASSING INDEX.TSX ROUTING ==========');
-      router.replace('/(tabs)/new-dose');
+      // Navigate based on whether user wants to set up a protocol
+      if (answers.followsProtocol === true) {
+        console.log('[UserType] 🚀 NAVIGATING TO PROTOCOL SETUP - user wants to follow a protocol');
+        router.replace('/onboarding/protocol');
+      } else {
+        console.log('[UserType] 🚀 NAVIGATING DIRECTLY TO INTRO - user wants quick use mode');
+        console.log('[UserType] ========== BYPASSING INDEX.TSX ROUTING ==========');
+        router.replace('/(tabs)/new-dose');
+      }
     } catch (error) {
       console.error('[UserType] ❌ ERROR during completion:', error);
       console.error('[UserType] Error stack:', error instanceof Error ? error.stack : 'No stack');
@@ -225,7 +250,8 @@ export default function UserTypeSegmentation() {
     switch (currentStep) {
       case 0: return answers.isLicensedProfessional !== null || answers.isProfessionalAthlete !== null;
       case 1: return answers.isCosmeticUse !== null || answers.isPerformanceUse !== null || answers.isRecoveryUse !== null;
-      case 2: return true; // This step is always "complete" since it can be skipped
+      case 2: return answers.followsProtocol !== null;
+      case 3: return true; // This step is always "complete" since it can be skipped
       default: return false;
     }
   };
@@ -422,6 +448,63 @@ export default function UserTypeSegmentation() {
     </Animated.View>
   );
 
+  const renderProtocolDecisionStep = () => (
+    <Animated.View entering={FadeInRight.duration(500)} style={[styles.stepContainer, isMobileWeb && styles.stepContainerMobile]}>
+      <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Are you following a protocol?</Text>
+      <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
+        This helps us determine whether to set up structured medication scheduling or provide quick one-off calculations.
+      </Text>
+      
+      <View style={[styles.optionsContainer, isMobileWeb && styles.optionsContainerMobile]}>
+        <TouchableOpacity
+          style={[
+            styles.optionCard,
+            isMobileWeb && styles.optionCardMobile,
+            answers.followsProtocol === true && styles.optionCardSelected,
+          ]}
+          onPress={() => handleAnswerChange('followsProtocol', true)}
+          accessibilityRole="button"
+          accessibilityLabel="Yes, I follow a structured protocol"
+        >
+          {answers.followsProtocol === true && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+          <Text style={[
+            styles.optionTitle,
+            isMobileWeb && styles.optionTitleMobile,
+            answers.followsProtocol === true && styles.optionTitleSelected,
+          ]}>
+            Yes, I follow a protocol
+          </Text>
+          <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
+            I have a structured medication schedule (TRT, peptides, insulin, etc.)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.optionCard,
+            isMobileWeb && styles.optionCardMobile,
+            answers.followsProtocol === false && styles.optionCardSelected,
+          ]}
+          onPress={() => handleAnswerChange('followsProtocol', false)}
+          accessibilityRole="button"
+          accessibilityLabel="No, I need quick calculations"
+        >
+          {answers.followsProtocol === false && <Check size={isMobileWeb ? 20 : 24} color="#007AFF" />}
+          <Text style={[
+            styles.optionTitle,
+            isMobileWeb && styles.optionTitleMobile,
+            answers.followsProtocol === false && styles.optionTitleSelected,
+          ]}>
+            No, quick calculations
+          </Text>
+          <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
+            I need one-off dose calculations and guidance
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+
   const renderPersonalUseStep = () => (
     <Animated.View entering={FadeInRight.duration(500)} style={[styles.stepContainer, isMobileWeb && styles.stepContainerMobile]}>
       <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Who is this for?</Text>
@@ -492,13 +575,16 @@ export default function UserTypeSegmentation() {
     switch (currentStep) {
       case 0: return renderBackgroundStep();
       case 1: return renderUseTypeStep();
-      case 2: return renderPersonalUseStep();
+      case 2: return renderProtocolDecisionStep();
+      case 3: return renderPersonalUseStep();
       default: return null;
     }
   };
 
   const getProgressWidth = () => {
-    return ((currentStep + 1) / 3) * 100;
+    // If user selected protocol in step 2, we skip step 3, so total steps is 3 instead of 4
+    const totalSteps = (currentStep >= 2 && answers.followsProtocol === true) ? 3 : 4;
+    return ((currentStep + 1) / totalSteps) * 100;
   };
 
   return (
@@ -507,7 +593,7 @@ export default function UserTypeSegmentation() {
         <Animated.View entering={FadeIn.delay(100).duration(800)} style={[styles.header, isMobileWeb && styles.headerMobile]}>
           <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Let's Personalize Your Experience</Text>
           <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
-            Step {currentStep + 1} of 3
+            Step {currentStep + 1} of {(currentStep >= 2 && answers.followsProtocol === true) ? 3 : 4}
           </Text>
           
           {/* Progress bar */}
