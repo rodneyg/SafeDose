@@ -7,8 +7,12 @@ export default function OnboardingLayout() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="age" options={{ headerShown: false }} />
+        <Stack.Screen name="child-safety" options={{ headerShown: false }} />
         <Stack.Screen name="demo" options={{ headerShown: false }} />
         <Stack.Screen name="features" options={{ headerShown: false }} />
+        <Stack.Screen name="userType" options={{ headerShown: false }} />
+        <Stack.Screen name="protocol" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
