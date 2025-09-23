@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { AlertTriangle, CheckCircle, Info } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { AlertTriangle, CheckCircle, Info, Brain } from 'lucide-react-native';
+import RecommendationDashboard from './RecommendationDashboard';
+import { PersonalizedRecommendation } from '../types/personalizedRecommendations';
 
 interface PreDoseConfirmationStepProps {
   substanceName: string;
@@ -11,6 +13,8 @@ interface PreDoseConfirmationStepProps {
   calculatedVolume: number | null;
   calculatedConcentration?: number | null;
   calculationError: string | null;
+  onAcceptRecommendation?: (recommendation: PersonalizedRecommendation) => void;
+  onProvideFeedback?: () => void;
 }
 
 export default function PreDoseConfirmationStep({
@@ -22,7 +26,11 @@ export default function PreDoseConfirmationStep({
   calculatedVolume,
   calculatedConcentration,
   calculationError,
+  onAcceptRecommendation,
+  onProvideFeedback,
 }: PreDoseConfirmationStepProps) {
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  
   const hasVolumeWarning = calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
@@ -110,6 +118,38 @@ export default function PreDoseConfirmationStep({
             <Text style={styles.errorMessage}>
               {calculationError}
             </Text>
+          </View>
+        )}
+      </View>
+
+      {/* AI Recommendations Section */}
+      <View style={styles.recommendationsSection}>
+        <TouchableOpacity 
+          style={styles.recommendationsToggle}
+          onPress={() => setShowRecommendations(!showRecommendations)}
+        >
+          <Brain color="#6366F1" size={20} />
+          <Text style={styles.recommendationsToggleText}>
+            AI Dosage Recommendations
+          </Text>
+          <Text style={styles.recommendationsToggleIcon}>
+            {showRecommendations ? '−' : '+'}
+          </Text>
+        </TouchableOpacity>
+        
+        {showRecommendations && (
+          <View style={styles.recommendationsContainer}>
+            <RecommendationDashboard
+              substanceName={substanceName}
+              currentDose={doseValue || undefined}
+              currentUnit={unit}
+              onAcceptRecommendation={onAcceptRecommendation}
+              onProvideFeedback={onProvideFeedback}
+              onViewDetails={(recommendation) => {
+                // Handle viewing detailed recommendation info
+                console.log('View recommendation details:', recommendation);
+              }}
+            />
           </View>
         )}
       </View>
@@ -227,6 +267,37 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     flex: 1,
     lineHeight: 18,
+  },
+  recommendationsSection: {
+    marginBottom: 16,
+  },
+  recommendationsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 8,
+  },
+  recommendationsToggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginLeft: 8,
+    flex: 1,
+  },
+  recommendationsToggleIcon: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#6366F1',
+    width: 24,
+    textAlign: 'center',
+  },
+  recommendationsContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   safetyContainer: {
     padding: 16,
