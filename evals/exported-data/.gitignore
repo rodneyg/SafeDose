@@ -1,0 +1,6 @@
+# Ignore all exported evaluation data files
+*.json
+*.jsonl
+
+# Keep the directory structure
+!.gitignore

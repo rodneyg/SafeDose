@@ -1,0 +1,55 @@
+{
+  "name": "Basic Dose Calculations",
+  "description": "Core mathematical accuracy tests for common dosing scenarios",
+  "version": "1.0.0",
+  "evaluations": [
+    {
+      "id": "basic-001",
+      "category": "dose-calculation",
+      "description": "Standard mg to ml conversion - Semaglutide",
+      "image": null,
+      "prompt": "Calculate dose: 2.5 mg Semaglutide, 10mg/ml concentration, using 1ml syringe",
+      "expected_output": {
+        "calculatedVolume": 0.25,
+        "recommendedMarking": "0.25 ml",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "basic-002", 
+      "category": "dose-calculation",
+      "description": "Insulin units calculation",
+      "image": null,
+      "prompt": "Calculate dose: 15 units insulin, 100 units/ml concentration, using insulin syringe",
+      "expected_output": {
+        "calculatedVolume": 0.15,
+        "recommendedMarking": "15 units",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "basic-003",
+      "category": "dose-calculation", 
+      "description": "mcg to ml conversion - Epinephrine",
+      "image": null,
+      "prompt": "Calculate dose: 500 mcg epinephrine, 1 mg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": 0.5,
+        "recommendedMarking": "0.5 ml",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "basic-004",
+      "category": "dose-calculation",
+      "description": "Direct volume dose - Saline",
+      "image": null,
+      "prompt": "Calculate dose: 2 mL saline flush, using 3ml syringe",
+      "expected_output": {
+        "calculatedVolume": 2.0,
+        "recommendedMarking": "2.0 ml", 
+        "calculationError": null
+      }
+    }
+  ]
+}

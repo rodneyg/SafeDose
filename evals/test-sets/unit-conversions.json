@@ -1,0 +1,55 @@
+{
+  "name": "Unit Conversions",
+  "description": "Test accuracy across different unit combinations and conversions",
+  "version": "1.0.0", 
+  "evaluations": [
+    {
+      "id": "units-001",
+      "category": "unit-conversion",
+      "description": "mg dose with mcg/ml concentration",
+      "image": null,
+      "prompt": "Calculate dose: 2 mg medication, 500 mcg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": 4.0,
+        "recommendedMarking": "4.0 ml",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "units-002",
+      "category": "unit-conversion", 
+      "description": "mcg dose with mg/ml concentration",
+      "image": null,
+      "prompt": "Calculate dose: 750 mcg medication, 1.5 mg/ml concentration", 
+      "expected_output": {
+        "calculatedVolume": 0.5,
+        "recommendedMarking": "0.5 ml",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "units-003",
+      "category": "unit-conversion",
+      "description": "Units to ml conversion",
+      "image": null, 
+      "prompt": "Calculate dose: 40 units insulin, 100 units/ml concentration",
+      "expected_output": {
+        "calculatedVolume": 0.4,
+        "recommendedMarking": "40 units",
+        "calculationError": null
+      }
+    },
+    {
+      "id": "units-004",
+      "category": "unit-conversion",
+      "description": "mL direct dose (no conversion needed)",
+      "image": null,
+      "prompt": "Calculate dose: 1.5 mL medication, any concentration", 
+      "expected_output": {
+        "calculatedVolume": 1.5,
+        "recommendedMarking": "1.5 ml",
+        "calculationError": null
+      }
+    }
+  ]
+}

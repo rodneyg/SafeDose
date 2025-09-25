@@ -8,6 +8,7 @@ import { useWhyAreYouHereTracking } from './useWhyAreYouHereTracking';
 import { usePMFSurvey } from './usePMFSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
 import { useBeforeFirstScanPrompt } from './useBeforeFirstScanPrompt';
+import { useEvaluationDataCapture } from './useEvaluationDataCapture';
 
 // Import the minimum dose constant for safety checks
 const MIN_DOSES_FOR_PROMOTION = 4;
@@ -74,6 +75,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Initialize before first scan prompt tracking
   const beforeFirstScanPrompt = useBeforeFirstScanPrompt();
+
+  // Initialize evaluation data capture
+  const evaluationDataCapture = useEvaluationDataCapture();
 
   // Log limit modal state (now used for both power user promotion and log limits)
   const [showLogLimitModal, setShowLogLimitModal] = useState<boolean>(false);
@@ -426,6 +430,36 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       // Always navigate to preDoseConfirmation screen regardless of calculation errors
       setManualStep('preDoseConfirmation');
       console.log('[useDoseCalculator] Set manualStep to preDoseConfirmation');
+
+      // Capture evaluation data for manual entry
+      if (evaluationDataCapture && !evaluationDataCapture.isCapturing) {
+        const prompt = `Calculate dose: ${doseValue} ${unit} ${substanceName || 'medication'}${concentration ? `, ${concentration} ${concentrationUnit} concentration` : ''}${medicationInputType === 'totalAmount' && totalAmount && solutionVolume ? `, ${totalAmount} ${concentrationUnit.split('/')[0]} in ${solutionVolume} ml solution` : ''}, using ${manualSyringe.type.toLowerCase()} ${manualSyringe.volume} syringe`;
+        
+        evaluationDataCapture.captureUserInteraction({
+          prompt,
+          userIntent: 'manual_entry',
+          inputParameters: {
+            doseValue,
+            unit,
+            substanceName: substanceName || undefined,
+            concentration,
+            concentrationUnit,
+            syringeType: manualSyringe.type,
+            syringeVolume: manualSyringe.volume,
+            totalAmount: totalAmountValue || undefined,
+            solutionVolume: solutionVolume || undefined,
+            medicationInputType: medicationInputType || undefined
+          },
+          result: {
+            calculatedVolume: result.calculatedVolume,
+            recommendedMarking: result.recommendedMarking,
+            calculationError: result.calculationError,
+            calculatedConcentration: result.calculatedConcentration
+          }
+        }).catch(error => {
+          console.error('[useDoseCalculator] Error capturing evaluation data:', error);
+        });
+      }
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleCalculateFinal:', error);
       setCalculationError('Error calculating dose. Please check your inputs and try again.');
@@ -433,7 +467,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setManualStep('preDoseConfirmation');
       console.log('[useDoseCalculator] Set manualStep to preDoseConfirmation (after error)');
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType]);
+  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
 
   const handleNextPreDoseConfirmation = useCallback(() => {
     try {
