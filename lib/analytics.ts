@@ -48,6 +48,12 @@ export const ANALYTICS_EVENTS = {
   PMF_SURVEY_SKIPPED: 'pmf_survey_skipped',
   PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed',
   // Sign-up prompt events
+  SIGN_UP_PROMPT_SHOWN: 'sign_up_prompt_shown',
+  SIGN_UP_PROMPT_ACCEPTED: 'sign_up_prompt_accepted',
+  SIGN_UP_PROMPT_DISMISSED: 'sign_up_prompt_dismissed',
+  // Evaluation data capture events
+  EVALUATION_DATA_CAPTURED: 'evaluation_data_captured',
+  EVALUATION_DATA_EXPORTED: 'evaluation_data_exported',
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
   SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',

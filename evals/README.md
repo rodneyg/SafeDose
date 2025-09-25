@@ -29,6 +29,15 @@ evals/
 
 ## Running Evaluations
 
+### Automatic Data Collection
+
+SafeDose now automatically captures user interactions to build evaluation datasets:
+
+- Each dose calculation and AI scan is automatically saved
+- Data includes input parameters, results, and quality scores
+- High-quality interactions (score >= 0.6) can be exported for model training
+- Privacy-focused: images stored locally, no personal data transmitted
+
 ### Manual Testing
 For now, evaluations can be tested manually against the SafeDose application:
 

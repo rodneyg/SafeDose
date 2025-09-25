@@ -192,6 +192,48 @@ Document evaluation runs in `evals/results/` with:
 
 ## Community Hill-Climbing
 
+### Automatic Data Collection
+
+SafeDose now automatically captures user interactions to continuously build and improve the evaluation dataset:
+
+- **Every dose calculation** (manual entry) is saved with input parameters and results
+- **Every AI scan** is captured with the image, prompt, and extracted data
+- **User feedback** and corrections are tracked to improve accuracy
+- **Data quality scoring** ensures only high-quality examples are used for training
+
+This automatic collection enables:
+- **Continuous model improvement** through real-world usage data
+- **Effortless dataset building** - no manual data collection needed
+- **Easy fine-tuning workflows** - download data, plug into training scripts
+- **Quality-controlled training data** with automatic scoring and filtering
+
+### Data Export for Fine-Tuning
+
+Contributors can export captured evaluation data for model improvement:
+
+```javascript
+// Export high-quality evaluation data (quality score >= 0.8)
+const evaluationData = await evaluationDataCapture.exportEvaluationData(0.8);
+
+// Convert to fine-tuning format
+const trainingData = evaluationData.map(item => ({
+  messages: [
+    { role: "user", content: item.prompt },
+    { role: "assistant", content: JSON.stringify(item.expected_output) }
+  ]
+}));
+
+// Save for model training
+console.log(`Exported ${trainingData.length} high-quality training examples`);
+```
+
+### Privacy and Security
+
+- **Image data** is stored locally only (not sent to external servers)
+- **Personal information** is automatically filtered out
+- **Anonymous users** have their data stored locally only
+- **Authenticated users** can opt-in to contribute anonymized data to the community dataset
+
 ### Collaborative Improvement Process
 
 1. **Regular Evaluation Runs**: Weekly automated testing
