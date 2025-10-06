@@ -12,23 +12,96 @@ import { useBeforeFirstScanPrompt } from './useBeforeFirstScanPrompt';
 // Import the minimum dose constant for safety checks
 const MIN_DOSES_FOR_PROMOTION = 4;
 
+/**
+ * Represents the different main screen steps in the dose calculation workflow.
+ */
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+
+/**
+ * Represents the different steps within the manual dose entry workflow.
+ */
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
+/**
+ * Represents a syringe configuration with type and volume.
+ */
 type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
+
+/**
+ * Function type for resetting the entire form to a specific starting step.
+ */
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
+/**
+ * Props interface for the useDoseCalculator hook.
+ */
 interface UseDoseCalculatorProps {
+  /** Function to check if the user has reached their usage limit */
   checkUsageLimit: () => Promise<boolean>;
+  /** Optional function to track user interactions for analytics */
   trackInteraction?: () => void;
 }
 
+/**
+ * Validates if a value is considered valid (not null, undefined, or empty string).
+ * 
+ * @param value - The value to validate
+ * @returns True if the value is valid, false otherwise
+ */
 const isValidValue = (value: any): boolean => {
   if (value === null || value === undefined) return false;
   if (typeof value === 'string' && value.trim() === '') return false;
   return true;
 };
 
+/**
+ * A comprehensive React hook for managing dose calculation workflows in the SafeDose app.
+ * 
+ * This hook handles the complete dose calculation process including:
+ * - Screen navigation and step management for both scan and manual entry workflows
+ * - Form validation and error handling for dose inputs
+ * - Integration with camera scanning functionality
+ * - Dose calculation logic with various medication formats
+ * - User tracking and analytics integration
+ * - Modal management for errors and promotions
+ * - Integration with feedback collection, surveys, and user promotion systems
+ * 
+ * The hook manages complex state for multi-step forms, handles validation across
+ * different medication input types (concentration vs total amount), and coordinates
+ * with multiple other hooks for analytics, logging, and user experience features.
+ * 
+ * @param props - Configuration object for the hook
+ * @param props.checkUsageLimit - Function to verify if user can perform more scans
+ * @param props.trackInteraction - Optional analytics tracking function
+ * 
+ * @returns Object containing all state variables, setters, and handler functions for:
+ * - Screen and step navigation (screenStep, manualStep, etc.)
+ * - Form data and validation (dose, unit, concentration, etc.)
+ * - Calculation results (calculatedVolume, recommendedMarking, etc.)
+ * - Error handling (formError, calculationError, etc.)
+ * - Modal states (showVolumeErrorModal, showLogLimitModal, etc.)
+ * - Event handlers for all user interactions
+ * - Integration with sub-hooks for analytics, logging, and user experience features
+ * 
+ * @example
+ * ```typescript
+ * const doseCalculator = useDoseCalculator({
+ *   checkUsageLimit: async () => userCanScan,
+ *   trackInteraction: () => analytics.track('dose_interaction')
+ * });
+ * 
+ * // Navigate to manual entry
+ * doseCalculator.setScreenStep('manualEntry');
+ * 
+ * // Set dose and validate
+ * doseCalculator.setDose('5');
+ * doseCalculator.setUnit('mg');
+ * const isValid = doseCalculator.validateDoseInput('5', 'mg');
+ * 
+ * // Calculate final result
+ * doseCalculator.handleCalculateFinal();
+ * ```
+ */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
