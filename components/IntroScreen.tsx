@@ -11,6 +11,8 @@ import {
   Info,
   User,
   RotateCcw,
+  Calendar,
+  Clock,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { isMobileWeb } from '../lib/utils';
@@ -19,6 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
+import { useProtocolStorage } from '../lib/hooks/useProtocolStorage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import Constants from 'expo-constants'; // env variables from app.config.js
@@ -52,6 +55,7 @@ export default function IntroScreen({
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
+  const { getActiveProtocol, getNextDoses } = useProtocolStorage();
   const router = useRouter();
 
   // State for logout functionality
@@ -61,6 +65,10 @@ export default function IntroScreen({
   // State for last dose functionality
   const [hasLastDose, setHasLastDose] = useState(false);
   const [isLoadingLastDose, setIsLoadingLastDose] = useState(false);
+  
+  // State for protocol functionality
+  const [activeProtocol, setActiveProtocol] = useState<any>(null);
+  const [nextDoses, setNextDoses] = useState<any[]>([]);
 
   /* =========================================================================
      LOGGING  (remove or guard with __DEV__ as needed)
@@ -132,17 +140,42 @@ export default function IntroScreen({
     }
   }, [getDoseLogHistory, user]);
 
+  /* =========================================================================
+     PROTOCOL AVAILABILITY CHECK
+  ========================================================================= */
+  const checkProtocolAvailability = useCallback(async () => {
+    try {
+      const protocol = getActiveProtocol();
+      const nextScheduledDoses = getNextDoses().slice(0, 2); // Get next 2 doses
+      
+      console.log('[IntroScreen] Protocol check:', {
+        hasActiveProtocol: !!protocol,
+        nextDosesCount: nextScheduledDoses.length,
+        protocolName: protocol?.compoundName || 'none'
+      });
+      
+      setActiveProtocol(protocol);
+      setNextDoses(nextScheduledDoses);
+    } catch (error) {
+      console.error('[IntroScreen] Error checking protocol:', error);
+      setActiveProtocol(null);
+      setNextDoses([]);
+    }
+  }, [getActiveProtocol, getNextDoses]);
+
   // Check for last dose on mount and when user changes
   useEffect(() => {
     checkLastDoseAvailability();
-  }, [checkLastDoseAvailability, user?.uid]);
+    checkProtocolAvailability();
+  }, [checkLastDoseAvailability, checkProtocolAvailability, user?.uid]);
 
   // Re-check when screen comes into focus (e.g., after completing a dose)
   useFocusEffect(
     useCallback(() => {
       console.log('[IntroScreen] Screen focused, re-checking last dose availability...');
       checkLastDoseAvailability();
-    }, [checkLastDoseAvailability])
+      checkProtocolAvailability();
+    }, [checkLastDoseAvailability, checkProtocolAvailability])
   );
 
   /* =========================================================================
@@ -349,6 +382,21 @@ export default function IntroScreen({
     }
   }, [applyLastDose, setScreenStep, setNavigatingFromIntro, isLoadingLastDose]);
 
+  const handleUseProtocolPress = useCallback(() => {
+    if (!activeProtocol || !nextDoses[0]) return;
+    
+    console.log('[IntroScreen] ========== USE PROTOCOL DOSE FLOW START ==========');
+    console.log('[IntroScreen] Protocol:', activeProtocol.compoundName);
+    console.log('[IntroScreen] Next dose:', nextDoses[0]);
+    
+    setNavigatingFromIntro?.(true);
+    
+    // We'll need to enhance the dose calculator to accept protocol data
+    // For now, just navigate to manual entry
+    setScreenStep('manualEntry');
+    console.log('[IntroScreen] ========== USE PROTOCOL DOSE FLOW COMPLETE ==========');
+  }, [activeProtocol, nextDoses, setScreenStep, setNavigatingFromIntro]);
+
   /* =========================================================================
      RENDER
   ========================================================================= */
@@ -395,6 +443,75 @@ export default function IntroScreen({
                   <Text style={styles.welcomeText}>Ready to get started?</Text>
                 )}
               </View>
+
+              {/* Protocol Information */}
+              {activeProtocol && nextDoses.length > 0 && (
+                <View style={[styles.protocolContainer, isMobileWeb && styles.protocolContainerMobile]}>
+                  <View style={styles.protocolHeader}>
+                    <Calendar color="#007AFF" size={20} />
+                    <Text style={[styles.protocolTitle, isMobileWeb && styles.protocolTitleMobile]}>
+                      {activeProtocol.compoundName} Protocol
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.nextDoseInfo}>
+                    <Text style={[styles.nextDoseLabel, isMobileWeb && styles.nextDoseLabelMobile]}>
+                      Next dose:
+                    </Text>
+                    <Text style={[styles.nextDoseTime, isMobileWeb && styles.nextDoseTimeMobile]}>
+                      {(() => {
+                        const nextDose = nextDoses[0];
+                        const nextDate = new Date(nextDose.nextDateTime);
+                        const today = new Date();
+                        const isToday = nextDate.toDateString() === today.toDateString();
+                        const isTomorrow = nextDate.toDateString() === new Date(today.getTime() + 86400000).toDateString();
+                        
+                        let dayText = '';
+                        if (isToday) dayText = 'Today';
+                        else if (isTomorrow) dayText = 'Tomorrow';
+                        else dayText = nextDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                        
+                        const timeText = nextDate.toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit',
+                          hour12: true 
+                        });
+                        
+                        return `${dayText} at ${timeText}`;
+                      })()}
+                    </Text>
+                    
+                    <View style={styles.doseDetails}>
+                      <Text style={[styles.doseAmount, isMobileWeb && styles.doseAmountMobile]}>
+                        {nextDoses[0].doseInfo.amountPerDose.toFixed(1)} {activeProtocol.weeklyTargetUnit} • {nextDoses[0].doseInfo.volumePerDose.toFixed(2)} mL
+                      </Text>
+                      <Text style={[styles.syringeInfo, isMobileWeb && styles.syringeInfoMobile]}>
+                        {Math.round(nextDoses[0].doseInfo.syringeUnits)} units on {nextDoses[0].doseInfo.syringeType} syringe
+                      </Text>
+                    </View>
+                  </View>
+
+                  {nextDoses.length > 1 && (
+                    <View style={styles.upcomingDose}>
+                      <Text style={[styles.upcomingLabel, isMobileWeb && styles.upcomingLabelMobile]}>
+                        Following dose: {(() => {
+                          const followingDose = nextDoses[1];
+                          const followingDate = new Date(followingDose.nextDateTime);
+                          return followingDate.toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          }) + ' at ' + followingDate.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            hour12: true 
+                          });
+                        })()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
                 {(() => {
@@ -448,6 +565,23 @@ export default function IntroScreen({
                     <Text style={styles.buttonText}>
                       {isLoadingLastDose ? 'Loading...' : 'Use Last'}
                     </Text>
+                  </TouchableOpacity>
+                )}
+
+                {activeProtocol && nextDoses.length > 0 && (
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.protocolButton,
+                      isMobileWeb && styles.buttonMobile,
+                    ]}
+                    onPress={handleUseProtocolPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use Protocol Dose"
+                    accessibilityHint="Prefill form with your scheduled protocol dose"
+                  >
+                    <Calendar color="#fff" size={20} />
+                    <Text style={styles.buttonText}>Use Protocol</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -734,6 +868,9 @@ const styles = StyleSheet.create({
   tertiaryButton: {
     backgroundColor: '#10b981',
   },
+  protocolButton: {
+    backgroundColor: '#059669',
+  },
   buttonDisabled: {
     opacity: 0.6,
   },
@@ -937,5 +1074,86 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     color: '#ef4444',
+  },
+  
+  // Protocol styles
+  protocolContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  protocolContainerMobile: {
+    marginVertical: 12,
+    padding: 14,
+    borderRadius: 10,
+  },
+  protocolHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  protocolTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  protocolTitleMobile: {
+    fontSize: 15,
+  },
+  nextDoseInfo: {
+    marginBottom: 8,
+  },
+  nextDoseLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  nextDoseLabelMobile: {
+    fontSize: 12,
+  },
+  nextDoseTime: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  nextDoseTimeMobile: {
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  doseDetails: {
+    gap: 4,
+  },
+  doseAmount: {
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  doseAmountMobile: {
+    fontSize: 14,
+  },
+  syringeInfo: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  syringeInfoMobile: {
+    fontSize: 12,
+  },
+  upcomingDose: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  upcomingLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  upcomingLabelMobile: {
+    fontSize: 12,
   },
 });
