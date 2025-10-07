@@ -97,13 +97,36 @@ rodneyg-safedose/
 ├── android/             # Android project files
 ├── ios/                 # iOS project files
 ├── docs/                # Documentation
-│   └── auth-config.md   # Authentication configuration info
+│   ├── auth-config.md   # Authentication configuration
+│   ├── MODEL_FINE_TUNING_GUIDE.md  # Complete fine-tuning guide
+│   └── FINE_TUNING_QUICK_START.md  # Quick start guide
+├── evals/               # Evaluation framework
+│   ├── test-sets/       # Evaluation test cases
+│   ├── exported-data/   # Captured user interaction data
+│   └── README.md        # Evaluation documentation
 ├── types/               # Global type definitions
+├── Evals.md             # Evaluation framework overview
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration
 ├── tsconfig.json        # TypeScript settings
 
 
+
+⸻
+
+📊 Model Improvement & Evaluation
+
+SafeDose automatically captures user interactions to continuously improve AI accuracy:
+
+- **Automatic Data Capture**: Every dose calculation and AI scan is saved locally
+- **Quality Scoring**: Automatic filtering ensures only high-quality examples for training
+- **Easy Export**: One-click export to training-ready format for model fine-tuning
+- **Privacy-First**: Images stored locally only, no personal data transmitted
+
+**Resources**:
+- **Quick Start**: [docs/FINE_TUNING_QUICK_START.md](docs/FINE_TUNING_QUICK_START.md) - 5-minute guide
+- **Complete Guide**: [docs/MODEL_FINE_TUNING_GUIDE.md](docs/MODEL_FINE_TUNING_GUIDE.md) - Full instructions
+- **Evaluation Framework**: [Evals.md](Evals.md) - Testing and benchmarking
 
 ⸻
 

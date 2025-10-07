@@ -1,0 +1,55 @@
+{
+  "name": "Error Handling",
+  "description": "Test appropriate error detection and messaging for unsafe scenarios",
+  "version": "1.0.0",
+  "evaluations": [
+    {
+      "id": "error-001",
+      "category": "error-handling",
+      "description": "Volume below safe threshold (< 0.005ml)",
+      "image": null,
+      "prompt": "Calculate dose: 0.01 mg medication, 100 mg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": 0.0001,
+        "calculationError": "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.",
+        "recommendedMarking": null
+      }
+    },
+    {
+      "id": "error-002", 
+      "category": "error-handling",
+      "description": "Volume above safe threshold (> 2ml)",
+      "image": null,
+      "prompt": "Calculate dose: 50 mg medication, 10 mg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": 5.0,
+        "calculationError": "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.",
+        "recommendedMarking": null
+      }
+    },
+    {
+      "id": "error-003",
+      "category": "error-handling",
+      "description": "Invalid dose value (zero)",
+      "image": null,
+      "prompt": "Calculate dose: 0 mg medication, 10 mg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": null,
+        "calculationError": "Dose value is invalid or missing.",
+        "recommendedMarking": null
+      }
+    },
+    {
+      "id": "error-004",
+      "category": "error-handling", 
+      "description": "Incompatible units",
+      "image": null,
+      "prompt": "Calculate dose: 10 units medication, 5 mg/ml concentration",
+      "expected_output": {
+        "calculatedVolume": null,
+        "calculationError": "Units 'units' and 'mg/ml' are not compatible for calculation.",
+        "recommendedMarking": null
+      }
+    }
+  ]
+}

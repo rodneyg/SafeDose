@@ -26,6 +26,7 @@ import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
@@ -43,6 +44,7 @@ export default function NewDoseScreen() {
   const feedbackStorage = useFeedbackStorage();
   const signUpPrompt = useSignUpPrompt();
   const { getDoseLogHistory } = useDoseLogging();
+  const evaluationDataCapture = useEvaluationDataCapture();
   
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
@@ -772,6 +774,32 @@ export default function NewDoseScreen() {
         
         // Track interaction for sign-up prompt
         signUpPrompt.trackInteraction();
+
+        // Capture evaluation data for scan result
+        if (evaluationDataCapture && !evaluationDataCapture.isCapturing) {
+          const prompt = `Analyze image for syringe and vial details. Identify syringe type, volume, markings and vial substance, concentration, total amount.`;
+          
+          evaluationDataCapture.captureUserInteraction({
+            image: result.capturedImage ? {
+              uri: result.capturedImage.uri,
+              mimeType: result.capturedImage.mimeType
+            } : undefined,
+            prompt,
+            userIntent: 'scan',
+            inputParameters: {
+              scanMode: 'ai_vision'
+            },
+            result: {
+              scanResult: {
+                syringe: result.syringe,
+                vial: result.vial
+              },
+              success: !!(result.syringe || result.vial)
+            }
+          }).catch(error => {
+            console.error('[NewDoseScreen] Error capturing scan evaluation data:', error);
+          });
+        }
         
         // If we have a captured image, show the preview modal first
         if (result.capturedImage?.uri) {
