@@ -29,38 +29,27 @@ export default function BirthDateCollection() {
   const validation = isComplete ? validateBirthDate(birthDate) : { isValid: false };
   const isValid = validation.isValid;
 
+  const handleYearChange = useCallback((year: string) => {
+    setSelectedYear(year);
+    setValidationError('');
+    
+    // Reset month and day when year changes
+    setSelectedMonth('');
+    setSelectedDay('');
+  }, []);
+
   const handleMonthChange = useCallback((month: string) => {
     setSelectedMonth(month);
     setValidationError('');
     
-    // Reset day if it's invalid for the new month
-    if (selectedDay && selectedYear && month) {
-      const daysInMonth = getDayOptions(month, selectedYear);
-      const dayExists = daysInMonth.some(day => day.value === selectedDay);
-      if (!dayExists) {
-        setSelectedDay('');
-      }
-    }
-  }, [selectedDay, selectedYear]);
+    // Reset day when month changes
+    setSelectedDay('');
+  }, []);
 
   const handleDayChange = useCallback((day: string) => {
     setSelectedDay(day);
     setValidationError('');
   }, []);
-
-  const handleYearChange = useCallback((year: string) => {
-    setSelectedYear(year);
-    setValidationError('');
-    
-    // Reset day if it's invalid for the new year (e.g., Feb 29 in non-leap year)
-    if (selectedDay && selectedMonth && year) {
-      const daysInMonth = getDayOptions(selectedMonth, year);
-      const dayExists = daysInMonth.some(day => day.value === selectedDay);
-      if (!dayExists) {
-        setSelectedDay('');
-      }
-    }
-  }, [selectedDay, selectedMonth]);
 
   const handleContinue = useCallback(() => {
     if (!isComplete) {
@@ -135,14 +124,13 @@ export default function BirthDateCollection() {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SHOWN);
   }, []);
 
-  // Progressive disclosure: only show day picker after month is selected
-  const showDayPicker = selectedMonth !== '';
-  // Only show year picker after both month and day are selected (optional UX choice)
-  const showYearPicker = true; // We'll show all three for better UX
+  // Progressive disclosure: show month picker after year is selected, day after month
+  const showMonthPicker = selectedYear !== '';
+  const showDayPicker = selectedMonth !== '' && selectedYear !== '';
 
+  const yearOptions = getYearOptions();
   const monthOptions = getMonthOptions();
   const dayOptions = getDayOptions(selectedMonth, selectedYear);
-  const yearOptions = getYearOptions();
 
   return (
     <View style={styles.container}>
@@ -161,7 +149,18 @@ export default function BirthDateCollection() {
 
         <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.inputSection}>
           <View style={[styles.datePickerContainer, isMobileWeb && styles.datePickerContainerMobile]}>
-            {/* Month Picker */}
+            {/* Year Picker - Select first */}
+            <View style={styles.pickerWrapper}>
+              <DatePickerSelect
+                label="Year"
+                value={selectedYear}
+                onValueChange={handleYearChange}
+                items={yearOptions}
+                placeholder="Select year"
+              />
+            </View>
+
+            {/* Month Picker - Progressive disclosure */}
             <View style={styles.pickerWrapper}>
               <DatePickerSelect
                 label="Month"
@@ -169,6 +168,7 @@ export default function BirthDateCollection() {
                 onValueChange={handleMonthChange}
                 items={monthOptions}
                 placeholder="Select month"
+                disabled={!showMonthPicker}
               />
             </View>
 
@@ -181,18 +181,6 @@ export default function BirthDateCollection() {
                 items={dayOptions}
                 placeholder="Select day"
                 disabled={!showDayPicker}
-              />
-            </View>
-
-            {/* Year Picker */}
-            <View style={styles.pickerWrapper}>
-              <DatePickerSelect
-                label="Year"
-                value={selectedYear}
-                onValueChange={handleYearChange}
-                items={yearOptions}
-                placeholder="Select year"
-                disabled={!showYearPicker}
               />
             </View>
           </View>

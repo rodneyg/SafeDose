@@ -8,7 +8,9 @@
  * @returns Age in years
  */
 export function calculateAge(birthDate: string): number {
-  const birth = new Date(birthDate);
+  // Parse date components to avoid timezone issues
+  const [year, month, day] = birthDate.split('-').map(Number);
+  const birth = new Date(year, month - 1, day);
   const today = new Date();
   
   let age = today.getFullYear() - birth.getFullYear();
@@ -29,7 +31,9 @@ export function calculateAge(birthDate: string): number {
  */
 export function validateBirthDate(birthDate: string): { isValid: boolean; error?: string } {
   try {
-    const date = new Date(birthDate);
+    // Parse date components to avoid timezone issues
+    const [year, month, day] = birthDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
@@ -126,7 +130,9 @@ export function getYearOptions() {
  */
 export function formatBirthDateForDisplay(birthDate: string): string {
   try {
-    const date = new Date(birthDate);
+    // Parse date components to avoid timezone issues
+    const [year, month, day] = birthDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
