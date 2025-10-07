@@ -11,20 +11,26 @@ interface ErrorBoundaryState {
 }
 
 // Define the fallback component BEFORE the error boundary class that uses it
-function OnboardingErrorFallback({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
+const OnboardingErrorFallback = React.memo(({ error, onRetry }: { error: Error | null; onRetry: () => void }) => {
   const router = useRouter();
   
-  console.error('[OnboardingErrorFallback] Rendering error fallback for:', error?.message);
+  React.useEffect(() => {
+    console.error('[OnboardingErrorFallback] Rendering error fallback for:', error?.message);
+  }, [error]);
 
-  const handleGoHome = () => {
+  const handleGoHome = React.useCallback(() => {
     console.log('[OnboardingErrorFallback] Navigating to home');
-    router.replace('/');
-  };
+    try {
+      router.replace('/');
+    } catch (err) {
+      console.error('[OnboardingErrorFallback] Failed to navigate home:', err);
+    }
+  }, [router]);
 
-  const handleRetry = () => {
+  const handleRetry = React.useCallback(() => {
     console.log('[OnboardingErrorFallback] Retrying onboarding');
     onRetry();
-  };
+  }, [onRetry]);
 
   return (
     <View style={styles.errorContainer}>
@@ -53,7 +59,7 @@ function OnboardingErrorFallback({ error, onRetry }: { error: Error | null; onRe
       </Text>
     </View>
   );
-}
+});
 
 class OnboardingErrorBoundary extends React.Component<
   { children: React.ReactNode },
