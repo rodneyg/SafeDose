@@ -10,33 +10,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class OnboardingErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  ErrorBoundaryState
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[OnboardingErrorBoundary] Error caught:', error);
-    console.error('[OnboardingErrorBoundary] Error info:', errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <OnboardingErrorFallback error={this.state.error} onRetry={() => this.setState({ hasError: false, error: null })} />;
-    }
-
-    return this.props.children;
-  }
-}
-
+// Define the fallback component BEFORE the error boundary class that uses it
 function OnboardingErrorFallback({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
   const router = useRouter();
   
@@ -79,6 +53,33 @@ function OnboardingErrorFallback({ error, onRetry }: { error: Error | null; onRe
       </Text>
     </View>
   );
+}
+
+class OnboardingErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[OnboardingErrorBoundary] Error caught:', error);
+    console.error('[OnboardingErrorBoundary] Error info:', errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <OnboardingErrorFallback error={this.state.error} onRetry={() => this.setState({ hasError: false, error: null })} />;
+    }
+
+    return this.props.children;
+  }
 }
 
 export default function OnboardingLayout() {
