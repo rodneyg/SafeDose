@@ -38,6 +38,19 @@ SafeDose now automatically captures user interactions to build evaluation datase
 - High-quality interactions (score >= 0.6) can be exported for model training
 - Privacy-focused: images stored locally, no personal data transmitted
 
+**For complete instructions on using captured data to fine-tune models**, see the **[Model Fine-Tuning Guide](../docs/MODEL_FINE_TUNING_GUIDE.md)**.
+
+#### Quick Export
+
+```bash
+# Export captured user interaction data
+node scripts/export-evaluation-data.js
+
+# Output files in evals/exported-data/:
+# - evaluation-data-{timestamp}.json (full format)
+# - training-data-{timestamp}.jsonl (OpenAI-ready format)
+```
+
 ### Manual Testing
 For now, evaluations can be tested manually against the SafeDose application:
 

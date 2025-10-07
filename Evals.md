@@ -227,6 +227,21 @@ const trainingData = evaluationData.map(item => ({
 console.log(`Exported ${trainingData.length} high-quality training examples`);
 ```
 
+#### Quick Start: Export and Use Data
+
+1. **Export Data**: Run the export script to gather captured interactions
+   ```bash
+   node scripts/export-evaluation-data.js
+   ```
+
+2. **Review Output**: Check `evals/exported-data/` for:
+   - `evaluation-data-{timestamp}.json` - Full evaluation format
+   - `training-data-{timestamp}.jsonl` - OpenAI-compatible training format
+
+3. **Fine-Tune Model**: Follow the comprehensive guide in [`docs/MODEL_FINE_TUNING_GUIDE.md`](docs/MODEL_FINE_TUNING_GUIDE.md)
+
+For detailed instructions on preparing data, using OpenAI's platform, best practices, and deployment, see the **[Complete Model Fine-Tuning Guide](docs/MODEL_FINE_TUNING_GUIDE.md)**.
+
 ### Privacy and Security
 
 - **Image data** is stored locally only (not sent to external servers)
