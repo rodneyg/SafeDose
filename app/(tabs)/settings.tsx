@@ -231,19 +231,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  subscriptionButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  subscriptionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   signOutButton: {
     backgroundColor: '#FF3B30',
     paddingVertical: 16,

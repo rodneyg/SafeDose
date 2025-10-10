@@ -109,9 +109,6 @@ const styles = StyleSheet.create({
   signInButton: {
     backgroundColor: '#007AFF',
   },
-  upgradeButton: {
-    backgroundColor: '#34C759',
-  },
   cancelButton: {
     backgroundColor: '#8E8E93',
   },

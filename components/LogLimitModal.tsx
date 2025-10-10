@@ -78,7 +78,7 @@ export default function LogLimitModal({
           </Text>
           <View style={styles.buttonContainer}>
             {isLogLimit && (
-              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleContinueWithoutSaving}>
+              <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={handleContinueWithoutSaving}>
                 <Text style={styles.buttonText}>Continue without saving</Text>
               </TouchableOpacity>
             )}
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  upgradeButton: {
+  primaryButton: {
     backgroundColor: '#34C759',
   },
   secondaryButton: {
