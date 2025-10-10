@@ -48,8 +48,8 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You've used your free scans for this session. Sign in to continue using SafeDose and save your dose history.'
-              : 'You've reached your scan limit for this period. SafeDose is committed to long-term safety and reliability. Your usage helps us improve the system for everyone.'}
+              ? "You've used your free scans for this session. Sign in to continue using SafeDose and save your dose history."
+              : "You've reached your scan limit for this period. SafeDose is committed to long-term safety and reliability. Your usage helps us improve the system for everyone."}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
