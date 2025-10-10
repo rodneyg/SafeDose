@@ -1,114 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
+import { LogOut, User, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
-interface SubscriptionStatus {
-  hasActiveSubscription: boolean;
-  subscriptionStatus: string;
-  plan: string;
-  customerId: string | null;
-  subscription?: {
-    id: string;
-    status: string;
-    currentPeriodEnd: number;
-    cancelAtPeriodEnd: boolean;
-    priceId: string;
-  } | null;
-}
-
 export default function SettingsScreen() {
   const { user, logout, isSigningOut, auth } = useAuth();
   const { usageData } = useUsageTracking();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
-  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
-  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
-
-  useEffect(() => {
-    if (user && !user.isAnonymous) {
-      fetchSubscriptionStatus();
-    }
-  }, [user]);
-
-  const fetchSubscriptionStatus = async () => {
-    if (!user || user.isAnonymous) return;
-    
-    setIsLoadingSubscription(true);
-    try {
-      const idToken = await user.getIdToken();
-      const response = await fetch('/api/get-subscription-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubscriptionStatus(data);
-        console.log('Subscription status loaded:', data);
-      } else {
-        console.error('Failed to fetch subscription status:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching subscription status:', error);
-    } finally {
-      setIsLoadingSubscription(false);
-    }
-  };
-
-  const handleManageSubscription = async () => {
-    if (!subscriptionStatus?.customerId) {
-      Alert.alert(
-        'No Subscription Found',
-        'You don\'t have an active subscription to manage. You can upgrade from the pricing page.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    setIsManagingSubscription(true);
-    logAnalyticsEvent(ANALYTICS_EVENTS.CANCEL_SUBSCRIPTION);
-
-    try {
-      const response = await fetch('/api/create-portal-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: subscriptionStatus.customerId,
-          returnUrl: typeof window !== 'undefined' ? window.location.href : 'https://safedose.app/settings',
-        }),
-      });
-
-      if (response.ok) {
-        const { url } = await response.json();
-        
-        // Handle opening portal based on platform
-        if (typeof window !== 'undefined') {
-          window.open(url, '_blank');
-        } else {
-          // For React Native, you could use Linking.openURL(url)
-          console.log('Portal URL:', url);
-          Alert.alert('Subscription Management', 'Portal URL generated. Check console for details.');
-        }
-      } else {
-        const errorData = await response.json();
-        Alert.alert('Error', errorData.error || 'Failed to open subscription management');
-      }
-    } catch (error) {
-      console.error('Error creating portal session:', error);
-      Alert.alert('Error', 'Failed to open subscription management. Please try again.');
-    } finally {
-      setIsManagingSubscription(false);
-    }
-  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -187,19 +88,7 @@ export default function SettingsScreen() {
       });
   }, [auth, user]);
 
-  const getPlanDisplayName = (plan: string) => {
-    switch (plan) {
-      case 'starter': return 'Starter';
-      case 'basic-pro': return 'Basic Pro';
-      case 'full-pro': return 'Full Pro';
-      case 'free': return 'Free';
-      default: return plan;
-    }
-  };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString();
-  };
 
   return (
     <ScrollView style={styles.container}>
@@ -224,9 +113,6 @@ export default function SettingsScreen() {
               </>
             )}
             
-            <Text style={styles.label}>Current Plan</Text>
-            <Text style={styles.value}>{getPlanDisplayName(usageData?.plan || 'free')}</Text>
-            
             <Text style={styles.label}>Usage This Month</Text>
             <Text style={styles.value}>
               {usageData?.scansUsed || 0} / {usageData?.limit === Infinity ? '∞' : (usageData?.limit || 3)} scans
@@ -234,73 +120,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Subscription Management */}
-        {!user?.isAnonymous && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <CreditCard size={20} color="#007AFF" />
-              <Text style={styles.sectionTitle}>Subscription</Text>
-            </View>
-            
-            {isLoadingSubscription ? (
-              <View style={styles.card}>
-                <ActivityIndicator size="small" color="#007AFF" />
-                <Text style={styles.loadingText}>Loading subscription...</Text>
-              </View>
-            ) : subscriptionStatus ? (
-              <View style={styles.card}>
-                <Text style={styles.label}>Status</Text>
-                <Text style={[styles.value, { 
-                  color: subscriptionStatus.hasActiveSubscription ? '#34C759' : '#FF3B30' 
-                }]}>
-                  {subscriptionStatus.hasActiveSubscription ? 'Active' : 'No Active Subscription'}
-                </Text>
-                
-                {subscriptionStatus.subscription && (
-                  <>
-                    <Text style={styles.label}>Next Billing Date</Text>
-                    <Text style={styles.value}>
-                      {formatDate(subscriptionStatus.subscription.currentPeriodEnd)}
-                    </Text>
-                    
-                    {subscriptionStatus.subscription.cancelAtPeriodEnd && (
-                      <View style={styles.warningContainer}>
-                        <AlertCircle size={16} color="#FF9500" />
-                        <Text style={styles.warningText}>
-                          Subscription will cancel at the end of the current period
-                        </Text>
-                      </View>
-                    )}
-                  </>
-                )}
-                
-                <TouchableOpacity 
-                  style={[styles.subscriptionButton, isManagingSubscription && styles.disabledButton]} 
-                  onPress={handleManageSubscription}
-                  disabled={isManagingSubscription}
-                >
-                  {isManagingSubscription ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.subscriptionButtonText}>
-                      {subscriptionStatus.hasActiveSubscription ? 'Manage Subscription' : 'View Billing'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.card}>
-                <Text style={styles.value}>No subscription information available</Text>
-                <TouchableOpacity 
-                  style={styles.subscriptionButton} 
-                  onPress={fetchSubscriptionStatus}
-                >
-                  <Text style={styles.subscriptionButtonText}>Refresh</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
+
 
         {/* Sign In/Out */}
         <View style={styles.section}>

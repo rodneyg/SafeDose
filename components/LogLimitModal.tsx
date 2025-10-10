@@ -30,13 +30,6 @@ export default function LogLimitModal({
     }
   }, [visible, triggerReason]);
 
-  const handleUpgrade = () => {
-    console.log('[LogLimitModal] Upgrade to Pro button pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade_pro', type: triggerReason });
-    router.push('/pricing');
-    onClose();
-  };
-
   const handleContinueWithoutSaving = () => {
     console.log('[LogLimitModal] Continue without saving pressed');
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'continue_without_saving', type: triggerReason });
@@ -63,9 +56,9 @@ export default function LogLimitModal({
 
   const getMessage = () => {
     if (isPowerUserPromotion) {
-      return "Great job on completing multiple doses! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
+      return "Great job on completing multiple doses! Your usage helps us improve SafeDose for everyone. Continue building safe, reliable dosing habits.";
     }
-    return "You've reached your monthly dose logging limit. Upgrade to Pro to save unlimited dose logs, access the AI vial scanner, and support ongoing development.";
+    return "You've reached your dose logging limit for this period. SafeDose is free and open source, focused on long-term safety. You can continue without saving this dose.";
   };
 
   return (
@@ -84,19 +77,14 @@ export default function LogLimitModal({
             {getMessage()}
           </Text>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-              <Text style={styles.buttonText}>Upgrade to Pro</Text>
-            </TouchableOpacity>
             {isLogLimit && (
-              <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleContinueWithoutSaving}>
-                <Text style={styles.secondaryButtonText}>Continue without saving</Text>
+              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleContinueWithoutSaving}>
+                <Text style={styles.buttonText}>Continue without saving</Text>
               </TouchableOpacity>
             )}
-            {isPowerUserPromotion && (
-              <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
-                <Text style={styles.secondaryButtonText}>Maybe later</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+              <Text style={styles.secondaryButtonText}>OK</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>

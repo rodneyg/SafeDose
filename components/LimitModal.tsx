@@ -28,13 +28,6 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
     onClose();
   };
 
-  const handleUpgrade = () => {
-    console.log('[LimitModal] Upgrade button pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade' });
-    router.push('/pricing');
-    onClose();
-  };
-
   const handleCancel = () => {
     console.log('[LimitModal] Cancel button pressed');
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'cancel' });
@@ -51,12 +44,12 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>
-            {isAnonymous ? 'Free Scan Limit Reached' : 'Plan Limit Reached'}
+            {isAnonymous ? 'Free Scan Limit Reached' : 'Scan Limit Reached'}
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You’ve used all 3 free scans. Sign in to get 10 scans per month or upgrade for more.'
-              : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
+              ? 'You've used your free scans for this session. Sign in to continue using SafeDose and save your dose history.'
+              : 'You've reached your scan limit for this period. SafeDose is committed to long-term safety and reliability. Your usage helps us improve the system for everyone.'}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
@@ -64,13 +57,8 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
                 <Text style={styles.buttonText}>Sign In</Text>
               </TouchableOpacity>
             )}
-            {!isPremium && (
-              <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-                <Text style={styles.buttonText}>Upgrade</Text>
-              </TouchableOpacity>
-            )}
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.buttonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
