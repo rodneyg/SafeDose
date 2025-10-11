@@ -234,7 +234,7 @@ export default function UserTypeSegmentation() {
     <Animated.View entering={FadeInRight.duration(500)} style={[styles.stepContainer, isMobileWeb && styles.stepContainerMobile]}>
       <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>What's your background?</Text>
       <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-        This helps us provide appropriate guidance for your experience level.
+        This helps us provide appropriate safety features for your experience level.
       </Text>
       
       <View style={[styles.optionsContainer, isMobileWeb && styles.optionsContainerMobile]}>
@@ -280,7 +280,7 @@ export default function UserTypeSegmentation() {
             Professional Athlete
           </Text>
           <Text style={[styles.optionSubtitle, isMobileWeb && styles.optionSubtitleMobile]}>
-            Professional athlete requiring specialized medication guidance
+            Professional athlete managing prescribed medications
           </Text>
         </TouchableOpacity>
 
@@ -581,7 +581,7 @@ export default function UserTypeSegmentation() {
         </View>
         
         <Text style={[styles.privacyText, isMobileWeb && styles.privacyTextMobile]}>
-          Your answers help us provide appropriate safety guidance and are stored securely.
+          Your answers help us provide appropriate safety features and are stored securely.
         </Text>
       </Animated.View>
     </View>

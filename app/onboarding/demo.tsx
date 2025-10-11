@@ -152,7 +152,7 @@ export default function Demo() {
               Limited Functionality Mode
             </Text>
             <Text style={[styles.warningText, isMobileWeb && styles.warningTextMobile]}>
-              Without birth date information, some safety features will be limited to ensure appropriate medical guidance.
+              Without birth date information, some age-appropriate safety features will be limited.
             </Text>
           </View>
         </Animated.View>
