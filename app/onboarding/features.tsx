@@ -8,23 +8,23 @@ import { isMobileWeb } from '../../lib/utils';
 const features = [
   {
     icon: Camera,
-    title: 'Smart Dose Recognition',
-    description: 'Our AI-powered camera helps you measure and verify medication doses with precision.',
+    title: 'Material Verification',
+    description: 'Use computer vision to scan your medication vial and syringe, then verify the information matches your prescription.',
   },
   {
     icon: History,
-    title: 'Medication Tracking',
-    description: 'Keep a detailed log of your medication schedule and history.',
+    title: 'Dose Logging',
+    description: 'Keep a detailed log of your medication administrations for your records.',
   },
   {
     icon: MessageCircle,
-    title: 'Expert Guidance',
-    description: 'Get real-time answers about your medication from our AI assistant.',
+    title: 'Calculation Support',
+    description: 'Perform unit conversions and dosage calculations based on information you verify.',
   },
   {
     icon: Book,
     title: 'Educational Resources',
-    description: 'Access comprehensive guides and information about your medication.',
+    description: 'Access reference information about common compounds and their typical dosage ranges.',
   },
 ];
 
@@ -72,7 +72,7 @@ export default function Features() {
       <Animated.View entering={FadeIn} style={styles.header}>
         <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>Key Features</Text>
         <Text style={[styles.headerSubtitle, isMobileWeb && styles.headerSubtitleMobile]}>
-          Discover what SafeDose can do for you
+          Tools to help you execute your prescription accurately
         </Text>
       </Animated.View>
 

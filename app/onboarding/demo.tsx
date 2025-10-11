@@ -80,9 +80,9 @@ export default function Demo() {
                 )}
               </View>
             </View>
-            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Smart Recognition</Text>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Scan & Verify</Text>
             <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-              Point your camera at your medication and syringe. Our AI will guide you through the process.
+              Scan your medication and syringe. The app uses computer vision to identify them, then you confirm the information matches your prescription.
             </Text>
           </Animated.View>
         );
@@ -97,11 +97,11 @@ export default function Demo() {
                 <Text style={styles.doseText}>0.5ml</Text>
               </View>
               <View style={styles.doseLine} />
-              <Text style={styles.doseLabel}>Recommended Dose</Text>
+              <Text style={styles.doseLabel}>Calculated Volume</Text>
             </View>
-            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Real-time Guidance</Text>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Calculate & Confirm</Text>
             <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-              Get precise measurements and instant verification of your medication dose.
+              The app calculates the volume to draw based on your verified information. You confirm it matches your prescription.
             </Text>
           </Animated.View>
         );
@@ -121,7 +121,7 @@ export default function Demo() {
               </View>
               <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Ready to Start</Text>
               <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-                Let's prepare your first dose together with real-time guidance.
+                You're ready to verify materials and calculate doses based on your prescription.
               </Text>
             </View>
           </Animated.View>

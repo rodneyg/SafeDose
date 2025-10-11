@@ -494,7 +494,7 @@ export default function IntroScreen({
                   <Info color="#856404" size={14} style={styles.disclaimerIcon} />
                   <Text style={styles.disclaimerText}>
                     {disclaimerText ||
-                      'Always consult a licensed healthcare professional before administering any medication.'}
+                      'SafeDose helps you administer medications prescribed by your healthcare provider. We do NOT provide medical advice or recommend dosages. Always follow your provider\'s prescription exactly.'}
                   </Text>
                 </View>
               </View>

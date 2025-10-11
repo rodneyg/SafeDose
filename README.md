@@ -1,9 +1,9 @@
 # SafeDose
 
-**A visual, AI-assisted dose calculator for injectable medications.**  
-Created by **SafeLab**, SafeDose transforms confusing math and manual conversions into clear, visual dosing guidance.
+**A verification and calculation tool for administering injectable medications prescribed by your healthcare provider.**  
+Created by **SafeLab**, SafeDose helps you verify medication materials, perform unit conversion calculations, and reduce math errors when executing your provider's prescription.
 
-Whether you're working with mg/ml, reconstituted peptides, or insulin units, SafeDose helps you calculate and visualize your exact syringe draw.
+Whether you're working with mg/ml, reconstituted peptides, or insulin units, SafeDose helps you verify your materials match your prescription and calculate the volume to draw.
 
 ---
 
@@ -11,34 +11,34 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 
 SafeDose today works in two steps:
 
-1. **Specify Dose**: The user first specifies their prescribed dose (e.g., "2.5 mg Semaglutide")
-2. **Photo & Guidance**: They then take a photo of their supplies. The app identifies the syringe and vial from that capture and guides them step by step to prepare the correct dose
+1. **Specify Dose**: The user enters their prescribed dose (e.g., "2.5 mg Semaglutide")
+2. **Scan & Verify**: They scan their supplies. The app uses computer vision to identify the syringe and vial, which the user confirms. It then calculates the volume to draw based on the verified information.
 
-This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided flow because continuous recognition isn't reliable enough yet for dosing safety.
+This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided verification flow with user confirmation at each step.
 
 **The longer-term vision is a glasses-native workflow:**
 
-1. **Specify Dose**: The user enters their drug + dose (e.g., "2.5 mg Semaglutide")
+1. **Specify Dose**: The user enters their prescribed drug and dose (e.g., "2.5 mg Semaglutide")
 
-2. **Automatic Identification**: SafeDose labels the syringe type and confirms the vial in the user's field of view
+2. **Automatic Recognition & User Verification**: SafeDose recognizes the syringe type and vial in the user's field of view, which the user confirms
 
-3. **Guided Drawing**: As the plunger moves, overlays show where to stop, confirm when correct, and flag any overdraw
+3. **Guided Drawing with Verification**: As the plunger moves, overlays show where to stop based on the user's prescription. The user confirms when correct.
 
-4. **Confirmation**: The correct dose is confirmed in real time, with optional logging for tracking
+4. **Confirmation & Logging**: The user confirms the dose matches their prescription, with optional logging for tracking
 
-The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time system** that recognizes tools directly in front of the user and provides immediate, unambiguous guidance.
+The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time verification system** that helps users confirm their materials and execute their provider's prescription accurately.
 
 ---
 
 ## ⚠️ Disclaimer
 
-> **This tool is a research preview and educational utility.**
+> **SafeDose is a verification and calculation tool, NOT a medical device.**
 >
-> SafeDose is not a medical device and is not intended to diagnose, treat, or prescribe. It should not be used as a substitute for professional medical judgment. All results must be independently verified by a licensed medical professional.
+> SafeDose helps you administer medications prescribed by your healthcare provider. We do NOT provide medical advice, diagnose conditions, or recommend dosages. This tool performs unit conversion calculations on information YOU verify and should not be used as a substitute for professional medical judgment.
+>
+> Always follow your healthcare provider's prescription exactly. Confirm all calculations and materials match your prescription before proceeding. All results must be independently verified.
 >
 > Use at your own risk. SafeLab and contributors assume no responsibility for misuse.
->
-> Always consult a healthcare professional before administering any medication.
 
 ---
 

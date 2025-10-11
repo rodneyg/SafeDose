@@ -236,24 +236,24 @@ export default function FinalResultDisplay({
       {!calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
           <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
-            Dose Calculation
+            Calculation Result
           </Text>
           <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
             {doseValue ? `For ${doseValue} ${unit} dose` : 'For the requested dose'} 
             {substanceName ? ` of ${substanceName}` : ''}:
           </Text>
           <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
-            No specific recommendation available
+            Unable to calculate volume
           </Text>
           <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
-            Please check your inputs and try again, or consult a healthcare professional.
+            Please check your inputs and try again. Confirm all values match your prescription.
           </Text>
         </View>
       )}
       {recommendedMarking && (
         <View style={[styles.instructionCard, calculationError && !calculationError.includes('Draw to') ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError && !calculationError.includes('Draw to') ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
+            {calculationError && !calculationError.includes('Draw to') ? '⚠️ Calculation Result' : '✅ Calculation Result'}
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
@@ -280,13 +280,19 @@ export default function FinalResultDisplay({
             </Text>
           )}
           <View style={styles.illustrationContainer}>
-            <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
+            <Text style={styles.instructionNote}>Syringe Illustration (calculated mark highlighted)</Text>
             <SyringeIllustration
               syringeType={manualSyringe.type}
               syringeVolume={manualSyringe.volume}
               recommendedMarking={recommendedMarking}
               syringeOptions={syringeOptions}
             />
+          </View>
+          <View style={styles.verificationReminder}>
+            <Info color="#065F46" size={14} />
+            <Text style={styles.verificationReminderText}>
+              Confirm this matches your healthcare provider's prescription before proceeding.
+            </Text>
           </View>
         </View>
       )}
@@ -534,6 +540,21 @@ const styles = StyleSheet.create({
   scanTeaserButtonText: {
     fontSize: 12,
     color: '#007AFF',
+    fontWeight: '500',
+  },
+  verificationReminder: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(6, 95, 70, 0.2)',
+    gap: 8,
+  },
+  verificationReminderText: {
+    fontSize: 13,
+    color: '#065F46',
+    flex: 1,
     fontWeight: '500',
   },
 });

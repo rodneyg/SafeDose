@@ -38,9 +38,9 @@ export default function PreDoseConfirmationStep({
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Pre-Dose Safety Review</Text>
+        <Text style={styles.title}>Verify Your Information</Text>
         <Text style={styles.subtitle}>
-          Please review the following dose calculation before proceeding
+          Confirm the information below matches your prescription before proceeding
         </Text>
       </View>
 
@@ -117,11 +117,10 @@ export default function PreDoseConfirmationStep({
       <View style={styles.safetyContainer}>
         <View style={styles.safetyHeader}>
           <Info color="#6B7280" size={16} />
-          <Text style={styles.safetyTitle}>Safety Reminder</Text>
+          <Text style={styles.safetyTitle}>Important Reminder</Text>
         </View>
         <Text style={styles.safetyText}>
-          Always double-check calculations with a healthcare professional before administration. 
-          Verify the patient, medication, dose, route, and timing.
+          This calculation is based on information YOU verified. Confirm this matches your healthcare provider's prescription exactly before proceeding. SafeDose does not provide medical advice or recommend dosages.
         </Text>
       </View>
     </View>
