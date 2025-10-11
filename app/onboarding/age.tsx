@@ -143,7 +143,7 @@ export default function BirthDateCollection() {
             Welcome to SafeDose
           </Text>
           <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
-            To provide you with the most appropriate guidance, could you please share your birth date?
+            To provide you with age-appropriate safety features, could you please share your birth date?
           </Text>
         </Animated.View>
 
@@ -212,7 +212,7 @@ export default function BirthDateCollection() {
           )}
           
           <Text style={[styles.privacyNote, isMobileWeb && styles.privacyNoteMobile]}>
-            This information helps us provide age-appropriate guidance and safety features.
+            This information helps us provide age-appropriate safety features and warnings.
           </Text>
         </Animated.View>
 
@@ -312,19 +312,19 @@ export default function BirthDateCollection() {
                 <View style={styles.reasonItem}>
                   <Text style={styles.bulletPoint}>•</Text>
                   <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                    <Text style={styles.boldText}>Age-appropriate guidance:</Text> Different age groups require different safety considerations for medications
+                    <Text style={styles.boldText}>Age-appropriate safety features:</Text> Different age groups require different safety considerations for medications
                   </Text>
                 </View>
                 <View style={styles.reasonItem}>
                   <Text style={styles.bulletPoint}>•</Text>
                   <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                    <Text style={styles.boldText}>Safety features:</Text> Minors receive additional safety resources and guidance
+                    <Text style={styles.boldText}>Enhanced protections:</Text> Minors receive additional safety resources and warnings
                   </Text>
                 </View>
                 <View style={styles.reasonItem}>
                   <Text style={styles.bulletPoint}>•</Text>
                   <Text style={[styles.reasonText, isMobileWeb && styles.reasonTextMobile]}>
-                    <Text style={styles.boldText}>Medical accuracy:</Text> Dosing recommendations can vary by age group
+                    <Text style={styles.boldText}>Age-specific context:</Text> Safety warnings and calculation examples can vary by age group
                   </Text>
                 </View>
                 
@@ -334,13 +334,13 @@ export default function BirthDateCollection() {
                 <View style={styles.reasonItem}>
                   <Text style={styles.limitationPoint}>⚠</Text>
                   <Text style={[styles.limitationText, isMobileWeb && styles.limitationTextMobile]}>
-                    Limited safety warnings and age-specific guidance
+                    Limited safety warnings and age-specific features
                   </Text>
                 </View>
                 <View style={styles.reasonItem}>
                   <Text style={styles.limitationPoint}>⚠</Text>
                   <Text style={[styles.limitationText, isMobileWeb && styles.limitationTextMobile]}>
-                    Generic dosing information instead of age-appropriate recommendations
+                    Generic calculation examples instead of age-appropriate context
                   </Text>
                 </View>
                 <View style={styles.reasonItem}>
@@ -352,7 +352,7 @@ export default function BirthDateCollection() {
               </View>
 
               <Text style={[styles.modalDisclaimer, isMobileWeb && styles.modalDisclaimerMobile]}>
-                Your privacy is important to us. This information is only used to provide you with safer, more appropriate guidance.
+                Your privacy is important to us. This information is only used to provide you with age-appropriate safety features.
               </Text>
 
               <View style={styles.modalButtons}>

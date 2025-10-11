@@ -267,7 +267,7 @@ export default function ReferenceScreen() {
       {/* Fixed Disclaimer */}
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerText}>
-          ⚠️ This information is for educational purposes only. SafeDose does not provide medical advice. Many of these interventions require professional medical supervision. Always consult a healthcare professional before using any compound or therapy.
+          ⚠️ This information is for educational purposes only. SafeDose is NOT a medical device and does NOT provide medical advice, diagnose conditions, or recommend dosages. These dosage ranges are typical examples only - always follow your healthcare provider's prescription exactly. Many of these interventions require professional medical supervision.
         </Text>
       </View>
 

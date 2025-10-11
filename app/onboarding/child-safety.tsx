@@ -40,7 +40,7 @@ Important Resources for Young People:
 • Call your local poison control center if you have medication questions
 • In emergencies, always call 911
 
-Remember: Medication safety is serious, and it's always best to have adult guidance.
+Remember: Medication safety is serious, and it's always best to have adult supervision.
     `.trim();
 
     if (isMobileWeb) {
@@ -78,7 +78,7 @@ Remember: Medication safety is serious, and it's always best to have adult guida
               <Heart size={isMobileWeb ? 20 : 24} color="#FF6B6B" />
             </View>
             <Text style={[styles.messageTitle, isMobileWeb && styles.messageTitleMobile]}>
-              Important Guidance
+              Important Information
             </Text>
             <Text style={[styles.messageText, isMobileWeb && styles.messageTextMobile]}>
               Medication safety is very important, especially for young people. We strongly recommend talking with:
@@ -106,7 +106,7 @@ Remember: Medication safety is serious, and it's always best to have adult guida
             </View>
 
             <Text style={[styles.disclaimerText, isMobileWeb && styles.disclaimerTextMobile]}>
-              This app provides educational information, but it's not a substitute for professional medical advice.
+              This app is a calculation tool, NOT a medical device. It does not provide medical advice. Always follow your healthcare provider's prescription exactly.
             </Text>
           </View>
         </Animated.View>

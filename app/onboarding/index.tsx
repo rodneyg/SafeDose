@@ -38,9 +38,9 @@ export default function Welcome() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.mainContent}>
-          <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Medication{'\n'}Made Simple</Text>
+          <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Verify Materials{'\n'}Calculate Doses</Text>
           <Text style={[styles.description, isMobileWeb && styles.descriptionMobile]}>
-            Let's try it together with a quick demo
+            Reduce math errors when administering your prescription
           </Text>
         </Animated.View>
 
