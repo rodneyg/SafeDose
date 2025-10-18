@@ -153,3 +153,170 @@ export const setPersonalizationUserProperties = (profile: any) => {
     [USER_PROPERTIES.USER_SEGMENT]: userSegment,
   });
 };
+
+// User segment definitions for grouping
+export const USER_SEGMENTS = {
+  HEALTHCARE_PROFESSIONAL: 'healthcare_professional',
+  COSMETIC_USER: 'cosmetic_user',
+  PERSONAL_MEDICAL_USER: 'personal_medical_user',
+  GENERAL_USER: 'general_user',
+} as const;
+
+// Group analyzer export functionality
+export interface AnalyticsEventData {
+  eventName: string;
+  parameters?: Record<string, any>;
+  timestamp: Date;
+  userSegment?: string;
+  userId?: string;
+}
+
+export interface GroupedAnalyticsData {
+  [segment: string]: {
+    events: AnalyticsEventData[];
+    eventCounts: Record<string, number>;
+    userCount: number;
+    properties: Record<string, any>;
+  };
+}
+
+// Storage for analytics data (in a real app, this would be persisted)
+let analyticsEventStore: AnalyticsEventData[] = [];
+
+// Enhanced logging function that stores events for export
+export const logAnalyticsEventWithStorage = (
+  eventName: string, 
+  parameters?: Record<string, any>,
+  userSegment?: string,
+  userId?: string
+) => {
+  // Store event for export functionality
+  const eventData: AnalyticsEventData = {
+    eventName,
+    parameters,
+    timestamp: new Date(),
+    userSegment,
+    userId,
+  };
+  analyticsEventStore.push(eventData);
+
+  // Call the original analytics logging
+  logAnalyticsEvent(eventName, parameters);
+};
+
+// Export analytics data grouped by user segments
+export const exportGroupedAnalytics = (
+  dateFrom?: Date,
+  dateTo?: Date
+): GroupedAnalyticsData => {
+  const filteredEvents = analyticsEventStore.filter(event => {
+    if (dateFrom && event.timestamp < dateFrom) return false;
+    if (dateTo && event.timestamp > dateTo) return false;
+    return true;
+  });
+
+  const groupedData: GroupedAnalyticsData = {};
+
+  // Initialize groups for all segments
+  Object.values(USER_SEGMENTS).forEach(segment => {
+    groupedData[segment] = {
+      events: [],
+      eventCounts: {},
+      userCount: 0,
+      properties: {},
+    };
+  });
+
+  // Group events by user segment
+  const usersBySegment: Record<string, Set<string>> = {};
+  
+  filteredEvents.forEach(event => {
+    const segment = event.userSegment || USER_SEGMENTS.GENERAL_USER;
+    
+    if (!groupedData[segment]) {
+      groupedData[segment] = {
+        events: [],
+        eventCounts: {},
+        userCount: 0,
+        properties: {},
+      };
+    }
+
+    groupedData[segment].events.push(event);
+    groupedData[segment].eventCounts[event.eventName] = 
+      (groupedData[segment].eventCounts[event.eventName] || 0) + 1;
+
+    // Track unique users per segment
+    if (event.userId) {
+      if (!usersBySegment[segment]) {
+        usersBySegment[segment] = new Set();
+      }
+      usersBySegment[segment].add(event.userId);
+    }
+  });
+
+  // Set user counts
+  Object.keys(usersBySegment).forEach(segment => {
+    groupedData[segment].userCount = usersBySegment[segment].size;
+  });
+
+  return groupedData;
+};
+
+// Export analytics data as CSV format
+export const exportAnalyticsAsCSV = (
+  groupedData?: GroupedAnalyticsData,
+  dateFrom?: Date,
+  dateTo?: Date
+): string => {
+  const data = groupedData || exportGroupedAnalytics(dateFrom, dateTo);
+  
+  const csvRows: string[] = [];
+  csvRows.push('User Segment,Event Name,Event Count,Total Events,Unique Users');
+
+  Object.entries(data).forEach(([segment, segmentData]) => {
+    const totalEvents = segmentData.events.length;
+    const uniqueUsers = segmentData.userCount;
+
+    Object.entries(segmentData.eventCounts).forEach(([eventName, count]) => {
+      csvRows.push(`${segment},${eventName},${count},${totalEvents},${uniqueUsers}`);
+    });
+  });
+
+  return csvRows.join('\n');
+};
+
+// Export analytics summary by segment
+export const exportAnalyticsSummary = (
+  dateFrom?: Date,
+  dateTo?: Date
+): Record<string, any> => {
+  const groupedData = exportGroupedAnalytics(dateFrom, dateTo);
+  
+  const summary: Record<string, any> = {
+    dateRange: {
+      from: dateFrom?.toISOString() || 'beginning',
+      to: dateTo?.toISOString() || 'now',
+    },
+    totalSegments: Object.keys(groupedData).length,
+    segmentSummary: {},
+  };
+
+  Object.entries(groupedData).forEach(([segment, data]) => {
+    summary.segmentSummary[segment] = {
+      totalEvents: data.events.length,
+      uniqueUsers: data.userCount,
+      topEvents: Object.entries(data.eventCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([eventName, count]) => ({ eventName, count })),
+    };
+  });
+
+  return summary;
+};
+
+// Clear stored analytics data (for testing or maintenance)
+export const clearAnalyticsStore = (): void => {
+  analyticsEventStore = [];
+};
