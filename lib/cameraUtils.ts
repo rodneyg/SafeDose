@@ -64,7 +64,7 @@ export async function captureAndProcessImage({
   console.log('[Capture] Setting isProcessing to true');
   setIsProcessing(true);
   setScanError(null);
-  setProcessingMessage('Waiting for photo selection...');
+  setProcessingMessage('Preparing your scan...');
 
   try {
     let base64Image: string | undefined;
@@ -75,7 +75,7 @@ export async function captureAndProcessImage({
       // First check if we have an active web camera stream
       if (webCameraStream && webCameraStream.active) {
         console.log('[Capture] Using active web camera stream');
-        setProcessingMessage('Taking photo...');
+        setProcessingMessage('Capturing photo...');
         
         try {
           const { base64Image: capturedImage, mimeType: capturedMimeType } = await captureImageFromStream(webCameraStream);
@@ -170,7 +170,7 @@ export async function captureAndProcessImage({
         });
 
         const { file } = await filePromise;
-        setProcessingMessage('Reading image data...');
+        setProcessingMessage('Processing image...');
 
         const reader = new FileReader();
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
@@ -222,7 +222,7 @@ export async function captureAndProcessImage({
       base64Image = photo.base64;
       if (!base64Image && photo.uri) {
         console.log('[Capture] Base64 missing, reading from URI:', photo.uri);
-        setProcessingMessage('Reading image data...');
+        setProcessingMessage('Processing image...');
         base64Image = await FileSystem.readAsStringAsync(photo.uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
@@ -263,7 +263,7 @@ export async function captureAndProcessImage({
       }
     }
 
-    setProcessingMessage('Analyzing image with AI...');
+    setProcessingMessage('AI is analyzing your scan...');
     console.log('[Process] Starting image processing');
 
     const imageUrl = `data:${mimeType};base64,${base64Image}`;
