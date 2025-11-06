@@ -35,16 +35,6 @@ module.exports = {
   extra: {
     NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    // Legacy Stripe keys for backward compatibility
-    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
-    // New Stripe configuration with feature flag support
-    STRIPE_MODE: process.env.STRIPE_MODE || 'test',
-    STRIPE_TEST_PUBLISHABLE_KEY: process.env.STRIPE_TEST_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY,
-    STRIPE_TEST_SECRET_KEY: process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY,
-    STRIPE_LIVE_PUBLISHABLE_KEY: process.env.STRIPE_LIVE_PUBLISHABLE_KEY,
-    STRIPE_LIVE_SECRET_KEY: process.env.STRIPE_LIVE_SECRET_KEY,
-    STRIPE_TEST_PRICE_ID: process.env.STRIPE_TEST_PRICE_ID || 'price_1REyzMPE5x6FmwJPyJVJIEXe',
-    STRIPE_LIVE_PRICE_ID: process.env.STRIPE_LIVE_PRICE_ID,
     TEST_LOGIN: process.env.REACT_APP_TEST_LOGIN === 'true', // Environment flag for auto-login testing
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",

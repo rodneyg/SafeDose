@@ -9,14 +9,11 @@ import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
-// Helper function to determine scan limits based on user plan and authentication status
-// Business logic: Anonymous users get minimal scans to encourage sign-up,
-// while authenticated users get progressively more scans based on their subscription tier
-const getLimitForPlan = (plan: string, isAnonymous: boolean) => {
-  if (isAnonymous) return 3; // Anonymous users
-  if (plan === 'plus') return 50; // Plus plan
-  if (plan === 'pro') return 500; // Pro plan
-  return 10; // Signed-in free users
+// Helper function to determine scan limits based on authentication status
+// SafeDose is free and open source - limits exist only to prevent abuse
+const getLimitForUser = (isAnonymous: boolean) => {
+  if (isAnonymous) return 3; // Anonymous users - minimal to encourage account creation
+  return Infinity; // Signed-in users have unlimited scans
 };
 
 export function useUsageTracking() {
@@ -95,7 +92,7 @@ export function useUsageTracking() {
           if (!userDoc.exists()) {
             // Create new user document if it doesn't exist
             const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-            data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
+            data = { scansUsed: 0, lastReset: currentMonthStart };
             await setDocWithEnv(userDocRef, data);
             console.log('Created new user document:', data);
           } else {
@@ -122,14 +119,13 @@ export function useUsageTracking() {
               }
             }
           }
-          const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
-          const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
+          const limit = getLimitForUser(user.isAnonymous);
+          const newUsageData = { scansUsed: data.scansUsed || 0, plan: 'free', limit, lastReset: data.lastReset };
           setUsageData(newUsageData);
           await saveCachedUsage(newUsageData);
           
-          // Set user properties for analytics when plan data is available
+          // Set user properties for analytics
           setAnalyticsUserProperties({
-            [USER_PROPERTIES.PLAN_TYPE]: data.plan || 'free',
             [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
           });
           
@@ -176,7 +172,7 @@ export function useUsageTracking() {
         if (!userDoc.exists()) {
           // Create new user document if it doesn't exist
           const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-          data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
+          data = { scansUsed: 0, lastReset: currentMonthStart };
           await setDocWithEnv(userDocRef, data);
           console.log('Created new user document:', data);
         } else {
@@ -192,7 +188,6 @@ export function useUsageTracking() {
           } else {
             // Monthly reset logic
             // Automatically reset usage counters at the beginning of each calendar month
-            // This ensures users get their full monthly allowance regardless of when they signed up
             const now = new Date();
             const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastReset = new Date(data.lastReset).toISOString();
@@ -205,8 +200,8 @@ export function useUsageTracking() {
             }
           }
         }
-        const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
-        const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
+        const limit = getLimitForUser(user.isAnonymous);
+        const newUsageData = { scansUsed: data.scansUsed || 0, plan: 'free', limit, lastReset: data.lastReset };
         setUsageData(newUsageData);
         await saveCachedUsage(newUsageData);
         return newUsageData.scansUsed < newUsageData.limit;
@@ -241,8 +236,8 @@ export function useUsageTracking() {
         if (!userDoc.exists()) {
           console.log('[useUsageTracking] User document does not exist, creating new one');
           const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-          await setDocWithEnv(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
-          console.log('[useUsageTracking] Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
+          await setDocWithEnv(userDocRef, { scansUsed: 0, lastReset: currentMonthStart });
+          console.log('[useUsageTracking] Created new user document for increment:', { scansUsed: 0, lastReset: currentMonthStart });
         }
         
         console.log('[useUsageTracking] Updating Firestore document with increment');

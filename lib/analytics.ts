@@ -9,12 +9,6 @@ export const ANALYTICS_EVENTS = {
   SIGN_IN_FAILURE: 'sign_in_failure',
   SIGN_UP_SUCCESS: 'sign_up_success',
   LOGOUT: 'logout',
-  VIEW_PRICING_PAGE: 'view_pricing_page',
-  INITIATE_UPGRADE: 'initiate_upgrade',
-  UPGRADE_SUCCESS: 'upgrade_success',
-  UPGRADE_FAILURE: 'upgrade_failure',
-  CANCEL_SUBSCRIPTION: 'cancel_subscription',
-  DOWNGRADE_PLAN: 'downgrade_plan',
   SCAN_ATTEMPT: 'scan_attempt',
   SCAN_SUCCESS: 'scan_success',
   SCAN_FAILURE: 'scan_failure',
@@ -76,7 +70,6 @@ export const ANALYTICS_EVENTS = {
 
 // User property names
 export const USER_PROPERTIES = {
-  PLAN_TYPE: 'plan_type',
   IS_ANONYMOUS: 'is_anonymous',
   IS_LICENSED_PROFESSIONAL: 'is_licensed_professional',
   IS_PROFESSIONAL_ATHLETE: 'is_professional_athlete',

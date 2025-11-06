@@ -1,26 +1,12 @@
 # Power User Promotion Fix - Testing Instructions
 
-## Issue Fixed
-The power user promotion modal was appearing after just 1 dose instead of the intended 4+ doses.
+## Status: Deprecated
 
-## Root Causes Identified & Fixed
+**Note**: This document is now deprecated as SafeDose has transitioned to a fully free and open-source model. Power user promotions have been disabled as there are no subscription tiers to promote.
 
-### 1. Misleading Modal Messages
-**Problem**: Log limit modal said "You've become a SafeDose power user!" even when triggered by storage limits
-**Fix**: Distinct messages for each scenario:
-- **Log Limit**: "Dose History Storage Limit Reached" 
-- **Power User**: "You've Become a SafeDose Power User!" (only when legitimately triggered)
+## Historical Context (for reference only)
 
-### 2. Missing Safety Checks
-**Problem**: No hardcoded safety net to prevent premature display
-**Fix**: Added multiple safety layers:
-- Hard-coded check preventing promotion if dose count < 4
-- Storage key update (`powerUserPromotion_v2`) to force fresh start
-- Suspicious data detection and warnings
-
-### 3. Race Conditions & Timing Issues
-**Problem**: Async state updates could cause incorrect evaluations  
-**Fix**: Added timing safeguards and comprehensive debugging
+The power user promotion modal was appearing after just 1 dose instead of the intended 4+ doses. This has been resolved by disabling promotions entirely as part of SafeDose's commitment to being free and focused on long-term safety.
 
 ## Testing Validation
 
@@ -53,11 +39,9 @@ All 9 test cases pass, including:
 - `lib/hooks/useDoseCalculator.ts` - Enhanced modal trigger logic
 - `lib/hooks/useLogUsageTracking.ts` - Added data validation
 
-## Expected Behavior After Fix
-- **New users**: Never see promotion modal on first use
-- **Active users**: Promotion only after legitimate 4+ doses
-- **Storage issues**: Clear messaging about limits, not "power user" confusion
-- **Subscribers**: No promotion modals (already have premium features)
+## Current Behavior
+- **All users**: Power user promotions are disabled
+- **Free and open source**: SafeDose is focused on long-term safety, not monetization
 
 ## Debug Information
 Enhanced logging will show exactly which modal is triggered and why:

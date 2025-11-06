@@ -179,9 +179,7 @@ export default function IntroScreen({
       });
   }, [auth, user]);
 
-  const handleUpgradePress = useCallback(() => {
-    router.push('/pricing');
-  }, [router]);
+
 
   const handleLogoutPress = useCallback(async () => {
     if (isLoggingOut) return;
@@ -288,9 +286,13 @@ export default function IntroScreen({
     // Check if user has remaining scans
     const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
     
-    if (scansRemaining <= 0) {
-      // If no scans remaining, redirect to pricing page
-      router.push('/pricing');
+    if (scansRemaining <= 0 && user?.isAnonymous) {
+      // If anonymous user is out of scans, encourage sign in
+      Alert.alert(
+        'Sign In to Continue',
+        'You\'ve used your free scans. Sign in to continue using SafeDose.',
+        [{ text: 'OK' }]
+      );
       return;
     }
     
@@ -412,7 +414,7 @@ export default function IntroScreen({
                     >
                       <CameraIcon color="#fff" size={20} />
                       <Text style={styles.buttonText}>
-                        {isOutOfScans ? 'Upgrade' : 'Scan'}
+                        Scan
                       </Text>
                     </TouchableOpacity>
                   );
@@ -480,12 +482,7 @@ export default function IntroScreen({
                       return "You've used all your scans";
                     }
                     return `You have ${scansRemaining} scans remaining.`;
-                  })()}{' '}
-                  {(!usageData || usageData.plan === 'free') && (
-                    <Text style={styles.upgradeLink} onPress={handleUpgradePress}>
-                      Upgrade
-                    </Text>
-                  )}
+                  })()}
                 </Text>
               </View>
 
@@ -726,7 +723,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   outOfScansButton: {
-    backgroundColor: '#f59e0b', // Orange color to indicate upgrade needed
+    backgroundColor: '#8E8E93', // Gray color to indicate disabled
   },
   secondaryButton: {
     backgroundColor: '#6366f1',
@@ -768,12 +765,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-  },
-  upgradeLink: {
-    fontSize: 14,
-    color: '#007AFF',
-    textDecorationLine: 'underline',
-    fontWeight: '500',
   },
 
   /* Reconstitution Link */
