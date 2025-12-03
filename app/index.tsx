@@ -2,11 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import AnimatedSplashScreen from '../components/AnimatedSplashScreen';
 
 export default function InitialScreen() {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     async function checkAppState() {
@@ -64,21 +65,16 @@ export default function InitialScreen() {
     checkAppState();
   }, [router]);
 
-  if (isChecking) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+  const handleSplashComplete = () => {
+    // Only hide splash if app state checking is complete
+    if (!isChecking) {
+      setShowSplash(false);
+    }
+  };
+
+  if (isChecking || showSplash) {
+    return <AnimatedSplashScreen onAnimationComplete={handleSplashComplete} />;
   }
 
   return null;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});

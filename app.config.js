@@ -9,6 +9,11 @@ module.exports = {
   icon: './assets/images/icon.png',
   scheme: 'myapp',
   userInterfaceStyle: 'automatic',
+  splash: {
+    image: './assets/images/icon.png',
+    resizeMode: 'contain',
+    backgroundColor: '#000000',
+  },
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
