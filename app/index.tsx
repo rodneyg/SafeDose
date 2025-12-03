@@ -66,7 +66,10 @@ export default function InitialScreen() {
   }, [router]);
 
   const handleSplashComplete = () => {
-    setShowSplash(false);
+    // Only hide splash if app state checking is complete
+    if (!isChecking) {
+      setShowSplash(false);
+    }
   };
 
   if (isChecking || showSplash) {

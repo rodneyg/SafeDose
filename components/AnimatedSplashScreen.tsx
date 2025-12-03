@@ -69,7 +69,7 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
     }, 2200); // Show for 2.2 seconds total before fade out
 
     return () => clearTimeout(fadeOutTimeout);
-  }, [logoOpacity, logoScale, taglineOpacity, containerOpacity, onAnimationComplete]);
+  }, [onAnimationComplete]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
