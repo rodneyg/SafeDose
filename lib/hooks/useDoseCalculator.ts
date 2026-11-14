@@ -47,6 +47,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [solutionVolume, setSolutionVolume] = useState<string>('');
   const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
   const [doseValue, setDoseValue] = useState<number | null>(null);
+  const [concentrationExact, setConcentrationExact] = useState<string | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
   const [calculatedConcentration, setCalculatedConcentration] = useState<number | null>(null);
@@ -139,6 +140,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setManualSyringe({ type: 'Standard', volume: '3 ml' });
     setDoseValue(null);
     setConcentration(null);
+    setConcentrationExact(null);
     setCalculatedVolume(null);
     setCalculatedConcentration(null);
     setRecommendedMarking(null);
@@ -399,6 +401,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       const result = calculateDose({
         doseValue,
         concentration,
+        concentrationExact,
         unit,
         concentrationUnit,
         totalAmount: totalAmountValue,
@@ -469,7 +472,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setManualStep('preDoseConfirmation');
       console.log('[useDoseCalculator] Set manualStep to preDoseConfirmation (after error)');
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, totalAmountUnit, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
+  }, [doseValue, concentration, concentrationExact, manualSyringe, unit, totalAmount, totalAmountUnit, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
 
   const handleNextPreDoseConfirmation = useCallback(() => {
     try {
@@ -496,6 +499,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setTotalAmountUnit('mg');
     setSolutionVolume('');
     setConcentration(null);
+    setConcentrationExact(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
@@ -954,15 +958,15 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     medicationInputType,
     setMedicationInputType,
     concentrationAmount,
-    setConcentrationAmount,
+    setConcentrationAmount: (value: string) => { setConcentrationAmount(value); setConcentrationExact(null); },
     concentrationUnit,
     setConcentrationUnit,
     totalAmount,
-    setTotalAmount,
+    setTotalAmount: (value: string) => { setTotalAmount(value); setConcentrationExact(null); },
     totalAmountUnit,
     setTotalAmountUnit,
     solutionVolume,
-    setSolutionVolume,
+    setSolutionVolume: (value: string) => { setSolutionVolume(value); setConcentrationExact(null); },
     manualSyringe,
     setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string } | string) => {
       try {
@@ -987,6 +991,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setDoseValue,
     concentration,
     setConcentration,
+    setConcentrationExact,
     calculatedVolume,
     setCalculatedVolume,
     calculatedConcentration,

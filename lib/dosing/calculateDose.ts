@@ -1,3 +1,4 @@
+import { Exact } from './exact';
 import { AmountUnit } from './inputs';
 import { syringeOptions } from './syringes';
 import { getMarkingGuidance } from './markings';
@@ -14,6 +15,7 @@ export interface ManualSyringe {
 
 export interface CalculateDoseParams {
   doseValue: number | null;
+  concentrationExact?: string | null;
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
@@ -92,6 +94,7 @@ export function getCompatibleConcentrationUnits(
 export function calculateDose({
   doseValue,
   concentration,
+  concentrationExact,
   unit,
   concentrationUnit,
   totalAmount,
@@ -180,15 +183,16 @@ export function calculateDose({
     calculatedVolume = doseValue;
   } else {
     // Standard dose calculations with unit conversions when needed
-    let requiredVolume = doseValue / concentration;
+    const exactConcentration = new Exact(concentrationExact || concentration);
+    let requiredVolume = new Exact(doseValue).div(exactConcentration);
 
     if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = (doseValue / 1000) / concentration;
+      requiredVolume = new Exact(doseValue).div(1000).div(exactConcentration);
     } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = (doseValue * 1000) / concentration;
+      requiredVolume = new Exact(doseValue).mul(1000).div(exactConcentration);
     }
 
-    calculatedVolume = requiredVolume;
+    calculatedVolume = requiredVolume.toNumber();
   }
 
   // Validate calculated volume against safe thresholds

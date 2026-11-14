@@ -1345,5 +1345,29 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-04",
+    "description": "10 mg vial, 300 mcg target in 0.1 mL: exact concentration 3 mg/mL",
+    "inputs": {
+      "doseValue": 300,
+      "unit": "mcg",
+      "concentration": 3,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 10,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "10/3",
+      "concentrationExact": "3"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]

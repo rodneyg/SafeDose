@@ -42,5 +42,7 @@ add('saf101-01','250 mcg from scanned 5000 mcg vial in 2 mL',250,'mcg',None,'mcg
 cases[-1]['inputs']['concentrationUnit']='mg/ml'
 add('saf101-02','Planner prefill 5000 mcg vial in 2 mL, 250 mcg dose',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 add('saf101-03','Planner scanned 1,000 mcg vial, 100 mcg in 0.1 mL',100,'mcg',None,'mcg/ml',total=1000,solution=1)
+add('saf101-04','10 mg vial, 300 mcg target in 0.1 mL: exact concentration 3 mg/mL',300,'mcg',3,'mg/ml',total=10)
+cases[-1]['inputs'].update(solutionVolume=str(F(10,3)),concentrationExact='3')
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

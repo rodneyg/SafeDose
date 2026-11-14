@@ -1,3 +1,4 @@
+import { Exact } from './exact';
 import { parseDoseInput } from './display';
 
 export interface ReconstitutionPlannerParams {
@@ -7,6 +8,8 @@ export interface ReconstitutionPlannerParams {
 }
 
 export interface ReconstitutionPlannerResult {
+  bacWaterExact?: string;
+  concentrationExact?: string;
   bacWaterToAdd: number; // mL
   concentration: number; // mg/mL
   injectionVolume: number; // mL (actual volume needed per dose)
@@ -25,17 +28,20 @@ export function calculateReconstitution(params: ReconstitutionPlannerParams): Re
   const { peptideAmountMg, targetDoseMg, preferredVolumeMl } = params;
 
   // Calculate required concentration: target dose (mg) / preferred volume (mL)
-  const requiredConcentration = targetDoseMg / preferredVolumeMl;
+  const requiredConcentration = new Exact(targetDoseMg).div(preferredVolumeMl);
 
   // Calculate BAC water to add: peptide amount (mg) / required concentration (mg/mL)
-  const bacWaterToAdd = peptideAmountMg / requiredConcentration;
+  const bacWater = new Exact(peptideAmountMg).div(requiredConcentration);
+  const bacWaterToAdd = bacWater.toNumber();
 
   // Actual injection volume will be the preferred volume (since we calculated concentration to achieve this)
   const injectionVolume = preferredVolumeMl;
 
   return {
     bacWaterToAdd,
-    concentration: requiredConcentration,
+    concentration: requiredConcentration.toNumber(),
+    concentrationExact: requiredConcentration.toString(),
+    bacWaterExact: bacWater.toString(),
     injectionVolume,
   };
 }
@@ -90,4 +96,10 @@ export function getReconstitutionInputError(input: ReconstitutionInputs, result:
   }
 
   return null;
+}
+
+/** Preserve exact concentration across navigation; BAC volume is only a display projection. */
+export function getPlannerHandoff(result: ReconstitutionPlannerResult) {
+  return { solutionVolume: String(result.bacWaterToAdd), concentration: result.concentration,
+    concentrationExact: result.concentrationExact };
 }

@@ -1,4 +1,4 @@
-import { parsePlannerScan, formatDoseNumber } from '../lib/dosing';
+import { getPlannerHandoff, parsePlannerScan, formatDoseNumber } from '../lib/dosing';
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { ArrowLeft, Camera, Edit3, Calculator, ArrowRight } from 'lucide-react-native';
@@ -112,11 +112,12 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     // Navigate to main dose calculator with prefilled values for total amount method
     const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
     const totalAmountUnit = peptideUnit;
-    const solutionVolume = formatDoseNumber(result.bacWaterToAdd, 2); // Total solution volume (BAC water + negligible powder volume)
+    const handoff = getPlannerHandoff(result);
+    const solutionVolume = handoff.solutionVolume; // Total solution volume (BAC water + negligible powder volume)
     const targetDoseValue = targetDose;
     
     // Use total amount method instead of concentration method for proper syringe calculations
-    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
+    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillConcentrationExact=${encodeURIComponent(handoff.concentrationExact!)}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
   };
 
   const getStepTitle = () => {

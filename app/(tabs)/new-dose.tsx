@@ -119,7 +119,7 @@ export default function NewDoseScreen() {
       prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled total amount data (not concentration)
-      const prefill = parsePlannerPrefill({ prefillTotalAmount, prefillTotalUnit, prefillSolutionVolume });
+      const prefill = parsePlannerPrefill({ prefillTotalAmount, prefillTotalUnit, prefillSolutionVolume, prefillConcentrationExact: searchParams.prefillConcentrationExact as string });
       doseCalculator.setTotalAmountUnit(prefill.ok ? prefill.value.totalAmountUnit : null);
       doseCalculator.setTotalAmount(prefill.ok ? String(prefill.value.totalAmount) : '');
       doseCalculator.setConcentration(null);
@@ -134,6 +134,8 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Prefilled solution volume:', prefillSolutionVolume);
       }
       
+      doseCalculator.setConcentrationExact(prefill.ok ? prefill.value.concentrationExact || null : null);
+
       // Prefill dose if provided
       if (prefillDose && prefillDoseUnit) {
         doseCalculator.setDose(prefillDose);
@@ -147,7 +149,7 @@ export default function NewDoseScreen() {
       
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
-  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, searchParams.prefillConcentrationExact, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
