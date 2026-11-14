@@ -27,3 +27,15 @@ export function parseScannedAmount(text: string): InputResult<{ amount: number; 
   }
   return { ok: true, value: { amount, unit } };
 }
+
+export function parsePlannerPrefill(params: { prefillTotalAmount?: string; prefillTotalUnit?: string; prefillSolutionVolume?: string }): InputResult<{ totalAmount: number; totalAmountUnit: AmountUnit; concentrationUnit: ConcentrationUnit; solutionVolume: string }> {
+  const amount = parseScannedAmount(`${params.prefillTotalAmount || ''} ${params.prefillTotalUnit || ''}`);
+  if (!amount.ok) return amount;
+  if (!(parseInputNumber(params.prefillSolutionVolume || '') > 0)) {
+    return { ok: false, error: 'Needs input: enter the solution volume in mL.' };
+  }
+  return { ok: true, value: {
+    totalAmount: amount.value.amount, totalAmountUnit: amount.value.unit,
+    concentrationUnit: `${amount.value.unit}/ml`, solutionVolume: params.prefillSolutionVolume!,
+  } };
+}

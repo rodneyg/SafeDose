@@ -1,4 +1,4 @@
-import { parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -109,19 +109,24 @@ export default function NewDoseScreen() {
     const prefillDoseUnit = searchParams.prefillDoseUnit as string;
     
     // Reset the applied flag when params change
-    if (!prefillTotalAmount || !prefillTotalUnit) {
+    if (!prefillTotalAmount) {
       prefillAppliedRef.current = false;
     }
     
     // Only apply prefill if we have total amount data, haven't applied it yet, and doseCalculator is on the intro screen
-    if (prefillTotalAmount && prefillTotalUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+    if (prefillTotalAmount && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
       console.log('[NewDoseScreen] Applying prefilled total amount data from reconstitution planner');
       prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled total amount data (not concentration)
-      doseCalculator.setTotalAmount(prefillTotalAmount);
+      const prefill = parsePlannerPrefill({ prefillTotalAmount, prefillTotalUnit, prefillSolutionVolume });
+      doseCalculator.setTotalAmountUnit(prefill.ok ? prefill.value.totalAmountUnit : null);
+      doseCalculator.setTotalAmount(prefill.ok ? String(prefill.value.totalAmount) : '');
+      doseCalculator.setConcentration(null);
+      doseCalculator.setConcentrationAmount('');
+      if (prefill.ok) doseCalculator.setConcentrationUnit(prefill.value.concentrationUnit);
       doseCalculator.setMedicationInputType('totalAmount');
-      doseCalculator.setTotalAmountHint('From reconstitution planner');
+      doseCalculator.setTotalAmountHint(prefill.ok ? 'From reconstitution planner' : prefill.error);
       
       // Prefill solution volume if provided
       if (prefillSolutionVolume) {

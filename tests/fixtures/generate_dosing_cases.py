@@ -40,5 +40,6 @@ for case in cases:
         case['known_bug'] = 'SAF-101 #1'
 add('saf101-01','250 mcg from scanned 5000 mcg vial in 2 mL',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 cases[-1]['inputs']['concentrationUnit']='mg/ml'
+add('saf101-02','Planner prefill 5000 mcg vial in 2 mL, 250 mcg dose',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

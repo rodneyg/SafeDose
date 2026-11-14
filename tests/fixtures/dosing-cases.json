@@ -1299,5 +1299,28 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-02",
+    "description": "Planner prefill 5000 mcg vial in 2 mL, 250 mcg dose",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]
