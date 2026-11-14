@@ -25,32 +25,19 @@ export default function MedicationSourceStep({
   // Infer the best default medication input type based on the dose and unit
   useEffect(() => {
     if (medicationInputType === null) {
-      // Default to 'totalAmount' unless inference logic suggests otherwise
-      let inferred = 'totalAmount';
-      
-      // If we have dose and unit values, attempt to infer the best type
+      // Only auto-select when the dose strongly implies a path. Leave unset otherwise
+      // so Next cannot silently skip the concentration flow.
+      let inferred: 'concentration' | 'totalAmount' | null = null;
       if (dose && unit) {
         const doseValue = parseFloat(dose);
-        
-        // Only apply inference if we have a valid number
         if (!isNaN(doseValue)) {
-          // For mcg, typically smaller values are concentrations, larger are total amounts
-          if (unit === 'mcg' && doseValue < 100) {
-            inferred = 'concentration';
-          }
-          // For mg, typically larger values indicate total amount
-          else if (unit === 'mg' && doseValue > 5) {
-            inferred = 'totalAmount';
-          }
-          // For units (like insulin), typically larger values are total amounts
-          else if (unit === 'units' && doseValue > 10) {
-            inferred = 'totalAmount';
-          }
+          if (unit === 'mcg' && doseValue < 100) inferred = 'concentration';
+          else if (unit === 'mg' && doseValue > 5) inferred = 'totalAmount';
+          else if (unit === 'units' && doseValue > 10) inferred = 'totalAmount';
         }
       }
-      
       console.log(`[MedicationSourceStep] Inferred medication type: ${inferred} based on dose=${dose}, unit=${unit}`);
-      setMedicationInputType(inferred);
+      if (inferred) setMedicationInputType(inferred);
     }
   }, [medicationInputType, setMedicationInputType, dose, unit]);
   
@@ -71,6 +58,8 @@ export default function MedicationSourceStep({
       <Text style={styles.label}>Select how the medication amount is specified on the vial label:</Text>
       <View style={styles.radioContainer}>
         <TouchableOpacity
+          testID="medication-source-concentration"
+          accessibilityLabel="Concentration"
           style={[styles.radioButton, medicationInputType === 'concentration' && styles.radioButtonSelected]}
           onPress={() => setMedicationInputType('concentration')}
         >
@@ -79,6 +68,8 @@ export default function MedicationSourceStep({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="medication-source-total-amount"
+          accessibilityLabel="Total Amount"
           style={[styles.radioButton, medicationInputType === 'totalAmount' && styles.radioButtonSelected]}
           onPress={() => setMedicationInputType('totalAmount')}
         >

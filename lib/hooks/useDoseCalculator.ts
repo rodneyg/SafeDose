@@ -40,7 +40,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [dose, setDose] = useState<string>('');
   const [unit, setUnit] = useState<'mg' | 'mcg' | 'units' | 'mL'>('mg');
   const [substanceName, setSubstanceName] = useState<string>('');
-  const [medicationInputType, setMedicationInputType] = useState<'concentration' | 'totalAmount' | null>('totalAmount');
+  const [medicationInputType, setMedicationInputType] = useState<'concentration' | 'totalAmount' | null>(null);
+  const medicationInputTypeRef = useRef(medicationInputType);
+  useEffect(() => { medicationInputTypeRef.current = medicationInputType; }, [medicationInputType]);
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
   // A dose choice must never inherit an incompatible concentration default.
@@ -231,10 +233,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       }
 
       setDoseValue(numericDose);
-      // Only reset medicationInputType if it's not already set to a meaningful value
-      if (medicationInputType !== 'concentration' && medicationInputType !== 'totalAmount') {
-        setMedicationInputType(null); // Set to null to trigger intelligent guessing
-      }
+      // Always re-choose the vial-label type for this dose so a stale totalAmount default cannot skip concentration.
+      setMedicationInputType(null);
       setManualStep('medicationSource');
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -245,13 +245,17 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, [dose, unit, medicationInputType]);
 
   const handleNextMedicationSource = useCallback(() => {
-    if (medicationInputType === 'totalAmount') {
+    const selected = medicationInputTypeRef.current;
+    if (selected === 'totalAmount') {
       setManualStep('totalAmountInput');
-    } else {
+    } else if (selected === 'concentration') {
       setManualStep('concentrationInput');
+    } else {
+      setFormError('Please select how the medication amount is specified on the vial label');
+      return;
     }
     setFormError(null);
-  }, [medicationInputType]);
+  }, []);
 
   const handleNextConcentrationInput = useCallback(() => {
     try {
