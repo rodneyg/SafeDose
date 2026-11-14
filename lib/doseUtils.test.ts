@@ -28,7 +28,7 @@ describe('calculateDose with volume thresholds', () => {
       concentration: 100, // mg/ml
       // Calculated volume: 0.1 / 100 = 0.001 mL
     });
-    expect(result.calculatedVolume).toBe(0.001);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
 
@@ -39,7 +39,7 @@ describe('calculateDose with volume thresholds', () => {
       concentration: 10, // mg/ml
       // Calculated volume: 30 / 10 = 3 mL
     });
-    expect(result.calculatedVolume).toBe(3);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
 
@@ -74,7 +74,7 @@ describe('calculateDose with volume thresholds', () => {
       manualSyringe: mockSyringeStandardSmall, // Syringe capacity 1mL
     });
     // Calculated volume is 3mL, which is > 2mL (threshold) and > 1mL (syringe capacity)
-    expect(result.calculatedVolume).toBe(3);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
 
@@ -85,7 +85,7 @@ describe('calculateDose with volume thresholds', () => {
       concentration: 1, // mg/ml -> results in 1.5mL volume (within 0.005-2mL safe threshold)
       manualSyringe: mockSyringeStandardSmall, // Syringe capacity 1mL
     });
-    expect(result.calculatedVolume).toBe(1.5);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toBe(`Required volume (1.50 ml) exceeds syringe capacity (1 ml).`);
   });
 
@@ -98,7 +98,7 @@ describe('calculateDose with volume thresholds', () => {
       concentration: null, // Not used for mL dose
       concentrationUnit: 'mg/ml' as 'mg/ml', // Not strictly used but required by type
     });
-    expect(result.calculatedVolume).toBe(3);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
 
@@ -124,7 +124,7 @@ describe('calculateDose with volume thresholds', () => {
     totalAmount: 5, // Only 5mg available, so 0.5mL possible. Dose requires 30mg (3mL)
       manualSyringe: mockSyringeStandardLarge, // Large enough syringe
     });
-    expect(result.calculatedVolume).toBe(3); // Volume is calculated first
+    expect(result.calculatedVolume).toBeNull(); // Rejected calculations expose no numeric output
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
 
@@ -247,7 +247,7 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
     // The concentration should be 0.5mg/3mL = 0.167 mg/mL
     // For 500mcg = 0.5mg dose: volume = 0.5mg / 0.167mg/mL = 3mL
     // This exceeds 2mL threshold, so should get VOLUME_THRESHOLD_ERROR
-    expect(result.calculatedVolume).toBeCloseTo(3, 1);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
   });
   
@@ -266,7 +266,7 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
     
     // For 500mcg = 0.5mg dose with 0.01mg/mL concentration:
     // volume = 0.5mg / 0.01mg/mL = 50mL
-    expect(result.calculatedVolume).toBe(50);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain("VOLUME_THRESHOLD_ERROR:");
     
     // When volume exceeds threshold, recommendedMarking should be null
@@ -327,7 +327,7 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
     
     // Volume = 0.5mg / 0.33mg/mL ≈ 1.5mL
     // This is > 1mL and < 2mL, so should get special insulin error
-    expect(result.calculatedVolume).toBeCloseTo(1.5, 1);
+    expect(result.calculatedVolume).toBeNull();
     expect(result.calculationError).toContain('too large for practical use with an insulin syringe');
     expect(result.recommendedMarking).toBeNull();
   });

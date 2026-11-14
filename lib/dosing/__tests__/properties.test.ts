@@ -1,7 +1,7 @@
 import * as fc from 'fast-check';
 import {
   calculateDose, CalculateDoseParams, CalculateDoseResult, calculateReconstitution,
-  formatDoseNumber, formatDrawToText, getPlannerHandoff, getSyringeMarkings, parseInputNumber,
+  formatDoseNumber, formatDrawToText, getMarkingGuidance, getPlannerHandoff, getSyringeMarkings, parseInputNumber,
   SyringeSelection,
 } from '..';
 import { Exact } from '../exact';
@@ -91,6 +91,10 @@ function success(result: CalculateDoseResult): string {
   expect(Number.isFinite(result.calculatedVolume)).toBe(true);
   expect(result.calculatedVolume!).toBeGreaterThanOrEqual(0.005);
   expect(result.calculatedVolume!).toBeLessThanOrEqual(2);
+  if (result.calculatedConcentration != null) {
+    expect(Number.isFinite(result.calculatedConcentration)).toBe(true);
+    expect(result.calculatedConcentration).toBeGreaterThan(0);
+  }
   expect(result.recommendedMarking).not.toBeNull();
   return result.recommendedMarking!;
 }
@@ -111,7 +115,7 @@ property('mg to mcg to mg round trip is exact', fc.property(doseMicros, dose => 
 for (const scale of [100, 40]) {
   property(`mL to U-${scale} to mL round trip is exact`, fc.property(enteredDecimal(100, 10000, 3), text => {
     const volume = parseInputNumber(text);
-    const marking = new Exact(volume).mul(scale);
+    const marking = new Exact(getMarkingGuidance(volume, 'Insulin', scale === 100 ? '10,20,100' : '1,20,40', scale).recommendedMarking);
     const [n, d] = ratio(text);
     expectRatio(marking.toString(), n * BigInt(scale), d);
     expectRatio(marking.div(scale).toString(), ...ratio(text));
@@ -161,7 +165,8 @@ property('vial unit conversions and repeating concentration paths agree exactly'
   }));
 
 property('total amount and entered concentration paths agree exactly', fc.property(
-  enteredDecimal(10, 100000, 2), enteredDecimal(1, 100, 1), enteredDecimal(5, 1000, 3),
+  // Shared accepted domain: derived mcg/mL has a lower bound of 1.
+  enteredDecimal(100, 100000, 2), enteredDecimal(1, 100, 1), enteredDecimal(5, 1000, 3),
   fc.constantFrom('mg', 'mcg', 'units'), (concentrationText, solutionText, volumeText, unit) => {
     // Hundredths * tenths is a typed total with at most three decimal places.
     const [cn, cd] = ratio(concentrationText);
@@ -182,6 +187,17 @@ property('total amount and entered concentration paths agree exactly', fc.proper
       expect(success(entered)).toBe(derived.recommendedMarking);
       expect(entered.calculatedVolume).toBe(derived.calculatedVolume);
     }
+  }));
+
+property('derived mcg concentration retains its existing lower bound', fc.property(
+  fc.integer({ min: 1, max: 999 }), concentration => {
+    const params = { doseValue: Number(decimal(concentration * 5, 4)), unit: 'mcg' as const,
+      concentrationUnit: 'mcg/ml' as const, totalAmount: Number(decimal(concentration, 3)),
+      totalAmountUnit: 'mcg' as const, solutionVolume: '1' };
+    const derived = calculate({ ...params, concentration: null });
+    failure(derived);
+    expect(derived.calculationError).toContain('extremely low');
+    expect(success(calculate({ ...params, concentration: Number(decimal(concentration, 3)) }))).toBe('0.5');
   }));
 
 const plannerCase = fc.record({ dose: doseMicros, extra: fc.integer({ min: 0, max: 100000 }), preferred: fc.integer({ min: 100, max: 1000 }) })
@@ -239,6 +255,15 @@ property('invalid and extreme numeric inputs return an error without numbers', f
     failure(calculate(params));
   }));
 
+const numericEdge = fc.constantFrom(0, -1, NaN, Infinity, -Infinity, Number.MIN_VALUE, 1e-308, 1e308, Number.MAX_VALUE);
+property('independent extreme operands cannot leak nonfinite numeric results', fc.property(
+  fc.oneof(numericEdge, doseMicros.map(dose => Number(decimal(dose, 3)))),
+  fc.oneof(numericEdge, concentrationMilli.map(value => Number(decimal(value, 3)))), (doseValue, concentration) => {
+    const result = calculate({ doseValue, concentration });
+    if (result.calculationError) failure(result);
+    else success(result);
+  }));
+
 property('unavailable medication never returns a numeric dose result', fc.property(
   doseMicros, dose => {
     failure(calculate({ doseValue: Number(decimal(dose, 3)), totalAmount: Number(decimal(dose * 5, 4)), totalAmountUnit: 'mg',
@@ -246,7 +271,7 @@ property('unavailable medication never returns a numeric dose result', fc.proper
   }));
 
 for (const syringe of syringes) {
-  const label = `${syringe.type} ${syringe.insulinScale || ''} ${syringe.volume}`.trim();
+  const label = [syringe.type, syringe.insulinScale, syringe.volume].filter(Boolean).join(' ');
   property(`display is within half a step for ${label}`, fc.property(safePair, ([dose, concentration]) => {
     const result = calculate({ doseValue: Number(decimal(dose, 3)), concentration: Number(decimal(concentration, 3)), manualSyringe: syringe });
     if (dose / concentration > Number(syringe.volume.split(' ')[0])) { failure(result); return; }
@@ -269,6 +294,11 @@ property('display preserves every listed syringe gradation', fc.property(syringe
   const exact = markings[index % markings.length];
   const display = formatDrawToText({ recommendedMarking: exact, syringeType: syringe.type })!.split(' ')[2];
   expectRatio(display, ...ratio(exact));
+  const scale = syringe.type === 'Standard' ? 1 : syringe.insulinScale === 'U-40' ? 40 : 100;
+  const [n, d] = ratio(exact);
+  const result = calculate({ unit: 'mL', doseValue: Number(n) / Number(d) / scale, manualSyringe: syringe });
+  if (Number(n) / Number(d) / scale > 2) failure(result);
+  else expectRatio(success(result), n, d);
 }));
 
 property('decimal displays have no float artifacts at supported precisions', fc.property(

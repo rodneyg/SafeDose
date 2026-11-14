@@ -82,6 +82,16 @@ The exported available-volume helper remains for defensive independent compariso
 
 Run `python3 tests/fixtures/generate_dosing_cases.py`, `npm run test:dosing`, and `npm run typecheck:dosing`. Coverage thresholds still require 100% statements, branches, functions, and lines in every production file under `lib/dosing/`. Full Jest and TypeScript failures are compared with the SAF-102 baseline; unrelated baseline problems are outside scope.
 
+## SAF-103 property tests
+
+`lib/dosing/__tests__/properties.test.ts` runs 26 properties with 1,000 cases each through both `npm test` and `npm run test:dosing`. The default seed is `1032026`; set `FC_SEED` to a signed 32-bit integer to use another seed. The runner reports the completed property run count. Failures include the seed, shrunk counterexample, shrink path, and a replay command using `FC_SEED`, `FC_PROPERTY`, and `FC_PATH`. An unknown property name or a path without a property name is an explicit error.
+
+Generators use short entered decimals, doses from 1 mcg through 2,000 mg, solution volumes from 0.1 through 10 mL, all eight supported syringe selections, and safety/numeric edge values. Expected ratios and display rounding use independent BigInt cross-products rather than the production arithmetic. Properties cover exact conversions, linearity, mass-unit invariance, supplied/derived concentrations, planner handoff, monotonicity, rejection, numeric overflow/underflow, and display rounding/gradations.
+
+Equivalence applies within the shared accepted domain. Existing derived-concentration lower bounds (0.01 mg/mL and 1 mcg/mL) do not apply to supplied concentration. A separate property preserves that policy difference. Numeric compatibility fields cannot represent repeating fractions exactly, so exact volume comparisons use the canonical marking and scale. Repeating planner BAC values require the existing exact concentration handoff; feeding only a rounded BAC number back into the total-amount path is not an exact invariant. Finite BAC values are also tested directly through that path.
+
+Property counterexamples exposed numeric outputs on rejected calculations, including Infinity when finite dose/concentration operands overflowed. All calculator errors now return null volume, concentration, and marking. Error messages, thresholds, and valid results are preserved. Six new independent regression fixtures carry `verified_by: "pending-rodney"`; the existing SAF-101 above-limit fixture also expects null volume under this error contract.
+
 ## Open questions for Rodney
 
 Should the 2 mL per-injection ceiling be raised for Standard 3/5 mL syringes, for example for IM injections? The ceiling remains unchanged pending a decision.
