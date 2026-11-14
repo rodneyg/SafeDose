@@ -4,7 +4,7 @@ const input: ReconstitutionInputs = {
   peptideAmount: '5', scannedPeptideAmount: null, peptideUnit: 'mg',
   targetDose: '250', targetDoseUnit: 'mcg', preferredVolume: '0.1',
 };
-const result = { bacWaterToAdd: 2, concentration: 2.5, injectionVolume: 0.1 };
+const result = { bacWaterToAdd: 2, concentration: 2.5, injectionVolume: 0.1, bacWaterExact: '2', concentrationExact: '2.5' };
 
 describe('current planner', () => {
   it('normal calculation', () => {
@@ -33,9 +33,9 @@ describe('current planner', () => {
     expect(getReconstitutionResult(data)).toBeNull();
     expect(getReconstitutionInputError(data, null)).toBe('Please enter a valid preferred volume greater than 0');
   });
-  it.each(['peptideAmount', 'targetDose', 'preferredVolume'] as const)('negative %s is computed but validation rejects it', field => {
+  it.each(['peptideAmount', 'targetDose', 'preferredVolume'] as const)('negative %s produces no result', field => {
     const data = { ...input, [field]: '-1' };
-    expect(getReconstitutionResult(data)).not.toBeNull();
+    expect(getReconstitutionResult(data)).toBeNull();
     expect(getReconstitutionInputError(data, null)).not.toBeNull();
   });
   it('valid input with no result', () => {
@@ -53,8 +53,7 @@ describe('current planner', () => {
   it.each([0.1, 20])('inclusive BAC limit %s', bacWaterToAdd => {
     expect(getReconstitutionInputError(input, { ...result, bacWaterToAdd })).toBeNull();
   });
-  it('zero direct planner inputs preserve existing nonfinite arithmetic', () => {
-    expect(calculateReconstitution({ peptideAmountMg: 5, targetDoseMg: 0, preferredVolumeMl: 0.1 })).toEqual({ bacWaterToAdd: Infinity, concentration: 0, injectionVolume: 0.1 });
-    expect(calculateReconstitution({ peptideAmountMg: 0, targetDoseMg: 0, preferredVolumeMl: 0 })).toEqual({ bacWaterToAdd: NaN, concentration: NaN, injectionVolume: 0 });
+  it('zero direct planner inputs are refused', () => {
+    expect(() => calculateReconstitution({ peptideAmountMg: 5, targetDoseMg: 0, preferredVolumeMl: 0.1 })).toThrow('Needs input');
   });
 });

@@ -400,7 +400,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
       const result = calculateDose({
         doseValue,
-        concentration,
+        concentration: medicationInputType === 'totalAmount' ? null : concentration,
         concentrationExact,
         unit,
         concentrationUnit,
@@ -964,7 +964,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     totalAmount,
     setTotalAmount: (value: string) => { setTotalAmount(value); setConcentrationExact(null); },
     totalAmountUnit,
-    setTotalAmountUnit,
+    setTotalAmountUnit: (value: AmountUnit | null) => { setTotalAmountUnit(value); setConcentrationExact(null); },
     solutionVolume,
     setSolutionVolume: (value: string) => { setSolutionVolume(value); setConcentrationExact(null); },
     manualSyringe,

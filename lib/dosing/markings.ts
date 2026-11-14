@@ -1,20 +1,21 @@
-/** Exact raw marking and existing two-decimal guidance, including float noise. */
-export function getMarkingGuidance(calculatedVolume: number, syringeType: 'Insulin' | 'Standard', markingsString: string) {
+import { Exact } from './exact';
+export function getMarkingGuidance(calculatedVolume: number | Exact, syringeType: 'Insulin' | 'Standard', markingsString: string) {
   const markings = markingsString.split(',').map((m: string) => parseFloat(m));
-  const markingScaleValue = syringeType === 'Insulin' ? calculatedVolume * 100 : calculatedVolume;
+  const exactMarking = new Exact(calculatedVolume).mul(syringeType === 'Insulin' ? 100 : 1);
+  const markingScaleValue = exactMarking.toNumber();
 
   const nearestMarking = markings.reduce((prev: number, curr: number) =>
-    Math.abs(curr - markingScaleValue) < Math.abs(prev - markingScaleValue) ? curr : prev
+    exactMarking.distance(new Exact(curr)).compare(exactMarking.distance(new Exact(prev))) < 0 ? curr : prev
   );
 
   // Set recommended marking to the exact calculated value instead of nearest marking
-  const recommendedMarking = markingScaleValue.toString();
+  const recommendedMarking = exactMarking.toString();
 
   // Provide guidance when exact dose falls between standard markings
   let precisionMessage = null;
-  if (Math.abs(nearestMarking - markingScaleValue) > 0.01) {
+  if (exactMarking.distance(new Exact(nearestMarking)).compare(0.01) > 0) {
     const unitLabel = syringeType === 'Insulin' ? 'units' : 'ml';
-    const exactValue = markingScaleValue.toFixed(2);
+    const exactValue = exactMarking.fixed(2);
     const nearestValue = nearestMarking.toString();
 
     // Find the two markings that the exact value falls between

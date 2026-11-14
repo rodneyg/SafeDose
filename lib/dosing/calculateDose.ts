@@ -1,5 +1,5 @@
 import { Exact } from './exact';
-import { AmountUnit } from './inputs';
+import { AmountUnit, parseInputNumber } from './inputs';
 import { syringeOptions } from './syringes';
 import { getMarkingGuidance } from './markings';
 
@@ -92,168 +92,92 @@ export function getCompatibleConcentrationUnits(
 }
 
 export function calculateDose({
-  doseValue,
-  concentration,
-  concentrationExact,
-  unit,
-  concentrationUnit,
-  totalAmount,
-  totalAmountUnit,
-  manualSyringe,
-  solutionVolume,
+  doseValue, concentration, concentrationExact, unit, concentrationUnit, totalAmount,
+  totalAmountUnit, manualSyringe, solutionVolume,
 }: CalculateDoseParams): CalculateDoseResult {
   let calculatedVolume: number | null = null;
-  let recommendedMarking: string | null = null;
-  let calculationError: string | null = null;
   let calculatedConcentration: number | null = null;
-
-  // Validate inputs
-  if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
-    calculationError = 'Dose value is invalid or missing.';
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  const fail = (calculationError: string): CalculateDoseResult => ({
+    calculatedVolume, calculatedConcentration, recommendedMarking: null, calculationError,
+  });
+  if (doseValue === null || !Number.isFinite(doseValue) || doseValue <= 0) {
+    return fail('Dose value is invalid or missing.');
   }
+  const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+  if (!compatibility.isValid) return fail(compatibility.errorMessage);
 
+  let exactTotal: Exact | null = null;
   if (totalAmount != null && unit !== 'mL') {
     if (!totalAmountUnit || !['mg', 'mcg', 'units'].includes(totalAmountUnit)) {
-      return { calculatedVolume, recommendedMarking, calculatedConcentration,
-        calculationError: 'Needs input: select the total amount unit.' };
+      return fail('Needs input: select the total amount unit.');
     }
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) return fail('Needs input: enter a valid total amount greater than zero.');
     const numerator = concentrationUnit.split('/')[0];
     if ((totalAmountUnit === 'units') !== (numerator === 'units')) {
-      return { calculatedVolume, recommendedMarking, calculatedConcentration,
-        calculationError: 'Needs input: vial and concentration units are incompatible.' };
+      return fail('Needs input: vial and concentration units are incompatible.');
     }
-    if (totalAmountUnit === 'mcg' && numerator === 'mg') totalAmount /= 1000;
-    if (totalAmountUnit === 'mg' && numerator === 'mcg') totalAmount *= 1000;
+    exactTotal = new Exact(totalAmount);
+    if (totalAmountUnit === 'mcg' && numerator === 'mg') exactTotal = exactTotal.div(1000);
+    if (totalAmountUnit === 'mg' && numerator === 'mcg') exactTotal = exactTotal.mul(1000);
   }
 
-  // Validate unit compatibility before proceeding
-  const unitCompatibility = validateUnitCompatibility(unit, concentrationUnit);
-  if (!unitCompatibility.isValid) {
-    calculationError = unitCompatibility.errorMessage;
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
-  // If concentration is missing but totalAmount and solutionVolume are available, calculate concentration
-  if ((concentration === null || isNaN(concentration) || concentration <= 0) &&
-      totalAmount !== null && totalAmount !== undefined && totalAmount > 0 &&
-      solutionVolume !== null && solutionVolume !== undefined && solutionVolume !== '') {
-
-    const solVolume = parseFloat(solutionVolume);
-    if (!isNaN(solVolume) && solVolume > 0) {
-      calculatedConcentration = totalAmount / solVolume;
-      concentration = calculatedConcentration;
-
-      // Validate calculated concentration is reasonable
-      if (concentrationUnit === 'mg/ml' && concentration < 0.01) {
-        calculationError = `Calculated concentration (${concentration.toFixed(4)} mg/ml) is extremely low. Please verify the total amount (${totalAmount} mg) and solution volume (${solutionVolume} ml) are correct.`;
-        return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-      } else if (concentrationUnit === 'mcg/ml' && concentration < 1) {
-        calculationError = `Calculated concentration (${concentration.toFixed(4)} mcg/ml) is extremely low. Please verify the total amount (${totalAmount} mcg) and solution volume (${solutionVolume} ml) are correct.`;
-        return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  let exactConcentration: Exact | null = null;
+  if (unit !== 'mL') {
+    if (concentrationExact) {
+      try {
+        exactConcentration = new Exact(concentrationExact);
+      } catch {
+        return fail('Needs input: invalid exact concentration.');
+      }
+      if (exactConcentration.compare(0) <= 0 || !Number.isFinite(exactConcentration.toNumber())) {
+        return fail('Needs input: invalid exact concentration.');
+      }
+    } else if (concentration !== null && Number.isFinite(concentration) && concentration > 0) {
+      exactConcentration = new Exact(concentration);
+    } else if (exactTotal && solutionVolume != null) {
+      const volume = parseInputNumber(solutionVolume);
+      if (volume > 0) {
+        exactConcentration = exactTotal.div(volume);
+        calculatedConcentration = exactConcentration.toNumber();
+        if ((concentrationUnit === 'mg/ml' && exactConcentration.compare(0.01) < 0) ||
+            (concentrationUnit === 'mcg/ml' && exactConcentration.compare(1) < 0)) {
+          return fail(`Calculated concentration (${exactConcentration.fixed(4)} ${concentrationUnit}) is extremely low. Please verify the total amount (${exactTotal.toString()} ${concentrationUnit.split('/')[0]}) and solution volume (${solutionVolume} ml) are correct.`);
+        }
       }
     }
+    if (!exactConcentration) return fail('Concentration is invalid or missing.');
+    if (concentrationExact) calculatedConcentration = exactConcentration.toNumber();
   }
-
-  if (concentration === null || isNaN(concentration) || concentration <= 0) {
-    calculationError = 'Concentration is invalid or missing.';
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
-  if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) {
-    calculationError = 'Syringe details are missing.';
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
+  if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) return fail('Syringe details are missing.');
   let markingsString: string | undefined;
+  if (manualSyringe.type === 'Insulin') markingsString = syringeOptions.Insulin[manualSyringe.volume as InsulinSyringeVolume];
+  else if (manualSyringe.type === 'Standard') markingsString = syringeOptions.Standard[manualSyringe.volume as StandardSyringeVolume];
+  if (!markingsString) return fail(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
 
-  if (manualSyringe.type === 'Insulin') {
-    markingsString = syringeOptions['Insulin'][manualSyringe.volume as InsulinSyringeVolume];
-  } else if (manualSyringe.type === 'Standard') {
-    markingsString = syringeOptions['Standard'][manualSyringe.volume as StandardSyringeVolume];
+  let convertedDose = new Exact(doseValue);
+  if (unit === 'mcg' && concentrationUnit === 'mg/ml') convertedDose = convertedDose.div(1000);
+  else if (unit === 'mg' && concentrationUnit === 'mcg/ml') convertedDose = convertedDose.mul(1000);
+  const volume = unit === 'mL' ? new Exact(doseValue) : convertedDose.div(exactConcentration!);
+  calculatedVolume = volume.toNumber();
+  if (volume.compare(0.005) < 0 || volume.compare(2) > 0) return fail('VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.');
+  if (manualSyringe.type === 'Insulin' && volume.compare(1) > 0) {
+    return fail(`Required volume (${volume.fixed(2)} ml) is too large for practical use with an insulin syringe. Consider using a standard syringe or checking your concentration calculation.`);
   }
-
-  if (!markingsString) {
-    calculationError = `Markings unavailable for ${manualSyringe.type} ${String(manualSyringe.volume)} syringe.`;
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  if (exactTotal && convertedDose.compare(exactTotal) > 0) {
+    return fail(`Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${totalAmountUnit}).`);
   }
-
-  // Special case for mL as dose unit (direct volume administration)
-  if (unit === 'mL') {
-    calculatedVolume = doseValue;
-  } else {
-    // Standard dose calculations with unit conversions when needed
-    const exactConcentration = new Exact(concentrationExact || concentration);
-    let requiredVolume = new Exact(doseValue).div(exactConcentration);
-
-    if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-      requiredVolume = new Exact(doseValue).div(1000).div(exactConcentration);
-    } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-      requiredVolume = new Exact(doseValue).mul(1000).div(exactConcentration);
-    }
-
-    calculatedVolume = requiredVolume.toNumber();
-  }
-
-  // Validate calculated volume against safe thresholds
-  if (calculatedVolume < 0.005 || calculatedVolume > 2) {
-    calculationError = "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.";
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
-  // Check for insulin syringe practical limits before other capacity checks
-  if (manualSyringe.type === 'Insulin' && calculatedVolume > 1) {
-    // For insulin syringes, volumes > 1mL result in markings > 100 units, which is unrealistic
-    calculationError = `Required volume (${calculatedVolume.toFixed(2)} ml) is too large for practical use with an insulin syringe. Consider using a standard syringe or checking your concentration calculation.`;
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
-  // Validate that the total amount is sufficient for the required dose
-  if (totalAmount !== undefined && totalAmount !== null && unit !== 'mL') {
-    calculationError = getMedicationAvailabilityError(doseValue, unit, concentrationUnit, totalAmount, calculatedVolume, concentration);
-    if (calculationError) {
-      return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-    }
-  }
-
-  const maxVolume = parseFloat(String(manualSyringe.volume).replace(/[^0-9.]/g, ''));
-  if (calculatedVolume > maxVolume) {
-    calculationError = `Required volume (${calculatedVolume.toFixed(2)} ml) exceeds syringe capacity (${maxVolume} ml).`;
-    return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
-  }
-
-  const guidance = getMarkingGuidance(calculatedVolume, manualSyringe.type, markingsString);
-  recommendedMarking = guidance.recommendedMarking;
-  calculationError = guidance.precisionMessage;
-
-  return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  const capacity = Number(manualSyringe.volume.replace(/[^0-9.]/g, ''));
+  if (volume.compare(capacity) > 0) return fail(`Required volume (${volume.fixed(2)} ml) exceeds syringe capacity (${capacity} ml).`);
+  const guidance = getMarkingGuidance(volume, manualSyringe.type, markingsString);
+  return { calculatedVolume, calculatedConcentration, recommendedMarking: guidance.recommendedMarking,
+    calculationError: guidance.precisionMessage };
 }
 
-/** Defensive volume check, separate from the earlier dose-amount check. */
+/** Defensive comparison for independently supplied volumes. */
 export function getAvailableVolumeError(calculatedVolume: number, totalAmount: number, concentration: number): string | null {
-  const maxPossibleVolume = totalAmount / concentration;
-  if (calculatedVolume > maxPossibleVolume) {
-    return `Required volume (${calculatedVolume.toFixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.toFixed(2)} ml).`;
+  const maxPossibleVolume = new Exact(totalAmount).div(concentration);
+  if (new Exact(calculatedVolume).compare(maxPossibleVolume) > 0) {
+    return `Required volume (${new Exact(calculatedVolume).fixed(2)} ml) exceeds what can be made from available medication (${maxPossibleVolume.fixed(2)} ml).`;
   }
   return null;
-}
-
-function getMedicationAvailabilityError(
-  doseValue: number,
-  unit: CalculateDoseParams['unit'],
-  concentrationUnit: CalculateDoseParams['concentrationUnit'],
-  totalAmount: number,
-  calculatedVolume: number,
-  concentration: number,
-): string | null {
-  let doseInSameUnitAsTotal = doseValue;
-  if (unit === 'mcg' && concentrationUnit === 'mg/ml') {
-    doseInSameUnitAsTotal = doseValue / 1000;
-  } else if (unit === 'mg' && concentrationUnit === 'mcg/ml') {
-    doseInSameUnitAsTotal = doseValue * 1000;
-  }
-  if (doseInSameUnitAsTotal > totalAmount) {
-    return `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
-  }
-  return getAvailableVolumeError(calculatedVolume, totalAmount, concentration);
 }

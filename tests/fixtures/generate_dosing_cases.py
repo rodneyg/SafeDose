@@ -34,15 +34,14 @@ for i,d in enumerate([0.1,0.25,0.5,1],1):
     add(f'mg-to-mcg-{i:02}',f'{d} mg at 1000 mcg/mL',d,'mg',1000,'mcg/ml')
 add('direct-no-concentration','0.5 mL direct volume without concentration',0.5,'mL',1,'mg/ml','Standard')
 cases[-1]['inputs']['concentration']=None
-cases[-1]['known_bug']='SAF-101 #2'
-for case in cases:
-    if case['id'] == 'insulin-06':
-        case['known_bug'] = 'SAF-101 #1'
+
+
 add('saf101-01','250 mcg from scanned 5000 mcg vial in 2 mL',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 cases[-1]['inputs']['concentrationUnit']='mg/ml'
 add('saf101-02','Planner prefill 5000 mcg vial in 2 mL, 250 mcg dose',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 add('saf101-03','Planner scanned 1,000 mcg vial, 100 mcg in 0.1 mL',100,'mcg',None,'mcg/ml',total=1000,solution=1)
 add('saf101-04','10 mg vial, 300 mcg target in 0.1 mL: exact concentration 3 mg/mL',300,'mcg',3,'mg/ml',total=10)
 cases[-1]['inputs'].update(solutionVolume=str(F(10,3)),concentrationExact='3')
+add('saf101-05','0.29 mg at 1 mg/mL gives marking 29',0.29,'mg',1,'mg/ml')
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

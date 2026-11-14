@@ -112,7 +112,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     // Navigate to main dose calculator with prefilled values for total amount method
     const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
     const totalAmountUnit = peptideUnit;
-    const handoff = getPlannerHandoff(result);
+    const handoff = getPlannerHandoff(result, peptideUnit);
     const solutionVolume = handoff.solutionVolume; // Total solution volume (BAC water + negligible powder volume)
     const targetDoseValue = targetDose;
     

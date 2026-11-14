@@ -1,9 +1,9 @@
 import { parseDoseInput, formatDoseNumber, concentrationFromDose, formatConcentration, formatDrawToText } from '..';
 
-it('keeps numeric prefix parsing', () => {
-  expect(parseDoseInput('2.5 mg')).toBe(2.5);
+it('rejects numeric prefixes and nonfinite values', () => {
+  expect(parseDoseInput('2.5 mg')).toBeNaN();
   expect(parseDoseInput('')).toBeNaN();
-  expect(parseDoseInput('Infinity')).toBe(Infinity);
+  expect(parseDoseInput('Infinity')).toBeNaN();
 });
 it('keeps fixed decimal formatting and planner handoff rounding', () => {
   expect(formatDoseNumber(0.12345, 2)).toBe('0.12');

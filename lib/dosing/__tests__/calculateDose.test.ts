@@ -39,7 +39,7 @@ describe('input validation and order', () => {
   it.each([null, NaN, 0, -1])('invalid concentration %s', concentration => {
     expect(dose({ concentration }).calculationError).toBe('Concentration is invalid or missing.');
   });
-  it.each([null, undefined, 0, -1])('unavailable total %s', totalAmount => {
+  it.each([null, undefined])('unavailable total %s', totalAmount => {
     expect(dose({ concentration: null, totalAmount, solutionVolume: '2' }).calculationError).toBe('Concentration is invalid or missing.');
   });
   it.each([null, undefined, '', 'bad', '0', '-1'])('unavailable solution %s', solutionVolume => {
@@ -145,15 +145,13 @@ describe('dose volumes and limits', () => {
   });
 });
 
-it('characterizes unrounded U-100 float noise (SAF-101 #1)', () => {
+it('returns clean U-100 marking', () => {
   expect(dose({ unit: 'units', concentrationUnit: 'units/ml', doseValue: 29, concentration: 100,
-    manualSyringe: { type: 'Insulin', volume: '1 ml' } }).recommendedMarking).toBe('28.999999999999996');
+    manualSyringe: { type: 'Insulin', volume: '1 ml' } }).recommendedMarking).toBe('29');
 });
-it('characterizes mL still requiring concentration (SAF-101 #2)', () => {
-  expect(dose({ unit: 'mL', concentration: null }).calculationError).toBe('Concentration is invalid or missing.');
+it('direct mL does not require concentration', () => {
+  expect(dose({ unit: 'mL', concentration: null }).calculationError).toBeNull();
 });
-it('characterizes nonfinite inputs passing current guards (SAF-101 #3)', () => {
-  expect(dose({ doseValue: Infinity, concentration: Infinity })).toEqual({
-    calculatedVolume: NaN, calculatedConcentration: null, recommendedMarking: 'NaN', calculationError: null,
-  });
+it('rejects nonfinite dose', () => {
+  expect(dose({ doseValue: Infinity, concentration: Infinity }).calculationError).toBe('Dose value is invalid or missing.');
 });

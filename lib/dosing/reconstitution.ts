@@ -27,6 +27,10 @@ export interface ReconstitutionInputs {
 export function calculateReconstitution(params: ReconstitutionPlannerParams): ReconstitutionPlannerResult {
   const { peptideAmountMg, targetDoseMg, preferredVolumeMl } = params;
 
+  if (![peptideAmountMg, targetDoseMg, preferredVolumeMl].every(value => Number.isFinite(value) && value > 0)) {
+    throw new Error('Needs input: planner amounts and volume must be positive finite numbers.');
+  }
+
   // Calculate required concentration: target dose (mg) / preferred volume (mL)
   const requiredConcentration = new Exact(targetDoseMg).div(preferredVolumeMl);
 
@@ -51,15 +55,15 @@ export function getReconstitutionResult(input: ReconstitutionInputs): Reconstitu
   const targetDoseValue = parseDoseInput(input.targetDose);
   const preferredVolumeValue = parseDoseInput(input.preferredVolume);
 
-  if (!peptideAmountValue || !targetDoseValue || !preferredVolumeValue) {
+  if (!(peptideAmountValue > 0) || !(targetDoseValue > 0) || !(preferredVolumeValue > 0)) {
     return null;
   }
 
   // Convert peptide amount to mg if needed
-  const peptideAmountMg = input.peptideUnit === 'mcg' ? peptideAmountValue / 1000 : peptideAmountValue;
+  const peptideAmountMg = input.peptideUnit === 'mcg' ? new Exact(peptideAmountValue).div(1000).toNumber() : peptideAmountValue;
 
   // Convert target dose to mg if needed
-  const targetDoseMg = input.targetDoseUnit === 'mcg' ? targetDoseValue / 1000 : targetDoseValue;
+  const targetDoseMg = input.targetDoseUnit === 'mcg' ? new Exact(targetDoseValue).div(1000).toNumber() : targetDoseValue;
 
   return calculateReconstitution({
     peptideAmountMg,
@@ -99,7 +103,7 @@ export function getReconstitutionInputError(input: ReconstitutionInputs, result:
 }
 
 /** Preserve exact concentration across navigation; BAC volume is only a display projection. */
-export function getPlannerHandoff(result: ReconstitutionPlannerResult) {
+export function getPlannerHandoff(result: ReconstitutionPlannerResult, unit: 'mg' | 'mcg' = 'mg') {
   return { solutionVolume: String(result.bacWaterToAdd), concentration: result.concentration,
-    concentrationExact: result.concentrationExact };
+    concentrationExact: new Exact(result.concentrationExact!).mul(unit === 'mcg' ? 1000 : 1).toString() };
 }

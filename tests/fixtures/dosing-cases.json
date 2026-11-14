@@ -853,8 +853,7 @@
       "marking": "29"
     },
     "computed_by": "independent hand calculation",
-    "verified_by": "pending-rodney",
-    "known_bug": "SAF-101 #1"
+    "verified_by": "pending-rodney"
   },
   {
     "id": "insulin-07",
@@ -1274,8 +1273,7 @@
       "marking": "0.5"
     },
     "computed_by": "independent hand calculation",
-    "verified_by": "pending-rodney",
-    "known_bug": "SAF-101 #2"
+    "verified_by": "pending-rodney"
   },
   {
     "id": "saf101-01",
@@ -1366,6 +1364,26 @@
     "expected": {
       "volume_mL": 0.1,
       "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-05",
+    "description": "0.29 mg at 1 mg/mL gives marking 29",
+    "inputs": {
+      "doseValue": 0.29,
+      "unit": "mg",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.29,
+      "marking": "29"
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
