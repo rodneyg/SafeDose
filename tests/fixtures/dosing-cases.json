@@ -1407,5 +1407,25 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07",
+    "description": "Confirmed Standard 3 mL syringe after unreadable scan",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "0.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]

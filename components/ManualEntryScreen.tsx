@@ -34,8 +34,8 @@ interface ManualEntryScreenProps {
   setTotalAmount: (value: string) => void;
   solutionVolume: string;
   setSolutionVolume: (value: string) => void;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
-  setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string }) => void;
+  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean };
+  setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean }) => void;
   doseValue: number | null;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration

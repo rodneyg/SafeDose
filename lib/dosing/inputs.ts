@@ -60,3 +60,14 @@ export function parseScannedConcentration(text: string): InputResult<{ amount: n
   }
   return { ok: true, value: { amount, unit: `${numerator}/ml` } };
 }
+
+export function parseScannedSyringe(scan: { type?: string | null; volume?: string | null }): InputResult<{ type: 'Insulin' | 'Standard'; volume: string }> {
+  const type = scan.type?.trim().toLowerCase();
+  const normalizedType = type === 'insulin' ? 'Insulin' : type === 'standard' ? 'Standard' : null;
+  const volume = scan.volume?.replace(/\s/g, '').toLowerCase();
+  if (!normalizedType || !volume) return { ok: false, error: 'Needs input: select the syringe type and volume from its label.' };
+  const volumes = normalizedType === 'Insulin' ? ['0.3 ml', '0.5 ml', '1 ml'] : ['1 ml', '3 ml', '5 ml'];
+  const selected = volumes.find(option => option.replace(/\s/g, '') === volume);
+  if (!selected) return { ok: false, error: 'Needs input: select a supported syringe volume from its label.' };
+  return { ok: true, value: { type: normalizedType, volume: selected } };
+}

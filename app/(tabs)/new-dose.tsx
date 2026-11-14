@@ -1,4 +1,4 @@
-import { parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parseScannedSyringe, parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -497,21 +497,9 @@ export default function NewDoseScreen() {
     const scannedSyringe = result.syringe || {};
     const scannedVial = result.vial || {};
 
-    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-    const scannedVolume = scannedSyringe.volume;
-    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-    let selectedVolume = defaultVolume;
-
-    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-    } else {
-      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
-    }
-    setManualSyringe({ type: scannedType, volume: selectedVolume });
-    setSyringeHint('Detected from image scan');
+    const parsedSyringe = parseScannedSyringe(scannedSyringe);
+    setManualSyringe(parsedSyringe.ok ? parsedSyringe.value : { type: 'Standard', volume: '', needsConfirmation: true });
+    setSyringeHint(parsedSyringe.ok ? 'Detected from image scan' : parsedSyringe.error);
 
     if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
       setSubstanceName(String(scannedVial.substance));

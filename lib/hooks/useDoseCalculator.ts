@@ -16,7 +16,7 @@ const MIN_DOSES_FOR_PROMOTION = 4;
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
-type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
+type Syringe = { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean };
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
@@ -45,7 +45,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [totalAmountUnit, setTotalAmountUnit] = useState<AmountUnit | null>('mg');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
-  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
+  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean }>({ type: 'Standard', volume: '3 ml' });
   const [doseValue, setDoseValue] = useState<number | null>(null);
   const [concentrationExact, setConcentrationExact] = useState<string | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
@@ -968,7 +968,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     solutionVolume,
     setSolutionVolume: (value: string) => { setSolutionVolume(value); setConcentrationExact(null); },
     manualSyringe,
-    setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string } | string) => {
+    setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean } | string) => {
       try {
         if (typeof syringe === 'string') {
           // Parse string format (for backward compatibility)
@@ -984,7 +984,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         lastActionTimestamp.current = Date.now();
       } catch (error) {
         console.error('[useDoseCalculator] Error in setManualSyringe:', error);
-        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
       }
     },
     doseValue,

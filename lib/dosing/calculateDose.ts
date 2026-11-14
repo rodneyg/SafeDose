@@ -10,6 +10,7 @@ export type SyringeVolume = InsulinSyringeVolume | StandardSyringeVolume;
 
 export interface ManualSyringe {
   type: 'Insulin' | 'Standard';
+  needsConfirmation?: boolean;
   volume: SyringeVolume; // Use the more specific type
 }
 
@@ -21,7 +22,7 @@ export interface CalculateDoseParams {
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   totalAmountUnit?: AmountUnit | null;
   totalAmount?: number | null;  // Total amount in vial
-  manualSyringe: ManualSyringe | { type: 'Insulin' | 'Standard'; volume: string } | null; // Allow string for initial state, but cast later
+  manualSyringe: ManualSyringe | { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean } | null; // Allow string for initial state, but cast later
   solutionVolume?: string | null; // Added solution volume for concentration calculation
 }
 
@@ -148,6 +149,7 @@ export function calculateDose({
     if (!exactConcentration) return fail('Concentration is invalid or missing.');
     if (concentrationExact) calculatedConcentration = exactConcentration.toNumber();
   }
+  if (manualSyringe?.needsConfirmation) return fail('Needs input: confirm the syringe type and volume from its label.');
   if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) return fail('Syringe details are missing.');
   let markingsString: string | undefined;
   if (manualSyringe.type === 'Insulin') markingsString = syringeOptions.Insulin[manualSyringe.volume as InsulinSyringeVolume];
