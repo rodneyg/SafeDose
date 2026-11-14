@@ -33,3 +33,10 @@ it('SAF-101 #4: planner handoff preserves exact target concentration', () => {
   expect(result.calculatedVolume).toBe(0.1);
   expect(result.recommendedMarking).toBe('10');
 });
+
+it('SAF-101 #5: exact marking and stored log contain 29 without float noise', () => {
+  const result = dosing.calculateDose({ ...vialProbe, doseValue: 0.29, unit: 'mg', concentration: 1, totalAmount: null });
+  expect(result.recommendedMarking).toBe('29');
+  expect(dosing.formatDrawToText({ recommendedMarking: result.recommendedMarking!, syringeType: 'Insulin' })).toBe('Draw to 29.00 units');
+  expect(dosing.calculateDose({ ...vialProbe, unit: 'mL', doseValue: 0.5, totalAmount: null, concentration: null }).recommendedMarking).toBe('50');
+});
