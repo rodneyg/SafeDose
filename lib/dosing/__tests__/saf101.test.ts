@@ -20,3 +20,8 @@ it('SAF-101 #2: planner prefill applies mcg vial unit', () => {
   expect(prefill.value.totalAmountUnit).toBe('mcg');
   expect(dosing.calculateDose({ ...vialProbe, ...prefill.value }).recommendedMarking).toBe('10');
 });
+
+it('SAF-101 #3: planner scan refuses concentration and parses thousands with units', () => {
+  expect(dosing.parsePlannerScan({ concentration: '5 mg/mL' }).ok).toBe(false);
+  expect(dosing.parsePlannerScan({ totalAmount: '1,000 mcg' })).toEqual({ ok: true, value: { amount: 1000, unit: 'mcg' } });
+});
