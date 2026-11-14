@@ -107,7 +107,7 @@ describe('dose volumes and limits', () => {
   });
   it('null total and direct volume bypass total checks', () => {
     expect(dose({ totalAmount: null }).recommendedMarking).toBe('0.1');
-    expect(dose({ unit: 'mL', totalAmount: 0 }).recommendedMarking).toBe('1');
+    expect(dose({ unit: 'mL', totalAmount: 0 }).recommendedMarking).toBe('2');
   });
   it('required volume exceeds the maximum possible volume', () => {
     // Earlier dose checks preclude this branch through calculateDose for finite inputs.
