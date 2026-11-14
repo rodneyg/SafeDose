@@ -94,3 +94,8 @@ Vercel environment variables were not changed. `OPENAI_API_KEY` is already prese
 
 Related, not changed here: `app.config.js` extra still lists Stripe secret key fields (`STRIPE_*_SECRET_KEY`). Those would also bake into the client if set at Expo export time.
 
+
+
+## Stripe secret keys removed from Expo extra
+
+`app.config.js` extra no longer includes `STRIPE_TEST_SECRET_KEY` or `STRIPE_LIVE_SECRET_KEY`. `lib/stripeConfig.js` (used by the client pricing pages) now exposes only publishable key, price ID, and mode. Server routes still read secrets from `process.env` via `lib/stripeConfig.server.js`. Vercel env was not changed; keep `STRIPE_*_SECRET_KEY` as server-side variables.

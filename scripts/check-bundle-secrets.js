@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = process.argv[2] || path.join(process.cwd(), 'dist');
-const KEY_RE = /sk-(?:proj|live|svcacct)-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}/;
+const KEY_RE = /sk-(?:proj|live|svcacct)-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}|sk_(?:test|live)_[A-Za-z0-9]+|rk_(?:test|live)_[A-Za-z0-9]+/;
 const CLIENT_RE = /dangerouslyAllowBrowser/;
 const EXTENSIONS = new Set(['.js', '.css', '.html', '.json', '.map', '.txt']);
 
@@ -47,4 +47,4 @@ if (keyHits.length || clientHits.length) {
   process.exit(1);
 }
 
-console.log(`[check-bundle-secrets] ok — scanned ${files.length} files in ${path.relative(process.cwd(), ROOT) || ROOT}; no sk- secrets or dangerouslyAllowBrowser`);
+console.log(`[check-bundle-secrets] ok — scanned ${files.length} files in ${path.relative(process.cwd(), ROOT) || ROOT}; no sk-/sk_ secrets or dangerouslyAllowBrowser`);
