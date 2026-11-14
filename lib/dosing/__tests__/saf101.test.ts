@@ -25,3 +25,11 @@ it('SAF-101 #3: planner scan refuses concentration and parses thousands with uni
   expect(dosing.parsePlannerScan({ concentration: '5 mg/mL' }).ok).toBe(false);
   expect(dosing.parsePlannerScan({ totalAmount: '1,000 mcg' })).toEqual({ ok: true, value: { amount: 1000, unit: 'mcg' } });
 });
+
+it('SAF-101 #4: planner handoff preserves exact target concentration', () => {
+  const plan = dosing.calculateReconstitution({ peptideAmountMg: 10, targetDoseMg: 0.3, preferredVolumeMl: 0.1 });
+  const handoff = dosing.getPlannerHandoff(plan);
+  const result = dosing.calculateDose({ ...vialProbe, doseValue: 300, totalAmount: 10, totalAmountUnit: 'mg', ...handoff });
+  expect(result.calculatedVolume).toBe(0.1);
+  expect(result.recommendedMarking).toBe('10');
+});
