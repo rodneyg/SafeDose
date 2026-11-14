@@ -43,6 +43,13 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [medicationInputType, setMedicationInputType] = useState<'concentration' | 'totalAmount' | null>('totalAmount');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
+  // A dose choice must never inherit an incompatible concentration default.
+  // Preserve compatible mass conversions, including mcg doses in mg/ml.
+  useEffect(() => {
+    setConcentrationUnit(current => validateUnitCompatibility(unit, current).isValid
+      ? current
+      : unit === 'units' ? 'units/ml' : unit === 'mcg' ? 'mcg/ml' : 'mg/ml');
+  }, [unit]);
   const [totalAmountUnit, setTotalAmountUnit] = useState<AmountUnit | null>('mg');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
@@ -89,24 +96,16 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [logLimitModalTriggerReason, setLogLimitModalTriggerReason] = useState<'log_limit' | 'power_user_promotion'>('log_limit');
 
   // Validate dose input
-  const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
+  const validateDoseInput = useCallback((doseValue: string, _doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
     const numericDose = parseDoseInput(doseValue);
     if (!doseValue || isNaN(numericDose) || numericDose <= 0) {
       setFormError('Please enter a valid dose amount greater than 0');
       return false;
     }
     
-    if (concentrationUnit && doseUnit) {
-      const compatibility = validateUnitCompatibility(doseUnit, concentrationUnit);
-      if (!compatibility.isValid) {
-        setFormError(compatibility.errorMessage || 'Incompatible units');
-        return false;
-      }
-    }
-    
     setFormError(null);
     return true;
-  }, [concentrationUnit]);
+  }, []);
 
   // Validate concentration input
   const validateConcentrationInput = useCallback((amount: string, concUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'): boolean => {
@@ -231,15 +230,6 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         return;
       }
 
-      // Ensure compatibility with any already selected concentration unit
-      if (concentrationUnit) {
-        const compatibility = validateUnitCompatibility(unit, concentrationUnit);
-        if (!compatibility.isValid) {
-          setFormError(compatibility.errorMessage || 'Incompatible units. Please select a different dose unit or concentration unit.');
-          return;
-        }
-      }
-      
       setDoseValue(numericDose);
       // Only reset medicationInputType if it's not already set to a meaningful value
       if (medicationInputType !== 'concentration' && medicationInputType !== 'totalAmount') {
@@ -252,7 +242,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleNextDose:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [dose, unit, concentrationUnit, setMedicationInputType]);
+  }, [dose, unit, medicationInputType]);
 
   const handleNextMedicationSource = useCallback(() => {
     if (medicationInputType === 'totalAmount') {
@@ -331,7 +321,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
           console.log('[useDoseCalculator] Total amount mode: Going to reconstitution step to capture solution volume');
         }
       } else {
-        setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'syringe');
+        setManualStep('syringe');
       }
       setFormError(null);
       lastActionTimestamp.current = Date.now();
@@ -543,7 +533,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         }
       }
       else if (manualStep === 'reconstitution') setManualStep('totalAmountInput');
-      else if (manualStep === 'syringe') setManualStep(medicationInputType === 'solution' ? 'reconstitution' : 'totalAmountInput');
+      else if (manualStep === 'syringe') setManualStep('totalAmountInput');
       else if (manualStep === 'preDoseConfirmation') setManualStep('syringe');
       else if (manualStep === 'finalResult') setManualStep('preDoseConfirmation');
 

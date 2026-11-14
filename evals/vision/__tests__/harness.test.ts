@@ -34,16 +34,20 @@ describe('vision eval full pipeline and gate', () => {
     expect(row.classification).toBe('refused-or-asked');
     expect(row.pipeline.got).toBeNull();
   });
-  it('a calculator error cannot conceal a wrong volume still displayed by confirmation UI', () => {
+  it('a blocked unsafe volume is cleared before confirmation UI', () => {
     const fixture = JSON.parse(JSON.stringify(fixtures[0])) as Fixture;
     (fixture.model_output as { vial: { concentration: string } }).vial.concentration = '0.5 mg/ml';
     const row = score(fixture);
     expect(row.pipeline.status).toBe('calculator-asked');
     expect(row.pipeline.got?.recommendedMarking).toBeNull();
-    expect(row.pipeline.got?.calculatedVolume).toBe(5);
+    expect(row.pipeline.got?.calculatedVolume).toBeNull();
+    expect(row.pipeline.got?.calculatedConcentration).toBeNull();
     expect(row.pipeline.got?.calculationError).toContain('VOLUME_THRESHOLD_ERROR');
-    expect(row.classification).toBe('wrong-number-shown');
-    expect(row.mismatches).toContain('dose.calculatedVolume');
+    expect(row.classification).toBe('refused-or-asked');
+    expect(row.mismatches).not.toContain('dose.calculatedVolume');
+  });
+  it('an error cannot conceal a wrong number if a numeric output regresses', () => {
+    expect(classifyResult({ refused: false, asked: true, expectedBehavior: 'read', mismatches: ['dose.calculatedVolume'], numberShown: true })).toBe('wrong-number-shown');
   });
   it('does not leak expected_behavior into model acceptance', () => {
     const fixture = JSON.parse(JSON.stringify(fixtures[0])) as Fixture;

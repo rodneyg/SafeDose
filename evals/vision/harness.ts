@@ -137,6 +137,7 @@ export function runDosePipeline(scan: ScanResult, scenario?: DoseScenario): Eval
     concentration, concentrationUnit,
     // The concentration prefill path does not pass an optional vial total into the app calculator.
     totalAmount: input.concentration === null ? input.totalAmount : null,
+    totalAmountUnit: fromTotal ? input.totalAmountUnit : null,
     solutionVolume: scenario.solutionVolume,
   });
   return { status: got.recommendedMarking === null ? 'calculator-asked' : 'number-shown', expected: scenario.expected, got };
@@ -161,8 +162,8 @@ export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
   const mapped = mapScanToDoseInputs(scan);
   const asked = !observed || mapped.status === 'needs-input' || (pipeline.status !== 'no-dose-scenario' && pipeline.status !== 'number-shown');
   const mismatches = fieldMismatches(expected, got);
-  // PreDoseConfirmationStep displays a finite calculatedVolume even alongside an error.
-  // A blocking calculator error must not hide an incorrect visible volume from the gate.
+  // Conservatively score any numeric output, even on an error, as potentially visible.
+  // SAF-103 clears rejected outputs; this still detects a regression in that contract.
   const volumeShown = pipeline.got?.calculatedVolume !== null && pipeline.got?.calculatedVolume !== undefined && Number.isFinite(pipeline.got.calculatedVolume);
   const markingShown = pipeline.got?.recommendedMarking !== null && pipeline.got?.recommendedMarking !== undefined;
   if (pipeline.got && pipeline.expected) {

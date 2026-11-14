@@ -2,7 +2,7 @@
 // In Vercel, go to Settings > Environment Variables, add STRIPE_LIVE_SECRET_KEY with your live secret key (sk_live_...), and redeploy the app.
 
 const Stripe = require('stripe');
-const stripeConfig = require('../lib/stripeConfig');
+const stripeConfig = require('../lib/stripeConfig.server.js');
 
 // Enhanced error checking and logging
 console.log('create-checkout-session.js Version: 1.6 (deployed with process.env fix)');

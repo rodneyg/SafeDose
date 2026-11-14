@@ -23,6 +23,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck:dosing
+      - run: npm run test:dose-flow
+      - run: npm run typecheck:api
       - name: Dosing tests and 100% coverage gate
         run: |
           echo "FC_SEED=$FC_SEED"

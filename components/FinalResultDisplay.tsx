@@ -224,7 +224,7 @@ export default function FinalResultDisplay({
   });
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {calculationError && !recommendedMarking && (
+      {calculationError && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
@@ -256,10 +256,10 @@ export default function FinalResultDisplay({
           </Text>
         </View>
       )}
-      {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+      {!calculationError && recommendedMarking && (
+        <View style={[styles.instructionCard, { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError ? '⚠️ Calculation Result' : '✅ Calculation Result'}
+            ✅ Calculation Result
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
@@ -300,7 +300,7 @@ export default function FinalResultDisplay({
       )}
       
       {/* Calculation Breakdown Toggle - only show when we have valid calculation results */}
-      {(recommendedMarking || (!calculationError && calculatedVolume !== null)) && (
+      {(!calculationError && (recommendedMarking || calculatedVolume !== null)) && (
         <View style={styles.calculationBreakdownContainer}>
           <TouchableOpacity 
             style={styles.calculationToggleButton}
