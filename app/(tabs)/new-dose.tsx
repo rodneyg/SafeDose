@@ -1,4 +1,4 @@
-import { parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -523,20 +523,14 @@ export default function NewDoseScreen() {
     const vialTotalAmount = scannedVial.totalAmount;
 
     if (vialConcentration && vialConcentration !== 'unreadable') {
-      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-      if (concMatch) {
-        setConcentrationAmount(concMatch[1]);
-        const detectedUnit = concMatch[2].toLowerCase();
-        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-      } else {
-        setConcentrationAmount(String(vialConcentration));
-        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-      }
+      const parsed = parseScannedConcentration(String(vialConcentration));
+      setConcentrationAmount(parsed.ok ? String(parsed.value.amount) : '');
+      setConcentration(null);
+      setTotalAmount('');
+      doseCalculator.setTotalAmountUnit(null);
+      if (parsed.ok) setConcentrationUnit(parsed.value.unit);
       setMedicationInputType('concentration');
-      setConcentrationHint('Detected from vial scan');
+      setConcentrationHint(parsed.ok ? 'Detected from vial scan' : parsed.error);
       setTotalAmountHint(null);
     } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
       const amount = parseScannedAmount(String(vialTotalAmount));
@@ -549,6 +543,10 @@ export default function NewDoseScreen() {
       setConcentrationHint(null);
     } else {
       console.log('[Process] No reliable concentration or total amount detected');
+      setConcentration(null);
+      setConcentrationAmount('');
+      setTotalAmount('');
+      doseCalculator.setTotalAmountUnit(null);
       setMedicationInputType(null);
       setConcentrationHint('No concentration detected, please enter manually');
       setTotalAmountHint('No total amount detected, please enter manually');

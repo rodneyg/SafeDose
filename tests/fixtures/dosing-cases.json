@@ -1387,5 +1387,25 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06",
+    "description": "5 mg / mL normalized before 0.5 mg dose calculation",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mg",
+      "concentration": 5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]

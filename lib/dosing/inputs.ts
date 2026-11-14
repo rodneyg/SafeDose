@@ -49,3 +49,14 @@ export function parsePlannerScan(vial: { totalAmount?: string | null; concentrat
   }
   return { ok: true, value: { amount: amount.value.amount, unit: amount.value.unit } };
 }
+
+export function parseScannedConcentration(text: string): InputResult<{ amount: number; unit: ConcentrationUnit }> {
+  const normalized = text.trim().replace(/\s*\/\s*/g, '/');
+  const match = normalized.match(/^([+\-\d.,]+)\s*(.+)\/ml$/i);
+  const amount = match ? parseInputNumber(match[1]) : NaN;
+  const numerator = match ? normalizeAmountUnit(match[2]) : null;
+  if (!Number.isFinite(amount) || amount <= 0 || !numerator) {
+    return { ok: false, error: 'Needs input: enter a valid concentration and select mg/mL, mcg/mL, or units/mL. Unknown units are not supported.' };
+  }
+  return { ok: true, value: { amount, unit: `${numerator}/ml` } };
+}
