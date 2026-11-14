@@ -1,3 +1,4 @@
+import { formatDoseNumber } from '../lib/dosing';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { AlertTriangle, CheckCircle, Info } from 'lucide-react-native';
@@ -11,6 +12,7 @@ interface PreDoseConfirmationStepProps {
   calculatedVolume: number | null;
   calculatedConcentration?: number | null;
   calculationError: string | null;
+  guidance?: string | null;
 }
 
 export default function PreDoseConfirmationStep({
@@ -22,8 +24,9 @@ export default function PreDoseConfirmationStep({
   calculatedVolume,
   calculatedConcentration,
   calculationError,
+  guidance,
 }: PreDoseConfirmationStepProps) {
-  const hasVolumeWarning = calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
+  const hasVolumeWarning = !calculationError && calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
   // Determine which concentration to display
@@ -32,7 +35,7 @@ export default function PreDoseConfirmationStep({
   const displayConcentration = hasManualConcentration 
     ? `${concentrationAmount} ${concentrationUnit}`
     : hasCalculatedConcentration 
-    ? `${calculatedConcentration.toFixed(2)} ${concentrationUnit}`
+    ? `${formatDoseNumber(calculatedConcentration, 3)} ${concentrationUnit}`
     : null;
 
   return (
@@ -84,11 +87,11 @@ export default function PreDoseConfirmationStep({
             </View>
           )}
 
-          {calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && (
+          {!hasError && calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Volume to Draw:</Text>
               <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
-                {calculatedVolume.toFixed(2)} mL
+                {formatDoseNumber(calculatedVolume, 3)} mL
                 {hasVolumeWarning && ' ⚠️'}
               </Text>
             </View>
@@ -103,6 +106,8 @@ export default function PreDoseConfirmationStep({
             </Text>
           </View>
         )}
+
+        {guidance && !hasError && <Text style={styles.subtitle}>{guidance}</Text>}
 
         {hasError && (
           <View style={styles.errorContainer}>

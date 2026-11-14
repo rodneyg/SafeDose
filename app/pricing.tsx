@@ -13,7 +13,7 @@ const stripePromise = stripeConfig.publishableKey
   : null;
 
 // Base URL for your API
-const API_BASE_URL = "https://app.safedoseai.com";
+const API_BASE_URL = "https://safe-dose.vercel.app";
 
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');

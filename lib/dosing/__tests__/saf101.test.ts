@@ -1,0 +1,73 @@
+import * as dosing from '..';
+import { CalculateDoseParams } from '..';
+
+const syringe = { type: 'Insulin' as const, volume: '1 ml' };
+const vialProbe = {
+  doseValue: 250, unit: 'mcg', concentration: null, concentrationUnit: 'mg/ml',
+  totalAmount: 5000, totalAmountUnit: 'mcg', solutionVolume: '2', manualSyringe: syringe,
+} as CalculateDoseParams;
+
+it('SAF-101 #1: scanned mcg vial retains its unit through concentration calculation', () => {
+  const result = dosing.calculateDose(vialProbe);
+  expect(result.calculatedVolume).toBe(0.1);
+  expect(result.recommendedMarking).toBe('10');
+});
+
+it('SAF-101 #2: planner prefill applies mcg vial unit', () => {
+  const prefill = dosing.parsePlannerPrefill({ prefillTotalAmount: '5000', prefillTotalUnit: 'mcg', prefillSolutionVolume: '2' });
+  expect(prefill.ok).toBe(true);
+  if (!prefill.ok) throw new Error(prefill.error);
+  expect(prefill.value.totalAmountUnit).toBe('mcg');
+  expect(dosing.calculateDose({ ...vialProbe, ...prefill.value }).recommendedMarking).toBe('10');
+});
+
+it('SAF-101 #3: planner scan refuses concentration and parses thousands with units', () => {
+  expect(dosing.parsePlannerScan({ concentration: '5 mg/mL' }).ok).toBe(false);
+  expect(dosing.parsePlannerScan({ totalAmount: '1,000 mcg' })).toEqual({ ok: true, value: { amount: 1000, unit: 'mcg' } });
+});
+
+it('SAF-101 #4: planner handoff preserves exact target concentration', () => {
+  const plan = dosing.calculateReconstitution({ peptideAmountMg: 10, targetDoseMg: 0.3, preferredVolumeMl: 0.1 });
+  const handoff = dosing.getPlannerHandoff(plan);
+  const result = dosing.calculateDose({ ...vialProbe, doseValue: 300, totalAmount: 10, totalAmountUnit: 'mg', ...handoff });
+  expect(result.calculatedVolume).toBe(0.1);
+  expect(result.recommendedMarking).toBe('10');
+});
+
+it('SAF-101 #5: exact marking and stored log contain 29 without float noise', () => {
+  const result = dosing.calculateDose({ ...vialProbe, doseValue: 0.29, unit: 'mg', concentration: 1, totalAmount: null });
+  expect(result.recommendedMarking).toBe('29');
+  expect(dosing.formatDrawToText({ recommendedMarking: result.recommendedMarking!, syringeType: 'Insulin' })).toBe('Draw to 29.00 units');
+  expect(dosing.calculateDose({ ...vialProbe, unit: 'mL', doseValue: 0.5, totalAmount: null, concentration: null }).recommendedMarking).toBe('50');
+});
+
+it('SAF-101 #6: normalize concentration units and refuse unknown scan units', () => {
+  expect(dosing.parseScannedConcentration('5 mg / mL')).toEqual({ ok: true, value: { amount: 5, unit: 'mg/ml' } });
+  expect(dosing.parseScannedConcentration('5 IU/mL').ok).toBe(false);
+});
+
+it('SAF-101 #7: unreadable syringe details require selection', () => {
+  expect(dosing.parseScannedSyringe({ type: 'Insulin', volume: 'unreadable' }).ok).toBe(false);
+  expect(dosing.parseScannedSyringe({ type: 'unknown', volume: '3 mL' }).ok).toBe(false);
+  expect(dosing.parseScannedSyringe({ type: 'Standard', volume: '3 mL' })).toEqual({ ok: true, value: { type: 'Standard', volume: '3 ml' } });
+});
+
+it('SAF-101 #8: U-40 syringe uses 40 scale units per mL', () => {
+  const result = dosing.calculateDose({ ...vialProbe, manualSyringe: { ...syringe, insulinScale: 'U-40' } } as CalculateDoseParams);
+  expect(result.recommendedMarking).toBe('4');
+});
+
+it('SAF-101 #9: larger syringes explain the 2 mL injection safety ceiling', () => {
+  for (const volume of ['3 ml', '5 ml']) {
+    const result = dosing.calculateDose({ ...vialProbe, unit: 'mL', doseValue: 2.5, manualSyringe: { type: 'Standard', volume } });
+    expect(result.calculationError).toContain('2 mL per-injection safety limit');
+    expect(result.recommendedMarking).toBeNull();
+  }
+});
+
+it('SAF-101 #10: between-mark advice is guidance, not calculation failure', () => {
+  const result = dosing.calculateDose({ ...vialProbe, unit: 'mg', doseValue: 0.25, concentration: 1, totalAmount: null, manualSyringe: { type: 'Standard', volume: '1 ml' } });
+  expect(result.calculationError).toBeNull();
+  expect(result.guidance).toBe('Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks.');
+  expect(result.recommendedMarking).toBe('0.25');
+});

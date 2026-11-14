@@ -1,14 +1,15 @@
-/** Preserve parseFloat's existing acceptance of numeric prefixes. */
+import { Exact } from './exact';
+import { parseInputNumber } from './inputs';
 export function parseDoseInput(value: string): number {
-  return parseFloat(value);
+  return parseInputNumber(value);
 }
 
 export function formatDoseNumber(value: number, digits: number): string {
-  return value.toFixed(digits);
+  return new Exact(value).fixed(digits);
 }
 
 export function concentrationFromDose(dose: number, volume: number): number {
-  return dose / volume;
+  return new Exact(dose).div(volume).toNumber();
 }
 
 export function formatDrawToText(log: { recommendedMarking?: string; syringeType?: 'Insulin' | 'Standard' }): string | null {
@@ -16,7 +17,7 @@ export function formatDrawToText(log: { recommendedMarking?: string; syringeType
     return null;
   }
   const unit = log.syringeType === 'Insulin' ? 'units' : 'ml';
-  const value = parseDoseInput(log.recommendedMarking).toFixed(2);
+  const value = new Exact(log.recommendedMarking).fixed(2);
   return `Draw to ${value} ${unit}`;
 }
 
@@ -27,10 +28,10 @@ export function formatConcentration(doseValue: number, unit: string, calculatedV
   if (!calculatedVolume || calculatedVolume <= 0) {
     return null;
   }
-  const concentration = concentrationFromDose(doseValue, calculatedVolume);
+  const concentration = new Exact(doseValue).div(calculatedVolume);
   const concentrationUnit = unit === 'units' ? 'units/mL' : `${unit}/mL`;
-  const formattedConcentration = concentration < 1
-    ? concentration.toFixed(3).replace(/\.?0+$/, '')
-    : concentration.toFixed(1).replace(/\.?0+$/, '');
+  const formattedConcentration = concentration.compare(1) < 0
+    ? concentration.fixed(3).replace(/\.?0+$/, '')
+    : concentration.fixed(1).replace(/\.?0+$/, '');
   return `${formattedConcentration} ${concentrationUnit}`;
 }

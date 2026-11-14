@@ -1,5 +1,7 @@
 # SafeDose
 
+[![CI](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml)
+
 **A verification and calculation tool for administering injectable medications prescribed by your healthcare provider.**  
 Created by **SafeLab**, SafeDose helps you verify medication materials, perform unit conversion calculations, and reduce math errors when executing your provider's prescription.
 
@@ -44,7 +46,7 @@ The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time
 
 ## 🚀 Hosted Version
 
-A hosted version of SafeDose: https://app.safedoseai.com/
+A hosted version of SafeDose: https://safe-dose.vercel.app/
 
 ---
 
