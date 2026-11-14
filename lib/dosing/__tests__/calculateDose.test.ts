@@ -85,7 +85,7 @@ describe('dose volumes and limits', () => {
     expect(dose({ unit, concentrationUnit, doseValue, concentration }).calculatedVolume).toBe(volume);
   });
   it.each([0.004, 2.001])('outside volume threshold: %s', doseValue => {
-    expect(dose({ unit: 'mL', doseValue }).calculationError).toBe('VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.');
+    expect(dose({ unit: 'mL', doseValue }).calculationError).toContain('VOLUME_THRESHOLD_ERROR:');
   });
   it.each([0.005, 2])('inclusive volume threshold: %s', doseValue => {
     expect(dose({ unit: 'mL', doseValue }).calculatedVolume).toBe(doseValue);

@@ -421,7 +421,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       if (result.calculationError && result.calculationError.startsWith("VOLUME_THRESHOLD_ERROR:")) {
         setShowVolumeErrorModal(true);
         setVolumeErrorValue(result.calculatedVolume);
-        setCalculationError(null); // Clear the generic error
+        setCalculationError(result.calculationError); // Keep blocking state after the modal closes
         // Still set other results so they are available if modal is cancelled
         setCalculatedVolume(result.calculatedVolume);
         setRecommendedMarking(result.recommendedMarking);

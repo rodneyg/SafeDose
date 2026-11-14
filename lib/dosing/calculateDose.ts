@@ -3,6 +3,8 @@ import { AmountUnit, parseInputNumber } from './inputs';
 import { getSyringeMarkings, SyringeSelection, syringeOptions } from './syringes';
 import { getMarkingGuidance } from './markings';
 
+export const MAX_INJECTION_VOLUME_ML = 2;
+
 // Define specific volume types for better type safety
 export type InsulinSyringeVolume = keyof typeof syringeOptions['Insulin'];
 export type StandardSyringeVolume = keyof typeof syringeOptions['Standard'];
@@ -166,7 +168,8 @@ export function calculateDose({
   else if (unit === 'mg' && concentrationUnit === 'mcg/ml') convertedDose = convertedDose.mul(1000);
   const volume = unit === 'mL' ? new Exact(doseValue) : convertedDose.div(exactConcentration!);
   calculatedVolume = volume.toNumber();
-  if (volume.compare(0.005) < 0 || volume.compare(2) > 0) return fail('VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.');
+  if (volume.compare(MAX_INJECTION_VOLUME_ML) > 0) return fail(`VOLUME_THRESHOLD_ERROR:The ${MAX_INJECTION_VOLUME_ML} mL per-injection safety limit applies, including with 3 mL and 5 mL syringes. Please verify the concentration and protocol.`);
+  if (volume.compare(0.005) < 0) return fail('VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.');
   if (manualSyringe.type === 'Insulin' && volume.compare(1) > 0) {
     return fail(`Required volume (${volume.fixed(2)} ml) is too large for practical use with an insulin syringe. Consider using a standard syringe or checking your concentration calculation.`);
   }

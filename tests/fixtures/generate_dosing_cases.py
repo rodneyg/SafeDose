@@ -48,5 +48,8 @@ add('saf101-07','Confirmed Standard 3 mL syringe after unreadable scan',0.5,'mL'
 add('saf101-08','250 mcg from 5000 mcg in 2 mL on U-40: 4 scale units',250,'mcg',None,'mcg/ml',total=5000,solution=2)
 cases[-1]['inputs']['manualSyringe']['insulinScale']='U-40'
 cases[-1]['expected']['marking']='4' # 0.1 mL * 40 units/mL
+add('saf101-09','2.5 mL on 5 mL syringe is blocked by unchanged 2 mL policy',2.5,'mL',1,'mg/ml','Standard')
+cases[-1]['inputs']['manualSyringe']['volume']='5 ml'
+cases[-1]['expected'].update(marking=None,error_contains='2 mL per-injection safety limit')
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

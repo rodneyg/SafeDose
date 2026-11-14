@@ -1451,5 +1451,26 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-09",
+    "description": "2.5 mL on 5 mL syringe is blocked by unchanged 2 mL policy",
+    "inputs": {
+      "doseValue": 2.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "5 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 2.5,
+      "marking": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]
