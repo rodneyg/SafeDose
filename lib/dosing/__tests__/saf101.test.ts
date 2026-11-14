@@ -56,3 +56,11 @@ it('SAF-101 #8: U-40 syringe uses 40 scale units per mL', () => {
   const result = dosing.calculateDose({ ...vialProbe, manualSyringe: { ...syringe, insulinScale: 'U-40' } } as CalculateDoseParams);
   expect(result.recommendedMarking).toBe('4');
 });
+
+it('SAF-101 #9: larger syringes explain the 2 mL injection safety ceiling', () => {
+  for (const volume of ['3 ml', '5 ml']) {
+    const result = dosing.calculateDose({ ...vialProbe, unit: 'mL', doseValue: 2.5, manualSyringe: { type: 'Standard', volume } });
+    expect(result.calculationError).toContain('2 mL per-injection safety limit');
+    expect(result.recommendedMarking).toBeNull();
+  }
+});
