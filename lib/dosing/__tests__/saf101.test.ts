@@ -51,3 +51,8 @@ it('SAF-101 #7: unreadable syringe details require selection', () => {
   expect(dosing.parseScannedSyringe({ type: 'unknown', volume: '3 mL' }).ok).toBe(false);
   expect(dosing.parseScannedSyringe({ type: 'Standard', volume: '3 mL' })).toEqual({ ok: true, value: { type: 'Standard', volume: '3 ml' } });
 });
+
+it('SAF-101 #8: U-40 syringe uses 40 scale units per mL', () => {
+  const result = dosing.calculateDose({ ...vialProbe, manualSyringe: { ...syringe, insulinScale: 'U-40' } } as CalculateDoseParams);
+  expect(result.recommendedMarking).toBe('4');
+});
