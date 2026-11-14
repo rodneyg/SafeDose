@@ -64,3 +64,10 @@ it('SAF-101 #9: larger syringes explain the 2 mL injection safety ceiling', () =
     expect(result.recommendedMarking).toBeNull();
   }
 });
+
+it('SAF-101 #10: between-mark advice is guidance, not calculation failure', () => {
+  const result = dosing.calculateDose({ ...vialProbe, unit: 'mg', doseValue: 0.25, concentration: 1, totalAmount: null, manualSyringe: { type: 'Standard', volume: '1 ml' } });
+  expect(result.calculationError).toBeNull();
+  expect(result.guidance).toBe('Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks.');
+  expect(result.recommendedMarking).toBe('0.25');
+});
