@@ -1,4 +1,5 @@
-import { parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
+import { SyringeSelection } from '../lib/dosing';
+import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -28,17 +29,20 @@ interface ManualEntryScreenProps {
   setConcentrationAmount: (value: string) => void;
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   setConcentrationUnit: (value: 'mg/ml' | 'mcg/ml' | 'units/ml') => void;
+  totalAmountUnit: AmountUnit | null;
+  setTotalAmountUnit: (value: AmountUnit) => void;
   totalAmount: string;
   setTotalAmount: (value: string) => void;
   solutionVolume: string;
   setSolutionVolume: (value: string) => void;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
-  setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string }) => void;
+  manualSyringe: SyringeSelection;
+  setManualSyringe: (value: SyringeSelection) => void;
   doseValue: number | null;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration
   recommendedMarking: string | null;
   calculationError: string | null;
+  guidance?: string | null;
   formError: string | null;
   substanceNameHint: string | null;
   setSubstanceNameHint: (value: string | null) => void;
@@ -82,6 +86,8 @@ export default function ManualEntryScreen({
   setConcentrationUnit,
   totalAmount,
   setTotalAmount,
+  totalAmountUnit,
+  setTotalAmountUnit,
   solutionVolume,
   setSolutionVolume,
   manualSyringe,
@@ -91,6 +97,7 @@ export default function ManualEntryScreen({
   calculatedConcentration,
   recommendedMarking,
   calculationError,
+  guidance,
   formError,
   substanceNameHint,
   setSubstanceNameHint,
@@ -179,8 +186,8 @@ export default function ManualEntryScreen({
   };
 
   const isPreDoseConfirmationStepValid = (): boolean => {
-    // Pre-dose confirmation is valid if calculations are done (even with errors)
-    return calculatedVolume !== null;
+    // Blocking errors prevent progression; guidance does not.
+    return calculatedVolume !== null && !calculationError && recommendedMarking !== null;
   };
 
   // Function to check if current step is valid
@@ -326,7 +333,8 @@ export default function ManualEntryScreen({
           setTotalAmount={setTotalAmount}
           setTotalAmountHint={setTotalAmountHint}
           totalAmountHint={totalAmountHint}
-          unit={unit}
+          unit={totalAmountUnit}
+          setUnit={setTotalAmountUnit}
           dose={dose}
         />
       );
@@ -367,6 +375,7 @@ export default function ManualEntryScreen({
           unit={unit}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          guidance={guidance}
           calculationError={calculationError}
         />
       );
@@ -380,6 +389,7 @@ export default function ManualEntryScreen({
         
       currentStepComponent = (
         <FinalResultDisplay
+          guidance={guidance}
           calculationError={calculationError}
           recommendedMarking={recommendedMarking}
           doseValue={doseValue}

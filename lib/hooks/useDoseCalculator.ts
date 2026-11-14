@@ -1,4 +1,5 @@
-import { calculateDose, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
+import { SyringeSelection } from '../dosing';
+import { AmountUnit, calculateDose, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { FeedbackContextType } from '../../types/feedback';
 import { InjectionSite } from '../../types/doseLog';
@@ -16,7 +17,7 @@ const MIN_DOSES_FOR_PROMOTION = 4;
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
-type Syringe = { type: 'Insulin' | 'Standard'; volume: string };
+type Syringe = SyringeSelection;
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
@@ -42,14 +43,18 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [medicationInputType, setMedicationInputType] = useState<'concentration' | 'totalAmount' | null>('totalAmount');
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
+  const [totalAmountUnit, setTotalAmountUnit] = useState<AmountUnit | null>('mg');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
-  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string }>({ type: 'Standard', volume: '3 ml' });
+  const [manualSyringe, setManualSyringe] = useState<SyringeSelection>({ type: 'Standard', volume: '3 ml' });
   const [doseValue, setDoseValue] = useState<number | null>(null);
+  const [concentrationExact, setConcentrationExact] = useState<string | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
   const [calculatedVolume, setCalculatedVolume] = useState<number | null>(null);
   const [calculatedConcentration, setCalculatedConcentration] = useState<number | null>(null);
   const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [needsConcentrationUnit, setNeedsConcentrationUnit] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [showVolumeErrorModal, setShowVolumeErrorModal] = useState<boolean>(false);
@@ -132,15 +137,19 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setMedicationInputType('totalAmount');
     setConcentrationAmount('');
     setConcentrationUnit('mg/ml');
+    setNeedsConcentrationUnit(false);
     setTotalAmount('');
+    setTotalAmountUnit('mg');
     setSolutionVolume('');
     setManualSyringe({ type: 'Standard', volume: '3 ml' });
     setDoseValue(null);
     setConcentration(null);
+    setConcentrationExact(null);
     setCalculatedVolume(null);
     setCalculatedConcentration(null);
     setRecommendedMarking(null);
     setCalculationError(null);
+    setGuidance(null);
     setFormError(null);
     // Reset new state variables
     setShowVolumeErrorModal(false);
@@ -267,7 +276,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         return;
       }
       
-      if (!concentrationUnit) {
+      if (!concentrationUnit || needsConcentrationUnit) {
         setFormError('Please select a concentration unit');
         return;
       }
@@ -295,7 +304,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleNextConcentrationInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [concentrationAmount, concentrationUnit, unit, totalAmount, totalAmountHint]);
+  }, [concentrationAmount, concentrationUnit, needsConcentrationUnit, unit, totalAmount, totalAmountHint]);
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {
@@ -309,6 +318,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         setFormError('Please enter a total amount greater than 0');
         return;
       }
+
+      if (!totalAmountUnit) { setFormError('Needs input: select the total amount unit.'); return; }
 
       // Check if solution volume is already prefilled (e.g., from reconstitution planner)
       if (medicationInputType === 'totalAmount') {
@@ -328,7 +339,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleNextTotalAmountInput:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [totalAmount, medicationInputType, solutionVolume]);
+  }, [totalAmount, totalAmountUnit, medicationInputType, solutionVolume]);
 
   const handleNextReconstitution = useCallback(() => {
     try {
@@ -355,6 +366,14 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const handleCalculateFinal = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleCalculateFinal called');
+      setGuidance(null);
+      setCalculatedVolume(null);
+      setRecommendedMarking(null);
+      if (needsConcentrationUnit && medicationInputType === 'concentration') {
+        setCalculationError('Needs input: select the concentration unit.');
+        setManualStep('preDoseConfirmation');
+        return;
+      }
       
       // Validate required inputs before calculation
       if (!doseValue || doseValue <= 0) {
@@ -396,14 +415,17 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
       const result = calculateDose({
         doseValue,
-        concentration,
+        concentration: medicationInputType === 'totalAmount' ? null : concentration,
+        concentrationExact,
         unit,
         concentrationUnit,
         totalAmount: totalAmountValue,
+        totalAmountUnit,
         manualSyringe: syringeObj,
         solutionVolume, // Add solutionVolume for concentration calculation
       });
 
+      setGuidance(result.guidance || null);
       console.log('[useDoseCalculator] Calculation result:', {
         calculatedVolume: result.calculatedVolume,
         recommendedMarking: result.recommendedMarking,
@@ -414,7 +436,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       if (result.calculationError && result.calculationError.startsWith("VOLUME_THRESHOLD_ERROR:")) {
         setShowVolumeErrorModal(true);
         setVolumeErrorValue(result.calculatedVolume);
-        setCalculationError(null); // Clear the generic error
+        setCalculationError(result.calculationError); // Keep blocking state after the modal closes
         // Still set other results so they are available if modal is cancelled
         setCalculatedVolume(result.calculatedVolume);
         setRecommendedMarking(result.recommendedMarking);
@@ -466,11 +488,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setManualStep('preDoseConfirmation');
       console.log('[useDoseCalculator] Set manualStep to preDoseConfirmation (after error)');
     }
-  }, [doseValue, concentration, manualSyringe, unit, totalAmount, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
+  }, [doseValue, concentration, concentrationExact, needsConcentrationUnit, manualSyringe, unit, totalAmount, totalAmountUnit, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
 
   const handleNextPreDoseConfirmation = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleNextPreDoseConfirmation called');
+      if (calculationError || !recommendedMarking) return;
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
       lastActionTimestamp.current = Date.now();
@@ -478,7 +501,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleNextPreDoseConfirmation:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, []);
+  }, [calculationError, recommendedMarking]);
 
   const handleCloseVolumeErrorModal = useCallback(() => {
     setShowVolumeErrorModal(false);
@@ -488,13 +511,17 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const handleReEnterVialData = useCallback(() => {
     setShowVolumeErrorModal(false);
     setConcentrationAmount('');
-    setConcentrationUnit('mg/ml'); // Or your default
+    setConcentrationUnit('mg/ml');
+    setNeedsConcentrationUnit(false); // Or your default
     setTotalAmount('');
+    setTotalAmountUnit('mg');
     setSolutionVolume('');
     setConcentration(null);
+    setConcentrationExact(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
+    setGuidance(null);
     setFormError(null);
     // also clear doseValue as it might be related to the vial data error
     // setDose(''); // Optional: decide if dose itself should be cleared
@@ -561,6 +588,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         calculatedVolume,
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
+        insulinScale: manualSyringe.insulinScale,
+        totalAmountUnit: totalAmountUnit || undefined,
+        concentrationExact: concentrationExact || undefined,
         injectionSite: selectedInjectionSite,
         // Add original user inputs for "Use Last Dose" feature
         medicationInputType,
@@ -573,7 +603,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     
     // Always go to injection site selection first
     setScreenStep('injectionSiteSelection');
-  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking]);
+  }, [trackInteraction, substanceName, doseValue, unit, calculatedVolume, manualSyringe, recommendedMarking, selectedInjectionSite, lastActionType, pmfSurvey, whyAreYouHereTracking, medicationInputType, concentrationAmount, concentrationUnit, totalAmount, totalAmountUnit, concentrationExact, solutionVolume]);
 
   // Handle injection site selection completion
   const handleInjectionSiteSelected = useCallback(async () => {
@@ -950,15 +980,18 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     medicationInputType,
     setMedicationInputType,
     concentrationAmount,
-    setConcentrationAmount,
+    setConcentrationAmount: (value: string) => { setConcentrationAmount(value); setConcentrationExact(null); },
     concentrationUnit,
-    setConcentrationUnit,
+    setConcentrationUnit: (value: typeof concentrationUnit) => { setConcentrationUnit(value); setConcentrationExact(null); setNeedsConcentrationUnit(false); },
+    setNeedsConcentrationUnit,
     totalAmount,
-    setTotalAmount,
+    setTotalAmount: (value: string) => { setTotalAmount(value); setConcentrationExact(null); },
+    totalAmountUnit,
+    setTotalAmountUnit: (value: AmountUnit | null) => { setTotalAmountUnit(value); setConcentrationExact(null); },
     solutionVolume,
-    setSolutionVolume,
+    setSolutionVolume: (value: string) => { setSolutionVolume(value); setConcentrationExact(null); },
     manualSyringe,
-    setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string } | string) => {
+    setManualSyringe: (syringe: SyringeSelection | string) => {
       try {
         if (typeof syringe === 'string') {
           // Parse string format (for backward compatibility)
@@ -974,19 +1007,22 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         lastActionTimestamp.current = Date.now();
       } catch (error) {
         console.error('[useDoseCalculator] Error in setManualSyringe:', error);
-        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
       }
     },
     doseValue,
     setDoseValue,
     concentration,
     setConcentration,
+    setConcentrationExact,
     calculatedVolume,
     setCalculatedVolume,
     calculatedConcentration,
     setCalculatedConcentration,
     recommendedMarking,
     setRecommendedMarking,
+    guidance,
+    setGuidance,
     calculationError,
     setCalculationError,
     formError,

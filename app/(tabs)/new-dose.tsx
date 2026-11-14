@@ -1,4 +1,4 @@
-import { concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parseScannedSyringe, parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -109,19 +109,24 @@ export default function NewDoseScreen() {
     const prefillDoseUnit = searchParams.prefillDoseUnit as string;
     
     // Reset the applied flag when params change
-    if (!prefillTotalAmount || !prefillTotalUnit) {
+    if (!prefillTotalAmount) {
       prefillAppliedRef.current = false;
     }
     
     // Only apply prefill if we have total amount data, haven't applied it yet, and doseCalculator is on the intro screen
-    if (prefillTotalAmount && prefillTotalUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+    if (prefillTotalAmount && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
       console.log('[NewDoseScreen] Applying prefilled total amount data from reconstitution planner');
       prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled total amount data (not concentration)
-      doseCalculator.setTotalAmount(prefillTotalAmount);
+      const prefill = parsePlannerPrefill({ prefillTotalAmount, prefillTotalUnit, prefillSolutionVolume, prefillConcentrationExact: searchParams.prefillConcentrationExact as string });
+      doseCalculator.setTotalAmountUnit(prefill.ok ? prefill.value.totalAmountUnit : null);
+      doseCalculator.setTotalAmount(prefill.ok ? String(prefill.value.totalAmount) : '');
+      doseCalculator.setConcentration(null);
+      doseCalculator.setConcentrationAmount('');
+      if (prefill.ok) doseCalculator.setConcentrationUnit(prefill.value.concentrationUnit);
       doseCalculator.setMedicationInputType('totalAmount');
-      doseCalculator.setTotalAmountHint('From reconstitution planner');
+      doseCalculator.setTotalAmountHint(prefill.ok ? 'From reconstitution planner' : prefill.error);
       
       // Prefill solution volume if provided
       if (prefillSolutionVolume) {
@@ -129,6 +134,8 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Prefilled solution volume:', prefillSolutionVolume);
       }
       
+      doseCalculator.setConcentrationExact(prefill.ok ? prefill.value.concentrationExact || null : null);
+
       // Prefill dose if provided
       if (prefillDose && prefillDoseUnit) {
         doseCalculator.setDose(prefillDose);
@@ -142,7 +149,7 @@ export default function NewDoseScreen() {
       
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
-  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, searchParams.prefillConcentrationExact, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
@@ -487,24 +494,17 @@ export default function NewDoseScreen() {
 
   // Function to apply scan results to form state
   const applyScanResults = (result: any) => {
+    setSolutionVolume('');
+    setTotalAmount('');
+    doseCalculator.setTotalAmountUnit(null);
+    setConcentration(null);
+    setConcentrationAmount('');
     const scannedSyringe = result.syringe || {};
     const scannedVial = result.vial || {};
 
-    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-    const scannedVolume = scannedSyringe.volume;
-    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-    let selectedVolume = defaultVolume;
-
-    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-    } else {
-      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
-    }
-    setManualSyringe({ type: scannedType, volume: selectedVolume });
-    setSyringeHint('Detected from image scan');
+    const parsedSyringe = parseScannedSyringe(scannedSyringe, manualSyringe.insulinScale || 'U-100');
+    setManualSyringe(parsedSyringe.ok ? parsedSyringe.value : { type: 'Standard', volume: '', needsConfirmation: true, needsScaleConfirmation: true });
+    setSyringeHint(parsedSyringe.ok ? 'Detected from image scan' : parsedSyringe.error);
 
     if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
       setSubstanceName(String(scannedVial.substance));
@@ -516,35 +516,31 @@ export default function NewDoseScreen() {
     const vialTotalAmount = scannedVial.totalAmount;
 
     if (vialConcentration && vialConcentration !== 'unreadable') {
-      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-      if (concMatch) {
-        setConcentrationAmount(concMatch[1]);
-        const detectedUnit = concMatch[2].toLowerCase();
-        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-      } else {
-        setConcentrationAmount(String(vialConcentration));
-        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-      }
+      const parsed = parseScannedConcentration(String(vialConcentration));
+      setConcentrationAmount(parsed.ok ? String(parsed.value.amount) : '');
+      setConcentration(null);
+      setTotalAmount('');
+      doseCalculator.setTotalAmountUnit(null);
+      if (parsed.ok) setConcentrationUnit(parsed.value.unit);
+      doseCalculator.setNeedsConcentrationUnit(!parsed.ok);
       setMedicationInputType('concentration');
-      setConcentrationHint('Detected from vial scan');
+      setConcentrationHint(parsed.ok ? 'Detected from vial scan' : parsed.error);
       setTotalAmountHint(null);
     } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-      if (amountMatch) {
-        setTotalAmount(amountMatch[1]);
-        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-      } else {
-        setTotalAmount(String(vialTotalAmount));
-        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-      }
+      const amount = parseScannedAmount(String(vialTotalAmount));
+      doseCalculator.setTotalAmountUnit(amount.ok ? amount.value.unit : null);
+      setTotalAmount(amount.ok ? String(amount.value.amount) : '');
+      setConcentration(null);
+      if (amount.ok) setConcentrationUnit(`${amount.value.unit}/ml`);
       setMedicationInputType('totalAmount');
-      setTotalAmountHint('Detected from vial scan');
+      setTotalAmountHint(amount.ok ? 'Detected from vial scan' : amount.error);
       setConcentrationHint(null);
     } else {
       console.log('[Process] No reliable concentration or total amount detected');
+      setConcentration(null);
+      setConcentrationAmount('');
+      setTotalAmount('');
+      doseCalculator.setTotalAmountUnit(null);
       setMedicationInputType(null);
       setConcentrationHint('No concentration detected, please enter manually');
       setTotalAmountHint('No total amount detected, please enter manually');
@@ -552,6 +548,7 @@ export default function NewDoseScreen() {
 
     console.log('[Process] Scan successful, transitioning to manual entry');
     // Clear calculation-related state without resetting the scan results
+    doseCalculator.setGuidance(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
@@ -584,6 +581,8 @@ export default function NewDoseScreen() {
 
       console.log('[applyLastDose] ========== APPLYING DOSE DATA ==========');
       
+      doseCalculator.setTotalAmountUnit(lastDose.totalAmountUnit || null);
+
       // Apply basic dose information with fallbacks for missing data
       const substanceNameValue = lastDose.substanceName || 'Previous Substance';
       const doseValue = lastDose.doseValue.toString();
@@ -621,7 +620,7 @@ export default function NewDoseScreen() {
       // Apply syringe information if available
       if (lastDose.syringeType) {
         const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
-        setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
+        setManualSyringe({ insulinScale: lastDose.insulinScale, type: lastDose.syringeType, volume: defaultVolume });
         setSyringeHint('Syringe type from your last dose');
       } else {
         setManualSyringe({ type: 'Standard', volume: '3 ml' });
@@ -660,7 +659,8 @@ export default function NewDoseScreen() {
         
         // Clear concentration fields
         setConcentrationAmount('');
-        setConcentrationUnit('mg/ml');
+        if (lastDose.totalAmountUnit) setConcentrationUnit(lastDose.concentrationUnit || `${lastDose.totalAmountUnit}/ml`);
+        doseCalculator.setConcentrationExact(lastDose.concentrationExact || null);
         setConcentrationHint(null);
         
         console.log('[applyLastDose] Restored total amount inputs:', {
@@ -1080,6 +1080,8 @@ export default function NewDoseScreen() {
           setConcentrationAmount={setConcentrationAmount}
           concentrationUnit={concentrationUnit}
           setConcentrationUnit={setConcentrationUnit}
+          totalAmountUnit={doseCalculator.totalAmountUnit}
+          setTotalAmountUnit={doseCalculator.setTotalAmountUnit}
           totalAmount={totalAmount}
           setTotalAmount={setTotalAmount}
           solutionVolume={solutionVolume}
@@ -1090,6 +1092,7 @@ export default function NewDoseScreen() {
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
           recommendedMarking={recommendedMarking}
+          guidance={doseCalculator.guidance}
           calculationError={calculationError}
           formError={formError}
           substanceNameHint={substanceNameHint}
@@ -1166,6 +1169,7 @@ export default function NewDoseScreen() {
         triggerReason={logLimitModalTriggerReason}
       />
       <VolumeErrorModal
+        message={calculationError}
         visible={showVolumeErrorModal}
         onClose={handleCloseVolumeErrorModal}
         onReEnterVialData={handleReEnterVialData}
