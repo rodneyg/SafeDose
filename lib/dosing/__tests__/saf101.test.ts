@@ -45,3 +45,9 @@ it('SAF-101 #6: normalize concentration units and refuse unknown scan units', ()
   expect(dosing.parseScannedConcentration('5 mg / mL')).toEqual({ ok: true, value: { amount: 5, unit: 'mg/ml' } });
   expect(dosing.parseScannedConcentration('5 IU/mL').ok).toBe(false);
 });
+
+it('SAF-101 #7: unreadable syringe details require selection', () => {
+  expect(dosing.parseScannedSyringe({ type: 'Insulin', volume: 'unreadable' }).ok).toBe(false);
+  expect(dosing.parseScannedSyringe({ type: 'unknown', volume: '3 mL' }).ok).toBe(false);
+  expect(dosing.parseScannedSyringe({ type: 'Standard', volume: '3 mL' })).toEqual({ ok: true, value: { type: 'Standard', volume: '3 ml' } });
+});
