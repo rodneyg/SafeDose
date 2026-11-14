@@ -12,7 +12,6 @@ interface ScanScreenProps {
   scanError: string | null;
   cameraRef: RefObject<CameraView>;
   webCameraStream?: MediaStream | null;
-  openai: any;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   setManualStep: (step: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
   setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string }) => void;
@@ -45,7 +44,6 @@ export default function ScanScreen({
   scanError,
   cameraRef,
   webCameraStream,
-  openai,
   setScreenStep,
   setManualStep,
   setManualSyringe,

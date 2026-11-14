@@ -11,5 +11,5 @@
     "outDir": ".eval-cache",
     "rootDir": "."
   },
-  "include": ["lib/scan/**/*.ts", "lib/dosing/**/*.ts", "evals/vision/**/*.ts"]
+  "include": ["lib/scan/**/*.ts", "lib/scan/**/*.d.ts", "lib/dosing/**/*.ts", "evals/vision/**/*.ts"]
 }

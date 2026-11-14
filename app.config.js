@@ -39,7 +39,8 @@ module.exports = {
   },
   extra: {
     NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    // Never put OPENAI_API_KEY (or other secrets) in extra — Expo bakes extra into the client bundle.
+    // Scan analysis reads process.env.OPENAI_API_KEY only in /api/analyze-scan on the server.
     // Legacy Stripe keys for backward compatibility
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     // New Stripe configuration with feature flag support

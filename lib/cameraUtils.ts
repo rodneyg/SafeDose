@@ -1,7 +1,7 @@
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
+import { completeScanOnServer } from './scan/completeOnServer';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
 import { CameraView } from 'expo-camera';
 
@@ -12,7 +12,6 @@ interface CameraRef {
 interface CaptureAndProcessImageProps {
   cameraRef: React.RefObject<CameraRef>;
   permission: { status: string } | null;
-  openai: any;
   isMobileWeb: boolean;
   setIsProcessing: (value: boolean) => void;
   setProcessingMessage: (message: string) => void;
@@ -24,7 +23,6 @@ interface CaptureAndProcessImageProps {
 export async function captureAndProcessImage({
   cameraRef,
   permission,
-  openai,
   isMobileWeb,
   setIsProcessing,
   setProcessingMessage,
@@ -34,15 +32,7 @@ export async function captureAndProcessImage({
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
 
-  const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error('[Capture] OpenAI API key missing');
-    Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
-    setScanError('OpenAI configuration error');
-    setIsProcessing(false); // Ensure isProcessing is reset on this error path
-    return null;
-  }
-
+  // OpenAI keys stay on the server. The client only posts the image to /api/analyze-scan.
   // Set the processing state at the beginning
   console.log('[Capture] Setting isProcessing to true');
   setIsProcessing(true);
@@ -251,21 +241,18 @@ export async function captureAndProcessImage({
 
     const imageUrl = `data:${mimeType};base64,${base64Image}`;
     console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
-    console.log('[Process] Sending request to OpenAI');
+    console.log('[Process] Sending image to /api/analyze-scan');
 
     const result = await readScan(imageUrl, {
-      complete: async request => {
+      complete: async () => {
         let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
-          const response: any = await Promise.race([
-            openai.chat.completions.create(request),
-            new Promise((_, reject) => {
+          return await Promise.race([
+            completeScanOnServer(imageUrl),
+            new Promise<string>((_, reject) => {
               timeout = setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
             }),
           ]);
-          const content = response?.choices?.[0]?.message?.content;
-          if (typeof content !== 'string') throw new Error('Invalid response from image analysis');
-          return content;
         } finally {
           if (timeout) clearTimeout(timeout);
         }
