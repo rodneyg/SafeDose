@@ -1,3 +1,4 @@
+import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
 import { concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -486,65 +487,40 @@ export default function NewDoseScreen() {
   }, [screenStep, getDoseLogHistory]);
 
   // Function to apply scan results to form state
-  const applyScanResults = (result: any) => {
-    const scannedSyringe = result.syringe || {};
-    const scannedVial = result.vial || {};
-
-    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-    const scannedVolume = scannedSyringe.volume;
-    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-    let selectedVolume = defaultVolume;
-
-    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-    } else {
-      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+  const applyScanResults = (result: ScanResult) => {
+    const mapped = mapScanToDoseInputs(result);
+    if (mapped.status === 'needs-input') {
+      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+      return;
     }
-    setManualSyringe({ type: scannedType, volume: selectedVolume });
-    setSyringeHint('Detected from image scan');
-
-    if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
-      setSubstanceName(String(scannedVial.substance));
+    const scanned = mapped.inputs;
+    if (scanned.manualSyringe) {
+      setManualSyringe(scanned.manualSyringe);
+      setSyringeHint('Detected from image scan');
+    }
+    if (scanned.substance) {
+      setSubstanceName(scanned.substance);
       setSubstanceNameHint('Detected from vial scan');
-      console.log('[Process] Set substance name:', scannedVial.substance);
     }
-
-    const vialConcentration = scannedVial.concentration;
-    const vialTotalAmount = scannedVial.totalAmount;
-
-    if (vialConcentration && vialConcentration !== 'unreadable') {
-      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-      if (concMatch) {
-        setConcentrationAmount(concMatch[1]);
-        const detectedUnit = concMatch[2].toLowerCase();
-        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-      } else {
-        setConcentrationAmount(String(vialConcentration));
-        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-      }
+    // Clear previous medication values so an absent field cannot reuse a stale number.
+    setConcentrationAmount('');
+    setConcentration(null);
+    setCalculatedConcentration(null);
+    setTotalAmount('');
+    setSolutionVolume('');
+    if (scanned.concentration !== null && scanned.concentrationUnit) {
+      setConcentrationAmount(String(scanned.concentration));
+      setConcentrationUnit(scanned.concentrationUnit);
       setMedicationInputType('concentration');
       setConcentrationHint('Detected from vial scan');
       setTotalAmountHint(null);
-    } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-      if (amountMatch) {
-        setTotalAmount(amountMatch[1]);
-        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-      } else {
-        setTotalAmount(String(vialTotalAmount));
-        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-      }
+    } else if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
+      setTotalAmount(String(scanned.totalAmount));
+      setConcentrationUnit(`${scanned.totalAmountUnit}/ml`);
       setMedicationInputType('totalAmount');
       setTotalAmountHint('Detected from vial scan');
       setConcentrationHint(null);
     } else {
-      console.log('[Process] No reliable concentration or total amount detected');
       setMedicationInputType(null);
       setConcentrationHint('No concentration detected, please enter manually');
       setTotalAmountHint('No total amount detected, please enter manually');

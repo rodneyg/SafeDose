@@ -8,7 +8,7 @@ This directory contains the evaluation framework for testing and improving SafeD
 evals/
 ├── README.md              # This file
 ├── test-sets/             # Evaluation test suites
-├── images/                # Test images for AI scanning
+├── vision/                # Shared-reader harness, pending labels, and text fixtures
 └── results/               # Evaluation run results
 ```
 
@@ -59,19 +59,21 @@ For now, evaluations can be tested manually against the SafeDose application:
 3. Compare actual output with expected output
 4. Record results in `results/` directory
 
-### Future Automation
-Planned automated evaluation runner:
+### Automated dosing and vision checks
+
 ```bash
-npm run eval -- --test-set basic-dose-calculations
-npm run eval -- --all
-npm run eval -- --category dose-calculation
+npm run test:dosing
+npm run test:vision
+npm run eval:vision -- --offline
 ```
+
+See [Vision evals](vision/README.md) for the private image store, recorded-output replay, and live spend approval. The old `npm run eval -- --test-set ...` interface is not implemented. Labels and proposed accuracy thresholds remain pending Rodney verification. Offline synthetic fixtures do not establish photo accuracy.
 
 ## Contributing Test Cases
 
 1. Identify gaps in current test coverage
 2. Create new test cases following the standard format
-3. Add test images to `images/` directory if needed
+3. Keep test pixels outside git; configure `SAFEDOSE_EVAL_IMAGES_DIR` as documented in `vision/README.md`
 4. Submit PR with rationale for new evaluations
 
 ## Test Case Format

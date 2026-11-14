@@ -17,6 +17,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.eval-cache/'],
   collectCoverageFrom: ['lib/dosing/**/*.ts', '!lib/dosing/**/__tests__/**'],
   coverageThreshold: {
     './lib/dosing/': { branches: 100, lines: 100, functions: 100, statements: 100 },

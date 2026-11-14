@@ -1,3 +1,4 @@
+import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
@@ -18,24 +19,6 @@ interface CaptureAndProcessImageProps {
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
   webCameraStream?: MediaStream | null;
-}
-
-interface ScanResult {
-  syringe: {
-    type: 'Insulin' | 'Standard' | 'unreadable' | null;
-    volume: string | 'unreadable' | null;
-    markings: string | 'unreadable' | null;
-  };
-  vial: {
-    substance: string | 'unreadable' | null;
-    totalAmount: string | 'unreadable' | null;
-    concentration: string | 'unreadable' | null;
-    expiration: string | 'unreadable' | null;
-  };
-  capturedImage?: {
-    uri: string;
-    mimeType: string;
-  };
 }
 
 export async function captureAndProcessImage({
@@ -270,68 +253,27 @@ export async function captureAndProcessImage({
     console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
     console.log('[Process] Sending request to OpenAI');
 
-    // Add timeout protection for the OpenAI API call
-    let responsePromise = openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Analyze the image for syringe and vial details. Provide ONLY a valid JSON object with the following structure: { "syringe": { "type": "Insulin | Standard | unreadable | null", "volume": "e.g., \'1 ml\', \'0.5 ml\', \'unreadable\', null", "markings": "e.g., \'0.1,0.2,...\', \'unreadable\', null" }, "vial": { "substance": "name | unreadable | null", "totalAmount": "e.g., \'20 mg\', \'1000 units\', \'unreadable\', null", "concentration": "e.g., \'100 units/ml\', \'10 mg/ml\', \'unreadable\', null", "expiration": "YYYY-MM-DD | unreadable | null" } }. Use "unreadable" if text is present but illegible. Use null if the information is completely absent or not visible. Do not include any explanatory text before or after the JSON.',
-            },
-            {
-              type: 'image_url',
-              image_url: { url: imageUrl },
-            },
-          ],
-        },
-      ],
+    const result = await readScan(imageUrl, {
+      complete: async request => {
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const response: any = await Promise.race([
+            openai.chat.completions.create(request),
+            new Promise((_, reject) => {
+              timeout = setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
+            }),
+          ]);
+          const content = response?.choices?.[0]?.message?.content;
+          if (typeof content !== 'string') throw new Error('Invalid response from image analysis');
+          return content;
+        } finally {
+          if (timeout) clearTimeout(timeout);
+        }
+      },
     });
-
-    // Create a timeout promise
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
-    });
-
-    // Race the API promise against the timeout
-    const response = await Promise.race([responsePromise, timeoutPromise])
-                      .catch(error => {
-                        console.error('[Process] API call failed:', error);
-                        throw new Error(`API error: ${error.message || 'Network issue'}`);
-                      }) as any;
-
-    console.log('[Process] Received response from OpenAI:', JSON.stringify(response || {}, null, 2));
-
-    // Validate the response
-    if (!response || !response.choices || !response.choices[0] || !response.choices[0].message) {
-      console.error('[Process] Invalid or empty response from OpenAI');
-      throw new Error('Invalid response from image analysis');
-    }
-
-    const content = response.choices[0].message.content;
-    console.log('[Process] Raw OpenAI response content:', content);
-
-    if (!content) {
-      throw new Error('OpenAI returned an empty response');
-    }
-
-    const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
-    const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
-    console.log('[Process] Extracted JSON content:', jsonContent);
-
-    let result: ScanResult;
-    try {
-      result = JSON.parse(jsonContent);
-      console.log('[Process] Parsed JSON result:', JSON.stringify(result, null, 2));
-      if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
-        console.error('[Process] Invalid JSON structure:', result);
-        throw new Error('Invalid JSON structure received from analysis');
-      }
-    } catch (parseError) {
-      console.error('[Process] JSON parse error:', parseError);
-      throw new Error('Could not parse analysis result');
+    const mapped = mapScanToDoseInputs(result);
+    if (mapped.status === 'needs-input') {
+      throw new Error(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
     }
 
     await incrementScansUsed();
