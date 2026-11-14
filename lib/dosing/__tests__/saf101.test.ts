@@ -40,3 +40,8 @@ it('SAF-101 #5: exact marking and stored log contain 29 without float noise', ()
   expect(dosing.formatDrawToText({ recommendedMarking: result.recommendedMarking!, syringeType: 'Insulin' })).toBe('Draw to 29.00 units');
   expect(dosing.calculateDose({ ...vialProbe, unit: 'mL', doseValue: 0.5, totalAmount: null, concentration: null }).recommendedMarking).toBe('50');
 });
+
+it('SAF-101 #6: normalize concentration units and refuse unknown scan units', () => {
+  expect(dosing.parseScannedConcentration('5 mg / mL')).toEqual({ ok: true, value: { amount: 5, unit: 'mg/ml' } });
+  expect(dosing.parseScannedConcentration('5 IU/mL').ok).toBe(false);
+});
