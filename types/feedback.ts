@@ -24,6 +24,9 @@ export interface FeedbackContextType {
     unit: string;
     calculatedVolume: number | null;
     syringeType?: 'Insulin' | 'Standard' | null;
+    insulinScale?: string;
+    totalAmountUnit?: 'mg' | 'mcg' | 'units';
+    concentrationExact?: string;
     recommendedMarking?: string | null;
     injectionSite?: InjectionSite | null;
     

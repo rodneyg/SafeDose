@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { AmountUnit } from '../lib/dosing';
+import React from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { isMobileWeb } from '../lib/utils';
 
 type Props = {
@@ -7,7 +8,8 @@ type Props = {
   setTotalAmount: (amount: string) => void;
   setTotalAmountHint: (hint: string | null) => void;
   totalAmountHint: string | null;
-  unit: 'mg' | 'mcg' | 'units';
+  unit: AmountUnit | null;
+  setUnit: (unit: AmountUnit) => void;
   dose?: string; // Optional dose parameter to enable validation against dose amount
 };
 
@@ -17,32 +19,20 @@ export default function TotalAmountInputStep({
   setTotalAmountHint,
   totalAmountHint,
   unit,
+  setUnit,
   dose = '',
 }: Props) {
-  // Validate total amount whenever it changes, comparing with dose if available
-  useEffect(() => {
-    if (totalAmount && dose) {
-      // Get numeric values for comparison
-      const totalAmountValue = parseFloat(totalAmount);
-      const doseValue = parseFloat(dose);
-      
-      if (!isNaN(totalAmountValue) && !isNaN(doseValue)) {
-        // For mcg unit, we need to convert for comparison since total amount is in mg
-        const adjustedDose = unit === 'mcg' ? doseValue / 1000 : doseValue;
-        
-        if (adjustedDose > totalAmountValue) {
-          setTotalAmountHint(`Warning: The dose (${dose} ${unit}) may exceed the total amount available (${totalAmount} ${unit === 'mcg' ? 'mg' : unit}). This could result in calculation errors.`);
-        } else {
-          setTotalAmountHint(null);
-        }
-      }
-    }
-  }, [totalAmount, dose, unit, setTotalAmountHint]);
-
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Enter Total Amount</Text>
-      <Text style={styles.label}>Total Amount in Vial ({unit === 'mcg' ? 'mg' : unit}):</Text>
+      <Text style={styles.label}>Total Amount in Vial ({unit || 'select unit'}):</Text>
+      <View style={{ flexDirection: 'row', gap: 16 }}>
+        {(['mg', 'mcg', 'units'] as const).map(option => (
+          <TouchableOpacity key={option} onPress={() => setUnit(option)} accessibilityRole="radio" accessibilityState={{ checked: unit === option }}>
+            <Text style={{ fontWeight: unit === option ? '700' : '400' }}>{option}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <TextInput
         style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={totalAmount}
@@ -56,8 +46,8 @@ export default function TotalAmountInputStep({
       />
       {totalAmountHint && <Text style={[styles.helperHint, styles.warningHint]}>{totalAmountHint}</Text>}
       <Text style={styles.helperText}>
-        Enter the total amount of substance in the vial as a number. Unit is '{unit === 'mcg' ? 'mg' : unit}'.
-        {unit === 'mcg' && ' (Note: Converted to mcg for calculation.)'}
+        Enter the total amount of substance in the vial as a number. Unit is '{unit || 'select unit'}'.
+
       </Text>
     </View>
   );

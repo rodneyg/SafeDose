@@ -17,6 +17,9 @@ export interface DoseLog {
   unit: string;
   calculatedVolume: number;
   syringeType?: 'Insulin' | 'Standard'; // Type of syringe used
+  insulinScale?: string;
+  totalAmountUnit?: 'mg' | 'mcg' | 'units';
+  concentrationExact?: string;
   recommendedMarking?: string; // The exact marking user should draw to
   injectionSite?: InjectionSite; // Body location for injection site rotation
   timestamp: string;
@@ -37,6 +40,9 @@ export interface DoseLogContext {
   unit: string;
   calculatedVolume: number | null;
   syringeType?: 'Insulin' | 'Standard' | null;
+  insulinScale?: string;
+  totalAmountUnit?: 'mg' | 'mcg' | 'units';
+  concentrationExact?: string;
   recommendedMarking?: string | null;
   injectionSite?: InjectionSite | null;
   

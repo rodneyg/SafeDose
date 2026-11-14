@@ -1,3 +1,4 @@
+import { Exact } from '../lib/dosing/exact';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -28,7 +29,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
   const maxMarking = Math.max(...markings);
   const syringeWidth = 300;
   const markingPositions = markings.map(m => (m / maxMarking) * syringeWidth);
-  const recommendedValue = parseFloat(recommendedMarking || '0');
+  const recommendedValue = new Exact(recommendedMarking || '0').toNumber();
   const recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
 
   return (
@@ -49,7 +50,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
           <View style={[styles.recommendedMark, { left: recommendedPosition - 2 }]} />
           <View style={[styles.precisionIndicator, { left: recommendedPosition - 1 }]} />
           <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 35) }]}>
-            Draw to {recommendedValue.toFixed(2)} {unit}
+            Draw to {new Exact(recommendedMarking || '0').fixed(2)} {unit}
           </Text>
         </>
       )}

@@ -1,82 +1,97 @@
-# Current dosing rules (SAF-102)
+# Dosing rules (SAF-101)
 
-This document characterizes `origin/main` at `370d568`. SAF-102 moves the existing math into `lib/dosing/` without changing numeric results, validation order, or displayed strings. These are software rules and arithmetic examples, not dosing recommendations. Known issues stay in place for SAF-101.
+SAF-101 fixes the verified dosing defects on top of SAF-102 (#411). These are software rules and arithmetic examples, not prescribing recommendations. Fixture review by Rodney remains pending.
 
-## Units and formulas
+## Exact arithmetic and the display rule
+
+`lib/dosing/exact.ts` uses reduced BigInt fractions. Input decimals, mg/mcg conversion, concentration, planner formulas, dose volume, availability comparisons, scale positions, and nearest-mark comparisons use exact arithmetic. A finite decimal is serialized without trailing zeros (`29`, `0.29`). A repeating decimal is serialized as a reduced fraction (`100/3`). No rounded planner value or displayed marking is used as a calculation input.
+
+**One rounding rule: round half away from zero, only at display boundaries.** For example, `1.005` at two places is `1.01`, and `-1.005` is `-1.01`. The shared formatter implements this with integers rather than `Number.toFixed`.
+
+| Display context | Decimal places |
+| --- | ---: |
+| Syringe marking, marking guidance, log draw text | 2 |
+| Calculated dose volume and calculator concentration | 3 |
+| Planner BAC water | 2 |
+| Planner concentration and injection volume | 3 |
+| Low-concentration validation message | 4 |
+| Compact log concentration | 3 below 1; otherwise 1; strip trailing zeros |
+
+Stored/logged `recommendedMarking` is always the exact canonical string, never the display-rounded number. The final view, illustration, and log draw text understand fractions, so `100/3` displays as `33.33`. Numeric result fields are compatibility projections to JavaScript numbers; repeating values cannot be represented exactly by that type. Those projections are never fed back into the current calculation. Planner handoff carries its exact concentration separately, in the explicit vial numerator unit. Editing the medication amount, unit, or solution volume invalidates that handoff value.
+
+## Explicit units and input parsing
 
 - Dose units: `mg`, `mcg`, `units`, `mL`.
 - Concentration units: `mg/ml`, `mcg/ml`, `units/ml`.
-- Same-unit volume: `dose / concentration` in mL.
-- mcg dose with mg/mL: `(dose / 1000) / concentration`.
-- mg dose with mcg/mL: `(dose * 1000) / concentration`.
-- Direct mL dose: volume equals the entered dose, after the current concentration and syringe checks.
-- Mass units can convert between mg and mcg. Medication units can only pair with units/mL. mL is compatible with every supported concentration unit.
-- If concentration is null, NaN, zero, or negative, positive total amount and positive parsed solution volume can supply `concentration = totalAmount / solutionVolume`. Total amount is interpreted in the concentration numerator's units, without inferring or converting a separate vial unit. A supplied valid concentration takes precedence.
+- Every total amount has a separate explicit `totalAmountUnit`, including scans, planner prefills, and newly saved original-input logs. The manual total-amount step has an mg/mcg/units selector. Its label reflects the selected vial unit, independently of the dose unit.
+- Convert mg and mcg exactly by a factor of 1000. Medication units cannot convert into mass units.
+- Same-unit volume = dose / concentration. Convert the dose into the concentration numerator unit first when needed.
+- Direct mL dose = entered volume; it does not require concentration or medication amount. Syringe, volume threshold, and capacity checks still apply.
+- Strict numeric input accepts plain decimals and unambiguous thousands groups: `1,000` = 1000; `1,000.5` = 1000.5. `1.000,5`, numeric prefixes, nonfinite values, and malformed separators are rejected. Scientific notation is internal only, not accepted in entered/scanned text. Decimals that would lose digits at the numeric API boundary are refused instead of silently truncated.
+- Normalize harmless case and whitespace, including `mg / mL`, `MG/ML`, `mcg/mL`, `µg/mL`, `μg/mL`, and `ug/mL`. `u/mL` and `units/mL` mean supported medication units. `IU/mL` is explicitly unsupported.
+- Missing/unknown scanned units clear stale input and block the result with needs-input guidance through the existing error/hint display. An unknown concentration unit requires an explicit unit selection before proceeding. New scans clear the previous solution volume and medication inputs.
+- A supplied concentration takes precedence over vial-derived concentration. In total-amount mode the UI clears/ignores stale supplied concentration. Missing concentration can be derived as converted vial total / solution volume.
 
-JavaScript number arithmetic and operation order are preserved. No decimal rounding is applied to calculations.
+## Planner and handoff
 
-## Validation order and thresholds
+Only a total mass (`5 mg`, `1,000 mcg`) can fill the planner vial amount. A concentration (`5 mg/mL`) cannot substitute for a vial amount. Medication units are unsupported by the mass-based planner. Unreadable or ambiguous scans require manual input.
 
-1. Reject a null, NaN, zero, or negative dose.
-2. Reject incompatible dose/concentration units.
-3. Try deriving concentration. Solution volume uses `parseFloat`. Reject derived mg/mL concentration below `0.01` and derived mcg/mL concentration below `1`. There is no analogous lower units/mL check. These checks do not apply to supplied concentrations.
-4. Reject a null, NaN, zero, or negative concentration, including for direct mL dosing.
-5. Require syringe type, volume, and a recognized markings list.
-6. Calculate volume. Reject volume below `0.005 mL` or above `2 mL`, using the `VOLUME_THRESHOLD_ERROR:` prefix. Both boundaries are inclusive.
-7. Reject insulin syringe volumes above `1 mL`, before total-amount and capacity checks.
-8. If total amount is supplied and the dose is not in mL, convert the dose into the concentration numerator's unit and reject a dose above total amount. Then compare volume with `totalAmount / concentration`.
-9. Reject volume above the selected syringe capacity.
-10. Return the raw exact marking string and, when applicable, precision guidance in `calculationError`.
-
-The maximum-possible-volume check is defensive. For finite supported inputs, the preceding dose-amount comparison and monotonic division preclude a separate failure here. Its exported helper is tested directly with volume `1 mL`, total `5 mg`, concentration `10 mg/mL` (available volume `0.5 mL`).
-
-## Syringes and marking guidance
-
-Insulin marking = `volume mL * 100`. This assumes U-100 only. The number is a syringe scale position, not a conversion of an arbitrary medication's biological units.
-
-| Syringe | Capacity | Listed markings |
-| --- | --- | --- |
-| Insulin | 0.3 mL | 5 through 30, step 5 |
-| Insulin | 0.5 mL | 5 through 50, step 5 |
-| Insulin | 1 mL | 10 through 100, step 10 |
-| Standard | 1 mL | 0.1 through 1, step 0.1 |
-| Standard | 3 mL | 0.5 through 3, step 0.5 |
-| Standard | 5 mL | 1 through 5, step 1 |
-
-Standard marking = volume in mL. `recommendedMarking` uses `Number.toString()` on the calculated scale value, rather than rounding to a listed mark. The nearest listed mark is used only for guidance. Ties select the earlier listed mark. Guidance is emitted when the absolute distance from the nearest mark is greater than `0.01` scale units. Text uses two decimals and identifies between-marks, below-first, or above-last positions. Built-in lists end at syringe capacity, so the above-last path is tested directly through the marking helper with a shorter list.
-
-## Planner
-
-Peptide amount uses the manual string first, then scanned amount, then `'0'`. Target dose and preferred volume use their entered strings. Parsing uses `parseFloat`. Peptide amount and target dose in mcg are each divided by `1000` to obtain mg.
-
-- Required concentration = `targetDoseMg / preferredVolumeMl`.
-- BAC water = `peptideAmountMg / requiredConcentration`.
+- Convert vial and target dose to mg.
+- Required concentration = target dose mg / preferred injection volume mL.
+- BAC water = vial amount mg / required concentration mg/mL.
 - Injection volume = preferred volume.
 
-Blank, zero, or NaN parsed inputs yield a null computed result. The separate validation step rejects nonpositive input and BAC water below `0.1 mL` or above `20 mL`; both boundaries are inclusive. The low-level arithmetic function itself does not validate inputs.
+All inputs must be positive and finite. The low-level calculator throws an explicit needs-input error for invalid arguments; the UI's validated planner returns no result for invalid entered values. BAC water must be between 0.1 and 20 mL inclusive. Planner handoff applies `prefillTotalUnit` and preserves the exact concentration. The rounded BAC display is never handed back as a calculation input. Example: 10 mg vial, 300 mcg target, 0.1 mL preferred volume gives concentration exactly 3 mg/mL, BAC exactly 10/3 mL, and U-100 marking exactly `10`.
 
-Planner output shows BAC water to two decimals, concentration to three, and injection volume to three. The calculator handoff also uses BAC water rounded to two decimals.
+## Syringes and insulin scales
 
-## Other display behavior
+Syringe scale units describe barrel positions. They do not convert arbitrary medications into biological insulin units.
 
-Dose-log draw text parses the stored marking and uses two decimals. Logged concentration is reconstructed as `doseValue / calculatedVolume` in the dose's unit per mL. It is hidden for mL doses or nonpositive/missing volume. Values below 1 use three decimals; others use one; trailing zeros and the decimal point are stripped. The last-dose fallback uses the same dose/volume ratio and raw `toString()`.
+| Type / scale | Capacity | Listed markings |
+| --- | --- | --- |
+| Insulin U-100 | 0.3 mL | 5–30, step 5 |
+| Insulin U-100 | 0.5 mL | 5–50, step 5 |
+| Insulin U-100 | 1 mL | 10–100, step 10 |
+| Insulin U-40 | 0.5 mL | 1–20, step 1 |
+| Insulin U-40 | 1 mL | 1–40, step 1 |
+| Standard | 1 mL | 0.1–1, step 0.1 |
+| Standard | 3 mL | 0.5–3, step 0.5 |
+| Standard | 5 mL | 1–5, step 1 |
+
+U-100 is the unchanged default for manual selections. U-40 uses 40 scale units/mL: 1 unit = 0.025 mL. The 1 mL U-40 option uses one-unit increments. U-40 0.3 mL syringes and other scales, including U-500, are refused. The scale selector and illustration use the selected scale. Saved logs retain the scale.
+
+Scans must report a supported type, volume, and explicit insulin scale. No insulin scale is inferred from the dose or medication. An unreadable type/volume or missing, unsupported, or conflicting insulin scale requires selection. After an unreadable scan, type and volume must each be selected; an insulin scale must also be confirmed. The syringe step never silently replaces a scanned or user-selected syringe with a suggestion.
+
+Standard marking = volume mL. Insulin marking = volume mL × selected units/mL. No result is snapped to a barrel marking. Guidance is emitted when the exact distance from the nearest mark exceeds 0.01 scale units. Ties select the earlier listed mark. Guidance describes between-marks, below-first, or above-last positions; built-in lists end at capacity, so the above-last helper is tested directly.
+
+## Validation and results
+
+1. Require a positive finite dose and compatible units.
+2. If a vial total is supplied for a non-mL dose, require a supported explicit unit and a positive finite amount. Convert it into the concentration numerator's unit exactly.
+3. Resolve exact handoff, supplied, or derived concentration; reject missing or invalid concentration for non-mL doses. Existing lower bounds for derived concentration remain: mg/mL >= 0.01 and mcg/mL >= 1. These checks do not apply to supplied concentration; no lower units/mL bound is introduced.
+4. Require supported, confirmed syringe details and insulin scale.
+5. Calculate exact volume. Preserve the inclusive 0.005–2 mL range. `MAX_INJECTION_VOLUME_ML = 2` is an explicit safety policy, independent of larger syringe capacity. Above-limit errors say the **2 mL per-injection safety limit applies**, including for 3/5 mL syringes. The volume modal preserves the blocking error after dismissal.
+6. Reject insulin volumes above 1 mL, requested dose above the available medication, and volume above the selected syringe capacity. Availability errors label the vial's actual unit correctly.
+7. Return `calculationError` only for blocking errors. Valid marking advice is returned in `guidance`; confirmation and final views display it without treating it as a failed calculation. Blocking errors prevent progression and saving.
+
+The exported available-volume helper remains for defensive independent comparisons; exact dose availability makes the extra comparison redundant in the main calculator.
 
 ## Deterministic fixtures and verification
 
-`tests/fixtures/dosing-cases.json` contains 62 arithmetic cases spanning peptide vial reconstitution, testosterone concentration, semaglutide/tirzepatide-style mg amounts, units/units, mcg/mcg, mg/mcg conversion, and direct mL doses. Each expected volume and marking was calculated independently with exact rational arithmetic in `tests/fixtures/generate_dosing_cases.py`; it imports no application code. Regenerate with `python3 tests/fixtures/generate_dosing_cases.py`.
+`tests/fixtures/generate_dosing_cases.py` computes arithmetic expectations independently using Python `fractions.Fraction`, without importing application code. Fixtures include the original 62 cases and a probe for each of the ten SAF-101 defects. Additional label-contract fixtures cover refused inputs. All carry `verified_by: "pending-rodney"`. The SAF-102 float-marking and direct-mL known-bug fixtures are now normal passing cases; no expected-failure fixtures remain.
 
-All fixtures are `verified_by: "pending-rodney"`. Passing fixture tests do not represent independent owner review. Tests use exact equality and exact strings; the new tests use no approximate assertions. Two correct-value fixture assertions are `it.failing` until SAF-101. Explicit characterization tests also lock their current incorrect outputs.
+Run `python3 tests/fixtures/generate_dosing_cases.py`, `npm run test:dosing`, and `npm run typecheck:dosing`. Coverage thresholds still require 100% statements, branches, functions, and lines in every production file under `lib/dosing/`. Full Jest and TypeScript failures are compared with the SAF-102 baseline; unrelated baseline problems are outside scope.
 
-Run `npm run test:dosing` for 100% statements, branches, functions, and lines, and `npm run typecheck:dosing` for strict isolated checking of the module and its tests. Coverage includes every production `.ts` file in the module; tests are excluded. Thresholds are scoped to the dosing path and do not apply to unrelated files in plain Jest runs.
+## SAF-103 property tests
 
-## Known issues (SAF-101)
+`lib/dosing/__tests__/properties.test.ts` runs 26 properties with 1,000 cases each through both `npm test` and `npm run test:dosing`. The default seed is `1032026`; set `FC_SEED` to a signed 32-bit integer to use another seed. The runner reports the completed property run count. Failures include the seed, shrunk counterexample, shrink path, and a replay command using `FC_SEED`, `FC_PROPERTY`, and `FC_PATH`. An unknown property name or a path without a property name is an explicit error.
 
-The numbered references below are local tracking labels used by these fixtures and this PR.
+Generators use short entered decimals, doses from 1 mcg through 2,000 mg, solution volumes from 0.1 through 10 mL, all eight supported syringe selections, and safety/numeric edge values. Expected ratios and display rounding use independent BigInt cross-products rather than the production arithmetic. Properties cover exact conversions, linearity, mass-unit invariance, supplied/derived concentrations, planner handoff, monotonicity, rejection, numeric overflow/underflow, and display rounding/gradations.
 
-1. **Raw floating-point marking noise.** `29 units / 100 units/mL = 0.29 mL`, then multiplying by 100 produces the marking string `28.999999999999996`. Fixture `insulin-06` is marked `SAF-101 #1` and uses `it.failing` against the correct string `29`.
-2. **Direct mL unnecessarily requires concentration.** A direct `0.5 mL` dose with no concentration fails before direct-volume calculation. Fixture `direct-no-concentration` is marked `SAF-101 #2` and uses `it.failing` against volume `0.5` and marking `0.5`.
-3. **Permissive and nonfinite inputs.** Numeric prefixes such as `2.5 mg` parse successfully. Infinity is not rejected by the NaN/nonpositive checks. Infinity divided by Infinity can produce a successful result containing NaN and marking `NaN`. Negative planner inputs can produce a result before separate validation rejects them; the low-level planner permits Infinity/NaN from zero inputs. These outputs are characterized, not corrected.
-4. **Total-amount error label in mg-to-mcg conversion.** When dose is mg and total is interpreted as mcg, the error labels the total amount as mg. Comparison arithmetic is preserved.
-5. **Planner handoff rounding.** BAC water is rounded to two decimals before prefilling the calculator, which can change the resulting concentration and dose volume.
+Equivalence applies within the shared accepted domain. Existing derived-concentration lower bounds (0.01 mg/mL and 1 mcg/mL) do not apply to supplied concentration. A separate property preserves that policy difference. Numeric compatibility fields cannot represent repeating fractions exactly, so exact volume comparisons use the canonical marking and scale. Repeating planner BAC values require the existing exact concentration handoff; feeding only a rounded BAC number back into the total-amount path is not an exact invariant. Finite BAC values are also tested directly through that path.
 
-Precision guidance continues to share the `calculationError` field with blocking errors. Concentration lower-bound checks remain asymmetric between supplied and derived values. SAF-102 introduces no decisions about changing these policies.
+Property counterexamples exposed numeric outputs on rejected calculations, including Infinity when finite dose/concentration operands overflowed. All calculator errors now return null volume, concentration, and marking. Error messages, thresholds, and valid results are preserved. Six new independent regression fixtures carry `verified_by: "pending-rodney"`; the existing SAF-101 above-limit fixture also expects null volume under this error contract.
+
+## Open questions for Rodney
+
+Should the 2 mL per-injection ceiling be raised for Standard 3/5 mL syringes, for example for IM injections? The ceiling remains unchanged pending a decision.
