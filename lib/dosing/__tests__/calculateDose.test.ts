@@ -58,7 +58,7 @@ describe('input validation and order', () => {
   });
   it('low derived mg concentration', () => {
     expect(dose({ concentration: null, totalAmount: 0.01, solutionVolume: '2' })).toEqual({
-      calculatedVolume: null, recommendedMarking: null, calculatedConcentration: 0.005,
+      calculatedVolume: null, recommendedMarking: null, calculatedConcentration: null,
       calculationError: 'Calculated concentration (0.0050 mg/ml) is extremely low. Please verify the total amount (0.01 mg) and solution volume (2 ml) are correct.',
     });
   });

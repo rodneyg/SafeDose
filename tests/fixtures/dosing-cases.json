@@ -1466,7 +1466,7 @@
       }
     },
     "expected": {
-      "volume_mL": 2.5,
+      "volume_mL": null,
       "marking": null,
       "error_contains": "2 mL per-injection safety limit"
     },
@@ -1582,6 +1582,145 @@
       "ok": false
     },
     "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-below-minimum",
+    "description": "Shrunk direct-volume counterexample: 0.001 mL returns no numeric result",
+    "inputs": {
+      "doseValue": 0.001,
+      "unit": "mL",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "0.3 ml",
+        "insulinScale": "U-100"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "VOLUME_THRESHOLD_ERROR:"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-extreme-dose",
+    "description": "Shrunk extreme-dose counterexample: 1e308 / 10 must return no numeric result",
+    "inputs": {
+      "doseValue": 1e+308,
+      "unit": "mg",
+      "concentration": 10,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-overflow",
+    "description": "Finite operands whose quotient overflows must return no numeric result",
+    "inputs": {
+      "doseValue": 1e+308,
+      "unit": "mg",
+      "concentration": 1e-308,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-capacity",
+    "description": "0.4 mL on a 0.3 mL syringe returns no numeric result",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "0.3 ml",
+        "insulinScale": "U-100"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "exceeds syringe capacity"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-availability",
+    "description": "0.001 mg requested from 0.0005 mg available returns no numeric result",
+    "inputs": {
+      "doseValue": 0.001,
+      "unit": "mg",
+      "concentration": 0.002,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      },
+      "totalAmount": 0.0005,
+      "totalAmountUnit": "mg"
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "exceeds total amount available"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-low-concentration",
+    "description": "Rejected derived concentration must not remain a numeric output",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      },
+      "totalAmount": 0.001,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "1"
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "extremely low"
+    },
+    "computed_by": "independent safety contract",
     "verified_by": "pending-rodney"
   }
 ]

@@ -16,6 +16,9 @@ for (const fixture of cases) {
     const result = calculateDose(fixture.inputs as CalculateDoseParams);
     expect(result.calculatedVolume).toBe(fixture.expected.volume_mL);
     expect(result.recommendedMarking).toBe(fixture.expected.marking);
+    if ('calculatedConcentration' in fixture.expected) {
+      expect(result.calculatedConcentration).toBe(fixture.expected.calculatedConcentration);
+    }
     if ('guidance' in fixture.expected) {
       expect(result.guidance).toBe(fixture.expected.guidance);
       expect(result.calculationError).toBeNull();
