@@ -39,3 +39,12 @@ export function parsePlannerPrefill(params: { prefillTotalAmount?: string; prefi
     concentrationUnit: `${amount.value.unit}/ml`, solutionVolume: params.prefillSolutionVolume!,
   } };
 }
+
+export function parsePlannerScan(vial: { totalAmount?: string | null; concentration?: string | null }): InputResult<{ amount: number; unit: 'mg' | 'mcg' }> {
+  const amount = parseScannedAmount(vial.totalAmount || '');
+  if (!amount.ok) return amount;
+  if (amount.value.unit === 'units') {
+    return { ok: false, error: 'Needs input: the planner requires a vial amount in mg or mcg, not concentration or medication units.' };
+  }
+  return { ok: true, value: { amount: amount.value.amount, unit: amount.value.unit } };
+}

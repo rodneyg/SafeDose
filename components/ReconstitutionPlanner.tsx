@@ -1,4 +1,4 @@
-import { formatDoseNumber } from '../lib/dosing';
+import { parsePlannerScan, formatDoseNumber } from '../lib/dosing';
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { ArrowLeft, Camera, Edit3, Calculator, ArrowRight } from 'lucide-react-native';
@@ -88,25 +88,12 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
       });
 
       if (result?.vial) {
-        // Extract peptide amount from scan result
-        const vial = result.vial;
-        if (vial.totalAmount && vial.totalAmount !== 'unreadable') {
-          const amountMatch = String(vial.totalAmount).match(/([\d.]+)/);
-          if (amountMatch) {
-            setScannedPeptideAmount(amountMatch[1]);
-            setStep('manualInput'); // Continue to manual input for BAC water and dose
-          }
-        } else if (vial.concentration && vial.concentration !== 'unreadable') {
-          // If we got concentration instead of total amount, extract the amount part
-          const concMatch = String(vial.concentration).match(/([\d.]+)/);
-          if (concMatch) {
-            setScannedPeptideAmount(concMatch[1]);
-            setStep('manualInput');
-          }
-        } else {
-          setError('Could not extract peptide amount from vial label. Please enter manually.');
-          setStep('manualInput');
-        }
+        const amount = parsePlannerScan(result.vial);
+        setScannedPeptideAmount(amount.ok ? String(amount.value.amount) : null);
+        setPeptideAmount('');
+        if (amount.ok) setPeptideUnit(amount.value.unit);
+        setStep('manualInput');
+        if (!amount.ok) setError(amount.error);
       } else {
         setError('Could not read vial information. Please enter manually.');
         setStep('manualInput');

@@ -1322,5 +1322,28 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03",
+    "description": "Planner scanned 1,000 mcg vial, 100 mcg in 0.1 mL",
+    "inputs": {
+      "doseValue": 100,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 1000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "1"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]
