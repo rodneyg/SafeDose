@@ -1,3 +1,4 @@
+import { parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -141,7 +142,7 @@ export default function ManualEntryScreen({
 
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
-    return Boolean(dose && !isNaN(parseFloat(dose)));
+    return Boolean(dose && !isNaN(parseDoseInput(dose)));
   };
 
   const isMedicationSourceStepValid = (): boolean => {
@@ -150,11 +151,10 @@ export default function ManualEntryScreen({
 
   const isConcentrationInputStepValid = (): boolean => {
     // Check for valid concentration input
-    const valid = Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+    const valid = Boolean(concentrationAmount && !isNaN(parseDoseInput(concentrationAmount)));
     
     // Also validate unit compatibility if both units are set
     if (valid && unit && concentrationUnit) {
-      const { validateUnitCompatibility } = require('../lib/doseUtils');
       const compatibility = validateUnitCompatibility(unit, concentrationUnit);
       if (!compatibility.isValid) {
         return false;
@@ -165,13 +165,13 @@ export default function ManualEntryScreen({
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
-    const isValid = Boolean(totalAmount && !isNaN(parseFloat(totalAmount)));
+    const isValid = Boolean(totalAmount && !isNaN(parseDoseInput(totalAmount)));
     console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
     return isValid;
   };
 
   const isReconstitutionStepValid = (): boolean => {
-    return Boolean(solutionVolume && !isNaN(parseFloat(solutionVolume)));
+    return Boolean(solutionVolume && !isNaN(parseDoseInput(solutionVolume)));
   };
 
   const isSyringeStepValid = (): boolean => {
@@ -349,7 +349,7 @@ export default function ManualEntryScreen({
           setSyringeHint={setSyringeHint}
           syringeHint={syringeHint}
           doseValue={doseValue}
-          concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
+          concentration={medicationInputType === 'concentration' ? parseDoseInput(concentrationAmount) || null : null}
           unit={unit}
           concentrationUnit={concentrationUnit}
           medicationInputType={medicationInputType}
@@ -375,7 +375,7 @@ export default function ManualEntryScreen({
     case 'finalResult':
       // Calculate the concentration value to pass to FinalResultDisplay
       const concentrationValue = medicationInputType === 'concentration' 
-        ? (parseFloat(concentrationAmount) || null)
+        ? (parseDoseInput(concentrationAmount) || null)
         : (calculatedConcentration || null);
         
       currentStepComponent = (

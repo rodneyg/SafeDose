@@ -1,3 +1,4 @@
+import { formatDoseNumber } from '../lib/dosing';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calculator, RotateCcw, Syringe } from 'lucide-react-native';
@@ -52,21 +53,21 @@ export default function ReconstitutionOutputStep({
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Add this much BAC water:</Text>
           <Text style={[styles.resultValue, styles.primaryResult]}>
-            {result.bacWaterToAdd.toFixed(2)} mL
+            {formatDoseNumber(result.bacWaterToAdd, 2)} mL
           </Text>
         </View>
 
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>This gives you a concentration of:</Text>
           <Text style={styles.resultValue}>
-            {result.concentration.toFixed(3)} mg/mL
+            {formatDoseNumber(result.concentration, 3)} mg/mL
           </Text>
         </View>
 
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>To inject {targetDose} {targetDoseUnit}, draw:</Text>
           <Text style={styles.resultValue}>
-            {result.injectionVolume.toFixed(3)} mL on your syringe
+            {formatDoseNumber(result.injectionVolume, 3)} mL on your syringe
           </Text>
         </View>
 
@@ -74,7 +75,7 @@ export default function ReconstitutionOutputStep({
         <View style={styles.visualGuide}>
           <Syringe color="#007AFF" size={24} />
           <Text style={styles.visualText}>
-            Add {result.bacWaterToAdd.toFixed(2)} mL of BAC water to your {peptideAmount} {peptideUnit} vial
+            Add {formatDoseNumber(result.bacWaterToAdd, 2)} mL of BAC water to your {peptideAmount} {peptideUnit} vial
           </Text>
         </View>
       </View>

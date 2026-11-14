@@ -1,5 +1,5 @@
+import { calculateDose, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { validateUnitCompatibility, getCompatibleConcentrationUnits } from '../doseUtils';
 import { FeedbackContextType } from '../../types/feedback';
 import { InjectionSite } from '../../types/doseLog';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
@@ -85,7 +85,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Validate dose input
   const validateDoseInput = useCallback((doseValue: string, doseUnit: 'mg' | 'mcg' | 'units' | 'mL'): boolean => {
-    const numericDose = parseFloat(doseValue);
+    const numericDose = parseDoseInput(doseValue);
     if (!doseValue || isNaN(numericDose) || numericDose <= 0) {
       setFormError('Please enter a valid dose amount greater than 0');
       return false;
@@ -105,7 +105,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   // Validate concentration input
   const validateConcentrationInput = useCallback((amount: string, concUnit: 'mg/ml' | 'mcg/ml' | 'units/ml'): boolean => {
-    const numericAmount = parseFloat(amount);
+    const numericAmount = parseDoseInput(amount);
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       setFormError('Please enter a valid concentration amount greater than 0');
       return false;
@@ -211,7 +211,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         return;
       }
 
-      const numericDose = parseFloat(dose);
+      const numericDose = parseDoseInput(dose);
       if (isNaN(numericDose) || numericDose <= 0) {
         setFormError('Please enter a valid dose amount greater than 0');
         return;
@@ -261,7 +261,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         return;
       }
 
-      const numericConcentration = parseFloat(concentrationAmount);
+      const numericConcentration = parseDoseInput(concentrationAmount);
       if (isNaN(numericConcentration) || numericConcentration <= 0) {
         setFormError('Please enter a valid concentration amount greater than 0');
         return;
@@ -299,12 +299,12 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
   const handleNextTotalAmountInput = useCallback(() => {
     try {
-      if (!totalAmount || isNaN(parseFloat(totalAmount))) {
+      if (!totalAmount || isNaN(parseDoseInput(totalAmount))) {
         setFormError('Please enter a valid total amount');
         return;
       }
 
-      const numericTotalAmount = parseFloat(totalAmount);
+      const numericTotalAmount = parseDoseInput(totalAmount);
       if (numericTotalAmount <= 0) {
         setFormError('Please enter a total amount greater than 0');
         return;
@@ -337,7 +337,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         return;
       }
 
-      const numericSolutionVolume = parseFloat(solutionVolume);
+      const numericSolutionVolume = parseDoseInput(solutionVolume);
       if (isNaN(numericSolutionVolume) || numericSolutionVolume <= 0) {
         setFormError('Please enter a valid solution volume greater than 0');
         return;
@@ -389,12 +389,11 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       }
 
       // Prepare total amount value - it should be in the same unit as the concentration unit
-      let totalAmountValue = totalAmount ? parseFloat(totalAmount) : null;
+      let totalAmountValue = totalAmount ? parseDoseInput(totalAmount) : null;
 
       // Use the manualSyringe object directly, as it's already in the correct format
       const syringeObj = manualSyringe;
 
-      const { calculateDose } = require('../doseUtils');
       const result = calculateDose({
         doseValue,
         concentration,

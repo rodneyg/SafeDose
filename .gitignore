@@ -39,3 +39,22 @@ yarn-error.*
 
 # Test validation scripts
 validate-*.js
+
+# Jest coverage reports
+coverage/
+
+# Local vision evaluation pixels, review packets, recordings, and generated output
+evals/images/
+evals/vision/images/
+evals/results/*.json
+evals/results/*.md
+evals/vision/.cache/
+.eval-cache/
+evals/**/*.jpg
+evals/**/*.jpeg
+evals/**/*.png
+evals/**/*.heic
+evals/**/*.webp
+evals/**/*.zip
+review.html
+review_packet.pdf

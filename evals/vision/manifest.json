@@ -1,0 +1,5848 @@
+[
+  {
+    "id": "found_c015",
+    "file": "images/found_c015.jpg",
+    "sha256": "b00a4bd3557c37684ae5b0e91b005a97e043a57698721d844c3dd1018ec2ad5c",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "empty",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:BBraun Injekt Luer Solo Single-use syringe 5ml - horizontal.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:BBraun_Injekt_Luer_Solo_Single-use_syringe_5ml_-_horizontal.jpg",
+      "author": "mpan",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": "B. Braun Injekt",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Green plunger fully depressed; empty.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c016",
+    "file": "images/found_c016.jpg",
+    "sha256": "401a327abee777ba338a1a44ccd773c45883b7d6763b11fcf248d3a4467920ba",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:BBraun Injekt Luer Solo Single-use syringe 5ml - vertical.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:BBraun_Injekt_Luer_Solo_Single-use_syringe_5ml_-_vertical.jpg",
+      "author": "mpan",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": "B. Braun Injekt",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Vertical; plunger fully depressed; scale printed to 6 mL beyond the 5 mL nominal mark.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c020",
+    "file": "images/found_c020.jpg",
+    "sha256": "fcbc2d2aa7095fcee03d92850104a5d430508d69d07805843cd9d2582f35b0dc",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "other_capacity",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Baxa syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Baxa_syringe.jpg",
+      "author": "多多123",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "oral/enteral",
+      "scale": "mL",
+      "capacity_ml": null,
+      "brand": "Baxa",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "capacity unknown"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white/cream",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Graduations too small to read capacity at this resolution; stopper at tip. Capacity unknown.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c044",
+    "file": "images/found_c044.jpg",
+    "sha256": "6351cb9cdc6df7342f87b11649e89c2444d2f1f4b0ddca1bf828a31e654791fa",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Empty 5ml plastic syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Empty_5ml_plastic_syringe.jpg",
+      "author": "Mike Shaw",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": "BD",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Plunger at zero; ink smudge on background.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c076",
+    "file": "images/found_c076.jpg",
+    "sha256": "a1287475d26cefe62e200b83d7ee5a9f31dde5a0edd10b21e2a34c90681a7b8e",
+    "group": "syringe_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Insulin syringe foto.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Insulin_syringe_foto.jpg",
+      "author": "http://rebcenter-moscow.ru/",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 0,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-3 units"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Stopper sits at the needle end (0); small image.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c077",
+    "file": "images/found_c077.jpg",
+    "sha256": "5ba72f8cddb0ce1c3b34fdaac057717652d98eb8bf69e1b9dfb423e711eab285",
+    "group": "syringe_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "on_or_near_mark"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Insulin syringe in disassembled form.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Insulin_syringe_in_disassembled_form.jpg",
+      "author": "http://rebcenter-moscow.ru/",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 50,
+      "ml": 0.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-4 units"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Caps removed and shown beside syringe; stopper over the 50 label; estimated, not measured.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c078",
+    "file": "images/found_c078.jpg",
+    "sha256": "1d3b7e144f241cc542f18e96b2866cd8403be133e9c73767b82714ceddc436dc",
+    "group": "syringe_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Insulin syringe white background.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Insulin_syringe_white_background.jpg",
+      "author": "Wesalius",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 0,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-3 units"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Stopper at needle end under the 10 label region; reads as empty.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c082",
+    "file": "images/found_c082.jpg",
+    "sha256": "633ebc24887282a6e2b11abbbbbb4999dda4e1e1f48d6d46955b2d0bd6957167",
+    "group": "syringe_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "empty",
+      "angle_30",
+      "vial_IU"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Insulin&Syringe.JPG",
+      "url": "https://commons.wikimedia.org/wiki/File:Insulin%26Syringe.JPG",
+      "author": "Reza babaeian",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 0,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-3 units"
+    },
+    "vial": {
+      "substance": "insulin isophane (Dipisulin N)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 100,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "marble, textured",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Syringe plus vial in one frame.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c096",
+    "file": "images/found_c096.jpg",
+    "sha256": "f62ced3b3d92ba46eb0d9b88586cc8e11f411aa2c2d5e736a58b4b1fce3e2240",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "near_empty",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Nadeln 001 2026 08 07.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Nadeln_001_2026_08_07.jpg",
+      "author": "Friedrich Haag",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "tuberculin",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "0.01 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.1,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.05 mL, low confidence"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "black",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Scale numbers small; leading edge near 0.1 mL; low confidence.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c108",
+    "file": "images/found_c108.jpg",
+    "sha256": "bba8eeae5fd5c189b4d52d639880f7d97e509e2c1a77a24b6f37f570a2de9bf4",
+    "group": "syringe_u100",
+    "case_tags": [
+      "U-100",
+      "0.3mL",
+      "between_or_on_mark",
+      "vial_units"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Standard insulin syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Standard_insulin_syringe.jpg",
+      "author": "No machine-readable author provided. Matanya assumed (based on copyright claims).",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.3,
+      "brand": null,
+      "gradation": "1 unit (half-unit ticks possible)"
+    },
+    "fill": {
+      "units": 15,
+      "ml": 0.15,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-2 units"
+    },
+    "vial": {
+      "substance": "insulin aspart (NovoLog) and insulin glargine (Lantus)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 100,
+      "concentration_unit": "units/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "30-unit syringe; two vials in frame; estimated fill.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c116",
+    "file": "images/found_c116.jpg",
+    "sha256": "0c0afb116b24a2218607ed0cd592bdacb6b0294a58c462277e4f982ad2a1093d",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "other_capacity",
+      "full"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe details raw.jpeg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_details_raw.jpeg",
+      "author": "No machine-readable author provided. Fifo assumed (based on copyright claims).",
+      "license": "CC BY-SA 2.5",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 2,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 2,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.2 mL, low confidence"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "black",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Looks like a 2 mL syringe with stopper near the 2 mL mark; scale only partly legible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c122",
+    "file": "images/found_c122.jpg",
+    "sha256": "c6f970d7fc3738fd2728896212b292d72a034b569203a141c2f1a38213eed646",
+    "group": "prefilled",
+    "case_tags": [
+      "prefilled",
+      "vial_mg_per_mL"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe with Metex-9109.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_with_Metex-9109.jpg",
+      "author": "Raimond Spekking</a",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "prefilled",
+      "scale": "none",
+      "capacity_ml": null,
+      "brand": "Metex (methotrexate)",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": {
+      "substance": "methotrexate",
+      "total_amount": 15,
+      "total_unit": "mg",
+      "concentration": 50,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "prefilled_no_graduations",
+    "notes": "Prefilled pen-type syringe; label legible (15 mg, 50 mg/ml) but no graduated scale to read.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c125",
+    "file": "images/found_c125.jpg",
+    "sha256": "7664ec579cf43db50accf7e240658e3f69322ba0d0bbee0b90b44912450993b7",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "other_capacity",
+      "between_marks"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe with needle and needle cap.jpeg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_with_needle_and_needle_cap.jpeg",
+      "author": "No machine-readable author provided. Fifo assumed (based on copyright claims).",
+      "license": "CC BY-SA 2.5",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 2,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 1.0,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.2 mL, low confidence"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "2 mL syringe; stopper just past the 1 mL mark.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c128",
+    "file": "images/found_c128.jpg",
+    "sha256": "4414bd0ba76bc89fbe9fba69962a71107cd58e78a3d9140ed320d5266abf1c23",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "other_capacity",
+      "between_marks",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe2.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe2.jpg",
+      "author": "No machine-readable author provided. <a href=\"//commons.wikimedia.org/w/index.php?title=User:Biggishben~commonswiki&action=edit&redlink=1\" class=\"new\" title=\"Us",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 10,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 3,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.5 mL"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "blue",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "10 mL syringe; stopper between 2 and 4.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d009",
+    "file": "images/found_d009.jpg",
+    "sha256": "ef0506a5af0af906d9e5db07550df48ba5738886d101b029b7fea54c8b3d6024",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:BD 3ml syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:BD_3ml_syringe.jpg",
+      "author": "Mx. Granger",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3,
+      "brand": "BD",
+      "gradation": "0.1 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Stopper at zero.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d020",
+    "file": "images/found_d020.jpg",
+    "sha256": "38f6354a3e5de1613173ea865ec2489c4fe60ef2c345d959b102fe1559de324c",
+    "group": "prefilled",
+    "case_tags": [
+      "prefilled",
+      "vial_mg"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Clexane prefilled syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Clexane_prefilled_syringe.jpg",
+      "author": "Whispyhistory",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "prefilled",
+      "scale": "none",
+      "capacity_ml": 0.4,
+      "brand": "Clexane (enoxaparin)",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.4,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "label",
+      "tolerance": null
+    },
+    "vial": {
+      "substance": "enoxaparin",
+      "total_amount": 40,
+      "total_unit": "mg",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "dark textured",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "prefilled_no_graduations",
+    "notes": "Label shows 40 mg/0.4 mL; no graduated scale.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d023",
+    "file": "images/found_d023.jpg",
+    "sha256": "fe62c61551419e01b14c44bdb8c49762557dc3107a198846880d8aaa9503f242",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "between_marks",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Disposable syringe 5ml 3.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Disposable_syringe_5ml_3.jpg",
+      "author": "real name: Nadina Wiórkiewicz\npl.wiki: Nadine90\ncommons: <a href=\"//comm",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 4,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.3 mL"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Stopper near the 4 mL mark; estimated.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d070",
+    "file": "images/found_d070.jpg",
+    "sha256": "27dac60d680e05370952c3c6668830fa30cb3ba7ab9f4b47f6357886ab251ebf",
+    "group": "prefilled",
+    "case_tags": [
+      "prefilled",
+      "vial_IU",
+      "thousands_separator_dot"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe Enoxaparin Becat, 6000 I.E., Rovi-5480.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_Enoxaparin_Becat,_6000_I.E.,_Rovi-5480.jpg",
+      "author": "Raimond Spekking</a",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "prefilled",
+      "scale": "none",
+      "capacity_ml": 0.6,
+      "brand": "Enoxaparin Becat",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.6,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "label",
+      "tolerance": null
+    },
+    "vial": {
+      "substance": "enoxaparin",
+      "total_amount": 6000,
+      "total_unit": "IU",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": "European dot thousands separator on box (6.000 I.E.)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "prefilled_no_graduations",
+    "notes": "Prefilled syringe; small label not legible here.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d077",
+    "file": "images/found_d077.jpg",
+    "sha256": "ba07578bc124d847b3362bc282b0f64336d0f9711f0fed97e50c13618e260b41",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "other_capacity",
+      "empty"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Toomey syringe 60.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Toomey_syringe_60.jpg",
+      "author": "Marmasphan",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "catheter tip",
+      "scale": "mL",
+      "capacity_ml": 60,
+      "brand": "BD",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "estimated_from_image",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "dark gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "60 mL catheter-tip syringe outside the supported range; package in frame. App should flag unsupported capacity.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c007",
+    "file": "images/found_c007.jpg",
+    "sha256": "771c923636f9eeffbf8cec952b070b98f275e079341373a639d7cf4a8fb7618e",
+    "group": "hard_refuse",
+    "case_tags": [
+      "no_scale_visible"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:A full of syringe having wound drainage.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:A_full_of_syringe_having_wound_drainage.jpg",
+      "author": "Ajay Kumar Chaurasiya",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "metal",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_graduations_visible",
+    "notes": "Barrel full of opaque fluid; no scale visible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c029",
+    "file": "images/found_c029.jpg",
+    "sha256": "fc79c99cbe1cdd095aada1bdf0027503df717a7e9bf1c2d2f16c7d711254d842",
+    "group": "hard_refuse",
+    "case_tags": [
+      "multiple_syringes",
+      "U-100",
+      "0.5mL",
+      "1mL"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Comparing insulin and tuberculin syringes.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Comparing_insulin_and_tuberculin_syringes.jpg",
+      "author": "Bron766",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin + tuberculin",
+      "scale": "mixed",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "knit fabric",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "multiple_syringes",
+    "notes": "Insulin 50-unit and tuberculin 1 mL side by side; useful for scale-type contrast.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c036",
+    "file": "images/found_c036.jpg",
+    "sha256": "8a281137782f48854375c00d4c84967cdb5471ae9f0c5c1ca8db41432df75eb4",
+    "group": "hard_refuse",
+    "case_tags": [
+      "other_capacity",
+      "plunger_not_visible"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:D50Prefill.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:D50Prefill.jpg",
+      "author": "James Heilman, MD",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "prefilled",
+      "scale": "mL",
+      "capacity_ml": 50,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": {
+      "substance": "dextrose 50%",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white cloth",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "plunger_not_visible",
+    "notes": "50 mL D50 prefilled syringe; outside range.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c060",
+    "file": "images/found_c060.jpg",
+    "sha256": "178fadfc97ea1a855f6adf49b1cf60bfc73cf0bfb3a208fdbee1bc7e5d801356",
+    "group": "hard_refuse",
+    "case_tags": [
+      "prefilled"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Gardasil 9 syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Gardasil_9_syringe.jpg",
+      "author": "Whispyhistory",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "prefilled",
+      "scale": "none",
+      "capacity_ml": 0.5,
+      "brand": "Gardasil 9",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "label",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "prefilled_no_graduations",
+    "notes": "Single-dose prefilled 0.5 mL vaccine syringe.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c068",
+    "file": "images/found_c068.jpg",
+    "sha256": "3fd626edff79273a9e3c19b879b8fccf0d7325f329335d6400a406f4a0dfcaf6",
+    "group": "hard_refuse",
+    "case_tags": [
+      "dim",
+      "glass",
+      "unreadable"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Hypodermic syringe, 1ml, for insulin, glass and chrome plate Wellcome L0057652.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Hypodermic_syringe,_1ml,_for_insulin,_glass_and_chrome_plate_Wellcome_L0057652.jpg",
+      "author": "",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "insulin (glass)",
+      "scale": "unknown",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "black",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Museum glass/chrome syringe; markings unreadable.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c073",
+    "file": "images/found_c073.jpg",
+    "sha256": "1ad9e758442c2e41a04e9ee0cd37547a807ade4f8c4ae5287662c20d13f90b70",
+    "group": "hard_refuse",
+    "case_tags": [
+      "finger_occlusion",
+      "angle_60"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Injection Syringe 01.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Injection_Syringe_01.jpg",
+      "author": "Kuebi = Armin Kübelbeck",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "60deg",
+      "background": "black",
+      "focus": "sharp",
+      "occlusion": "finger"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Hand holding syringe; numbers not legible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c101",
+    "file": "images/found_c101.jpg",
+    "sha256": "8f3212f0a9f962bde77751998e46cfd618eda6db2e0dd3c2877233cc97ac5991",
+    "group": "hard_refuse",
+    "case_tags": [
+      "packaging_only",
+      "U-40"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:RECALLED – Insulin syringes (12660343513).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:RECALLED_%E2%80%93_Insulin_syringes_(12660343513).jpg",
+      "author": "The U.S. Food and Drug Administration",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 0.5,
+      "brand": "MVI/Oasis",
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_syringe_barrel",
+    "notes": "Box label reading 1/2cc insulin syringe U-40; no syringe visible. Useful for U-40 detection from packaging.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c114",
+    "file": "images/found_c114.jpg",
+    "sha256": "ed2d843fbcd9ee62b42005afe881955f70a70b92395766a24b0388ed8fa58e97",
+    "group": "hard_refuse",
+    "case_tags": [
+      "no_scale_visible"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe 2.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_2.jpg",
+      "author": "Mx. Granger",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "catheter tip",
+      "scale": "mL",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_graduations_visible",
+    "notes": "Large syringe with no visible graduations.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c118",
+    "file": "images/found_c118.jpg",
+    "sha256": "8be60572c29750945cb880f2327393178c7c7d1e42131f2a9afb73f57b0de56a",
+    "group": "hard_refuse",
+    "case_tags": [
+      "angle_60",
+      "partial_view"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe medicine.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_medicine.jpg",
+      "author": "Pixabay",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "60deg",
+      "background": "pale blue",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Stock photo: syringe leaning into vials.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c123",
+    "file": "images/found_c123.jpg",
+    "sha256": "bab63c5663e09c6988a4cbdb29d9ad52deb6c122f3b79486a58c79253c93bd95",
+    "group": "hard_refuse",
+    "case_tags": [
+      "finger_occlusion",
+      "backlit",
+      "blurred"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe with insulin for a cat.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_with_insulin_for_a_cat.jpg",
+      "author": "Melissa Wiese from Fresno, CA, United States of America",
+      "license": "CC BY 2.0",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "backlit",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "blurred",
+      "occlusion": "finger"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Hand holding insulin syringe; markings illegible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c124",
+    "file": "images/found_c124.jpg",
+    "sha256": "c72fdca62818111f5dc9692d12e932e1af7aab38c29b379077a846085d2b5877",
+    "group": "hard_refuse",
+    "case_tags": [
+      "multiple_syringes"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe with needle (2).JPG",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_with_needle_(2).JPG",
+      "author": "Intropin",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "multiple_syringes",
+    "notes": "Four syringes in frame.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c127",
+    "file": "images/found_c127.jpg",
+    "sha256": "b038b3cbbb21032f1cef18a72ada65f9c75dac434fc9e11c5bdd2fb394903d73",
+    "group": "hard_refuse",
+    "case_tags": [
+      "disassembled"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe-parts.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe-parts.jpg",
+      "author": "Vtbijoy",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "blue",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_plunger_in_barrel",
+    "notes": "Barrel and plunger shown separately.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c129",
+    "file": "images/found_c129.jpg",
+    "sha256": "f07a9f9e0ea6e3abf3fa826da02bb883c389536db8f5d89ff5bb05dd3505702f",
+    "group": "hard_refuse",
+    "case_tags": [
+      "low_resolution",
+      "top_down"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:SyringeNearLegacyTower.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:SyringeNearLegacyTower.jpg",
+      "author": "DanielPenfield",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "gravel",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Discarded syringe on gravel; scale illegible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c134",
+    "file": "images/found_c134.jpg",
+    "sha256": "4153b9dc72724aaa33df4bd13f0478ef3c674fe120cd8c91cee20937f1f2bc6b",
+    "group": "hard_refuse",
+    "case_tags": [
+      "low_resolution",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Tuberculin Syringe.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Tuberculin_Syringe.jpg",
+      "author": "Sarindam7",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "tuberculin",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "blue",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Small image; numbers illegible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c142",
+    "file": "images/found_c142.jpg",
+    "sha256": "4d38001e033a468ea165f248fbdf174d4788f85075502dcf8e1c3cf46b36f9c4",
+    "group": "hard_refuse",
+    "case_tags": [
+      "partial_view",
+      "occlusion"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Used Insulin Syringe in Wolf Point- bloodborne pathogens lurking in garage.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Used_Insulin_Syringe_in_Wolf_Point-_bloodborne_pathogens_lurking_in_garage.jpg",
+      "author": "Biscuitroot",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "object"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "partial_view",
+    "notes": "Used syringe partly under a board.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d066",
+    "file": "images/found_d066.jpg",
+    "sha256": "08bf895aba08c64f3d3e1fd06c51ebe29fbaca850116f80a9387428bb859bbbd",
+    "group": "hard_refuse",
+    "case_tags": [
+      "glass",
+      "unreadable"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Spritze 5ml Record 01.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Spritze_5ml_Record_01.jpg",
+      "author": "Markus.Michalczyk",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "glass (Record)",
+      "scale": "mL",
+      "capacity_ml": 5,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "blue cloth",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Old glass/metal syringe; markings unreadable.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d076",
+    "file": "images/found_d076.jpg",
+    "sha256": "abaf64ae000467b75b449c31e2553ffbc7fd778434ba91ad7189a15e99f3f63e",
+    "group": "hard_refuse",
+    "case_tags": [
+      "multiple_syringes",
+      "U-100",
+      "3mL",
+      "1mL"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Three types of syringes.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Three_types_of_syringes.jpg",
+      "author": "Bron766",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": {
+      "type": "mixed",
+      "scale": "mixed",
+      "capacity_ml": null,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white lace",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "multiple_syringes",
+    "notes": "3 mL, 1 mL and insulin syringes overlapping.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c009",
+    "file": "images/found_c009.jpg",
+    "sha256": "78647417f5b8ba7d41318c4f31423c5d23afa70fb601711480cbe87ef1c73cff",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Actrapid vial.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Actrapid_vial.jpg",
+      "author": "John Campbell",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin human (Actrapid)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 100,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "shallow depth",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Label spells out \"100 international units/ml\".",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c038",
+    "file": "images/found_c038.jpg",
+    "sha256": "ac5387282be861847d6edfb9884309177c2848c117f99514d2ec3227a229cdc7",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_mL",
+      "multiple_vials"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Depo-Estradiol (estradiol cypionate) vials.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Depo-Estradiol_(estradiol_cypionate)_vials.jpg",
+      "author": "Medgirl131",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "estradiol cypionate (Depo-Estradiol)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 5,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "dark",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Three identical vials; 5 mL vial size printed small.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c039",
+    "file": "images/found_c039.jpg",
+    "sha256": "40e42188c2cf97aec34bfdd7490d3558d12821bb4d2b9730882aa74266ad73e8",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_mL",
+      "testosterone",
+      "handwriting"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Depo-testosterone 200 mg ml crop.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Depo-testosterone_200_mg_ml_crop.jpg",
+      "author": "U.S. Drug Enforcement Administration",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "testosterone cypionate (Depo-Testosterone)",
+      "total_amount": 2000,
+      "total_unit": "mg",
+      "concentration": 200,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "dark gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "10 mL vial at 200 mg per ml; total derived (2,000 mg), not printed. Handwritten marks on label, no names.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c057",
+    "file": "images/found_c057.jpg",
+    "sha256": "c7be7d6239e792d646f7829d6f970323eb226b72e4374295cc3d769c359fd18c",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "cartridge",
+      "non_english"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Fiasp insulin vial with Euro.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Fiasp_insulin_vial_with_Euro.jpg",
+      "author": "MallardTV",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin aspart (Fiasp)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 100,
+      "concentration_unit": "units/mL",
+      "label_legible": true,
+      "number_format": "German: 100 Einheiten/ml"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Cartridge beside a 1 euro coin.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c065",
+    "file": "images/found_c065.jpg",
+    "sha256": "c4461371d75533b39b1dc2d5507ec91bbb8d3fe0a0ca776e82d0d843d9eb56c6",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Human insulin 100IU-ml vial white background.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Human_insulin_100IU-ml_vial_white_background.jpg",
+      "author": "Wesalius",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin human (Humulin R)",
+      "total_amount": 1000,
+      "total_unit": "IU",
+      "concentration": 100,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "10 ml vial, 100 IU/ml (Czech label).",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c067",
+    "file": "images/found_c067.jpg",
+    "sha256": "b7513dd8f6ef0491ca836220fdc868edaa39bcecf997769f035fa2c3278e2101",
+    "group": "vial",
+    "case_tags": [
+      "vial_mcg",
+      "thousands_comma",
+      "total_and_concentration",
+      "syringe_in_frame"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Hydroxocobalamin Injection.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Hydroxocobalamin_Injection.jpg",
+      "author": "Sbharris",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "hydroxocobalamin",
+      "total_amount": 30000,
+      "total_unit": "mcg",
+      "concentration": 1000,
+      "concentration_unit": "mcg/mL",
+      "label_legible": true,
+      "number_format": "30,000 mcg/30 mL (1,000 mcg/mL)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Box, vial and a syringe; both total and concentration printed with commas.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c074",
+    "file": "images/found_c074.jpg",
+    "sha256": "28457f81a5d468d135fbd82c8f654893843875e23aa2878bfce4b53134f71bba",
+    "group": "vial",
+    "case_tags": [
+      "vial_units"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Insulin Admelog Vial.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Insulin_Admelog_Vial.jpg",
+      "author": "MallardTV",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin lispro (Admelog)",
+      "total_amount": 1000,
+      "total_unit": "units",
+      "concentration": 100,
+      "concentration_unit": "units/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "10 mL vial, 100 units/mL (U-100).",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c083",
+    "file": "images/found_c083.jpg",
+    "sha256": "8f9b8e9e5c352795b87d911a058851308c1948af0d4b8e38c73f3d3f53ef3f72",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "multiple_vials"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Inzulín.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Inzul%C3%ADn.jpg",
+      "author": "Mr Hyde at Czech Wikipedi",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin (Actrapid HM, NovoRapid)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 100,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white cloth",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Two vials, one lying down.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_c088",
+    "file": "images/found_c088.jpg",
+    "sha256": "eaf1ec4553c521d077cb408b10ccd1f61048f88864a484e31b6ecde859ef6fd3",
+    "group": "vial",
+    "case_tags": [
+      "vial_units",
+      "curved_label"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Lantus vial.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Lantus_vial.jpg",
+      "author": "Matanya",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "insulin glargine (Lantus)",
+      "total_amount": 1000,
+      "total_unit": "units",
+      "concentration": 100,
+      "concentration_unit": "units/mL",
+      "label_legible": false,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_partly_unreadable",
+    "notes": "Label curves away; text partly unreadable at this size.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d003",
+    "file": "images/found_d003.jpg",
+    "sha256": "a266edb2b54baa1080888c212bfe0488b72686917fe9fddf48fe9df18015d6b5",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "vial_mg_per_mL",
+      "rotated_text"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Adrenaline ampoule.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Adrenaline_ampoule.jpg",
+      "author": "Whispyhistory<div style=\"display:table;width:auto;vertical-align:middle;direction:ltr;float:left;line-heigh",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "adrenaline (epinephrine)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 1,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "1 mg/ml (1:1000)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Ampoule; text runs vertically.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d008",
+    "file": "images/found_d008.jpg",
+    "sha256": "ebe3d953e74e465437bd0e3b7a85dbab65f877e9c7b8b8e06b4dbb63f67d379c",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "total_vs_concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Apaurin 10 mg-2 ml amp.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Apaurin_10_mg-2_ml_amp.jpg",
+      "author": "Tomino de WS",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "diazepam (Apaurin)",
+      "total_amount": 10,
+      "total_unit": "mg",
+      "concentration": 5,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "10 mg/2 ml"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Label states total per volume (10 mg/2 ml); concentration 5 mg/mL must be derived.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d018",
+    "file": "images/found_d018.jpg",
+    "sha256": "e4a0dde03258c76240df3cde458efad59c417760ce2290f1100e0004e884502b",
+    "group": "vial",
+    "case_tags": [
+      "prefilled_syringe",
+      "vial_mg_per_mL",
+      "ratio"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Cardiac Epinephrine (cropped).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Cardiac_Epinephrine_(cropped).jpg",
+      "author": "Mark Oniffrey",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "epinephrine",
+      "total_amount": 1,
+      "total_unit": "mg",
+      "concentration": 0.1,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "1:10,000, 1 mg (0.1 mg/mL)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Emergency prefilled syringe; ratio notation.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d022",
+    "file": "images/found_d022.jpg",
+    "sha256": "dcdacd475ec9fd02c52eee7629e67bc46ca97cc530b5636796115ddec94aa5e1",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "total_vs_concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Diazepam Ampulle ratiopharm 10 mg. 2 ml.JPG",
+      "url": "https://commons.wikimedia.org/wiki/File:Diazepam_Ampulle_ratiopharm_10_mg._2_ml.JPG",
+      "author": "Stefan Bellini",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "diazepam",
+      "total_amount": 10,
+      "total_unit": "mg",
+      "concentration": 5,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "10 mg/2 ml"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Total per volume.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d024",
+    "file": "images/found_d024.jpg",
+    "sha256": "202ae34b2cd0d6155e4a02eff46ac10a669ce7b17a77cc14b76b6a1ee6e9f9c3",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "vial_mg_per_mL",
+      "decimal_comma"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Dithiaden 0,5 mg-ml inj.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Dithiaden_0,5_mg-ml_inj.jpg",
+      "author": "Tomino de WS",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "bisulepin (Dithiaden)",
+      "total_amount": 1,
+      "total_unit": "mg",
+      "concentration": 0.5,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "0,5 mg/ml (decimal comma)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "European decimal comma: 0,5 means 0.5.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d028",
+    "file": "images/found_d028.jpg",
+    "sha256": "854793150e9691c0c3933f7d2dca8dd863d9fefcc80ddf778d5364ef5f800111",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg",
+      "ratio"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Epinephrine-ampule.JPG",
+      "url": "https://commons.wikimedia.org/wiki/File:Epinephrine-ampule.JPG",
+      "author": "Jfoldmei",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "epinephrine (Adrenalin)",
+      "total_amount": 1,
+      "total_unit": "mg",
+      "concentration": 1,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "1 mg 1:1000 1 mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "blurred",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d034",
+    "file": "images/found_d034.jpg",
+    "sha256": "731684fed1cd371929069ba6294b14d4a83bc9076852fdeedc8d28c4d918ffdf",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "rotated_text",
+      "angle_30"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Gentamicin for injection.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Gentamicin_for_injection.jpg",
+      "author": "LHcheM",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "gentamicin",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_partly_unreadable",
+    "notes": "Strength partly hidden by curvature.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d035",
+    "file": "images/found_d035.jpg",
+    "sha256": "4727a07b89b045cec9abf2f7585e17bd651585e6d58a632351c5c05119340cc0",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "thousands_space",
+      "total_and_concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Heparin 5000 IU-1ml vial white background.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Heparin_5000_IU-1ml_vial_white_background.jpg",
+      "author": "Wesalius",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_required": true,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "heparin sodium",
+      "total_amount": 50000,
+      "total_unit": "IU",
+      "concentration": 5000,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": "5 000 IU/ml, 50 000 IU per 10 ml (space separator)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Space as thousands separator.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d040",
+    "file": "images/found_d040.jpg",
+    "sha256": "7050ec80cb72d24161e7b4ad87a2d12882a8c87a36347009b3c88d5e87fe1cc0",
+    "group": "vial",
+    "case_tags": [
+      "ampoule",
+      "total_vs_concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Ketonal 100 mg-2 ml amp.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Ketonal_100_mg-2_ml_amp.jpg",
+      "author": "Tomino de WS",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "ketoprofen (Ketonal)",
+      "total_amount": 100,
+      "total_unit": "mg",
+      "concentration": 50,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "100 mg/2 ml"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Box says 100 mg; amps 2 ml.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d057",
+    "file": "images/found_d057.jpg",
+    "sha256": "7544518ee36925cf2e373923356a238aa3a63e6e4f553fbe43f97eb00fcc9cce",
+    "group": "vial",
+    "case_tags": [
+      "label_scan",
+      "percent_w_v"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:RECALLED - Calcium Chloride Intravenous Infusion 10% in 10 mL prefilled glass syringes (19071089343).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:RECALLED_-_Calcium_Chloride_Intravenous_Infusion_10%25_in_10_mL_prefilled_glass_syringes_(19071089343).jpg",
+      "author": "The U.S. Food and Drug Administration",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "calcium chloride",
+      "total_amount": 1000,
+      "total_unit": "mg",
+      "concentration": 100,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "10% w/v in 10 mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat label scan; strength in percent (10% w/v = 100 mg/mL), must be converted.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d058",
+    "file": "images/found_d058.jpg",
+    "sha256": "fbe32f200c706b32e34ea8054fbc023f68d0ceb510bfe7277ff5cdc164388259",
+    "group": "vial",
+    "case_tags": [
+      "label_turned_away"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:RECALLED – Lidocaine HCI Injection, USP, 2% (14593133070).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:RECALLED_%E2%80%93_Lidocaine_HCI_Injection,_USP,_2%25_(14593133070).jpg",
+      "author": "The U.S. Food and Drug Administration",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "lidocaine HCl (hidden)",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_not_visible",
+    "notes": "Back of vial: only lot/expiry visible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d059",
+    "file": "images/found_d059.jpg",
+    "sha256": "a0a4a2ce8d9d8c340fd39a2b0f448d7b6780452efc5209d15612c924063b9b02",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_mL",
+      "percent"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:RECALLED – Lidocaine HCI Injection, USP, 2% (14777489864).jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:RECALLED_%E2%80%93_Lidocaine_HCI_Injection,_USP,_2%25_(14777489864).jpg",
+      "author": "The U.S. Food and Drug Administration",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "lidocaine HCl 2%",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": 20,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "2%, 20 mg per mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Small text; 5 mL single-dose.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d063",
+    "file": "images/found_d063.jpg",
+    "sha256": "42a35c5dde561af3d993803e3f2a48a6772e02047db7a80bdcc786f768553433",
+    "group": "vial",
+    "case_tags": [
+      "vial_mcg",
+      "multiple_vials"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:SampleCyanocobalaminn.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:SampleCyanocobalaminn.jpg",
+      "author": "Эрг",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "cyanocobalamin (vitamin B-12)",
+      "total_amount": 10000,
+      "total_unit": "mcg",
+      "concentration": 1000,
+      "concentration_unit": "mcg/mL",
+      "label_legible": true,
+      "number_format": "1000 mcg/ml (no comma)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "yellow",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "10 ml; second unlabeled vial beside it.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d068",
+    "file": "images/found_d068.jpg",
+    "sha256": "07648bce2a116eec7e4ae5ace39898bafd15f27f5019b3ae4e6f391915790dee",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_volume",
+      "glare",
+      "syringe_in_frame"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Sumatriptan vails 100 5509.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Sumatriptan_vails_100_5509.jpg",
+      "author": "Malagent",
+      "license": "Public domain",
+      "license_url": null,
+      "attribution_required": false,
+      "share_alike": false
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "sumatriptan succinate",
+      "total_amount": 6,
+      "total_unit": "mg",
+      "concentration": 12,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "6 mg/0.5 mL"
+    },
+    "conditions": {
+      "lighting": "glare",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Strong light; several vials and a syringe.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d069",
+    "file": "images/found_d069.jpg",
+    "sha256": "9e34efe8fa2541ce5b8d4545282805466866f49664d8d2d3db6b7fac54300316",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "thousands_separator_dot",
+      "total_vs_concentration"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Syringe Enoxaparin Becat, 6000 I.E., Rovi-5476.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Syringe_Enoxaparin_Becat,_6000_I.E.,_Rovi-5476.jpg",
+      "author": "Raimond Spekking</a",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "enoxaparin",
+      "total_amount": 6000,
+      "total_unit": "IU",
+      "concentration": 10000,
+      "concentration_unit": "IU/mL",
+      "label_legible": true,
+      "number_format": "6.000 I.E. (60 mg)/0,6 ml"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Dot thousands separator and decimal comma on same label: 6.000 means 6000, 0,6 means 0.6.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "found_d080",
+    "file": "images/found_d080.jpg",
+    "sha256": "9acf0f9ec8ca8c1c7be013a10beb383cb12cc2dba1cf2f098985c6da304f6206",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "label_cropped"
+    ],
+    "generated": false,
+    "source": {
+      "kind": "wikimedia_commons",
+      "title": "File:Vial heparina sódica.jpg",
+      "url": "https://commons.wikimedia.org/wiki/File:Vial_heparina_s%C3%B3dica.jpg",
+      "author": "Juanjosemarin1",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_required": true,
+      "share_alike": true
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "heparin sodium",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": "strength cut off at label edge (1.0...)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_partly_unreadable",
+    "notes": "Strength runs off the visible label edge.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1 (single labeler; second labeler = Rodney review)",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_01",
+    "file": "images/gen_ai_01.jpg",
+    "sha256": "a0e7304db943b05e3800070face1e875ce3682874d2d10bc25be066ce6f1b2f0",
+    "group": "syringe_u40",
+    "case_tags": [
+      "U-40",
+      "1mL",
+      "between_marks",
+      "air_only"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "U-40 1 mL syringe, red caps, filled to 20 units",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 31,
+      "ml": 0.775,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-2 units"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "WHAT IT SHOWS (not the prompt): empty barrel, no liquid; stopper leading edge about 31 units, not 20. Scale starts at 5 by the needle. Plausible enough to read, but verify.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_02",
+    "file": "images/gen_ai_02.jpg",
+    "sha256": "3c87c38d3078c42441d2292295d0055941b59beae27bad8702fcb0be8f875043",
+    "group": "hard_refuse",
+    "case_tags": [
+      "U-100",
+      "0.3mL",
+      "dim",
+      "garbled_scale"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "0.3 mL U-100 syringe, dim lamp light, ~12 units",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.3,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "30deg",
+      "background": "dark wood",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_stopper_visible_and_garbled_scale",
+    "notes": "Scale numbers duplicated (two rows 15-30), \"UNITS\" garbled, no rubber stopper drawn.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_03",
+    "file": "images/gen_ai_03.jpg",
+    "sha256": "9e82d266e4134911f7cc5162b362f89793d83744ae4b6a600f9515269efa1380",
+    "group": "hard_refuse",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "glare",
+      "generator_error"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "3 mL syringe with glare, ~1.5 mL",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "glare",
+      "angle": "30deg",
+      "background": "glossy white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "no_stopper_visible",
+    "notes": "Glare over 0.5 mL area; generator drew no rubber stopper, so there is no reading edge.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_04",
+    "file": "images/gen_ai_04.jpg",
+    "sha256": "ff8ac11b214d9f3b8220ac905f776cbf20eda8a5f298744f16b8e2bb5ecb7f64",
+    "group": "hard_refuse",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "angle_60",
+      "garbled_scale"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "5 mL syringe at 60 deg angle",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "60deg",
+      "background": "gray",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Scale text is gibberish; stopper near flange.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_05",
+    "file": "images/gen_ai_05.jpg",
+    "sha256": "028477136735b99f7743957bf78ea9562ab54a183b0d14f9aceb870071c891fd",
+    "group": "hard_refuse",
+    "case_tags": [
+      "U-100",
+      "partial_view"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "U-100 syringe cropped so stopper out of frame",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "plunger_not_visible",
+    "notes": "Matches prompt: only needle end and 0-30 units visible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_06",
+    "file": "images/gen_ai_06.jpg",
+    "sha256": "5a747d4bad45e4023f3e149cb99bc21f89acf5bb46a86a7b1de02b8367a26053",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg",
+      "total_only",
+      "peptide",
+      "lyophilized"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "BPC-157 5 mg lyophilized vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "BPC-157",
+      "total_amount": 5,
+      "total_unit": "mg",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": "total only; concentration depends on reconstitution volume"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt. App must ask for reconstitution volume.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_07",
+    "file": "images/gen_ai_07.jpg",
+    "sha256": "db900316fd95b68e5ff50c6d8a0ff323930a86e72b6ca576e0d989dae63f5e30",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "thousands_comma",
+      "total_only"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "hCG 10,000 IU vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "chorionic gonadotropin (hCG)",
+      "total_amount": 10000,
+      "total_unit": "IU",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": "10,000 IU per vial"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_08",
+    "file": "images/gen_ai_08.jpg",
+    "sha256": "53bd03bd3b5b6d1314e63192114c72fb47ac3a5a6568dc564d79b407e7726bd5",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_mL",
+      "testosterone",
+      "thousands_comma",
+      "total_and_concentration"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Testosterone cypionate 2,000 mg/10 mL (200 mg/mL) vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "testosterone cypionate",
+      "total_amount": 2000,
+      "total_unit": "mg",
+      "concentration": 200,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "2,000 mg / 10 mL (200 mg/mL)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "beige",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_09",
+    "file": "images/gen_ai_09.jpg",
+    "sha256": "a7d7ce966199257668bcff4a90fe35b3cdf43cebc2b7a2f3eae5164ead1c0cc9",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg_per_mL",
+      "peptide",
+      "total_and_concentration"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Semaglutide 2 mg/mL, total 4 mg in 2 mL vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "semaglutide",
+      "total_amount": 4,
+      "total_unit": "mg",
+      "concentration": 2,
+      "concentration_unit": "mg/mL",
+      "label_legible": true,
+      "number_format": "2 mg/mL; Total 4 mg in 2 mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "marble",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_10",
+    "file": "images/gen_ai_10.jpg",
+    "sha256": "f7d10f417ca2f1e643a63c64895117f2d4cdde9b7ffd849b5c5e5a9031c71adc",
+    "group": "hard_refuse",
+    "case_tags": [
+      "vial",
+      "blurred"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Vial with blurred unreadable label",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "unknown",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": null
+    },
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "wood",
+      "focus": "blurred",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_unreadable",
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_11",
+    "file": "images/gen_ai_11.jpg",
+    "sha256": "8cf18008f2c35080c005194ec03721981599df5bde330b0a596831151c925c29",
+    "group": "hard_refuse",
+    "case_tags": [
+      "U-100",
+      "0.5mL",
+      "generator_error"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "0.5 mL U-100 syringe filled to 25 units",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.5,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "implausible_syringe",
+    "notes": "Scale numbers increase toward the needle (reversed), no plunger rod; stopper spans about 16-21. Not a real syringe layout. Recommend reject or keep only as an adversarial refuse case.",
+    "recommend_reject": true,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_12",
+    "file": "images/gen_ai_12.jpg",
+    "sha256": "b82c8e956b3c70f34378133b73ea52da4b102ba6e3130bb7d32a63ecd5f3f67b",
+    "group": "syringe_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "on_mark",
+      "generator_error"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "1 mL tuberculin syringe at 0.45 mL",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "tuberculin",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": "0.02 mL as drawn"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.6,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "estimated_from_image",
+      "tolerance": "+/-0.02 mL"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "blue cloth",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "WHAT IT SHOWS: stopper leading edge at 0.6 mL, not 0.45. \"0.6\" is printed twice (second one under stopper where 0.65 would be). Air bubble near 0.4. Verify or reject.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_13",
+    "file": "images/gen_ai_13.jpg",
+    "sha256": "a36b8c2d6aa26558ac1a2ef155d30b6da832cfac80f2b954d28bb3839958792e",
+    "group": "hard_refuse",
+    "case_tags": [
+      "U-100",
+      "backlit",
+      "garbled_scale",
+      "occlusion"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Backlit U-100 syringe at 100 units",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "backlit",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "clip"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Numbers garbled (100 at needle end, \"64\"); clip covers scale.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_14",
+    "file": "images/gen_ai_14.jpg",
+    "sha256": "e037abc1c7438fac35b7135b924c7f83af4af01233c935a9a6be0da615a5fbcf",
+    "group": "hard_refuse",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "finger_occlusion",
+      "garbled_scale"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Gloved thumb covering 3 mL scale",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "gray",
+      "focus": "sharp",
+      "occlusion": "gloved thumb"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "occluded_and_garbled_scale",
+    "notes": "Scale reads 0.5, 1.5, 7, 2.2, 3 mL (wrong); thumb covers middle.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_15",
+    "file": "images/gen_ai_15.jpg",
+    "sha256": "3bd3d8b38eec10ed0f4610b2d98db5747ec742a4e3172656a475bbf84c0c130a",
+    "group": "vial",
+    "case_tags": [
+      "vial_mcg",
+      "thousands_comma",
+      "concentration"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Cyanocobalamin 1,000 mcg/mL 10 mL vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "cyanocobalamin",
+      "total_amount": 10000,
+      "total_unit": "mcg",
+      "concentration": 1000,
+      "concentration_unit": "mcg/mL",
+      "label_legible": true,
+      "number_format": "1,000 mcg/mL; 10 mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_16",
+    "file": "images/gen_ai_16.jpg",
+    "sha256": "8d32f1f653e0b10682cb53500e77cdacd1fc2781b1ad5628a1c3aa3a1a636a9d",
+    "group": "vial",
+    "case_tags": [
+      "vial_mg",
+      "glare",
+      "total_only",
+      "peptide"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Tirzepatide 10 mg vial with glare",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "tirzepatide",
+      "total_amount": 10,
+      "total_unit": "mg",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": "10 mg total; glare over end of name"
+    },
+    "conditions": {
+      "lighting": "glare",
+      "angle": "straight",
+      "background": "black",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Glare covers part of the label but text still readable.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_17",
+    "file": "images/gen_ai_17.jpg",
+    "sha256": "e9ea360f17953cced2c235bf97c6a130950b10911a57ecb05b167515570ea8ce",
+    "group": "vial",
+    "case_tags": [
+      "vial_units",
+      "thousands_comma",
+      "total_and_concentration"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Heparin 5,000 USP units/mL 1 mL vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "heparin sodium",
+      "total_amount": 5000,
+      "total_unit": "USP units",
+      "concentration": 5000,
+      "concentration_unit": "USP units/mL",
+      "label_legible": true,
+      "number_format": "5,000 USP units/mL; 1 mL"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_18",
+    "file": "images/gen_ai_18.jpg",
+    "sha256": "840388833a8f8314dcd3e47ec2a8f6738574da4786701217101da2f4d3ecf90f",
+    "group": "hard_refuse",
+    "case_tags": [
+      "vial",
+      "label_turned_away"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Vial on side, label mostly hidden",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "unknown",
+      "total_amount": null,
+      "total_unit": null,
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": false,
+      "number_format": "only \"lmg/mL\" visible; ambiguous 1 vs l"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "lying on side",
+      "background": "bathroom counter",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "label_partly_unreadable",
+    "notes": "Open screw-neck bottle with no cap; only \"lmg/mL\" visible.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_19",
+    "file": "images/gen_ai_19.jpg",
+    "sha256": "5ad32ce08d476465d88eb82a8a6a3c6c22c2a63727497e9a82c80a53678ff6bb",
+    "group": "vial",
+    "case_tags": [
+      "vial_IU",
+      "vial_mg",
+      "peptide",
+      "lyophilized",
+      "total_only"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "Somatropin 36 IU (12 mg) vial",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": null,
+    "fill": null,
+    "vial": {
+      "substance": "somatropin (HGH)",
+      "total_amount": 36,
+      "total_unit": "IU",
+      "concentration": null,
+      "concentration_unit": null,
+      "label_legible": true,
+      "number_format": "36 IU (12 mg)"
+    },
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Matches prompt. Two units for the same total.",
+    "recommend_reject": false,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "gen_ai_20",
+    "file": "images/gen_ai_20.jpg",
+    "sha256": "8de9bb37e46abf63a42c371366b6e4a351276f8883aafa10862394e9596447f7",
+    "group": "hard_refuse",
+    "case_tags": [
+      "U-40",
+      "0.5mL",
+      "generator_error"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "ai_generated",
+      "generator": "Grok Bot GenerateImage",
+      "prompt_summary": "0.5 mL U-40 syringe at 10 units",
+      "license": "generated for this project; no third-party rights claimed"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 0.5,
+      "brand": null,
+      "gradation": null
+    },
+    "fill": {
+      "units": null,
+      "ml": null,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "n/a",
+      "tolerance": null
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "white",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "implausible_scale",
+    "notes": "\"14\" printed twice (12, 14, 14, 16); stopper about 13-14. The scale is wrong, so no correct reading exists. Recommend reject or keep only as an adversarial refuse case.",
+    "recommend_reject": true,
+    "labeler": "grok-bot pass 1: labeled from what the image shows, not the prompt",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_01_U100-0p3_on_mark",
+    "file": "images/proc_01_U100-0p3_on_mark.jpg",
+    "sha256": "ebd0eab5353d92d3b4a3e53f9512eb3d473ee09110497c236f0970f680c7c10d",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.3mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.3,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 10,
+      "ml": 0.1,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_02_U100-0p3_between_marks",
+    "file": "images/proc_02_U100-0p3_between_marks.jpg",
+    "sha256": "49fd5aa5a3aceac2574643ded398c8f0f6c35a8a272188f658bced799757cd80",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.3mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.3,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 22.5,
+      "ml": 0.225,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_03_U100-0p3_full",
+    "file": "images/proc_03_U100-0p3_full.jpg",
+    "sha256": "197f3bc1a69acd8dee166827ad3cb80354e298b5b6de668a3386114829c5cb54",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.3mL",
+      "full"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.3,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 30,
+      "ml": 0.3,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_04_U100-0p5_empty",
+    "file": "images/proc_04_U100-0p5_empty.jpg",
+    "sha256": "35fe6786d58bbf09dea638565d040035d2209eb84144312d3c9c83a427cea603",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.5mL",
+      "empty"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 0,
+      "ml": 0.0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_05_U100-0p5_on_mark",
+    "file": "images/proc_05_U100-0p5_on_mark.jpg",
+    "sha256": "d9e686e6121a8ab9ba5a26af480c45f6dc5620b40a848d1ce32035b3a1d747dc",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.5mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 25,
+      "ml": 0.25,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_06_U100-0p5_between_marks",
+    "file": "images/proc_06_U100-0p5_between_marks.jpg",
+    "sha256": "a48e8722e331cf5af0891929984384136112f1332fd54613d5f732982997a972",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.5mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 37.5,
+      "ml": 0.375,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_07_U100-1_on_mark",
+    "file": "images/proc_07_U100-1_on_mark.jpg",
+    "sha256": "39a6e3717ec8c3038e32951a36c7ca8b05453b4f9a20ab8b2d990f59332e390d",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 40,
+      "ml": 0.4,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_08_U100-1_between_marks",
+    "file": "images/proc_08_U100-1_between_marks.jpg",
+    "sha256": "24bf98948f6824add9641b05506d12978a9d4697369168bcaa1cea92bea1ec0b",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 63,
+      "ml": 0.63,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_09_U100-1_full",
+    "file": "images/proc_09_U100-1_full.jpg",
+    "sha256": "d93b2862f16d72d259b1c8599243311cfaa63323206b7c414c564122b26de437",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "full"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 100,
+      "ml": 1.0,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_10_U40-0p5_empty",
+    "file": "images/proc_10_U40-0p5_empty.jpg",
+    "sha256": "cd33ec9360534faaf94888d77fe2d700769460399f80be950d0a2acfa005dedc",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "0.5mL",
+      "empty"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 0,
+      "ml": 0.0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_11_U40-0p5_on_mark",
+    "file": "images/proc_11_U40-0p5_on_mark.jpg",
+    "sha256": "26067f6cd49966a9ae20f25e353f3a42c68d9f2f3e73417f7f8ce840a082c090",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "0.5mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 8,
+      "ml": 0.2,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_12_U40-0p5_between_marks",
+    "file": "images/proc_12_U40-0p5_between_marks.jpg",
+    "sha256": "7cf4fef2b917e0939d26580022b9fb0248257cf245b4e1163c8cdb9a344f5c23",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "0.5mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 13.5,
+      "ml": 0.3375,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_13_U40-1_on_mark",
+    "file": "images/proc_13_U40-1_on_mark.jpg",
+    "sha256": "04bc6f78e9d4a5cfe2cb674f81fe884e16f1e9a1ed9536e2311195d6f89b1b90",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "1mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 20,
+      "ml": 0.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_14_U40-1_between_marks",
+    "file": "images/proc_14_U40-1_between_marks.jpg",
+    "sha256": "db58beba1744796ea9f645aefc44b06646030b951d548f69d1b414edcf0c253a",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "1mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 27.5,
+      "ml": 0.6875,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_15_U40-1_full",
+    "file": "images/proc_15_U40-1_full.jpg",
+    "sha256": "c492567c28684ba18370064558429347f7dedab5b6af672107bab129dc488eba",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "1mL",
+      "full"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 40,
+      "ml": 1.0,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_16_mL-1_empty",
+    "file": "images/proc_16_mL-1_empty.jpg",
+    "sha256": "e669b2bbd2def036ae825a881f70f09c319224d7109b830ceab145068cd85ae9",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "empty"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "0.01 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_17_mL-1_on_mark",
+    "file": "images/proc_17_mL-1_on_mark.jpg",
+    "sha256": "72ff57079154e66ff3d4357cd5759a350663a345aa43b58ecd7498a59e971a47",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "0.01 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.25,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_18_mL-1_between_marks",
+    "file": "images/proc_18_mL-1_between_marks.jpg",
+    "sha256": "2db7e831dacb46bf0d8d14dbacf4360d659a70d5c4c810b5be2167c670ae457f",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "0.01 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.455,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_19_mL-3_on_mark",
+    "file": "images/proc_19_mL-3_on_mark.jpg",
+    "sha256": "f3e9250142a4c83e7fb3b54b7c51b456f9967f7948312a4968a56786e5a17c55",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": "none (rendered)",
+      "gradation": "0.1 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 1.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_20_mL-3_between_marks",
+    "file": "images/proc_20_mL-3_between_marks.jpg",
+    "sha256": "b51b1f4a3facd9225aa905f444deaa12fae993686e5260c06fe205448b7a3972",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": "none (rendered)",
+      "gradation": "0.1 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 2.25,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_21_mL-3_full",
+    "file": "images/proc_21_mL-3_full.jpg",
+    "sha256": "9ec5e8955aad28d0f9a0b729a9c916d9d83781965174b0cd1edf72944ee0cc81",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "full"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": "none (rendered)",
+      "gradation": "0.1 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 3.0,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_22_mL-5_empty",
+    "file": "images/proc_22_mL-5_empty.jpg",
+    "sha256": "3de2b7bc83d1ad6c7d3a738872e60d0c13dd881de46f2bca097c61c34c69d9ca",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "empty"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5.0,
+      "brand": "none (rendered)",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0,
+      "plunger_visible": true,
+      "empty": true,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_23_mL-5_on_mark",
+    "file": "images/proc_23_mL-5_on_mark.jpg",
+    "sha256": "60ae52ebf11f5e8f507730172fb7875e37c8467372b40167aece18d2eb83489d",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "on_mark"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5.0,
+      "brand": "none (rendered)",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 2.4,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_24_mL-5_between_marks",
+    "file": "images/proc_24_mL-5_between_marks.jpg",
+    "sha256": "5016566829d405c5601701f8a21f50604b8f0132d603804ec7aeb1be865a33bb",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "between_marks"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5.0,
+      "brand": "none (rendered)",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 3.7,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_25_U100-1_on_mark_rotate30",
+    "file": "images/proc_25_U100-1_on_mark_rotate30.jpg",
+    "sha256": "1dab63c71fbc361b3ee2ffcdf53c53ee737a82114107b5de44f935fb0bdc88c8",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "1mL",
+      "on_mark",
+      "rotate30"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "2 units"
+    },
+    "fill": {
+      "units": 40,
+      "ml": 0.4,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "30deg (in-plane)",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_26_mL-3_on_mark_glare",
+    "file": "images/proc_26_mL-3_on_mark_glare.jpg",
+    "sha256": "8ecda0d90a740468a64228fc90b7d1d1fc51820acc33a036e09901bbac735811",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "3mL",
+      "on_mark",
+      "glare"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 3.0,
+      "brand": "none (rendered)",
+      "gradation": "0.1 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 1.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "glare",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "reading_edge_washed_out",
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_27_U100-0p5_on_mark_blur",
+    "file": "images/proc_27_U100-0p5_on_mark_blur.jpg",
+    "sha256": "64713063c25b401ce7ef146134dc5b81b9b8537035fb53fdf83db89668f830a0",
+    "group": "procedural_u100",
+    "case_tags": [
+      "U-100",
+      "0.5mL",
+      "on_mark",
+      "blur"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-100",
+      "capacity_ml": 0.5,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 25,
+      "ml": 0.25,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "blurred",
+      "occlusion": "none"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "scale_unreadable",
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_28_U40-1_on_mark_dim",
+    "file": "images/proc_28_U40-1_on_mark_dim.jpg",
+    "sha256": "18d47ae01b6fa35fdadd59d6ef1ed151bb944f5ec1b5df616c8184aa77ba902c",
+    "group": "procedural_u40",
+    "case_tags": [
+      "U-40",
+      "1mL",
+      "on_mark",
+      "dim"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "insulin",
+      "scale": "U-40",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "1 unit"
+    },
+    "fill": {
+      "units": 20,
+      "ml": 0.5,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "dim",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "locked_test",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_29_mL-5_between_marks_partial",
+    "file": "images/proc_29_mL-5_between_marks_partial.jpg",
+    "sha256": "c54819e78de9a513d1d1f2dc598f96698ade8aeec4dc3c190a4ad23863520661",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "5mL",
+      "between_marks",
+      "partial"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 5.0,
+      "brand": "none (rendered)",
+      "gradation": "0.2 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 3.7,
+      "plunger_visible": false,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "straight",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "cropped"
+    },
+    "expected_behavior": "refuse",
+    "refuse_reason": "plunger_not_visible",
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness. Between-marks value: app should report nearest mark and flag it.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "proc_30_mL-1_on_mark_foreshorten60",
+    "file": "images/proc_30_mL-1_on_mark_foreshorten60.jpg",
+    "sha256": "409a58c82846cb7a083255f00ad1aad53dc0e7620cf3440c42a5660e3e52bff2",
+    "group": "procedural_ml",
+    "case_tags": [
+      "mL",
+      "1mL",
+      "on_mark",
+      "foreshorten60"
+    ],
+    "generated": true,
+    "source": {
+      "kind": "procedural_render",
+      "generator": "render.py (PIL), exact geometry",
+      "license": "generated for this project"
+    },
+    "syringe": {
+      "type": "standard",
+      "scale": "mL",
+      "capacity_ml": 1.0,
+      "brand": "none (rendered)",
+      "gradation": "0.01 mL"
+    },
+    "fill": {
+      "units": null,
+      "ml": 0.25,
+      "plunger_visible": true,
+      "empty": false,
+      "ground_truth": "exact_render",
+      "tolerance": "exact; leading edge drawn at value"
+    },
+    "vial": null,
+    "conditions": {
+      "lighting": "bright",
+      "angle": "60deg (simulated foreshortening)",
+      "background": "plain light (rendered)",
+      "focus": "sharp",
+      "occlusion": "none"
+    },
+    "expected_behavior": "read",
+    "refuse_reason": null,
+    "notes": "Flat diagram, not a photo; tests scale reading and math, not real-world robustness.",
+    "recommend_reject": false,
+    "labeler": "exact by construction",
+    "review": {
+      "status": "pending",
+      "reviewer": "Rodney"
+    },
+    "split": "dev",
+    "verified_by": "pending-rodney"
+  }
+]

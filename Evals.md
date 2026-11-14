@@ -45,11 +45,13 @@ Create specific test cases for each failure mode:
 ### 3. Run SafeDose Against Evaluation Set
 Execute evaluations using:
 ```bash
-# Example evaluation runner (to be implemented)
-npm run eval -- --test-set basic-dose-calculations
-npm run eval -- --test-set syringe-recognition  
-npm run eval -- --test-set unit-conversions
+# Deterministic dosing suite and shared scan/harness fixtures
+npm run test:dosing
+npm run test:vision
+npm run eval:vision -- --offline
 ```
+
+See [Vision evals](evals/vision/README.md) for the private image store, recorded outputs, proposed gates, and live spend approval. The former `npm run eval -- --test-set ...` examples are not implemented. All vision labels and policy thresholds remain pending Rodney verification; scores are not an official accuracy gate.
 
 ### 4. Compare Outputs vs Expected
 Measure accuracy using:
@@ -169,7 +171,7 @@ Test complex multi-step calculations for peptide reconstitution.
 
 1. **Identify Gap**: Find areas lacking test coverage
 2. **Create Test Case**: Follow the standard format above
-3. **Add Images**: Place test images in `evals/images/` directory
+3. **Keep Images Private**: Store pixels outside git and configure `SAFEDOSE_EVAL_IMAGES_DIR`; never commit eval image binaries.
 4. **Document Expected Output**: Be precise with expected values
 5. **Submit PR**: Include rationale for the new evaluation
 
@@ -269,7 +271,7 @@ To contribute to SafeDose evaluation:
 
 ### Success Metrics
 
-Target benchmarks for SafeDose accuracy:
+Historical proposed benchmarks, not approved gates. SAF-106 proposed vision thresholds now live in `evals/vision/thresholds.json` and remain pending Rodney approval:
 - **Dose Calculations**: >99% accuracy for standard scenarios
 - **Syringe Recognition**: >95% accuracy for common syringe types  
 - **Unit Conversions**: >99% accuracy for supported unit pairs

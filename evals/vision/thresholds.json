@@ -1,0 +1,10 @@
+{
+  "status": "pending-rodney",
+  "approved_by": null,
+  "source": "SAF-106 proposed defaults; not an approved accuracy policy",
+  "wrong_number_shown_allowed": 0,
+  "syringe_type_min_accuracy": 0.99,
+  "syringe_capacity_min_accuracy": 0.99,
+  "uncaught_syringe_misses_allowed": 0,
+  "other_thresholds": "Fill, vial OCR, per-tag minimum sample counts, refusal targets, and estimated-photo tolerances remain proposed and unspecified. No invented cutoffs."
+}
