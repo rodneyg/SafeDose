@@ -1,4 +1,4 @@
-import { concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -532,16 +532,13 @@ export default function NewDoseScreen() {
       setConcentrationHint('Detected from vial scan');
       setTotalAmountHint(null);
     } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-      if (amountMatch) {
-        setTotalAmount(amountMatch[1]);
-        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-      } else {
-        setTotalAmount(String(vialTotalAmount));
-        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-      }
+      const amount = parseScannedAmount(String(vialTotalAmount));
+      doseCalculator.setTotalAmountUnit(amount.ok ? amount.value.unit : null);
+      setTotalAmount(amount.ok ? String(amount.value.amount) : '');
+      setConcentration(null);
+      if (amount.ok) setConcentrationUnit(`${amount.value.unit}/ml`);
       setMedicationInputType('totalAmount');
-      setTotalAmountHint('Detected from vial scan');
+      setTotalAmountHint(amount.ok ? 'Detected from vial scan' : amount.error);
       setConcentrationHint(null);
     } else {
       console.log('[Process] No reliable concentration or total amount detected');
@@ -1080,6 +1077,8 @@ export default function NewDoseScreen() {
           setConcentrationAmount={setConcentrationAmount}
           concentrationUnit={concentrationUnit}
           setConcentrationUnit={setConcentrationUnit}
+          totalAmountUnit={doseCalculator.totalAmountUnit}
+          setTotalAmountUnit={doseCalculator.setTotalAmountUnit}
           totalAmount={totalAmount}
           setTotalAmount={setTotalAmount}
           solutionVolume={solutionVolume}

@@ -13,7 +13,7 @@ def add(id,description,dose,unit,conc,cunit,syringe='Insulin',total=None,solutio
         from decimal import Decimal
         return format(Decimal(v.numerator)/Decimal(v.denominator),'f').rstrip('0').rstrip('.') if v.denominator!=1 else str(v.numerator)
     inputs=dict(doseValue=dose,unit=unit,concentration=conc,concentrationUnit=cunit,manualSyringe=dict(type=syringe,volume='1 ml' if syringe=='Insulin' else '3 ml'))
-    if total is not None: inputs['totalAmount']=total
+    if total is not None: inputs.update(totalAmount=total,totalAmountUnit=cunit.split('/')[0])
     if solution is not None: inputs['solutionVolume']=str(solution)
     cases.append(dict(id=id,description=description,inputs=inputs,expected=dict(volume_mL=float(volume),marking=decimal(marking)),computed_by='independent hand calculation',verified_by='pending-rodney'))
 for i,d in enumerate([100,125,250,375,500,625,750,1000,1250,1500,1750,2000],1):
@@ -38,5 +38,7 @@ cases[-1]['known_bug']='SAF-101 #2'
 for case in cases:
     if case['id'] == 'insulin-06':
         case['known_bug'] = 'SAF-101 #1'
+add('saf101-01','250 mcg from scanned 5000 mcg vial in 2 mL',250,'mcg',None,'mcg/ml',total=5000,solution=2)
+cases[-1]['inputs']['concentrationUnit']='mg/ml'
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

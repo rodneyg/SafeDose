@@ -4,7 +4,7 @@ const base: CalculateDoseParams = {
   doseValue: 1, concentration: 10, unit: 'mg', concentrationUnit: 'mg/ml',
   manualSyringe: { type: 'Standard', volume: '3 ml' },
 };
-const dose = (overrides: Partial<CalculateDoseParams> = {}) => calculateDose({ ...base, ...overrides });
+const dose = (overrides: Partial<CalculateDoseParams> = {}) => calculateDose({ ...base, totalAmountUnit: (overrides.concentrationUnit || base.concentrationUnit).split('/')[0] as 'mg', ...overrides });
 
 describe('unit compatibility', () => {
   const doseUnits = ['mg', 'mcg', 'units', 'mL'] as const;
@@ -100,7 +100,7 @@ describe('dose volumes and limits', () => {
   });
   it.each([
     ['mg', 'mg/ml', 2, 1, 'mg'], ['mcg', 'mg/ml', 2000, 1, 'mg'],
-    ['mg', 'mcg/ml', 0.002, 1, 'mg'], ['mcg', 'mcg/ml', 2, 1, 'mcg'],
+    ['mg', 'mcg/ml', 0.002, 1, 'mcg'], ['mcg', 'mcg/ml', 2, 1, 'mcg'],
   ] as const)('dose exceeds total %s/%s', (unit, concentrationUnit, doseValue, totalAmount, label) => {
     expect(dose({ unit, concentrationUnit, doseValue, totalAmount, concentration: 1 }).calculationError)
       .toBe(`Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${label}).`);

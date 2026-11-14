@@ -1,4 +1,4 @@
-import { parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
+import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -28,6 +28,8 @@ interface ManualEntryScreenProps {
   setConcentrationAmount: (value: string) => void;
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   setConcentrationUnit: (value: 'mg/ml' | 'mcg/ml' | 'units/ml') => void;
+  totalAmountUnit: AmountUnit | null;
+  setTotalAmountUnit: (value: AmountUnit) => void;
   totalAmount: string;
   setTotalAmount: (value: string) => void;
   solutionVolume: string;
@@ -82,6 +84,8 @@ export default function ManualEntryScreen({
   setConcentrationUnit,
   totalAmount,
   setTotalAmount,
+  totalAmountUnit,
+  setTotalAmountUnit,
   solutionVolume,
   setSolutionVolume,
   manualSyringe,
@@ -326,7 +330,8 @@ export default function ManualEntryScreen({
           setTotalAmount={setTotalAmount}
           setTotalAmountHint={setTotalAmountHint}
           totalAmountHint={totalAmountHint}
-          unit={unit}
+          unit={totalAmountUnit}
+          setUnit={setTotalAmountUnit}
           dose={dose}
         />
       );

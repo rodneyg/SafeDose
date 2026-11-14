@@ -12,6 +12,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -34,6 +35,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -56,6 +58,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -78,6 +81,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -100,6 +104,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -122,6 +127,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -144,6 +150,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -166,6 +173,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -188,6 +196,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -210,6 +219,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -232,6 +242,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -254,6 +265,7 @@
         "volume": "1 ml"
       },
       "totalAmount": 5,
+      "totalAmountUnit": "mg",
       "solutionVolume": "2"
     },
     "expected": {
@@ -1264,5 +1276,28 @@
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney",
     "known_bug": "SAF-101 #2"
+  },
+  {
+    "id": "saf101-01",
+    "description": "250 mcg from scanned 5000 mcg vial in 2 mL",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]

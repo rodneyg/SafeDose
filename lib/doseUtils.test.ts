@@ -16,6 +16,7 @@ describe('calculateDose with volume thresholds', () => {
     concentration: 10, // results in 1mL volume by default
     concentrationUnit: 'mg/ml',
     manualSyringe: mockSyringeStandardLarge,
+    totalAmountUnit: 'mg',
     totalAmount: 100, // mg
     solutionVolume: '10', // ml
   };
@@ -119,7 +120,8 @@ describe('calculateDose with volume thresholds', () => {
       ...baseParams,
       doseValue: 30, // mg (results in 3mL with concentration 10mg/mL)
       concentration: 10, // mg/ml
-      totalAmount: 5, // Only 5mg available, so 0.5mL possible. Dose requires 30mg (3mL)
+      totalAmountUnit: 'mg',
+    totalAmount: 5, // Only 5mg available, so 0.5mL possible. Dose requires 30mg (3mL)
       manualSyringe: mockSyringeStandardLarge, // Large enough syringe
     });
     expect(result.calculatedVolume).toBe(3); // Volume is calculated first
@@ -137,6 +139,7 @@ describe('calculateDose precision guidance', () => {
     concentration: 40, // mg/ml -> results in 0.25mL volume
     concentrationUnit: 'mg/ml',
     manualSyringe: mockSyringeStandard,
+    totalAmountUnit: 'mg',
     totalAmount: 100,
     solutionVolume: '10',
   };
@@ -204,7 +207,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg',
       concentration: null, // Will be calculated from totalAmount/solutionVolume
       concentrationUnit: 'mg/ml',
-      totalAmount: 5, // mg - as reported
+      totalAmountUnit: 'mg',
+    totalAmount: 5, // mg - as reported
       solutionVolume: '3', // mL
       manualSyringe: mockInsulinSyringe
     });
@@ -232,7 +236,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg',
       concentration: null, // Will be calculated from totalAmount/solutionVolume
       concentrationUnit: 'mg/ml',
-      totalAmount: 0.5, // mg - very small amount
+      totalAmountUnit: 'mg',
+    totalAmount: 0.5, // mg - very small amount
       solutionVolume: '3', // mL
       manualSyringe: mockInsulinSyringe
     });
@@ -253,7 +258,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg',
       concentration: 0.01, // mg/ml - very low concentration
       concentrationUnit: 'mg/ml',
-      totalAmount: 1, // mg
+      totalAmountUnit: 'mg',
+    totalAmount: 1, // mg
       solutionVolume: '3', // mL
       manualSyringe: mockInsulinSyringe
     });
@@ -274,7 +280,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg',
       concentration: null, // Will be calculated
       concentrationUnit: 'mg/ml',
-      totalAmount: 10, // mg - reasonable amount
+      totalAmountUnit: 'mg',
+    totalAmount: 10, // mg - reasonable amount
       solutionVolume: '3', // mL
       manualSyringe: mockInsulinSyringe
     });
@@ -293,7 +300,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg',
       concentration: null, // Will be calculated
       concentrationUnit: 'mg/ml', 
-      totalAmount: 0.01, // mg - extremely small amount
+      totalAmountUnit: 'mg',
+    totalAmount: 0.01, // mg - extremely small amount
       solutionVolume: '3', // mL
       manualSyringe: mockInsulinSyringe
     });
@@ -311,7 +319,8 @@ describe('calculateDose issue reproduction - 500mcg with 3ML liquid', () => {
       unit: 'mcg', 
       concentration: 0.33, // mg/ml - low concentration
       concentrationUnit: 'mg/ml',
-      totalAmount: 2, // mg
+      totalAmountUnit: 'mg',
+    totalAmount: 2, // mg
       solutionVolume: '6', // mL
       manualSyringe: mockInsulinSyringe
     });

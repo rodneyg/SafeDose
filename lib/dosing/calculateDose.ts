@@ -1,3 +1,4 @@
+import { AmountUnit } from './inputs';
 import { syringeOptions } from './syringes';
 import { getMarkingGuidance } from './markings';
 
@@ -16,6 +17,7 @@ export interface CalculateDoseParams {
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
+  totalAmountUnit?: AmountUnit | null;
   totalAmount?: number | null;  // Total amount in vial
   manualSyringe: ManualSyringe | { type: 'Insulin' | 'Standard'; volume: string } | null; // Allow string for initial state, but cast later
   solutionVolume?: string | null; // Added solution volume for concentration calculation
@@ -93,6 +95,7 @@ export function calculateDose({
   unit,
   concentrationUnit,
   totalAmount,
+  totalAmountUnit,
   manualSyringe,
   solutionVolume,
 }: CalculateDoseParams): CalculateDoseResult {
@@ -105,6 +108,20 @@ export function calculateDose({
   if (doseValue === null || isNaN(doseValue) || doseValue <= 0) {
     calculationError = 'Dose value is invalid or missing.';
     return { calculatedVolume, recommendedMarking, calculationError, calculatedConcentration };
+  }
+
+  if (totalAmount != null && unit !== 'mL') {
+    if (!totalAmountUnit || !['mg', 'mcg', 'units'].includes(totalAmountUnit)) {
+      return { calculatedVolume, recommendedMarking, calculatedConcentration,
+        calculationError: 'Needs input: select the total amount unit.' };
+    }
+    const numerator = concentrationUnit.split('/')[0];
+    if ((totalAmountUnit === 'units') !== (numerator === 'units')) {
+      return { calculatedVolume, recommendedMarking, calculatedConcentration,
+        calculationError: 'Needs input: vial and concentration units are incompatible.' };
+    }
+    if (totalAmountUnit === 'mcg' && numerator === 'mg') totalAmount /= 1000;
+    if (totalAmountUnit === 'mg' && numerator === 'mcg') totalAmount *= 1000;
   }
 
   // Validate unit compatibility before proceeding
@@ -232,7 +249,7 @@ function getMedicationAvailabilityError(
     doseInSameUnitAsTotal = doseValue * 1000;
   }
   if (doseInSameUnitAsTotal > totalAmount) {
-    return `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${unit === 'mcg' && concentrationUnit === 'mg/ml' ? 'mg' : unit}).`;
+    return `Requested dose (${doseValue} ${unit}) exceeds total amount available (${totalAmount} ${concentrationUnit.split('/')[0]}).`;
   }
   return getAvailableVolumeError(calculatedVolume, totalAmount, concentration);
 }
