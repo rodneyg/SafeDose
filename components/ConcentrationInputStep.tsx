@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { getCompatibleConcentrationUnits } from '../lib/doseUtils';
+import { getCompatibleConcentrationUnits } from '../lib/dosing';
 import { isMobileWeb } from '../lib/utils';
 
 type Props = {

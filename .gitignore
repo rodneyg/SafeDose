@@ -39,3 +39,6 @@ yarn-error.*
 
 # Test validation scripts
 validate-*.js
+
+# Jest coverage reports
+coverage/

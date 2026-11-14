@@ -1,10 +1,11 @@
+import { concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import OpenAI from 'openai';
 import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
+import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
 import ScanScreen from '../../components/ScanScreen';
@@ -673,7 +674,7 @@ export default function NewDoseScreen() {
         console.log('[applyLastDose] No original input data found, falling back to calculated concentration');
         
         if (lastDose.calculatedVolume && lastDose.doseValue) {
-          const calculatedConcentration = lastDose.doseValue / lastDose.calculatedVolume;
+          const calculatedConcentration = concentrationFromDose(lastDose.doseValue, lastDose.calculatedVolume);
           const concentrationAmountValue = calculatedConcentration.toString();
           
           setConcentrationAmount(concentrationAmountValue);

@@ -17,5 +17,9 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  collectCoverageFrom: ['lib/dosing/**/*.ts', '!lib/dosing/**/__tests__/**'],
+  coverageThreshold: {
+    './lib/dosing/': { branches: 100, lines: 100, functions: 100, statements: 100 },
+  },
   // transformIgnorePatterns might not be needed if react-native is properly mocked
 };

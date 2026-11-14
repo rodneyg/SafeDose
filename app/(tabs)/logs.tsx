@@ -1,3 +1,4 @@
+import { formatDrawToText, formatConcentration } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Trash2, Calendar, Pill } from 'lucide-react-native';
@@ -5,17 +6,6 @@ import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { DoseLog } from '../../types/doseLog';
 import { formatInjectionSiteForDisplay } from '../../lib/injectionSites';
-
-// Helper function to format the "Draw to" text
-function formatDrawToText(log: DoseLog): string | null {
-  if (!log.recommendedMarking || !log.syringeType) {
-    return null;
-  }
-  
-  const unit = log.syringeType === 'Insulin' ? 'units' : 'ml';
-  const value = parseFloat(log.recommendedMarking).toFixed(2);
-  return `Draw to ${value} ${unit}`;
-}
 
 export default function LogsScreen() {
   const { getDoseLogHistory, deleteDoseLog } = useDoseLogging();
@@ -105,26 +95,6 @@ export default function LogsScreen() {
       return 'Peptide Injection';
     }
     return substanceName;
-  };
-
-  const formatConcentration = (doseValue: number, unit: string, calculatedVolume: number) => {
-    if (unit === 'mL') {
-      return null; // No concentration for volume-based doses
-    }
-    
-    if (!calculatedVolume || calculatedVolume <= 0) {
-      return null; // Avoid division by zero
-    }
-    
-    const concentration = doseValue / calculatedVolume;
-    const concentrationUnit = unit === 'units' ? 'units/mL' : `${unit}/mL`;
-    
-    // Round to appropriate precision
-    const formattedConcentration = concentration < 1 
-      ? concentration.toFixed(3).replace(/\.?0+$/, '') 
-      : concentration.toFixed(1).replace(/\.?0+$/, '');
-    
-    return `${formattedConcentration} ${concentrationUnit}`;
   };
 
   const formatInjectionSite = (injectionSite: string): string => {
