@@ -144,9 +144,11 @@ export function runDosePipeline(scan: ScanResult, scenario?: DoseScenario): Eval
 
 export function classifyResult(input: {
   refused: boolean; asked: boolean; expectedBehavior: 'read' | 'refuse'; mismatches: string[];
+  numberShown?: boolean;
 }): Classification {
-  if (input.refused || input.asked) return 'refused-or-asked';
-  return input.expectedBehavior === 'refuse' || input.mismatches.length > 0 ? 'wrong-number-shown' : 'exact-correct';
+  const wrong = input.expectedBehavior === 'refuse' || input.mismatches.length > 0;
+  if (input.refused || (input.asked && !(input.numberShown && wrong))) return 'refused-or-asked';
+  return wrong ? 'wrong-number-shown' : 'exact-correct';
 }
 
 export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
@@ -159,9 +161,13 @@ export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
   const mapped = mapScanToDoseInputs(scan);
   const asked = !observed || mapped.status === 'needs-input' || (pipeline.status !== 'no-dose-scenario' && pipeline.status !== 'number-shown');
   const mismatches = fieldMismatches(expected, got);
-  if (pipeline.status === 'number-shown' && pipeline.got && pipeline.expected) {
-    if (pipeline.got.calculatedVolume !== pipeline.expected.calculatedVolume) mismatches.push('dose.calculatedVolume');
-    if (pipeline.got.recommendedMarking !== pipeline.expected.recommendedMarking) mismatches.push('dose.recommendedMarking');
+  // PreDoseConfirmationStep displays a finite calculatedVolume even alongside an error.
+  // A blocking calculator error must not hide an incorrect visible volume from the gate.
+  const volumeShown = pipeline.got?.calculatedVolume !== null && pipeline.got?.calculatedVolume !== undefined && Number.isFinite(pipeline.got.calculatedVolume);
+  const markingShown = pipeline.got?.recommendedMarking !== null && pipeline.got?.recommendedMarking !== undefined;
+  if (pipeline.got && pipeline.expected) {
+    if (volumeShown && pipeline.got.calculatedVolume !== pipeline.expected.calculatedVolume) mismatches.push('dose.calculatedVolume');
+    if (markingShown && pipeline.got.recommendedMarking !== pipeline.expected.recommendedMarking) mismatches.push('dose.recommendedMarking');
   }
   return {
     id: label.id, sha256: label.sha256, sha256_kind: meta.source === 'synthetic' ? 'text-fixture' : 'image',
@@ -171,7 +177,7 @@ export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
     refused: observed && scan.refuse, asked, pipeline, mismatches, confidence: scan.confidence,
     raw_model_output: observed ? scan.raw : null,
     reasons: !observed ? [`Not evaluated: ${meta.image_status}. No model prediction is claimed.`] : mapped.reasons,
-    classification: classifyResult({ refused: scan.refuse, asked, expectedBehavior: label.expected_behavior, mismatches }),
+    classification: classifyResult({ refused: scan.refuse, asked, expectedBehavior: label.expected_behavior, mismatches, numberShown: observed && (volumeShown || markingShown) }),
   };
 }
 
@@ -206,7 +212,7 @@ function counts(rows: EvalResult[]): Counts {
       if (row.observed) {
         field.evaluated++;
         if (expected === row.got[key]) field.correct++;
-        if (['syringe.type', 'syringe.capacity_ml'].includes(key) && expected !== row.got[key] && !row.refused && !row.asked) uncaught_syringe_misses++;
+        if (['syringe.type', 'syringe.capacity_ml'].includes(key) && expected !== row.got[key] && !row.refused && (!row.asked || row.classification === 'wrong-number-shown')) uncaught_syringe_misses++;
       }
     }
   }
