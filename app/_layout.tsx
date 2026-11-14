@@ -6,11 +6,15 @@ import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
 import "../global.css";
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   console.log('[RootLayout] ========== ROOT LAYOUT RENDER ==========');
   
   useEffect(() => {
-    console.log('[RootLayout] Root layout effect running - hiding splash screen');
+    console.log('[RootLayout] Root layout effect running - hiding native splash screen');
+    // Hide the native splash screen to show our custom animated one
     SplashScreen.hideAsync();
     
     // Initialize Firebase Analytics lazily
