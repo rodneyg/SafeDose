@@ -3,7 +3,6 @@ declare module 'expo-constants' {
     interface Constants {
       expoConfig: {
         extra: {
-          OPENAI_API_KEY: string;
           STRIPE_PUBLISHABLE_KEY: string;
           STRIPE_MODE: string;
           STRIPE_TEST_PUBLISHABLE_KEY: string;

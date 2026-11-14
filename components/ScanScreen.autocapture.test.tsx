@@ -34,7 +34,6 @@ describe('ScanScreen Autocapture', () => {
     scanError: null,
     cameraRef: { current: null },
     webCameraStream: null,
-    openai: {},
     setScreenStep: jest.fn(),
     setManualStep: jest.fn(),
     setManualSyringe: jest.fn(),
