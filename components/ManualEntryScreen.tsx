@@ -1,4 +1,4 @@
-import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
+import { SyringeSelection } from '../lib/dosing';
 import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
@@ -42,6 +42,7 @@ interface ManualEntryScreenProps {
   calculatedConcentration?: number | null; // Add calculated concentration
   recommendedMarking: string | null;
   calculationError: string | null;
+  guidance?: string | null;
   formError: string | null;
   substanceNameHint: string | null;
   setSubstanceNameHint: (value: string | null) => void;
@@ -96,6 +97,7 @@ export default function ManualEntryScreen({
   calculatedConcentration,
   recommendedMarking,
   calculationError,
+  guidance,
   formError,
   substanceNameHint,
   setSubstanceNameHint,
@@ -184,8 +186,8 @@ export default function ManualEntryScreen({
   };
 
   const isPreDoseConfirmationStepValid = (): boolean => {
-    // Pre-dose confirmation is valid if calculations are done (even with errors)
-    return calculatedVolume !== null;
+    // Blocking errors prevent progression; guidance does not.
+    return calculatedVolume !== null && !calculationError && recommendedMarking !== null;
   };
 
   // Function to check if current step is valid
@@ -373,6 +375,7 @@ export default function ManualEntryScreen({
           unit={unit}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          guidance={guidance}
           calculationError={calculationError}
         />
       );
@@ -386,6 +389,7 @@ export default function ManualEntryScreen({
         
       currentStepComponent = (
         <FinalResultDisplay
+          guidance={guidance}
           calculationError={calculationError}
           recommendedMarking={recommendedMarking}
           doseValue={doseValue}

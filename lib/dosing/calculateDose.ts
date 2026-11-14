@@ -26,14 +26,15 @@ export interface CalculateDoseParams {
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   totalAmountUnit?: AmountUnit | null;
   totalAmount?: number | null;  // Total amount in vial
-  manualSyringe: SyringeSelection | null; // Allow string for initial state, but cast later
-  solutionVolume?: string | null; // Added solution volume for concentration calculation
+  manualSyringe: SyringeSelection | null;
+  solutionVolume?: string | null;
 }
 
 export interface CalculateDoseResult {
   calculatedVolume: number | null;
   recommendedMarking: string | null;
   calculationError: string | null;
+  guidance?: string | null;
   calculatedConcentration?: number | null; // Add calculated concentration for reference
 }
 
@@ -134,7 +135,7 @@ export function calculateDose({
       } catch {
         return fail('Needs input: invalid exact concentration.');
       }
-      if (exactConcentration.compare(0) <= 0 || !Number.isFinite(exactConcentration.toNumber())) {
+      if (exactConcentration.compare(0) <= 0 || !Number.isFinite(exactConcentration.toNumber()) || exactConcentration.toNumber() === 0) {
         return fail('Needs input: invalid exact concentration.');
       }
     } else if (concentration !== null && Number.isFinite(concentration) && concentration > 0) {
@@ -144,6 +145,10 @@ export function calculateDose({
       if (volume > 0) {
         exactConcentration = exactTotal.div(volume);
         calculatedConcentration = exactConcentration.toNumber();
+        if (!Number.isFinite(calculatedConcentration) || calculatedConcentration === 0) {
+          calculatedConcentration = null;
+          return fail('Needs input: concentration is outside the supported numeric range.');
+        }
         if ((concentrationUnit === 'mg/ml' && exactConcentration.compare(0.01) < 0) ||
             (concentrationUnit === 'mcg/ml' && exactConcentration.compare(1) < 0)) {
           return fail(`Calculated concentration (${exactConcentration.fixed(4)} ${concentrationUnit}) is extremely low. Please verify the total amount (${exactTotal.toString()} ${concentrationUnit.split('/')[0]}) and solution volume (${solutionVolume} ml) are correct.`);
@@ -180,7 +185,7 @@ export function calculateDose({
   if (volume.compare(capacity) > 0) return fail(`Required volume (${volume.fixed(2)} ml) exceeds syringe capacity (${capacity} ml).`);
   const guidance = getMarkingGuidance(volume, manualSyringe.type, markingsString, scale === 'U-40' ? 40 : 100);
   return { calculatedVolume, calculatedConcentration, recommendedMarking: guidance.recommendedMarking,
-    calculationError: guidance.precisionMessage };
+    calculationError: null, guidance: guidance.precisionMessage };
 }
 
 /** Defensive comparison for independently supplied volumes. */

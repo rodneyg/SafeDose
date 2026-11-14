@@ -51,5 +51,18 @@ cases[-1]['expected']['marking']='4' # 0.1 mL * 40 units/mL
 add('saf101-09','2.5 mL on 5 mL syringe is blocked by unchanged 2 mL policy',2.5,'mL',1,'mg/ml','Standard')
 cases[-1]['inputs']['manualSyringe']['volume']='5 ml'
 cases[-1]['expected'].update(marking=None,error_contains='2 mL per-injection safety limit')
+add('saf101-10','0.25 mg at 1 mg/mL with Standard 1 mL: advice is guidance',0.25,'mg',1,'mg/ml','Standard')
+cases[-1]['inputs']['manualSyringe']['volume']='1 ml'
+cases[-1]['expected'].update(error=None,guidance='Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks.')
+# Label-contract oracles, authored independently of the application parsers.
+def label_case(id, description, operation, inputs, expected):
+    cases.append(dict(id=id,description=description,operation=operation,inputs=inputs,expected=expected,
+                      computed_by='independent label contract',verified_by='pending-rodney'))
+label_case('saf101-03-concentration','Planner concentration must not become vial amount','plannerScan',{'concentration':'5 mg/mL'},{'ok':False})
+label_case('saf101-03-thousands','Planner thousands and explicit mcg unit','plannerScan',{'totalAmount':'1,000 mcg'},{'ok':True,'value':{'amount':1000,'unit':'mcg'}})
+label_case('saf101-06-unknown','Unknown IU/mL concentration blocks','concentrationScan',{'text':'5 IU/mL'},{'ok':False})
+label_case('saf101-06-spacing','Harmless concentration whitespace normalizes','concentrationScan',{'text':'5 mg / mL'},{'ok':True,'value':{'amount':5,'unit':'mg/ml'}})
+label_case('saf101-07-volume','Unreadable syringe volume blocks','syringeScan',{'type':'Insulin','volume':'unreadable','scale':'U-100'},{'ok':False})
+label_case('saf101-07-type','Unknown syringe type blocks','syringeScan',{'type':'unknown','volume':'3 ml'},{'ok':False})
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

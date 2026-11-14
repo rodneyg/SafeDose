@@ -1,3 +1,4 @@
+import { Exact } from './exact';
 import { SyringeSelection } from './syringes';
 export type AmountUnit = 'mg' | 'mcg' | 'units';
 export type ConcentrationUnit = 'mg/ml' | 'mcg/ml' | 'units/ml';
@@ -8,7 +9,9 @@ export function parseInputNumber(text: string): number {
   const value = text.trim();
   if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d+)?)$/.test(value)) return NaN;
   const number = Number(value.replace(/,/g, ''));
-  return Number.isFinite(number) ? number : NaN;
+  if (!Number.isFinite(number)) return NaN;
+  // Refuse a decimal that would lose digits when crossing the numeric API boundary.
+  return new Exact(value.replace(/,/g, '')).compare(new Exact(number)) === 0 ? number : NaN;
 }
 
 export function normalizeAmountUnit(text: string): AmountUnit | null {

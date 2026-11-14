@@ -121,16 +121,16 @@ describe('dose volumes and limits', () => {
       .toBe('Required volume (1.50 ml) exceeds syringe capacity (1 ml).');
   });
   it('exact marking', () => {
-    expect(dose({ doseValue: 5 })).toEqual({ calculatedVolume: 0.5, recommendedMarking: '0.5', calculationError: null, calculatedConcentration: null });
+    expect(dose({ doseValue: 5 })).toEqual({ calculatedVolume: 0.5, recommendedMarking: '0.5', calculationError: null, calculatedConcentration: null, guidance: null });
   });
   it('between markings', () => {
-    expect(dose({ doseValue: 7.5 }).calculationError).toBe('Draw to 0.75 ml, which is between the 0.5 ml and 1 ml marks.');
+    expect(dose({ doseValue: 7.5 }).guidance).toBe('Draw to 0.75 ml, which is between the 0.5 ml and 1 ml marks.');
   });
   it('below first marking', () => {
-    expect(dose().calculationError).toBe('Draw to 0.10 ml, which is below the first marking at 0.5 ml.');
+    expect(dose().guidance).toBe('Draw to 0.10 ml, which is below the first marking at 0.5 ml.');
   });
   it('insulin between markings', () => {
-    expect(dose({ doseValue: 1.5, manualSyringe: { type: 'Insulin', volume: '1 ml' } }).calculationError)
+    expect(dose({ doseValue: 1.5, manualSyringe: { type: 'Insulin', volume: '1 ml' } }).guidance)
       .toBe('Draw to 15.00 units, which is between the 10 units and 20 units marks.');
   });
   it('above last marking in marking helper (built-in lists end at capacity)', () => {

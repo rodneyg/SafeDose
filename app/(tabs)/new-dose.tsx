@@ -1,4 +1,4 @@
-import { parseScannedSyringe, parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import { parseScannedSyringe, parseScannedConcentration, parsePlannerPrefill, parseScannedAmount, concentrationFromDose } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -494,6 +494,11 @@ export default function NewDoseScreen() {
 
   // Function to apply scan results to form state
   const applyScanResults = (result: any) => {
+    setSolutionVolume('');
+    setTotalAmount('');
+    doseCalculator.setTotalAmountUnit(null);
+    setConcentration(null);
+    setConcentrationAmount('');
     const scannedSyringe = result.syringe || {};
     const scannedVial = result.vial || {};
 
@@ -517,6 +522,7 @@ export default function NewDoseScreen() {
       setTotalAmount('');
       doseCalculator.setTotalAmountUnit(null);
       if (parsed.ok) setConcentrationUnit(parsed.value.unit);
+      doseCalculator.setNeedsConcentrationUnit(!parsed.ok);
       setMedicationInputType('concentration');
       setConcentrationHint(parsed.ok ? 'Detected from vial scan' : parsed.error);
       setTotalAmountHint(null);
@@ -542,6 +548,7 @@ export default function NewDoseScreen() {
 
     console.log('[Process] Scan successful, transitioning to manual entry');
     // Clear calculation-related state without resetting the scan results
+    doseCalculator.setGuidance(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
@@ -652,7 +659,8 @@ export default function NewDoseScreen() {
         
         // Clear concentration fields
         setConcentrationAmount('');
-        setConcentrationUnit('mg/ml');
+        if (lastDose.totalAmountUnit) setConcentrationUnit(lastDose.concentrationUnit || `${lastDose.totalAmountUnit}/ml`);
+        doseCalculator.setConcentrationExact(lastDose.concentrationExact || null);
         setConcentrationHint(null);
         
         console.log('[applyLastDose] Restored total amount inputs:', {
@@ -1084,6 +1092,7 @@ export default function NewDoseScreen() {
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
           recommendedMarking={recommendedMarking}
+          guidance={doseCalculator.guidance}
           calculationError={calculationError}
           formError={formError}
           substanceNameHint={substanceNameHint}
@@ -1160,6 +1169,7 @@ export default function NewDoseScreen() {
         triggerReason={logLimitModalTriggerReason}
       />
       <VolumeErrorModal
+        message={calculationError}
         visible={showVolumeErrorModal}
         onClose={handleCloseVolumeErrorModal}
         onReEnterVialData={handleReEnterVialData}

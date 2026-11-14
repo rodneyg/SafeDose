@@ -1472,5 +1472,116 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-10",
+    "description": "0.25 mg at 1 mg/mL with Standard 1 mL: advice is guidance",
+    "inputs": {
+      "doseValue": 0.25,
+      "unit": "mg",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "0.25",
+      "error": null,
+      "guidance": "Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks."
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03-concentration",
+    "description": "Planner concentration must not become vial amount",
+    "operation": "plannerScan",
+    "inputs": {
+      "concentration": "5 mg/mL"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03-thousands",
+    "description": "Planner thousands and explicit mcg unit",
+    "operation": "plannerScan",
+    "inputs": {
+      "totalAmount": "1,000 mcg"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "amount": 1000,
+        "unit": "mcg"
+      }
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06-unknown",
+    "description": "Unknown IU/mL concentration blocks",
+    "operation": "concentrationScan",
+    "inputs": {
+      "text": "5 IU/mL"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06-spacing",
+    "description": "Harmless concentration whitespace normalizes",
+    "operation": "concentrationScan",
+    "inputs": {
+      "text": "5 mg / mL"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "amount": 5,
+        "unit": "mg/ml"
+      }
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07-volume",
+    "description": "Unreadable syringe volume blocks",
+    "operation": "syringeScan",
+    "inputs": {
+      "type": "Insulin",
+      "volume": "unreadable",
+      "scale": "U-100"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07-type",
+    "description": "Unknown syringe type blocks",
+    "operation": "syringeScan",
+    "inputs": {
+      "type": "unknown",
+      "volume": "3 ml"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
   }
 ]

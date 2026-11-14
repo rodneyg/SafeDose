@@ -8,8 +8,8 @@ export interface ReconstitutionPlannerParams {
 }
 
 export interface ReconstitutionPlannerResult {
-  bacWaterExact?: string;
-  concentrationExact?: string;
+  bacWaterExact: string;
+  concentrationExact: string;
   bacWaterToAdd: number; // mL
   concentration: number; // mg/mL
   injectionVolume: number; // mL (actual volume needed per dose)
@@ -31,22 +31,20 @@ export function calculateReconstitution(params: ReconstitutionPlannerParams): Re
     throw new Error('Needs input: planner amounts and volume must be positive finite numbers.');
   }
 
-  // Calculate required concentration: target dose (mg) / preferred volume (mL)
-  const requiredConcentration = new Exact(targetDoseMg).div(preferredVolumeMl);
+  return calculateExactReconstitution(new Exact(peptideAmountMg), new Exact(targetDoseMg), new Exact(preferredVolumeMl));
+}
 
-  // Calculate BAC water to add: peptide amount (mg) / required concentration (mg/mL)
-  const bacWater = new Exact(peptideAmountMg).div(requiredConcentration);
+function calculateExactReconstitution(peptideAmountMg: Exact, targetDoseMg: Exact, preferredVolumeMl: Exact): ReconstitutionPlannerResult {
+  const concentration = targetDoseMg.div(preferredVolumeMl);
+  const bacWater = peptideAmountMg.div(concentration);
   const bacWaterToAdd = bacWater.toNumber();
-
-  // Actual injection volume will be the preferred volume (since we calculated concentration to achieve this)
-  const injectionVolume = preferredVolumeMl;
-
+  const concentrationValue = concentration.toNumber();
+  if (![bacWaterToAdd, concentrationValue].every(value => Number.isFinite(value) && value > 0)) {
+    throw new Error('Needs input: planner values are outside the supported numeric range.');
+  }
   return {
-    bacWaterToAdd,
-    concentration: requiredConcentration.toNumber(),
-    concentrationExact: requiredConcentration.toString(),
-    bacWaterExact: bacWater.toString(),
-    injectionVolume,
+    bacWaterToAdd, concentration: concentrationValue, injectionVolume: preferredVolumeMl.toNumber(),
+    concentrationExact: concentration.toString(), bacWaterExact: bacWater.toString(),
   };
 }
 
@@ -60,16 +58,16 @@ export function getReconstitutionResult(input: ReconstitutionInputs): Reconstitu
   }
 
   // Convert peptide amount to mg if needed
-  const peptideAmountMg = input.peptideUnit === 'mcg' ? new Exact(peptideAmountValue).div(1000).toNumber() : peptideAmountValue;
+  const peptideAmountMg = input.peptideUnit === 'mcg' ? new Exact(peptideAmountValue).div(1000) : new Exact(peptideAmountValue);
 
   // Convert target dose to mg if needed
-  const targetDoseMg = input.targetDoseUnit === 'mcg' ? new Exact(targetDoseValue).div(1000).toNumber() : targetDoseValue;
+  const targetDoseMg = input.targetDoseUnit === 'mcg' ? new Exact(targetDoseValue).div(1000) : new Exact(targetDoseValue);
 
-  return calculateReconstitution({
-    peptideAmountMg,
-    targetDoseMg,
-    preferredVolumeMl: preferredVolumeValue,
-  });
+  try {
+    return calculateExactReconstitution(peptideAmountMg, targetDoseMg, new Exact(preferredVolumeValue));
+  } catch {
+    return null;
+  }
 }
 
 export function getReconstitutionInputError(input: ReconstitutionInputs, result: ReconstitutionPlannerResult | null): string | null {
@@ -89,14 +87,14 @@ export function getReconstitutionInputError(input: ReconstitutionInputs, result:
     return 'Please enter a valid preferred volume greater than 0';
   }
 
+  if (!result) return 'Needs input: planner values are outside the supported numeric range.';
+
   // Validate BAC water amount is reasonable (between 0.1 mL and 20 mL)
-  if (result) {
-    if (result.bacWaterToAdd < 0.1) {
-      return 'Target dose is too high for this vial size - would require less than 0.1 mL of BAC water. Try a smaller dose or larger injection volume.';
-    }
-    if (result.bacWaterToAdd > 20) {
-      return 'Target dose is too low for this vial size - would require more than 20 mL of BAC water. Try a larger dose or smaller injection volume.';
-    }
+  if (new Exact(result.bacWaterExact).compare(0.1) < 0) {
+    return 'Target dose is too high for this vial size - would require less than 0.1 mL of BAC water. Try a smaller dose or larger injection volume.';
+  }
+  if (new Exact(result.bacWaterExact).compare(20) > 0) {
+    return 'Target dose is too low for this vial size - would require more than 20 mL of BAC water. Try a larger dose or smaller injection volume.';
   }
 
   return null;
@@ -105,5 +103,5 @@ export function getReconstitutionInputError(input: ReconstitutionInputs, result:
 /** Preserve exact concentration across navigation; BAC volume is only a display projection. */
 export function getPlannerHandoff(result: ReconstitutionPlannerResult, unit: 'mg' | 'mcg' = 'mg') {
   return { solutionVolume: String(result.bacWaterToAdd), concentration: result.concentration,
-    concentrationExact: new Exact(result.concentrationExact!).mul(unit === 'mcg' ? 1000 : 1).toString() };
+    concentrationExact: new Exact(result.concentrationExact).mul(unit === 'mcg' ? 1000 : 1).toString() };
 }

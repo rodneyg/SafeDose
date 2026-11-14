@@ -2,7 +2,7 @@ import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Info } from 'lucide-react-native';
-import { insulinVolumes, standardVolumes, syringeOptions, isMobileWeb } from '../lib/utils';
+import { insulinVolumes, standardVolumes, isMobileWeb } from '../lib/utils';
 
 type Props = {
   manualSyringe: SyringeSelection;
@@ -73,7 +73,7 @@ export default function SyringeStep({
               setSyringeHint("No compatible insulin syringes for this dose.");
               return;
             }
-            setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2], insulinScale: manualSyringe.insulinScale || 'U-100', needsScaleConfirmation: manualSyringe.needsScaleConfirmation });
+            setManualSyringe({ type: 'Insulin', volume: manualSyringe.needsConfirmation ? '' : insulinVolumes[2], insulinScale: manualSyringe.insulinScale || 'U-100', needsScaleConfirmation: manualSyringe.needsScaleConfirmation });
             setSyringeHint(null);
           }}
         >
@@ -99,7 +99,7 @@ export default function SyringeStep({
               setSyringeHint("No compatible standard syringes for this dose.");
               return;
             }
-            setManualSyringe({ type: 'Standard', volume: standardVolumes[1] });
+            setManualSyringe({ type: 'Standard', volume: manualSyringe.needsConfirmation ? '' : standardVolumes[1] });
             setSyringeHint(null);
           }}
         >

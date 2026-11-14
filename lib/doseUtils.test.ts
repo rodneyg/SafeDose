@@ -165,8 +165,8 @@ describe('calculateDose precision guidance', () => {
     
     expect(result.calculatedVolume).toBe(0.25);
     expect(result.recommendedMarking).toBe('0.25');
-    expect(result.calculationError).toContain('Draw to 0.25 ml');
-    expect(result.calculationError).toContain('between the 0.2 ml and 0.3 ml marks');
+    expect(result.guidance).toContain('Draw to 0.25 ml');
+    expect(result.guidance).toContain('between the 0.2 ml and 0.3 ml marks');
   });
 
   it('should handle exact dose that matches a standard marking', () => {
@@ -191,8 +191,8 @@ describe('calculateDose precision guidance', () => {
     
     expect(result.calculatedVolume).toBe(0.05);
     expect(result.recommendedMarking).toBe('0.05');
-    expect(result.calculationError).toContain('Draw to 0.05 ml');
-    expect(result.calculationError).toContain('below the first marking');
+    expect(result.guidance).toContain('Draw to 0.05 ml');
+    expect(result.guidance).toContain('below the first marking');
   });
 
 });

@@ -1,3 +1,4 @@
+import { formatDoseNumber } from '../lib/dosing';
 import { Exact } from '../lib/dosing/exact';
 import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React, { useState, useCallback, useEffect } from 'react';
@@ -5,13 +6,13 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'rea
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import SyringeIllustration from './SyringeIllustration';
-import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
 
 type Props = {
   calculationError: string | null;
+  guidance?: string | null;
   recommendedMarking: string | null;
   doseValue: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
@@ -32,6 +33,7 @@ type Props = {
 
 export default function FinalResultDisplay({
   calculationError,
+  guidance,
   recommendedMarking,
   doseValue,
   unit,
@@ -60,7 +62,7 @@ export default function FinalResultDisplay({
   // Effect to handle automatic saving after successful authentication
   useEffect(() => {
     const handleAuthenticatedSave = async () => {
-      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging) {
+      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging && !calculationError && recommendedMarking) {
         setPendingSave(false);
         setIsSaving(true);
         
@@ -72,7 +74,7 @@ export default function FinalResultDisplay({
             calculatedVolume,
             syringeType: manualSyringe.type as 'Insulin' | 'Standard',
             recommendedMarking,
-        insulinScale: manualSyringe.insulinScale,
+            insulinScale: manualSyringe.insulinScale,
           };
 
           const result = await logDose(doseInfo);
@@ -97,7 +99,7 @@ export default function FinalResultDisplay({
   }, [
     pendingSave, user, isSaving, isLogging, logDose,
     substanceName, doseValue, unit, calculatedVolume, 
-    manualSyringe, recommendedMarking
+    manualSyringe, recommendedMarking, calculationError
   ]);
   
   // Helper function to trigger Google sign-in
@@ -121,7 +123,7 @@ export default function FinalResultDisplay({
 
   // Handler for saving dose
   const handleSaveDose = useCallback(async () => {
-    if (isSaving || isLogging) return;
+    if (isSaving || isLogging || calculationError || !recommendedMarking) return;
     
     setIsSaving(true);
     
@@ -170,7 +172,7 @@ export default function FinalResultDisplay({
   }, [
     isSaving, isLogging, user, handleSignIn, logDose,
     substanceName, doseValue, unit, calculatedVolume, 
-    manualSyringe, recommendedMarking
+    manualSyringe, recommendedMarking, calculationError
   ]);
   
   // Helper function to get the calculation formula based on unit types
@@ -255,9 +257,9 @@ export default function FinalResultDisplay({
         </View>
       )}
       {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError && !calculationError.includes('Draw to') ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+        <View style={[styles.instructionCard, calculationError ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError && !calculationError.includes('Draw to') ? '⚠️ Calculation Result' : '✅ Calculation Result'}
+            {calculationError ? '⚠️ Calculation Result' : '✅ Calculation Result'}
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
@@ -270,19 +272,15 @@ export default function FinalResultDisplay({
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(3)} ml)
+              (Calculated volume: {formatDoseNumber(calculatedVolume, 3)} ml)
             </Text>
           )}
           {calculatedConcentration !== null && calculatedConcentration !== undefined && (
             <Text style={styles.instructionNote}>
-              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
+              (Calculated concentration: {formatDoseNumber(calculatedConcentration, 3)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
-          {calculationError && (
-            <Text style={calculationError.includes('Draw to') ? styles.guidanceText : styles.warningText}>
-              {calculationError}
-            </Text>
-          )}
+          {guidance && <Text style={styles.guidanceText}>{guidance}</Text>}
           <View style={styles.illustrationContainer}>
             <Text style={styles.instructionNote}>Syringe Illustration (calculated mark highlighted)</Text>
             <SyringeIllustration
@@ -331,7 +329,7 @@ export default function FinalResultDisplay({
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>Concentration Used:</Text>
                   <Text style={styles.breakdownValue}>
-                    {getConcentrationForDisplay()?.toFixed(2)} {concentrationUnit || 'mg/ml'}
+                    {formatDoseNumber(getConcentrationForDisplay()!, 3)} {concentrationUnit || 'mg/ml'}
                   </Text>
                 </View>
               )}
@@ -340,7 +338,7 @@ export default function FinalResultDisplay({
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>Final Volume to Draw:</Text>
                   <Text style={styles.breakdownValue}>
-                    {calculatedVolume.toFixed(3)} ml
+                    {formatDoseNumber(calculatedVolume, 3)} ml
                   </Text>
                 </View>
               )}
@@ -403,7 +401,7 @@ export default function FinalResultDisplay({
             isMobileWeb && styles.actionButtonMobile
           ]} 
           onPress={handleSaveDose}
-          disabled={isSaving || isLogging}
+          disabled={isSaving || isLogging || !!calculationError || !recommendedMarking}
         >
           <Save color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>

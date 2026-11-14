@@ -117,7 +117,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     const targetDoseValue = targetDose;
     
     // Use total amount method instead of concentration method for proper syringe calculations
-    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillConcentrationExact=${encodeURIComponent(handoff.concentrationExact!)}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
+    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillConcentrationExact=${encodeURIComponent(handoff.concentrationExact)}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
   };
 
   const getStepTitle = () => {

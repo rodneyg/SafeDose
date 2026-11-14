@@ -55,7 +55,7 @@ export class Exact {
     return new Exact(String(difference < BigInt(0) ? -difference : difference), this.d * value.d);
   }
 
-  toNumber(): number { return Number(this.n) / Number(this.d); }
+  toNumber(): number { return Number(this.fixed(324)); }
 
   toString(): string {
     let remainder = this.d;
