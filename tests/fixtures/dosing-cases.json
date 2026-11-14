@@ -1466,7 +1466,7 @@
       }
     },
     "expected": {
-      "volume_mL": 2.5,
+      "volume_mL": null,
       "marking": null,
       "error_contains": "2 mL per-injection safety limit"
     },

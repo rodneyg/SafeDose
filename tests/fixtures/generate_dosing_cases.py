@@ -50,7 +50,7 @@ cases[-1]['inputs']['manualSyringe']['insulinScale']='U-40'
 cases[-1]['expected']['marking']='4' # 0.1 mL * 40 units/mL
 add('saf101-09','2.5 mL on 5 mL syringe is blocked by unchanged 2 mL policy',2.5,'mL',1,'mg/ml','Standard')
 cases[-1]['inputs']['manualSyringe']['volume']='5 ml'
-cases[-1]['expected'].update(marking=None,error_contains='2 mL per-injection safety limit')
+cases[-1]['expected'].update(volume_mL=None,marking=None,error_contains='2 mL per-injection safety limit')
 add('saf101-10','0.25 mg at 1 mg/mL with Standard 1 mL: advice is guidance',0.25,'mg',1,'mg/ml','Standard')
 cases[-1]['inputs']['manualSyringe']['volume']='1 ml'
 cases[-1]['expected'].update(error=None,guidance='Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks.')

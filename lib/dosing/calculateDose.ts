@@ -104,7 +104,7 @@ export function calculateDose({
   let calculatedVolume: number | null = null;
   let calculatedConcentration: number | null = null;
   const fail = (calculationError: string): CalculateDoseResult => ({
-    calculatedVolume, calculatedConcentration, recommendedMarking: null, calculationError,
+    calculatedVolume: null, calculatedConcentration: null, recommendedMarking: null, calculationError,
   });
   if (doseValue === null || !Number.isFinite(doseValue) || doseValue <= 0) {
     return fail('Dose value is invalid or missing.');
