@@ -96,6 +96,9 @@ export function useDoseLogging() {
           calculatedVolume: data.calculatedVolume,
           syringeType: data.syringeType,
           recommendedMarking: data.recommendedMarking,
+          insulinScale: data.insulinScale,
+          totalAmountUnit: data.totalAmountUnit,
+          concentrationExact: data.concentrationExact,
           injectionSite: data.injectionSite,
           timestamp: data.timestamp,
           notes: data.notes,
@@ -126,6 +129,9 @@ export function useDoseLogging() {
       unit: string;
       calculatedVolume: number | null;
       syringeType?: 'Insulin' | 'Standard' | null;
+      insulinScale?: string;
+      totalAmountUnit?: 'mg' | 'mcg' | 'units';
+      concentrationExact?: string;
       recommendedMarking?: string | null;
       injectionSite?: InjectionSite | null;
       
@@ -180,6 +186,9 @@ export function useDoseLogging() {
         calculatedVolume: doseInfo.calculatedVolume,
         syringeType: doseInfo.syringeType || undefined,
         recommendedMarking: doseInfo.recommendedMarking || undefined,
+        insulinScale: doseInfo.insulinScale,
+        totalAmountUnit: doseInfo.totalAmountUnit,
+        concentrationExact: doseInfo.concentrationExact,
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,

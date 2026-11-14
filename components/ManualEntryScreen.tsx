@@ -1,3 +1,4 @@
+import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
@@ -34,8 +35,8 @@ interface ManualEntryScreenProps {
   setTotalAmount: (value: string) => void;
   solutionVolume: string;
   setSolutionVolume: (value: string) => void;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean };
-  setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean }) => void;
+  manualSyringe: SyringeSelection;
+  setManualSyringe: (value: SyringeSelection) => void;
   doseValue: number | null;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration

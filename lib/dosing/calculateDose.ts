@@ -1,6 +1,6 @@
 import { Exact } from './exact';
 import { AmountUnit, parseInputNumber } from './inputs';
-import { syringeOptions } from './syringes';
+import { getSyringeMarkings, SyringeSelection, syringeOptions } from './syringes';
 import { getMarkingGuidance } from './markings';
 
 // Define specific volume types for better type safety
@@ -11,6 +11,8 @@ export type SyringeVolume = InsulinSyringeVolume | StandardSyringeVolume;
 export interface ManualSyringe {
   type: 'Insulin' | 'Standard';
   needsConfirmation?: boolean;
+  insulinScale?: string;
+  needsScaleConfirmation?: boolean;
   volume: SyringeVolume; // Use the more specific type
 }
 
@@ -22,7 +24,7 @@ export interface CalculateDoseParams {
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   totalAmountUnit?: AmountUnit | null;
   totalAmount?: number | null;  // Total amount in vial
-  manualSyringe: ManualSyringe | { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean } | null; // Allow string for initial state, but cast later
+  manualSyringe: SyringeSelection | null; // Allow string for initial state, but cast later
   solutionVolume?: string | null; // Added solution volume for concentration calculation
 }
 
@@ -151,9 +153,12 @@ export function calculateDose({
   }
   if (manualSyringe?.needsConfirmation) return fail('Needs input: confirm the syringe type and volume from its label.');
   if (!manualSyringe || !manualSyringe.type || !manualSyringe.volume) return fail('Syringe details are missing.');
-  let markingsString: string | undefined;
-  if (manualSyringe.type === 'Insulin') markingsString = syringeOptions.Insulin[manualSyringe.volume as InsulinSyringeVolume];
-  else if (manualSyringe.type === 'Standard') markingsString = syringeOptions.Standard[manualSyringe.volume as StandardSyringeVolume];
+  if (manualSyringe.needsScaleConfirmation) return fail('Needs input: confirm the insulin scale shown on the scanned syringe.');
+  const scale = manualSyringe.insulinScale || 'U-100';
+  if (manualSyringe.type === 'Insulin' && !['U-100', 'U-40'].includes(scale)) {
+    return fail(`Unsupported insulin scale: ${scale}. Only U-100 and U-40 are supported.`);
+  }
+  const markingsString = getSyringeMarkings(manualSyringe);
   if (!markingsString) return fail(`Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`);
 
   let convertedDose = new Exact(doseValue);
@@ -170,7 +175,7 @@ export function calculateDose({
   }
   const capacity = Number(manualSyringe.volume.replace(/[^0-9.]/g, ''));
   if (volume.compare(capacity) > 0) return fail(`Required volume (${volume.fixed(2)} ml) exceeds syringe capacity (${capacity} ml).`);
-  const guidance = getMarkingGuidance(volume, manualSyringe.type, markingsString);
+  const guidance = getMarkingGuidance(volume, manualSyringe.type, markingsString, scale === 'U-40' ? 40 : 100);
   return { calculatedVolume, calculatedConcentration, recommendedMarking: guidance.recommendedMarking,
     calculationError: guidance.precisionMessage };
 }

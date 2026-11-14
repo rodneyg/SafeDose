@@ -1,11 +1,12 @@
+import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Info } from 'lucide-react-native';
 import { insulinVolumes, standardVolumes, syringeOptions, isMobileWeb } from '../lib/utils';
 
 type Props = {
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean };
-  setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean }) => void;
+  manualSyringe: SyringeSelection;
+  setManualSyringe: (syringe: SyringeSelection) => void;
   setSyringeHint: (hint: string | null) => void;
   syringeHint: string | null;
   // Optional context for smarter defaults
@@ -27,13 +28,13 @@ export default function SyringeStep({
   concentrationUnit,
   medicationInputType
 }: Props) {
-  const availableVolumes = manualSyringe.needsConfirmation ? [] : manualSyringe.type === 'Insulin' ? insulinVolumes : standardVolumes;
-  const isValidSyringeOption = syringeOptions[manualSyringe.type]?.[manualSyringe.volume];
+  const availableVolumes = manualSyringe.needsConfirmation ? [] : manualSyringe.type === 'Insulin' ? (manualSyringe.insulinScale === 'U-40' ? ['0.5 ml', '1 ml'] : insulinVolumes) : standardVolumes;
+  const isValidSyringeOption = getSyringeMarkings(manualSyringe);
 
   // Helper function to check if a syringe type has any valid markings for any volume
   const hasValidOptions = (type: 'Insulin' | 'Standard') => {
     const volumes = type === 'Insulin' ? insulinVolumes : standardVolumes;
-    return volumes.some(volume => syringeOptions[type]?.[volume]);
+    return volumes.some(volume => getSyringeMarkings({ type, volume }));
   };
   
   const hasValidInsulinOptions = hasValidOptions('Insulin');
@@ -72,7 +73,7 @@ export default function SyringeStep({
               setSyringeHint("No compatible insulin syringes for this dose.");
               return;
             }
-            setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2] });
+            setManualSyringe({ type: 'Insulin', volume: insulinVolumes[2], insulinScale: manualSyringe.insulinScale || 'U-100', needsScaleConfirmation: manualSyringe.needsScaleConfirmation });
             setSyringeHint(null);
           }}
         >
@@ -114,6 +115,19 @@ export default function SyringeStep({
         </TouchableOpacity>
       </View>
       {syringeHint && <Text style={styles.helperHint}>{syringeHint}</Text>}
+      {manualSyringe.type === 'Insulin' && !manualSyringe.needsConfirmation && (
+        <>
+          <Text style={styles.label}>Insulin scale printed on syringe:</Text>
+          <View style={styles.presetContainer}>
+            {['U-100', 'U-40'].map(scale => (
+              <TouchableOpacity key={scale} style={[styles.optionButton, !manualSyringe.needsScaleConfirmation && (manualSyringe.insulinScale || 'U-100') === scale && styles.selectedOption]}
+                onPress={() => { setManualSyringe({ ...manualSyringe, insulinScale: scale, needsScaleConfirmation: false }); setSyringeHint(null); }}>
+                <Text style={styles.buttonText}>{scale}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      )}
       <Text style={styles.label}>Syringe Volume:</Text>
       <View style={styles.presetContainer}>
         {availableVolumes.map((volume) => (
@@ -128,7 +142,7 @@ export default function SyringeStep({
       </View>
       {isValidSyringeOption ? (
         <Text style={styles.inferredMarkings}>
-          Markings ({manualSyringe.type === 'Insulin' ? 'units' : 'ml'}): {syringeOptions[manualSyringe.type][manualSyringe.volume]}
+          Markings ({manualSyringe.type === 'Insulin' ? 'units' : 'ml'}): {getSyringeMarkings(manualSyringe)}
         </Text>
       ) : (
         <Text style={[styles.inferredMarkings, { color: '#991B1B', fontWeight: 'bold' }]}>Markings unavailable.</Text>

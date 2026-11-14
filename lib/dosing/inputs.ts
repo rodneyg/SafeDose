@@ -1,3 +1,4 @@
+import { SyringeSelection } from './syringes';
 export type AmountUnit = 'mg' | 'mcg' | 'units';
 export type ConcentrationUnit = 'mg/ml' | 'mcg/ml' | 'units/ml';
 export type InputResult<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -61,7 +62,7 @@ export function parseScannedConcentration(text: string): InputResult<{ amount: n
   return { ok: true, value: { amount, unit: `${numerator}/ml` } };
 }
 
-export function parseScannedSyringe(scan: { type?: string | null; volume?: string | null }): InputResult<{ type: 'Insulin' | 'Standard'; volume: string }> {
+export function parseScannedSyringe(scan: { type?: string | null; volume?: string | null; scale?: string | null }, selectedScale = 'U-100'): InputResult<SyringeSelection> {
   const type = scan.type?.trim().toLowerCase();
   const normalizedType = type === 'insulin' ? 'Insulin' : type === 'standard' ? 'Standard' : null;
   const volume = scan.volume?.replace(/\s/g, '').toLowerCase();
@@ -69,5 +70,14 @@ export function parseScannedSyringe(scan: { type?: string | null; volume?: strin
   const volumes = normalizedType === 'Insulin' ? ['0.3 ml', '0.5 ml', '1 ml'] : ['1 ml', '3 ml', '5 ml'];
   const selected = volumes.find(option => option.replace(/\s/g, '') === volume);
   if (!selected) return { ok: false, error: 'Needs input: select a supported syringe volume from its label.' };
+  if (normalizedType === 'Insulin') {
+    const scale = scan.scale?.replace(/\s/g, '').toUpperCase();
+    if (!scale || !['U-100', 'U-40'].includes(scale)) {
+      return { ok: false, error: 'Needs input: confirm the insulin scale. Only U-100 and U-40 are supported.' };
+    }
+    if (scale !== selectedScale) return { ok: false, error: `Needs input: scanned ${scale} conflicts with selected ${selectedScale}. Select the scale printed on your syringe.` };
+    if (scale === 'U-40' && selected === '0.3 ml') return { ok: false, error: 'Needs input: U-40 supports 0.5 mL and 1 mL syringes only.' };
+    return { ok: true, value: { type: normalizedType, volume: selected, insulinScale: scale } };
+  }
   return { ok: true, value: { type: normalizedType, volume: selected } };
 }

@@ -497,8 +497,8 @@ export default function NewDoseScreen() {
     const scannedSyringe = result.syringe || {};
     const scannedVial = result.vial || {};
 
-    const parsedSyringe = parseScannedSyringe(scannedSyringe);
-    setManualSyringe(parsedSyringe.ok ? parsedSyringe.value : { type: 'Standard', volume: '', needsConfirmation: true });
+    const parsedSyringe = parseScannedSyringe(scannedSyringe, manualSyringe.insulinScale || 'U-100');
+    setManualSyringe(parsedSyringe.ok ? parsedSyringe.value : { type: 'Standard', volume: '', needsConfirmation: true, needsScaleConfirmation: true });
     setSyringeHint(parsedSyringe.ok ? 'Detected from image scan' : parsedSyringe.error);
 
     if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
@@ -574,6 +574,8 @@ export default function NewDoseScreen() {
 
       console.log('[applyLastDose] ========== APPLYING DOSE DATA ==========');
       
+      doseCalculator.setTotalAmountUnit(lastDose.totalAmountUnit || null);
+
       // Apply basic dose information with fallbacks for missing data
       const substanceNameValue = lastDose.substanceName || 'Previous Substance';
       const doseValue = lastDose.doseValue.toString();
@@ -611,7 +613,7 @@ export default function NewDoseScreen() {
       // Apply syringe information if available
       if (lastDose.syringeType) {
         const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
-        setManualSyringe({ type: lastDose.syringeType, volume: defaultVolume });
+        setManualSyringe({ insulinScale: lastDose.insulinScale, type: lastDose.syringeType, volume: defaultVolume });
         setSyringeHint('Syringe type from your last dose');
       } else {
         setManualSyringe({ type: 'Standard', volume: '3 ml' });

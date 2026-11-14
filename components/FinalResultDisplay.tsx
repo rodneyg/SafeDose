@@ -1,3 +1,5 @@
+import { Exact } from '../lib/dosing/exact';
+import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
@@ -15,7 +17,7 @@ type Props = {
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Add concentrationUnit prop
   substanceName: string;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
+  manualSyringe: SyringeSelection;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration prop
   concentration?: number | null; // Add concentration prop for breakdown display
@@ -70,6 +72,7 @@ export default function FinalResultDisplay({
             calculatedVolume,
             syringeType: manualSyringe.type as 'Insulin' | 'Standard',
             recommendedMarking,
+        insulinScale: manualSyringe.insulinScale,
           };
 
           const result = await logDose(doseInfo);
@@ -146,6 +149,7 @@ export default function FinalResultDisplay({
         calculatedVolume,
         syringeType: manualSyringe.type as 'Insulin' | 'Standard',
         recommendedMarking,
+        insulinScale: manualSyringe.insulinScale,
       };
 
       const result = await logDose(doseInfo);
@@ -259,10 +263,10 @@ export default function FinalResultDisplay({
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
-            Draw to {parseFloat(recommendedMarking).toFixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
+            Draw to {new Exact(recommendedMarking).fixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
           </Text>
           <Text style={styles.instructionNote}>
-            ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
+            ({manualSyringe.type === 'Insulin' ? `Units mark on ${manualSyringe.insulinScale || 'U-100'} Insulin Syringe` : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
@@ -285,7 +289,7 @@ export default function FinalResultDisplay({
               syringeType={manualSyringe.type}
               syringeVolume={manualSyringe.volume}
               recommendedMarking={recommendedMarking}
-              syringeOptions={syringeOptions}
+              syringeOptions={{ [manualSyringe.type]: { [manualSyringe.volume]: getSyringeMarkings(manualSyringe) || '' } }}
             />
           </View>
           <View style={styles.verificationReminder}>

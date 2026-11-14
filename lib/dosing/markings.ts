@@ -1,7 +1,7 @@
 import { Exact } from './exact';
-export function getMarkingGuidance(calculatedVolume: number | Exact, syringeType: 'Insulin' | 'Standard', markingsString: string) {
+export function getMarkingGuidance(calculatedVolume: number | Exact, syringeType: 'Insulin' | 'Standard', markingsString: string, insulinScale = 100) {
   const markings = markingsString.split(',').map((m: string) => parseFloat(m));
-  const exactMarking = new Exact(calculatedVolume).mul(syringeType === 'Insulin' ? 100 : 1);
+  const exactMarking = new Exact(calculatedVolume).mul(syringeType === 'Insulin' ? insulinScale : 1);
   const markingScaleValue = exactMarking.toNumber();
 
   const nearestMarking = markings.reduce((prev: number, curr: number) =>

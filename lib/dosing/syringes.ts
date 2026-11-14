@@ -13,3 +13,27 @@ export const syringeOptions = {
 
 export const insulinVolumes = ['0.3 ml', '0.5 ml', '1 ml'];
 export const standardVolumes = ['1 ml', '3 ml', '5 ml'];
+
+export interface SyringeSelection {
+  type: 'Insulin' | 'Standard';
+  volume: string;
+  insulinScale?: string;
+  needsConfirmation?: boolean;
+  needsScaleConfirmation?: boolean;
+}
+
+export const u40Markings: Record<string, string> = {
+  '0.5 ml': Array.from({ length: 20 }, (_, index) => String(index + 1)).join(','),
+  '1 ml': Array.from({ length: 40 }, (_, index) => String(index + 1)).join(','),
+};
+
+export function getSyringeMarkings(syringe: SyringeSelection): string | undefined {
+  if (syringe.type === 'Insulin') {
+    const scale = syringe.insulinScale || 'U-100';
+    if (scale === 'U-40') return u40Markings[syringe.volume];
+    if (scale !== 'U-100') return undefined;
+    return (syringeOptions.Insulin as Record<string, string>)[syringe.volume];
+  }
+  if (syringe.type === 'Standard') return (syringeOptions.Standard as Record<string, string>)[syringe.volume];
+  return undefined;
+}

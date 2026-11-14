@@ -45,5 +45,8 @@ cases[-1]['inputs'].update(solutionVolume=str(F(10,3)),concentrationExact='3')
 add('saf101-05','0.29 mg at 1 mg/mL gives marking 29',0.29,'mg',1,'mg/ml')
 add('saf101-06','5 mg / mL normalized before 0.5 mg dose calculation',0.5,'mg',5,'mg/ml')
 add('saf101-07','Confirmed Standard 3 mL syringe after unreadable scan',0.5,'mL',1,'mg/ml','Standard')
+add('saf101-08','250 mcg from 5000 mcg in 2 mL on U-40: 4 scale units',250,'mcg',None,'mcg/ml',total=5000,solution=2)
+cases[-1]['inputs']['manualSyringe']['insulinScale']='U-40'
+cases[-1]['expected']['marking']='4' # 0.1 mL * 40 units/mL
 Path(__file__).with_name('dosing-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(len(cases),'independently computed fixtures')

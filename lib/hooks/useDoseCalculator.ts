@@ -1,3 +1,4 @@
+import { SyringeSelection, getSyringeMarkings } from '../dosing';
 import { AmountUnit, calculateDose, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { FeedbackContextType } from '../../types/feedback';
@@ -16,7 +17,7 @@ const MIN_DOSES_FOR_PROMOTION = 4;
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
 
-type Syringe = { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean };
+type Syringe = SyringeSelection;
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
@@ -45,7 +46,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [totalAmountUnit, setTotalAmountUnit] = useState<AmountUnit | null>('mg');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
-  const [manualSyringe, setManualSyringe] = useState<{ type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean }>({ type: 'Standard', volume: '3 ml' });
+  const [manualSyringe, setManualSyringe] = useState<SyringeSelection>({ type: 'Standard', volume: '3 ml' });
   const [doseValue, setDoseValue] = useState<number | null>(null);
   const [concentrationExact, setConcentrationExact] = useState<string | null>(null);
   const [concentration, setConcentration] = useState<number | null>(null);
@@ -569,6 +570,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         calculatedVolume,
         syringeType: manualSyringe?.type || null,
         recommendedMarking,
+        insulinScale: manualSyringe.insulinScale,
+        totalAmountUnit: totalAmountUnit || undefined,
+        concentrationExact: concentrationExact || undefined,
         injectionSite: selectedInjectionSite,
         // Add original user inputs for "Use Last Dose" feature
         medicationInputType,
@@ -968,7 +972,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     solutionVolume,
     setSolutionVolume: (value: string) => { setSolutionVolume(value); setConcentrationExact(null); },
     manualSyringe,
-    setManualSyringe: (syringe: { type: 'Insulin' | 'Standard'; volume: string; needsConfirmation?: boolean } | string) => {
+    setManualSyringe: (syringe: SyringeSelection | string) => {
       try {
         if (typeof syringe === 'string') {
           // Parse string format (for backward compatibility)

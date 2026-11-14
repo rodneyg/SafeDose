@@ -1427,5 +1427,29 @@
     },
     "computed_by": "independent hand calculation",
     "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-08",
+    "description": "250 mcg from 5000 mcg in 2 mL on U-40: 4 scale units",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "insulinScale": "U-40"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "4"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
   }
 ]
