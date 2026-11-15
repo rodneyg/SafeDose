@@ -51,6 +51,9 @@ module.exports = {
     STRIPE_LIVE_PUBLISHABLE_KEY: process.env.STRIPE_LIVE_PUBLISHABLE_KEY,
     STRIPE_TEST_PRICE_ID: process.env.STRIPE_TEST_PRICE_ID || 'price_1REyzMPE5x6FmwJPyJVJIEXe',
     STRIPE_LIVE_PRICE_ID: process.env.STRIPE_LIVE_PRICE_ID,
+    // Public price IDs only (not secret keys). Optional; checkout can also resolve by lookup key.
+    STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID: process.env.STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID,
+    STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID: process.env.STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID,
     TEST_LOGIN: process.env.REACT_APP_TEST_LOGIN === 'true', // Environment flag for auto-login testing
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",

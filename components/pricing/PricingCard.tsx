@@ -20,6 +20,10 @@ export interface PricingPlan {
     monthly: string | null;
     annual: string | null;
   };
+  offerKey?: {
+    monthly: string | null;
+    annual: string | null;
+  };
   dynamicPrice?: {
     basePrice: number;
     currentPrice: number;
