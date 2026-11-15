@@ -22,6 +22,11 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run build:web
+      - name: Reject secrets in web export and resolved Expo extra
+        run: npm run check:bundle-secrets
+      - run: npm run test:scan-api
+      - run: npx jest scripts/__tests__/check-bundle-secrets.test.js --runInBand
       - run: npm run typecheck:dosing
       - run: npm run test:dose-flow
       - run: npm run typecheck:api

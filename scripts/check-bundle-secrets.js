@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * Fail if the web export contains an OpenAI-style secret or a browser OpenAI client.
+ * Fail if the web export or resolved Expo extra contains a secret.
  * Prints matching file paths only — never secret values or surrounding snippets.
  */
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = process.argv[2] || path.join(process.cwd(), 'dist');
-const KEY_RE = /sk-(?:proj|live|svcacct)-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}|sk_(?:test|live)_[A-Za-z0-9]+|rk_(?:test|live)_[A-Za-z0-9]+/;
+const KEY_RE = /sk-[A-Za-z0-9_-]+|(?:sk|rk)_(?:test|live)_[A-Za-z0-9_-]+|whsec_[A-Za-z0-9_-]+/;
+function hasSecret(text) {
+  const openAIKey = process.env.OPENAI_API_KEY;
+  return KEY_RE.test(text) || Boolean(openAIKey && text.includes(openAIKey));
+}
 const CLIENT_RE = /dangerouslyAllowBrowser/;
 const EXTENSIONS = new Set(['.js', '.css', '.html', '.json', '.map', '.txt']);
 
@@ -31,13 +35,18 @@ const keyHits = [];
 const clientHits = [];
 for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
-  if (KEY_RE.test(text)) keyHits.push(path.relative(process.cwd(), file));
+  if (hasSecret(text)) keyHits.push(path.relative(process.cwd(), file));
   if (CLIENT_RE.test(text)) clientHits.push(path.relative(process.cwd(), file));
 }
 
+// Resolve config without printing any values. Scan only client-visible extra.
+const config = require(path.join(process.cwd(), 'app.config.js'));
+const resolved = typeof config === 'function' ? config({ config: {} }) : config;
+if (hasSecret(JSON.stringify(resolved.extra || {}))) keyHits.push('app.config.js extra');
+
 if (keyHits.length || clientHits.length) {
   if (keyHits.length) {
-    console.error('[check-bundle-secrets] OpenAI-style secret pattern found in:');
+    console.error('[check-bundle-secrets] Secret pattern found in:');
     for (const file of keyHits) console.error(`  ${file}`);
   }
   if (clientHits.length) {
@@ -47,4 +56,4 @@ if (keyHits.length || clientHits.length) {
   process.exit(1);
 }
 
-console.log(`[check-bundle-secrets] ok — scanned ${files.length} files in ${path.relative(process.cwd(), ROOT) || ROOT}; no sk-/sk_ secrets or dangerouslyAllowBrowser`);
+console.log(`[check-bundle-secrets] ok — scanned ${files.length} files in ${path.relative(process.cwd(), ROOT) || ROOT}; no secret patterns or dangerouslyAllowBrowser`);
