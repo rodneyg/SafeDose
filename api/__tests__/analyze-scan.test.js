@@ -85,7 +85,9 @@ describe('POST /api/analyze-scan', () => {
   it.each([
     'https://safe-dose.vercel.app',
     'https://safedose.rodneygainous.com',
-    'https://safe-dose-abc123-rodneygs-projects.vercel.app', 'http://localhost:8081', undefined,
+    'https://safe-dose-abc123-rodneygs-projects.vercel.app',
+    'https://safe-dose-git-saf-115-photo-check-rodneygs-projects.vercel.app',
+    'http://localhost:8081', undefined,
   ])('allows SafeDose or native origin %s', async origin => {
     process.env.OPENAI_API_KEY = 'test-key';
     create.mockResolvedValue({ choices: [{ message: { content: '{}' } }] });

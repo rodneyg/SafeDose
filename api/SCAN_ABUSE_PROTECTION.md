@@ -16,7 +16,7 @@ new secret is required. Firebase Admin is not a dependency in this repository,
 so client-provided identities are not trusted or used to bypass IP limits.
 
 Browser Origins must be HTTPS `safe-dose.vercel.app`, HTTPS `safedose.rodneygainous.com`, or a team preview
-`safe-dose-<hash>-rodneygs-projects.vercel.app` (`safedoseai.com` is not registered, so it is deliberately not allowed); HTTP/HTTPS localhost with optional ports is
+`safe-dose-<hash>-rodneygs-projects.vercel.app` or a branch preview `safe-dose-git-<branch>-rodneygs-projects.vercel.app` (`safedoseai.com` is not registered, so it is deliberately not allowed); HTTP/HTTPS localhost with optional ports is
 also allowed. Native requests without Origin are allowed. Origin filtering is
 browser protection: non-browser callers can omit or forge Origin.
 
