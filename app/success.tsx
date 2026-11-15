@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
 
 // Base URL for API
-const API_BASE_URL = "https://safe-dose.vercel.app";
+const API_BASE_URL = "https://safedose.rodneygainous.com";
 
 export default function SuccessScreen() {
   const { session_id } = useLocalSearchParams();

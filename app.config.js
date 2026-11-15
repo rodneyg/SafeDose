@@ -65,7 +65,8 @@ module.exports = {
       // Google Sign-In redirect URIs
       redirectUris: {
         local: "http://localhost:8081/__/auth/handler",
-        production: "https://safe-dose.vercel.app/__/auth/handler"
+        production: "https://safedose.rodneygainous.com/__/auth/handler",
+        fallback: "https://safe-dose.vercel.app/__/auth/handler"
       }
     },
     googleAuth: {

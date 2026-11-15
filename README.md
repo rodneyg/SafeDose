@@ -46,7 +46,7 @@ The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time
 
 ## 🚀 Hosted Version
 
-A hosted version of SafeDose: https://safe-dose.vercel.app/
+A hosted version of SafeDose: https://safedose.rodneygainous.com/ (fallback: https://safe-dose.vercel.app/)
 
 ---
 
