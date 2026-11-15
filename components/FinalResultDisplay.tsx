@@ -268,11 +268,14 @@ export default function FinalResultDisplay({
             Draw to {new Exact(recommendedMarking).fixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
           </Text>
           <Text style={styles.instructionNote}>
+            Exact scale value: {recommendedMarking}. Display above rounds to 2 decimals, with halfway values rounded away from zero. No rounding to syringe gradations is applied.
+          </Text>
+          <Text style={styles.instructionNote}>
             ({manualSyringe.type === 'Insulin' ? `Units mark on ${manualSyringe.insulinScale || 'U-100'} Insulin Syringe` : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
-              (Calculated volume: {formatDoseNumber(calculatedVolume, 3)} ml)
+              (Calculated volume: {calculatedVolume} ml; no rounding to syringe marks applied)
             </Text>
           )}
           {calculatedConcentration !== null && calculatedConcentration !== undefined && (

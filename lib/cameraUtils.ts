@@ -1,3 +1,4 @@
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
 import { completeScanOnServer } from './scan/completeOnServer';
 import { Alert } from 'react-native';
@@ -260,7 +261,8 @@ export async function captureAndProcessImage({
     });
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
-      throw new Error(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+      logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      throw new Error(`I couldn't read the syringe size / vial strength safely. Retake or enter it manually. Keep the syringe scale and vial strength in focus, avoid glare, and include all units. ${mapped.reasons.join(' ')}`);
     }
 
     await incrementScansUsed();

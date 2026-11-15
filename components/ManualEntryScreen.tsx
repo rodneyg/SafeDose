@@ -369,6 +369,10 @@ export default function ManualEntryScreen({
       currentStepComponent = (
         <PreDoseConfirmationStep
           substanceName={substanceName}
+          inputSummary={`${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${concentrationAmount} ${concentrationUnit}
+${totalAmountHint?.includes('scan') ? 'Scanned vial amount: ' : 'Vial amount: '}${totalAmount || 'Not provided'} ${totalAmountUnit || ''}
+Solution volume: ${solutionVolume || 'Not used'} mL
+${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyringe.type} ${manualSyringe.volume} ${manualSyringe.type === 'Insulin' ? manualSyringe.insulinScale || 'U-100' : 'mL scale'}`}
           concentrationAmount={concentrationAmount}
           concentrationUnit={concentrationUnit}
           doseValue={doseValue}
@@ -453,7 +457,7 @@ export default function ManualEntryScreen({
                 accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : manualStep === 'preDoseConfirmation' ? "Proceed to result" : "Next step"}
               >
                 <Text style={styles.buttonText}>
-                  {manualStep === 'syringe' ? 'Calculate' : manualStep === 'preDoseConfirmation' ? 'Proceed to Result' : 'Next'}
+                  {manualStep === 'syringe' ? 'Calculate' : manualStep === 'preDoseConfirmation' ? 'Confirm' : 'Next'}
                 </Text>
                 {manualStep !== 'syringe' && manualStep !== 'preDoseConfirmation' && <ArrowRight color="#fff" size={18} />}
               </TouchableOpacity>

@@ -509,12 +509,17 @@ export default function NewDoseScreen() {
     setTotalAmount('');
     doseCalculator.setTotalAmountUnit(null);
     setSolutionVolume('');
+    if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
+      setTotalAmount(String(scanned.totalAmount));
+      doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
+      setTotalAmountHint('Detected from vial scan');
+    }
     if (scanned.concentration !== null && scanned.concentrationUnit) {
       setConcentrationAmount(String(scanned.concentration));
       setConcentrationUnit(scanned.concentrationUnit);
       setMedicationInputType('concentration');
       setConcentrationHint('Detected from vial scan');
-      setTotalAmountHint(null);
+      if (scanned.totalAmount === null) setTotalAmountHint(null);
     } else if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
       doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
       setTotalAmount(String(scanned.totalAmount));
@@ -528,6 +533,16 @@ export default function NewDoseScreen() {
       setTotalAmountHint('No total amount detected, please enter manually');
     }
 
+    doseCalculator.registerScannedFields({
+      ...(scanned.substance ? { substanceName: scanned.substance } : {}),
+      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      ...(scanned.concentration !== null && scanned.concentrationUnit ? {
+        concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
+      } : {}),
+      ...(scanned.totalAmount !== null && scanned.totalAmountUnit ? {
+        totalAmount: String(scanned.totalAmount), totalAmountUnit: scanned.totalAmountUnit,
+      } : {}),
+    });
     console.log('[Process] Scan successful, transitioning to manual entry');
     // Clear calculation-related state without resetting the scan results
     doseCalculator.setGuidance(null);
