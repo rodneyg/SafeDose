@@ -19,9 +19,8 @@ function allowedOrigin(origin) {
     if (url.origin !== origin) return false;
     if (url.hostname === 'localhost') return ['http:', 'https:'].includes(url.protocol);
     return url.protocol === 'https:' && !url.port && (
-      url.hostname === 'app.safedoseai.com' ||
       url.hostname === 'safe-dose.vercel.app' ||
-      /^safe-dose-[a-z0-9-]+\.vercel\.app$/.test(url.hostname)
+      /^safe-dose-[a-z0-9]+-rodneygs-projects\.vercel\.app$/.test(url.hostname)
     );
   } catch {
     return false;
