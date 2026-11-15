@@ -98,3 +98,24 @@ describe('shared scan boundary', () => {
     expect(parseScanQuantity(value, true)?.unit).toBe(unit);
   });
 });
+
+ describe('SAF-109 unknown math inputs', () => {
+  it.each(['unreadable', null, 'garbled'])('never defaults required syringe/vial fields: %s', value => {
+    for (const field of ['type', 'volume', 'scale', 'markings']) {
+      const o = output(); o.syringe[field] = value;
+      expect(mapScanToDoseInputs(parse(o)).status).toBe('needs-input');
+    }
+    const o = output(); o.vial.concentration = value; o.vial.totalAmount = null;
+    const mapped = mapScanToDoseInputs(parse(o));
+    expect(mapped.status).toBe('needs-input');
+    expect(mapped.inputs.concentration).toBeNull();
+  });
+  it('low confidence quantities and syringes are unknown to prefill', () => {
+    const o = output(); o.confidence['vial.concentration'] = 0.89;
+    o.confidence['syringe.capacity_ml'] = 0.89;
+    const mapped = mapScanToDoseInputs(parse(o));
+    expect(mapped.status).toBe('needs-input');
+    expect(mapped.inputs.concentration).toBeNull();
+    expect(mapped.inputs.manualSyringe).toBeNull();
+  });
+});

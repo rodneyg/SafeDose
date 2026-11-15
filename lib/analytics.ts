@@ -18,6 +18,8 @@ export const ANALYTICS_EVENTS = {
   SCAN_ATTEMPT: 'scan_attempt',
   SCAN_SUCCESS: 'scan_success',
   SCAN_FAILURE: 'scan_failure',
+  SAFETY_REFUSAL: 'safety_refusal',
+  SCANNED_VALUE_EDIT: 'scanned_value_edit',
   REACH_SCAN_LIMIT: 'reach_scan_limit',
   LIMIT_MODAL_VIEW: 'limit_modal_view',
   LIMIT_MODAL_ACTION: 'limit_modal_action',

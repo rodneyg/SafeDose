@@ -121,11 +121,13 @@ export function mapScanToDoseInputs(scan: ScanResult): { status: 'ready' | 'need
   const { type, volume } = scan.syringe;
   const supported = type && volume && Object.prototype.hasOwnProperty.call(syringeOptions[type], volume);
   if (!supported) reasons.push('Confirm a supported syringe type and capacity.');
-  const concentration = parseScanQuantity(scan.vial.concentration, true);
-  const total = parseScanQuantity(scan.vial.totalAmount);
+  const trusted = (key: string) => scan.confidence[key] >= SCAN_MIN_CONFIDENCE;
+  const concentration = trusted('vial.concentration') ? parseScanQuantity(scan.vial.concentration, true) : null;
+  const total = trusted('vial.totalAmount') ? parseScanQuantity(scan.vial.totalAmount) : null;
+  if (!concentration && !total) reasons.push('Vial strength is missing or unreadable.');
   const inputs: ScanDoseInputs = {
-    manualSyringe: supported && type && volume ? { type, volume } : null,
-    substance: scan.vial.substance,
+    manualSyringe: supported && ['type', 'capacity_ml', 'scale', 'markings'].every(key => trusted(`syringe.${key}`)) && type && volume ? { type, volume } : null,
+    substance: trusted('vial.substance') ? scan.vial.substance : null,
     concentration: concentration?.value ?? null,
     concentrationUnit: concentration ? `${concentration.unit}/ml` : null,
     totalAmount: total?.value ?? null,
