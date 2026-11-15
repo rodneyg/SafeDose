@@ -42,6 +42,7 @@ validate-*.js
 
 # Jest coverage reports
 coverage/
+.verify/
 
 # Local vision evaluation pixels, review packets, recordings, and generated output
 evals/images/

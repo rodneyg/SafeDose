@@ -1,0 +1,27 @@
+{
+  "flow": "photo-scan",
+  "ok": true,
+  "result": {
+    "freeTier": {
+      "capacityAfterThird": false,
+      "capacityBeforeThird": true,
+      "limit": 3
+    },
+    "mapped": {
+      "inputs": {
+        "concentration": 2.5,
+        "concentrationUnit": "mg/ml",
+        "manualSyringe": {
+          "type": "Insulin",
+          "volume": "1 ml"
+        },
+        "substance": "Fixture medication",
+        "totalAmount": 5,
+        "totalAmountUnit": "mg"
+      },
+      "reasons": [],
+      "status": "ready"
+    },
+    "model": "gpt-4o-2024-08-06"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "flow": "photo-check-paywall",
+  "ok": true,
+  "result": {
+    "calculator": "free",
+    "checkout": "mocked",
+    "offers": [
+      {
+        "amount": 299,
+        "interval": "month",
+        "lookupKey": "safedose_photo_check_monthly",
+        "priceId": "fixture_safedose_photo_check_monthly"
+      },
+      {
+        "amount": 2699,
+        "interval": "year",
+        "lookupKey": "safedose_photo_check_annual",
+        "priceId": "fixture_safedose_photo_check_annual"
+      }
+    ]
+  }
+}

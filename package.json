@@ -22,7 +22,8 @@
     "test:dose-flow": "jest components/SAF137.test.tsx --runInBand",
     "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
     "test:scan-api": "jest api/__tests__/analyze-scan.test.js lib/scan/__tests__/completeOnServer.test.ts --runInBand",
-    "check:bundle-secrets": "node scripts/check-bundle-secrets.js"
+    "check:bundle-secrets": "node scripts/check-bundle-secrets.js",
+    "verify": "./verify"
   },
   "vercel": {
     "projectRoot": "."
