@@ -4,8 +4,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { ArrowLeft, Camera, Edit3, Calculator, ArrowRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCameraPermissions, CameraView } from 'expo-camera';
-import OpenAI from 'openai';
-import Constants from 'expo-constants';
 
 import { useReconstitutionPlanner } from '../lib/hooks/useReconstitutionPlanner';
 import { captureAndProcessImage } from '../lib/cameraUtils';
@@ -51,11 +49,6 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     reset,
   } = useReconstitutionPlanner();
 
-  const openai = new OpenAI({
-    apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
-    dangerouslyAllowBrowser: true,
-  });
-
   const handleBack = () => {
     switch (step) {
       case 'manualInput':
@@ -78,7 +71,6 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
       const result = await captureAndProcessImage({
         cameraRef,
         permission,
-        openai,
         isMobileWeb,
         webCameraStream: webCameraStreamRef.current,
         setIsProcessing,

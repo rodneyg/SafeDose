@@ -3,8 +3,6 @@ import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVol
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import OpenAI from 'openai';
-import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
@@ -304,11 +302,6 @@ export default function NewDoseScreen() {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [capturedImageUri, setCapturedImageUri] = useState<string>('');
   const [pendingScanResult, setPendingScanResult] = useState<any>(null);
-
-  const openai = new OpenAI({
-    apiKey: (Constants as any).expoConfig?.extra?.OPENAI_API_KEY || '',
-    dangerouslyAllowBrowser: true,
-  });
 
   console.log('Usage Data:', usageData);
 
@@ -749,7 +742,6 @@ export default function NewDoseScreen() {
       const result = await captureAndProcessImage({
         cameraRef,
         permission,
-        openai,
         isMobileWeb,
         webCameraStream: webCameraStreamRef.current,
         setIsProcessing,
@@ -1029,7 +1021,6 @@ export default function NewDoseScreen() {
           scanError={scanError}
           cameraRef={cameraRef}
           webCameraStream={webCameraStreamRef.current}
-          openai={openai}
           setScreenStep={handleSetScreenStep}
           setManualStep={setManualStep}
           setManualSyringe={(syringe) => setManualSyringe(syringe.volume)}

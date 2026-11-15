@@ -62,3 +62,40 @@ No external settings were changed, no production deployment was triggered, and n
 - Vercel project domains: custom domain is gone; confirm `safe-dose.vercel.app` stays the production alias. The alternative project alias is not canonical. Domain/auth settings were not changed.
 
 All application edits stayed in this dedicated worktree. Git necessarily updated its linked-worktree metadata in the repository's shared Git directory; no sibling checkout application files were changed. No push, main merge, tags, or Git configuration changes were made.
+
+
+## OpenAI key no longer ships in the web bundle
+
+The live site was constructing the OpenAI client in the browser (`dangerouslyAllowBrowser`) and Expo `app.config.js` was copying `process.env.OPENAI_API_KEY` into `extra`, which baked the key into public JavaScript.
+
+This follow-up keeps every model call on the server:
+
+- New `POST /api/analyze-scan` reads `process.env.OPENAI_API_KEY` only in the Vercel function. It never returns the key. Missing key → 503. The route reuses the shared `buildScanRequest` / `SCAN_PROMPT` / `SCAN_MODEL` from `lib/scan/request.js` so prompt and safety parsing cannot drift.
+- Client scan flow posts the image to that route (`lib/scan/completeOnServer.ts`). `readScan` / `parseScanModelOutput` are unchanged, including refusals, `plunger_visible`, and `SCAN_MIN_CONFIDENCE` 0.9.
+- `OPENAI_API_KEY` was removed from `app.config.js` extra and from `types/env.d.ts`. There is no `EXPO_PUBLIC_OPENAI_API_KEY` usage. The vision eval CLI (`evals/vision/run.ts`) still reads `process.env.OPENAI_API_KEY` locally and is not a browser path.
+- `npm run check:bundle-secrets` greps the export for OpenAI-style `sk-` tokens and `dangerouslyAllowBrowser`, and prints matching paths only.
+
+### Verification (this follow-up)
+
+| Check | Result |
+| --- | --- |
+| `npm run test:scan-api` | PASS: 2 suites, 8 tests |
+| `npm run test:vision` | PASS: 3 suites, 61 tests (includes existing refusal / plunger / confidence cases) |
+| `npm run test:dosing` | PASS: 7 suites, 290 tests; statements, branches, functions, lines all 100% |
+| `npm run test:dose-flow` | PASS: 1 suite, 11 tests |
+| `npm run typecheck:dosing` | PASS |
+| `npm run typecheck:api` | PASS |
+| `npm run typecheck:vision` | PASS |
+| `npm run build` | PASS: Expo web export to `dist` |
+| `npm run check:bundle-secrets` | PASS: 32 files in `dist`; no `sk-` secrets or `dangerouslyAllowBrowser` |
+| Canary build-time `OPENAI_API_KEY` | PASS: a non-secret canary value was set during the export and did not appear in `dist` |
+
+Vercel environment variables were not changed. `OPENAI_API_KEY` is already present for Development, Preview, and Production and must stay a server-side variable. After the leaked key is rotated in the OpenAI dashboard, that same Vercel name must be updated to the new value. There is no `EXPO_PUBLIC_OPENAI_API_KEY` (or other client-prefixed OpenAI variable) in Vercel env to remove; do not add one.
+
+Related, not changed here: `app.config.js` extra still lists Stripe secret key fields (`STRIPE_*_SECRET_KEY`). Those would also bake into the client if set at Expo export time.
+
+
+
+## Stripe secret keys removed from Expo extra
+
+`app.config.js` extra no longer includes `STRIPE_TEST_SECRET_KEY` or `STRIPE_LIVE_SECRET_KEY`. `lib/stripeConfig.js` (used by the client pricing pages) now exposes only publishable key, price ID, and mode. Server routes still read secrets from `process.env` via `lib/stripeConfig.server.js`. Vercel env was not changed; keep `STRIPE_*_SECRET_KEY` as server-side variables.

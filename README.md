@@ -76,15 +76,20 @@ npx expo run:android
 
 npx expo start --web
 
-Note: To use the AI-powered scan feature, you’ll need your own OpenAI API Key.
+Note: The AI-powered scan feature calls a server route (`/api/analyze-scan`) that reads `OPENAI_API_KEY` on the server. Do not put this key in `app.config.js` extra or prefix it with `EXPO_PUBLIC_`.
 
 ⸻
 
 🔧 Environment Setup
 
-Create a .env file in the root:
+Create a `.env` file in the root for local API routes and the vision eval CLI:
 
+```
+# Server-side only — never exposed to the browser
 OPENAI_API_KEY=your-openai-key-here
+```
+
+On Vercel, set `OPENAI_API_KEY` as a server Environment Variable for Production, Preview, and Development (not a client/`EXPO_PUBLIC_` variable).
 
 
 

@@ -39,15 +39,16 @@ module.exports = {
   },
   extra: {
     NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    // Never put OPENAI_API_KEY (or other secrets) in extra — Expo bakes extra into the client bundle.
+    // Scan analysis reads process.env.OPENAI_API_KEY only in /api/analyze-scan on the server.
     // Legacy Stripe keys for backward compatibility
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     // New Stripe configuration with feature flag support
     STRIPE_MODE: process.env.STRIPE_MODE || 'test',
     STRIPE_TEST_PUBLISHABLE_KEY: process.env.STRIPE_TEST_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY,
-    STRIPE_TEST_SECRET_KEY: process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY,
+    // Never put Stripe secret keys in extra — Expo bakes extra into the client bundle.
+    // Server routes read STRIPE_*_SECRET_KEY from process.env via lib/stripeConfig.server.js.
     STRIPE_LIVE_PUBLISHABLE_KEY: process.env.STRIPE_LIVE_PUBLISHABLE_KEY,
-    STRIPE_LIVE_SECRET_KEY: process.env.STRIPE_LIVE_SECRET_KEY,
     STRIPE_TEST_PRICE_ID: process.env.STRIPE_TEST_PRICE_ID || 'price_1REyzMPE5x6FmwJPyJVJIEXe',
     STRIPE_LIVE_PRICE_ID: process.env.STRIPE_LIVE_PRICE_ID,
     TEST_LOGIN: process.env.REACT_APP_TEST_LOGIN === 'true', // Environment flag for auto-login testing
