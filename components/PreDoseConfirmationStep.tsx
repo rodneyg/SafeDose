@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle, Info } from 'lucide-react-native';
 
 interface PreDoseConfirmationStepProps {
   substanceName: string;
+  inputSummary?: string;
   concentrationAmount: string;
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   doseValue: number | null;
@@ -17,16 +18,14 @@ interface PreDoseConfirmationStepProps {
 
 export default function PreDoseConfirmationStep({
   substanceName,
+  inputSummary,
   concentrationAmount,
   concentrationUnit,
   doseValue,
   unit,
-  calculatedVolume,
   calculatedConcentration,
   calculationError,
-  guidance,
 }: PreDoseConfirmationStepProps) {
-  const hasVolumeWarning = !calculationError && calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
   // Determine which concentration to display
@@ -87,27 +86,11 @@ export default function PreDoseConfirmationStep({
             </View>
           )}
 
-          {!hasError && calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Volume to Draw:</Text>
-              <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
-                {formatDoseNumber(calculatedVolume, 3)} mL
-                {hasVolumeWarning && ' ⚠️'}
-              </Text>
-            </View>
-          )}
+          {inputSummary?.split('\n').map((line, index) => (
+            <Text key={index} style={[styles.summaryValue, line.startsWith('Scanned') && { backgroundColor: '#DBEAFE', color: '#1E40AF' }]}>{line}</Text>
+          ))}
+
         </View>
-
-        {hasVolumeWarning && (
-          <View style={styles.warningContainer}>
-            <AlertTriangle color="#F59E0B" size={16} />
-            <Text style={styles.warningMessage}>
-              Volume exceeds 1 mL. Please verify this dose with a healthcare professional.
-            </Text>
-          </View>
-        )}
-
-        {guidance && !hasError && <Text style={styles.subtitle}>{guidance}</Text>}
 
         {hasError && (
           <View style={styles.errorContainer}>

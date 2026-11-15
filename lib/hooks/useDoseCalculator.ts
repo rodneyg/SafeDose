@@ -64,7 +64,11 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [recommendedMarking, setRecommendedMarking] = useState<string | null>(null);
   const [guidance, setGuidance] = useState<string | null>(null);
   const [needsConcentrationUnit, setNeedsConcentrationUnit] = useState(false);
-  const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [calculationError, updateCalculationError] = useState<string | null>(null);
+  const setCalculationError = useCallback((error: string | null) => {
+    if (error) logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'calculation', reason: error });
+    updateCalculationError(error);
+  }, []);
   const [formError, setFormError] = useState<string | null>(null);
   const [showVolumeErrorModal, setShowVolumeErrorModal] = useState<boolean>(false);
   const [volumeErrorValue, setVolumeErrorValue] = useState<number | null>(null);
@@ -76,6 +80,24 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const [feedbackContext, setFeedbackContext] = useState<FeedbackContextType | null>(null);
   const [selectedInjectionSite, setSelectedInjectionSite] = useState<InjectionSite | null>(null);
   const [lastActionType, setLastActionType] = useState<'manual' | 'scan' | null>(null);
+
+  // Bind approval to the exact inputs that produced the pending result.
+  const inputKey = JSON.stringify([dose, unit, medicationInputType, concentrationAmount, concentrationUnit,
+    totalAmount, totalAmountUnit, solutionVolume, manualSyringe, concentrationExact]);
+  const pendingInputs = useRef<string | null>(null);
+  const scannedFields = useRef<Record<string, string> | null>(null);
+  useEffect(() => {
+    if (!scannedFields.current) return;
+    const scanFields = { substanceName, concentrationAmount, concentrationUnit, totalAmount, totalAmountUnit: totalAmountUnit || '',
+      manualSyringe: JSON.stringify(manualSyringe) };
+    for (const [field, value] of Object.entries(scanFields)) {
+      if (field in scannedFields.current && scannedFields.current[field] !== value) {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SCANNED_VALUE_EDIT, { field });
+        scannedFields.current[field] = value;
+      }
+    }
+  }, [substanceName, concentrationAmount, concentrationUnit, totalAmount, totalAmountUnit, manualSyringe]);
+
 
   // Initialize dose logging hook
   const { logDose, logUsageData } = useDoseLogging();
@@ -130,6 +152,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   }, [unit]);
 
   const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
+    scannedFields.current = null;
+    pendingInputs.current = null;
     lastActionTimestamp.current = Date.now();
 
     setDose('');
@@ -360,6 +384,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const handleCalculateFinal = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleCalculateFinal called');
+      pendingInputs.current = inputKey;
+      setDoseValue(parseDoseInput(dose));
       setGuidance(null);
       setCalculatedVolume(null);
       setRecommendedMarking(null);
@@ -370,7 +396,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       }
       
       // Validate required inputs before calculation
-      if (!doseValue || doseValue <= 0) {
+      if (!Number.isFinite(parseDoseInput(dose)) || parseDoseInput(dose) <= 0) {
         setCalculationError('Invalid dose value. Please go back and enter a valid dose.');
         setManualStep('preDoseConfirmation');
         return;
@@ -384,7 +410,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
 
       // For concentration and totalAmount, their necessity depends on input mode
       if (unit !== 'mL') { // mL as dose unit doesn't require concentration
-        if ((concentration === null || concentration <= 0) && medicationInputType !== 'totalAmount') {
+        if ((!Number.isFinite(parseDoseInput(concentrationAmount)) || parseDoseInput(concentrationAmount) <= 0) && medicationInputType !== 'totalAmount') {
           setCalculationError('Invalid concentration. Please go back and enter a valid concentration.');
           setManualStep('preDoseConfirmation');
           return;
@@ -408,8 +434,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       const syringeObj = manualSyringe;
 
       const result = calculateDose({
-        doseValue,
-        concentration: medicationInputType === 'totalAmount' ? null : concentration,
+        doseValue: parseDoseInput(dose),
+        concentration: medicationInputType === 'totalAmount' ? null : parseDoseInput(concentrationAmount),
         concentrationExact,
         unit,
         concentrationUnit,
@@ -482,12 +508,22 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setManualStep('preDoseConfirmation');
       console.log('[useDoseCalculator] Set manualStep to preDoseConfirmation (after error)');
     }
-  }, [doseValue, concentration, concentrationExact, needsConcentrationUnit, manualSyringe, unit, totalAmount, totalAmountUnit, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
+  }, [inputKey, dose, concentrationAmount, doseValue, concentration, concentrationExact, needsConcentrationUnit, manualSyringe, unit, totalAmount, totalAmountUnit, concentrationUnit, solutionVolume, medicationInputType, substanceName, evaluationDataCapture]);
+
+  useEffect(() => {
+    if (pendingInputs.current !== null && pendingInputs.current !== inputKey) {
+      pendingInputs.current = null;
+      setCalculatedVolume(null);
+      setRecommendedMarking(null);
+      setGuidance(null);
+      if (manualStep === 'preDoseConfirmation' || manualStep === 'finalResult') handleCalculateFinal();
+    }
+  }, [inputKey, manualStep, handleCalculateFinal]);
 
   const handleNextPreDoseConfirmation = useCallback(() => {
     try {
       console.log('[useDoseCalculator] handleNextPreDoseConfirmation called');
-      if (calculationError || !recommendedMarking) return;
+      if (manualStep !== 'preDoseConfirmation' || pendingInputs.current !== inputKey || calculationError || !recommendedMarking) return;
       setManualStep('finalResult');
       console.log('[useDoseCalculator] Set manualStep to finalResult');
       lastActionTimestamp.current = Date.now();
@@ -495,7 +531,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.error('[useDoseCalculator] Error in handleNextPreDoseConfirmation:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [calculationError, recommendedMarking]);
+  }, [manualStep, inputKey, calculationError, recommendedMarking]);
 
   const handleCloseVolumeErrorModal = useCallback(() => {
     setShowVolumeErrorModal(false);
@@ -961,6 +997,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   // }, [resetFullForm]);
 
   return {
+    registerScannedFields: (fields: Record<string, string>) => { scannedFields.current = fields; },
     screenStep,
     setScreenStep: safeSetScreenStep,
     manualStep,

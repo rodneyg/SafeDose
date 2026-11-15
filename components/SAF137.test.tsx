@@ -137,3 +137,47 @@ it('between-mark guidance allows Proceed and a draw result', () => {
   expect(JSON.stringify(renderer.toJSON())).toContain(props.guidance);
   expect(JSON.stringify(renderer.toJSON())).not.toContain('Unable to calculate volume');
 });
+
+it('SAF-109 hides the draw result until confirmation', () => {
+  const h = hook();
+  act(() => { h().setDose('0.2'); h().setUnit('mL'); });
+  act(() => h().handleNextDose());
+  act(() => h().handleCalculateFinal());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+  act(() => { renderer.update(<ManualEntryScreen {...base as any} manualStep="preDoseConfirmation" />); });
+  expect(JSON.stringify(renderer.toJSON())).not.toContain('Volume to Draw');
+});
+
+it('SAF-109 confirmation is tied to the calculated inputs', () => {
+  const h = hook();
+  act(() => { h().setDose('0.2'); h().setUnit('mL'); });
+  act(() => h().handleNextDose());
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).not.toBe('finalResult');
+  act(() => h().handleCalculateFinal());
+  act(() => h().setDose('0.3'));
+  expect(h().manualStep).toBe('preDoseConfirmation');
+  expect(h().calculatedVolume).toBe(0.3);
+  expect(h().doseValue).toBe(0.3);
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('finalResult');
+});
+
+it('SAF-109 records each scanned edit and each repeated refusal without recording values', () => {
+  const { logAnalyticsEvent } = jest.requireMock('../lib/analytics');
+  logAnalyticsEvent.mockClear();
+  const h = hook();
+  act(() => {
+    h().setConcentrationAmount('10');
+    h().registerScannedFields({ concentrationAmount: '10' });
+  });
+  expect(logAnalyticsEvent).not.toHaveBeenCalled();
+  act(() => h().setConcentrationAmount('12'));
+  act(() => h().setConcentrationAmount('14'));
+  const edits = logAnalyticsEvent.mock.calls.filter((call: any[]) => call[1]?.field);
+  expect(edits).toHaveLength(2);
+  expect(edits[0][1]).toEqual({ field: 'concentrationAmount' });
+  act(() => h().handleCalculateFinal());
+  act(() => h().handleCalculateFinal());
+  expect(logAnalyticsEvent.mock.calls.filter((call: any[]) => call[1]?.stage === 'calculation')).toHaveLength(2);
+});
