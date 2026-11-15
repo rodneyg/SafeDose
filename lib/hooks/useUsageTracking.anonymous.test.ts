@@ -39,20 +39,15 @@ describe('useUsageTracking - Anonymous User Support', () => {
   });
 
   it('should have proper limit calculation for anonymous users', () => {
-    // Test the getLimitForPlan function behavior for anonymous users
-    const getLimitForPlan = (plan: string, isAnonymous: boolean) => {
-      if (isAnonymous) return 3; // Anonymous users
-      if (plan === 'plus') return 50; // Plus plan
-      if (plan === 'pro') return 500; // Pro plan
-      return 10; // Signed-in free users
-    };
+    const { getLimitForPlan, UNLIMITED_SCANS } = require('../plans');
 
     expect(getLimitForPlan('free', true)).toBe(3);
     expect(getLimitForPlan('plus', true)).toBe(3); // Anonymous users always get 3
     expect(getLimitForPlan('pro', true)).toBe(3); // Anonymous users always get 3
-    expect(getLimitForPlan('free', false)).toBe(10);
-    expect(getLimitForPlan('plus', false)).toBe(50);
-    expect(getLimitForPlan('pro', false)).toBe(500);
+    expect(getLimitForPlan('free', false)).toBe(3); // Signed-in unpaid users share the 3-scan cap
+    expect(getLimitForPlan('photo_check', false)).toBe(UNLIMITED_SCANS);
+    expect(getLimitForPlan('plus', false)).toBe(UNLIMITED_SCANS);
+    expect(getLimitForPlan('pro', false)).toBe(UNLIMITED_SCANS);
   });
 
   it('should validate logic conditions for anonymous user support', () => {

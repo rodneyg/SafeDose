@@ -20,6 +20,7 @@ function allowedOrigin(origin) {
     if (url.hostname === 'localhost') return ['http:', 'https:'].includes(url.protocol);
     return url.protocol === 'https:' && !url.port && (
       url.hostname === 'safe-dose.vercel.app' ||
+      url.hostname === 'safedose.rodneygainous.com' ||
       /^safe-dose-[a-z0-9]+-rodneygs-projects\.vercel\.app$/.test(url.hostname)
     );
   } catch {

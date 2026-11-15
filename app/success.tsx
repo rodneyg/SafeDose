@@ -6,9 +6,9 @@ import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import Constants from 'expo-constants';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
+import { getApiBaseUrl } from "../lib/apiBase";
 
 // Base URL for API
-const API_BASE_URL = "https://safe-dose.vercel.app";
 
 export default function SuccessScreen() {
   const { session_id } = useLocalSearchParams();
@@ -37,7 +37,7 @@ export default function SuccessScreen() {
 
       try {
         // Call our API to validate the payment session
-        const response = await fetch(`${API_BASE_URL}/api/validate-session`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/validate-session`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -5,6 +5,11 @@ import stripeConfig from "../../lib/stripeConfig";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
 import PriceToggle from "@/components/pricing/PriceToggle";
 import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";
+import {
+  FREE_SCAN_LIMIT,
+  PHOTO_CHECK_MONTHLY_AMOUNT,
+  PHOTO_CHECK_ANNUAL_AMOUNT,
+} from "../../lib/plans";
 
 const stripePromise = stripeConfig.publishableKey
   ? loadStripe(stripeConfig.publishableKey)
@@ -14,74 +19,30 @@ const pricingPlans: PricingPlan[] = [
   {
     name: "Free",
     price: { monthly: 0, annual: 0 },
-    description: "Manual calculations only, ideal for light or trial use",
+    description: "The calculator, reconstitution, and on-device logs stay free",
     features: [
-      { name: "3 AI scans/month", available: true },
-      { name: "10 saved doses", available: true },
-      { name: "Manual calculations", available: true },
-      { name: "Basic support", available: true },
-      { name: "Faster scans & no mid-session limits", available: false },
-      { name: "Priority scan queue", available: false },
+      { name: `${FREE_SCAN_LIMIT} AI photo scans/month`, available: true },
+      { name: "Manual calculator", available: true },
+      { name: "On-device dose logs", available: true },
+      { name: "Unlimited photo checks", available: false },
     ],
     cta: "Start Free",
     priceId: { monthly: null, annual: null },
   },
   {
-    name: "Starter",
-    price: { monthly: 4.99, annual: 44.99 },
-    description: "For occasional dosing with basic AI assistance",
+    name: "Photo Check",
+    price: { monthly: PHOTO_CHECK_MONTHLY_AMOUNT, annual: PHOTO_CHECK_ANNUAL_AMOUNT },
+    description: "Unlimited web photo checks after the free monthly cap",
     features: [
-      { name: "10 AI scans/month", available: true },
-      { name: "20 saved doses", available: true },
-      { name: "Manual calculations", available: true },
-      { name: "Basic support", available: true },
-      { name: "Priority processing", available: false },
-      { name: "Priority scan queue", available: false },
+      { name: "Unlimited AI photo scans", available: true },
+      { name: "Manual calculator", available: true },
+      { name: "On-device dose logs", available: true },
+      { name: "Web checkout, cancel anytime", available: true },
     ],
-    cta: "Upgrade to Starter",
-    priceId: { 
-      monthly: "price_1RYgx7AY2p4W374YR9UxS0vr", 
-      annual: "price_1RYgx7AY2p4W374Yy23EtyIm" 
-    },
-  },
-  {
-    name: "Basic Pro",
-    price: { monthly: 9.99, annual: 89.99 },
-    description: "For consistent logging with AI scan assistance",
-    features: [
-      { name: "20 AI scans/month", available: true },
-      { name: "Unlimited logs", available: true },
-      { name: "Manual calculations", available: true },
-      { name: "Priority support", available: true },
-      { name: "Priority processing", available: false },
-      { name: "Priority scan queue", available: false },
-    ],
-    cta: "Upgrade to Basic Pro",
+    cta: "Get Photo Check",
     badge: "popular",
-    priceId: { 
-      monthly: "price_1RYgyPAY2p4W374YNbpBpbqv", 
-      annual: "price_1RYgyPAY2p4W374YJOhwDafY" 
-    },
-  },
-  {
-    name: "Full Pro",
-    price: { monthly: 20, annual: 179.99 },
-    description: "Complete solution with unlimited AI scans and logs",
-    features: [
-      { name: "Unlimited AI scans", available: true },
-      { name: "Unlimited logs", available: true },
-      { name: "Manual calculations", available: true },
-      { name: "Priority processing", available: true },
-      { name: "Priority scan queue", available: true },
-      { name: "Premium support", available: true },
-    ],
-    cta: "Start Free Trial",
-    badge: "best-value",
-    trialDays: 7,
-    priceId: { 
-      monthly: "price_1RUHgxAY2p4W374Yb5EWEtZ0", 
-      annual: "price_1RYgzUAY2p4W374YHiBBHvuX" 
-    },
+    priceId: { monthly: null, annual: null },
+    offerKey: { monthly: "photo_check_monthly", annual: "photo_check_annual" },
   },
 ];
 
@@ -103,11 +64,12 @@ export default function PricingPage() {
         return;
       }
 
+      const offerKey = isAnnual ? plan.offerKey?.annual : plan.offerKey?.monthly;
       const priceId = isAnnual ? plan.priceId.annual : plan.priceId.monthly;
-      if (!priceId) {
+      if (!offerKey && !priceId) {
         toast({
           title: "Free Plan Selected",
-          description: "No checkout needed for Free plan.",
+          description: "No checkout needed for the free calculator.",
         });
         return;
       }
@@ -116,6 +78,7 @@ export default function PricingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          offerKey,
           priceId,
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/pricing`,
@@ -178,16 +141,20 @@ export default function PricingPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold text-center mb-8">SafeDose Pricing</h2>
+      <h2 className="text-3xl font-bold text-center mb-4">SafeDose Pricing</h2>
+      <p className="text-center text-muted-foreground mb-8">
+        The calculator stays free. Optional photo checks are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
+        after {FREE_SCAN_LIMIT} free scans, or ${PHOTO_CHECK_ANNUAL_AMOUNT}/year.
+      </p>
       <div className="mb-8">
         <PaymentProviders
-          availableProviders={["stripe", "lemonsqueezy", "revenuecat", "paddle"]}
+          availableProviders={["stripe"]}
           selectedProvider={selectedPaymentProvider}
           onSelectProvider={setSelectedPaymentProvider}
         />
       </div>
       <PriceToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 max-w-4xl mx-auto">
         {pricingPlans.map((plan, idx) => (
           <PricingCard
             key={idx}

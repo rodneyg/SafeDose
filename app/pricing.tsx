@@ -6,14 +6,18 @@ import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { CheckCircle, Shield, Zap, Clock } from "lucide-react-native";
+import { getApiBaseUrl } from "../lib/apiBase";
+import {
+  PHOTO_CHECK_MONTHLY_AMOUNT,
+  PHOTO_CHECK_ANNUAL_AMOUNT,
+  PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
+  FREE_SCAN_LIMIT,
+} from "../lib/plans";
 
 // Initialize Stripe.js with the configuration, handling missing publishable key gracefully
 const stripePromise = stripeConfig.publishableKey
   ? loadStripe(stripeConfig.publishableKey)
   : null;
-
-// Base URL for your API
-const API_BASE_URL = "https://safe-dose.vercel.app";
 
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -25,122 +29,52 @@ export default function PricingPage() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  // Updated pricing plans with new 4-tier structure and Stripe Price IDs
   const pricingPlansData = [
     {
-      id: 'starter_monthly',
-      name: "Starter",
-      price: 4.99,
+      id: 'photo_check_monthly',
+      name: "Photo Check",
+      price: PHOTO_CHECK_MONTHLY_AMOUNT,
       priceSuffix: "/month",
-      subtext: "20 saved doses, 10 AI scans",
-      priceId: 'price_1RYgx7AY2p4W374YR9UxS0vr',
-      badgeText: "Entry Level",
-      isDefault: false,
-      planType: 'starter',
-      isMonthly: true,
-    },
-    {
-      id: 'starter_yearly',
-      name: "Starter",
-      price: 44.99,
-      originalPrice: 59.88,
-      priceSuffix: "/year",
-      subtext: "Save 25%",
-      priceId: 'price_1RYgx7AY2p4W374Yy23EtyIm',
-      badgeText: "Entry Level",
-      isDefault: false,
-      savings: 25,
-      planType: 'starter',
-      isMonthly: false,
-    },
-    {
-      id: 'basic_pro_monthly',
-      name: "Basic Pro",
-      price: 9.99,
-      priceSuffix: "/month",
-      subtext: "Unlimited logs, 20 AI scans",
-      priceId: 'price_1RYgyPAY2p4W374YNbpBpbqv',
-      badgeText: "Popular",
+      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
+      offerKey: 'photo_check_monthly',
+      badgeText: "Web",
       isDefault: true,
-      planType: 'basic_pro',
+      planType: 'photo_check',
       isMonthly: true,
+      hasTrial: false,
     },
     {
-      id: 'basic_pro_yearly',
-      name: "Basic Pro",
-      price: 89.99,
-      originalPrice: 119.88,
+      id: 'photo_check_yearly',
+      name: "Photo Check",
+      price: PHOTO_CHECK_ANNUAL_AMOUNT,
+      originalPrice: 35.88,
       priceSuffix: "/year",
-      subtext: "Save 25%",
-      priceId: 'price_1RYgyPAY2p4W374YJOhwDafY',
-      badgeText: "Popular",
-      isDefault: false,
-      savings: 25,
-      planType: 'basic_pro',
-      isMonthly: false,
-    },
-    {
-      id: 'full_pro_monthly',
-      name: "Full Pro",
-      price: 20,
-      priceSuffix: "/month",
-      subtext: "7-day free trial",
-      priceId: 'price_1RUHgxAY2p4W374Yb5EWEtZ0',
+      subtext: `Save ${PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT}%`,
+      offerKey: 'photo_check_annual',
       badgeText: "Best Value",
       isDefault: false,
-      planType: 'full_pro',
-      isMonthly: true,
-      hasTrial: true,
-    },
-    {
-      id: 'full_pro_yearly',
-      name: "Full Pro",
-      price: 179.99,
-      originalPrice: 240,
-      priceSuffix: "/year",
-      subtext: "7-day free trial, Save 25%",
-      priceId: 'price_1RYgzUAY2p4W374YHiBBHvuX',
-      badgeText: "Best Value",
-      isDefault: false,
-      savings: 25,
-      planType: 'full_pro',
+      savings: PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
+      planType: 'photo_check',
       isMonthly: false,
-      hasTrial: true,
+      hasTrial: false,
     },
   ];
 
-  // Key features for compact display - updated for new pricing structure
   const getKeyFeatures = (planType) => {
-    switch (planType) {
-      case 'starter':
-        return [
-          { icon: Zap, text: "10 AI scans/month", color: "#FF6B6B" },
-          { icon: CheckCircle, text: "20 saved doses", color: "#4ECDC4" },
-          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
-          { icon: Shield, text: "Basic support", color: "#96CEB4" },
-        ];
-      case 'basic_pro':
-        return [
-          { icon: Zap, text: "20 AI scans/month", color: "#FF6B6B" },
-          { icon: CheckCircle, text: "Unlimited logs", color: "#4ECDC4" },
-          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
-          { icon: Shield, text: "Priority support", color: "#96CEB4" },
-        ];
-      case 'full_pro':
-        return [
-          { icon: Zap, text: "Unlimited AI scans", color: "#FF6B6B" },
-          { icon: CheckCircle, text: "Unlimited logs", color: "#4ECDC4" },
-          { icon: Clock, text: "Priority processing", color: "#45B7D1" },
-          { icon: Shield, text: "Premium support", color: "#96CEB4" },
-        ];
-      default:
-        return [
-          { icon: Zap, text: "3 AI scans/month", color: "#FF6B6B" },
-          { icon: CheckCircle, text: "10 saved doses", color: "#4ECDC4" },
-          { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
-          { icon: Shield, text: "Basic support", color: "#96CEB4" },
-        ];
+    if (planType === 'photo_check') {
+      return [
+        { icon: Zap, text: "Unlimited photo checks", color: "#FF6B6B" },
+        { icon: CheckCircle, text: "Calculator stays free", color: "#4ECDC4" },
+        { icon: Clock, text: `${FREE_SCAN_LIMIT} free scans/month included`, color: "#45B7D1" },
+        { icon: Shield, text: "Web checkout, cancel anytime", color: "#96CEB4" },
+      ];
     }
+    return [
+      { icon: Zap, text: `${FREE_SCAN_LIMIT} AI scans/month`, color: "#FF6B6B" },
+      { icon: CheckCircle, text: "Calculator stays free", color: "#4ECDC4" },
+      { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
+      { icon: Shield, text: "On-device logs", color: "#96CEB4" },
+    ];
   };
 
   // Dynamic headline based on user profile
@@ -232,26 +166,34 @@ export default function PricingPage() {
         return;
       }
 
+      const apiBaseUrl = getApiBaseUrl();
+      const offerKey = selectedPlan.offerKey;
       const priceId = selectedPlan.priceId;
-      console.log("Using priceId:", priceId);
+      console.log("Using offerKey/priceId:", offerKey, priceId);
 
-      // Debug: show payload
-      console.log(`Calling ${API_BASE_URL}/api/create-checkout-session with:`, {
+      if (!offerKey && !priceId) {
+        setErrorMessage("This offer is not available for checkout yet.");
+        return;
+      }
+
+      console.log(`Calling ${apiBaseUrl}/api/create-checkout-session with:`, {
+        offerKey,
         priceId,
-        successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${API_BASE_URL}/pricing`,
+        successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${apiBaseUrl}/pricing`,
         hasTrial: selectedPlan.hasTrial,
       });
 
       const res = await fetch(
-        `${API_BASE_URL}/api/create-checkout-session`,
+        `${apiBaseUrl}/api/create-checkout-session`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            offerKey,
             priceId,
-            successUrl: `${API_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${API_BASE_URL}/pricing`,
+            successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${apiBaseUrl}/pricing`,
             hasTrial: selectedPlan.hasTrial,
           }),
         }
@@ -346,7 +288,7 @@ export default function PricingPage() {
 
       {/* Personalized Headline */}
       <Text style={styles.headline}>{getPersonalizedHeadline()}</Text>
-      <Text style={styles.subheadline}>Upgrade to unlock premium features</Text>
+      <Text style={styles.subheadline}>The calculator stays free. Optional photo checks are $2.99/month after 3 free scans.</Text>
 
       {/* Key Features Grid */}
       <View style={styles.featuresContainer}>
@@ -367,35 +309,12 @@ export default function PricingPage() {
         ))}
       </View>
 
-      {/* Plan Type Selection */}
+      {/* Single Photo Check offer (monthly / yearly chosen below) */}
       <View style={styles.planTypesContainer}>
-        {['starter', 'basic_pro', 'full_pro'].map((planType) => {
-          const planData = pricingPlansData.find(p => p.planType === planType && p.isMonthly);
-          return (
-            <TouchableOpacity
-              key={planType}
-              style={[
-                styles.planTypeBox,
-                selectedPlanType === planType && styles.selectedPlanTypeBox,
-              ]}
-              onPress={() => {
-                setSelectedPlanType(planType);
-                const newPlan = pricingPlansData.find(p => p.planType === planType && p.isMonthly);
-                setSelectedPlan(newPlan);
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={[
-                styles.planTypeName,
-                selectedPlanType === planType && styles.selectedPlanTypeName
-              ]}>{planData.name}</Text>
-              <Text style={styles.planTypePrice}>${planData.price}/mo</Text>
-              {planData.hasTrial && (
-                <Text style={styles.planTypeTrialBadge}>Free Trial</Text>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+        <View style={[styles.planTypeBox, styles.selectedPlanTypeBox, { flex: 1 }]}>
+          <Text style={[styles.planTypeName, styles.selectedPlanTypeName]}>Photo Check</Text>
+          <Text style={styles.planTypePrice}>${PHOTO_CHECK_MONTHLY_AMOUNT}/mo or ${PHOTO_CHECK_ANNUAL_AMOUNT}/yr</Text>
+        </View>
       </View>
 
       {/* Monthly/Yearly Toggle */}
@@ -445,16 +364,13 @@ export default function PricingPage() {
         activeOpacity={0.9}
       >
         <Text style={styles.ctaButtonText}>
-          {isLoading ? "Processing..." : selectedPlan.hasTrial ? "Start Free Trial" : `Upgrade to ${selectedPlan.name}`}
+          {isLoading ? "Processing..." : selectedPlan.isMonthly ? `Get Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/mo` : `Get Photo Check for $${PHOTO_CHECK_ANNUAL_AMOUNT}/yr`}
         </Text>
       </TouchableOpacity>
 
       {/* Trial Info */}
       <Text style={styles.trialInfo}>
-        {selectedPlan.hasTrial 
-          ? "7-day free trial • Cancel anytime • No payment required today"
-          : `Start with ${selectedPlan.name} plan • Cancel anytime`
-        }
+        {`Web checkout • Cancel anytime • Calculator stays free`}
       </Text>
 
       {/* Error Message */}
