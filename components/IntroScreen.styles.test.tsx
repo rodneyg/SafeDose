@@ -1,3 +1,8 @@
+jest.mock('../contexts/AuthContext', () => ({ useAuth: jest.fn() }));
+jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: jest.fn() }));
+jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: jest.fn() }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: jest.fn() }));
+jest.mock('expo-router', () => ({ useRouter: jest.fn(), useFocusEffect: jest.fn() }));
 // Simple test to verify the style fix is applied correctly
 import IntroScreen from './IntroScreen';
 
@@ -44,33 +49,26 @@ describe('IntroScreen Styles Configuration', () => {
     }));
   });
 
-  it('should apply z-index fix in styles', () => {
+  it('should use the current layout without obsolete menu overlays', () => {
     // Clear previous mock calls
     mockCreate.mockClear();
     
     // Import the module after mocking
-    delete require.cache[require.resolve('./IntroScreen')];
-    require('./IntroScreen');
+    jest.isolateModules(() => { require('./IntroScreen'); });
     
     // Check if StyleSheet.create was called with our fixed styles
     expect(mockCreate).toHaveBeenCalled();
     
-    // Get the styles object that was passed to StyleSheet.create
-    const stylesCreated = mockCreate.mock.calls[0]?.[0];
-    
-    if (stylesCreated) {
-      // Verify the z-index fixes are present
-      if (stylesCreated.profileMenu) {
-        expect(stylesCreated.profileMenu.zIndex).toBe(10);
-      }
-      
-      if (stylesCreated.authMenu) {
-        expect(stylesCreated.authMenu.zIndex).toBe(10);
-      }
-      
-      if (stylesCreated.menuOverlay) {
-        expect(stylesCreated.menuOverlay.zIndex).toBe(5);
-      }
-    }
+    const stylesCreated = mockCreate.mock.calls.map(([styles]) => styles)
+      .find(styles => styles.safeArea && styles.debugOverlay);
+    expect(stylesCreated).toBeDefined();
+    expect(stylesCreated.container).toEqual({ flex: 1 });
+    expect(stylesCreated.debugOverlay).toEqual(expect.objectContaining({
+      position: 'absolute', zIndex: 1000,
+    }));
+    // Logout confirmation now uses a Modal rather than these old menu layers.
+    expect(stylesCreated).not.toHaveProperty('profileMenu');
+    expect(stylesCreated).not.toHaveProperty('authMenu');
+    expect(stylesCreated).not.toHaveProperty('menuOverlay');
   });
 });

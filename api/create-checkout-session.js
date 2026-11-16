@@ -5,37 +5,7 @@ const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 const { resolveCheckoutPriceId } = require('../lib/photoCheckStripe');
 
-// Enhanced error checking and logging
-console.log('create-checkout-session.js Version: 1.6 (deployed with process.env fix)');
-console.log('Loading create-checkout-session with config:', {
-  mode: stripeConfig.mode,
-  hasSecretKey: !!stripeConfig.secretKey,
-  secretKeyFormat: stripeConfig.secretKey ? (stripeConfig.secretKey.startsWith('sk_') ? 'valid' : 'invalid') : 'missing'
-});
-
 module.exports = async (req, res) => {
-  // Direct environment variable logging for diagnostics
-  const stripeMode = process.env.STRIPE_MODE || 'test';
-  const isLiveMode = stripeMode === 'live';
-  
-  console.log('Environment variable diagnostic:', {
-    STRIPE_MODE: stripeMode,
-    isLiveMode: isLiveMode,
-    STRIPE_LIVE_SECRET_KEY: isLiveMode ? 
-      (process.env.STRIPE_LIVE_SECRET_KEY ? `Set (value: ${process.env.STRIPE_LIVE_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
-      'Not applicable (test mode)',
-    STRIPE_TEST_SECRET_KEY: !isLiveMode ? 
-      (process.env.STRIPE_TEST_SECRET_KEY ? `Set (value: ${process.env.STRIPE_TEST_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
-      'Not applicable (live mode)'
-  });
-
-  console.log('Received request to /api/create-checkout-session:', req.body);
-  console.log('Stripe config being used:', {
-    mode: stripeConfig.mode,
-    hasSecretKey: !!stripeConfig.secretKey,
-    secretKeyPrefix: stripeConfig.secretKey ? stripeConfig.secretKey.substring(0, 7) : 'N/A'
-  });
-
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -100,7 +70,6 @@ module.exports = async (req, res) => {
     // Base session configuration
     const sessionConfig = {
       mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [{ price: resolvedPriceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
@@ -125,9 +94,6 @@ module.exports = async (req, res) => {
     console.error('Error type:', err.type);
     console.error('Error code:', err.code);
     const status = err.statusCode || 500;
-    if (status >= 500) {
-      console.error('Full error object:', err);
-    }
     res.status(status).json({ error: err.message });
   }
 };

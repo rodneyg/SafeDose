@@ -104,6 +104,7 @@ describe('Scan Again Camera Preview Integration', () => {
       workflow.events.push('scan_successful');
       workflow.events.push('image_preview_continue');
       workflow.screenStep = 'manualEntry';
+      workflow.webCameraStream = null; // Camera is released when leaving the scan screen.
       
       // 4. Complete manual entry
       workflow.events.push('manual_entry_complete');

@@ -132,7 +132,7 @@ describe('Before First Scan Feature', () => {
       
       // These would be in the component text content
       expectedMaterials.forEach(material => {
-        expect(material).toContain('vial' || 'syringe' || 'prescription');
+        expect(material.toLowerCase()).toMatch(/vial|syringe|prescription/);
       });
     });
 

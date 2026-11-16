@@ -1,4 +1,4 @@
-import { getAbsoluteMappingEntries } from "../mapping-entry";
+import { getAbsoluteMappingEntries } from "tsconfig-paths/lib/mapping-entry";
 import { join } from "path";
 
 describe("mapping-entry", () => {
