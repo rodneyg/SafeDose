@@ -29,7 +29,12 @@
     "vision:strip-exif": "node evals/vision/strip-exif.js",
     "test:vision-labeling": "jest evals/vision/__tests__/labeling-tools.test.js --runInBand",
     "check:vision-labeling": "npm run vision:validate-labels && npm run vision:check-corpus && npm run vision:check-exif && npm run test:vision-labeling",
-    "vision:check-corpus": "node evals/vision/check-corpus.js"
+    "vision:check-corpus": "node evals/vision/check-corpus.js",
+    "changelog:build": "node scripts/changelog.js build",
+    "changelog:add": "node scripts/changelog.js add",
+    "prebuild:web": "npm run changelog:build",
+    "prestart": "npm run changelog:build",
+    "predev": "npm run changelog:build"
   },
   "vercel": {
     "projectRoot": "."

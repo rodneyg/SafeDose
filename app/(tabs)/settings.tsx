@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
@@ -175,6 +176,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        <Link href="/changelog" style={{ color: '#007AFF', marginBottom: 24 }}>Changelog</Link>
         {/* Account Information */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

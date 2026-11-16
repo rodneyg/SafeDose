@@ -34,7 +34,7 @@ jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_E
 jest.mock('expo-constants', () => ({ expoConfig: { extra: {} } }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: async () => null }));
 const mockNavigate = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockNavigate, replace: mockNavigate }), useFocusEffect: () => {} }));
+jest.mock('expo-router', () => ({ Link: 'Link', useRouter: () => ({ navigate: mockNavigate, replace: mockNavigate }), useFocusEffect: () => {} }));
 jest.mock('../lib/onboardingState', () => ({ HOME_ROUTE: '/(tabs)/new-dose', routeAfterGoogleSignIn: jest.fn(async () => '/(tabs)/new-dose'), loadRemoteUserProfile: jest.fn() }));
 const mockPopup = jest.fn();
 jest.mock('firebase/auth', () => ({ signInWithPopup: (...args: unknown[]) => mockPopup(...args), GoogleAuthProvider: class { setCustomParameters() {} } }));
