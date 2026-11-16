@@ -8,12 +8,13 @@ jest.mock('firebase/auth', () => ({
   signOut: jest.fn(() => Promise.resolve()),
   signInAnonymously: jest.fn(() => Promise.resolve({ user: { uid: 'anon', isAnonymous: true } })),
   onAuthStateChanged: jest.fn(),
-  GoogleAuthProvider: jest.fn(),
+  GoogleAuthProvider: jest.fn(() => ({ setCustomParameters: jest.fn() })),
   signInWithPopup: jest.fn(() => Promise.resolve({ user: { uid: 'test', displayName: 'Test User', isAnonymous: false } })),
 }));
 
 // Mock other dependencies
 jest.mock('react-native', () => ({
+  ...jest.requireActual('../__mocks__/react-native'),
   ActivityIndicator: 'ActivityIndicator',
   Alert: { alert: jest.fn() },
   Platform: { OS: 'web' },
@@ -33,7 +34,7 @@ jest.mock('../contexts/UserProfileContext', () => ({
 jest.mock('../lib/hooks/useUsageTracking', () => ({
   useUsageTracking: () => ({ usageData: { limit: 3, scansUsed: 0, plan: 'free' } }),
 }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useFocusEffect: jest.fn() }));
 jest.mock('expo-constants', () => ({ expoConfig: { extra: {} } }));
 jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
 
@@ -144,7 +145,8 @@ describe('Login and Logout Issues', () => {
 
     // Click sign out button
     const signOutButton = getByText(/Sign Out/i);
-    fireEvent.press(signOutButton);
+    await act(async () => { fireEvent.press(signOutButton); });
+    await act(async () => { fireEvent.press(getByText('Confirm')); });
 
     // Should show "Signing Out" state
     await waitFor(() => {
@@ -193,7 +195,8 @@ describe('Login and Logout Issues', () => {
 
     // Click sign out
     const signOutButton = getByText(/Sign Out/i);
-    fireEvent.press(signOutButton);
+    await act(async () => { fireEvent.press(signOutButton); });
+    await act(async () => { fireEvent.press(getByText('Confirm')); });
 
     // Simulate multiple rapid auth state changes (the problematic scenario)
     act(() => {
@@ -220,3 +223,7 @@ describe('Login and Logout Issues', () => {
     }, { timeout: 1000 });
   });
 });
+jest.mock('../lib/hooks/useDoseLogging', () => ({
+  useDoseLogging: () => ({ getDoseLogHistory: mockGetDoseLogHistory }),
+}));
+const mockGetDoseLogHistory = jest.fn().mockResolvedValue([]);
