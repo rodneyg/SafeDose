@@ -23,7 +23,12 @@
     "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
     "test:scan-api": "jest api/__tests__/analyze-scan.test.js lib/scan/__tests__/completeOnServer.test.ts --runInBand",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.js",
-    "verify": "./verify"
+    "verify": "./verify",
+    "vision:validate-labels": "node evals/vision/validate-labels.js",
+    "vision:check-exif": "node evals/vision/check-exif.js",
+    "vision:strip-exif": "node evals/vision/strip-exif.js",
+    "test:vision-labeling": "jest evals/vision/__tests__/labeling-tools.test.js --runInBand",
+    "check:vision-labeling": "npm run vision:validate-labels && npm run vision:check-exif && npm run test:vision-labeling"
   },
   "vercel": {
     "projectRoot": "."
@@ -84,8 +89,10 @@
     "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.2",
+    "ajv": "8.11.0",
     "eslint": "^8.57.0",
     "eslint-config-expo": "~8.0.1",
+    "exiftool-vendored": "^30.5.0",
     "expo-cli": "^6.3.12",
     "fast-check": "^4.10.2",
     "jest": "^29.7.0",

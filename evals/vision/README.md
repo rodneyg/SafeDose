@@ -89,3 +89,10 @@ The `accuracy.yml` workflow runs on every PR and pushes to main. `dosing` runs s
 `SAFEDOSE_EVAL_ENFORCE=1 npm run eval:vision -- --offline` enables hard failure for a failed would-be gate. Setting thresholds `status` to `approved` also enables enforcement. Keep CI informational until SAF-104 labels are verified and SAF-106 is signed. The synthetic negative fixture intentionally fails zero-wrong-number enforcement; when enabling a real gate, separate diagnostic negatives from the approved image baseline.
 
 Later required-check setup (owner action): **Settings → Branches → rule for main → Require status checks → select `dosing` and `eval-vision`**. This PR does not change protection or repository settings.
+
+## Future image labeling (SAF-104)
+
+See [LABELING_SPEC.md](LABELING_SPEC.md) for the independent review protocol,
+200+ image coverage targets, locked holdout, privacy requirements, schema, and
+local label validation and metadata ingest commands. The SAF-104 labels are a
+separate contract from this existing harness manifest. No images are added.

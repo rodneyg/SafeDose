@@ -39,6 +39,7 @@ yarn-error.*
 
 # Test validation scripts
 validate-*.js
+!evals/vision/validate-labels.js
 
 # Jest coverage reports
 coverage/

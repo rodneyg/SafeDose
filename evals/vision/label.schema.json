@@ -1,0 +1,338 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "image_id",
+    "image_sha256",
+    "split",
+    "syringe",
+    "fill",
+    "vial",
+    "conditions",
+    "expected_behavior",
+    "reason",
+    "review"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "image_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "image_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "split": {
+      "enum": [
+        "development",
+        "holdout"
+      ]
+    },
+    "syringe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "scale",
+        "capacity_ml",
+        "brand",
+        "gradation"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "insulin",
+            "standard",
+            "other",
+            null
+          ]
+        },
+        "scale": {
+          "enum": [
+            "U-100",
+            "U-40",
+            "mL",
+            null
+          ]
+        },
+        "capacity_ml": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "brand": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "gradation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "unit"
+          ],
+          "properties": {
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            },
+            "unit": {
+              "enum": [
+                "units",
+                "mL",
+                null
+              ]
+            }
+          }
+        }
+      }
+    },
+    "fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "units",
+        "ml",
+        "plunger_visible",
+        "empty"
+      ],
+      "properties": {
+        "units": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ml": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "plunger_visible": {
+          "type": "boolean"
+        },
+        "empty": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "vial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "substance",
+        "total_amount",
+        "concentration",
+        "label_legible"
+      ],
+      "properties": {
+        "substance": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "total_amount": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "unit"
+          ],
+          "properties": {
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          }
+        },
+        "concentration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "unit"
+          ],
+          "properties": {
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          }
+        },
+        "label_legible": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lighting",
+        "angle",
+        "background",
+        "focus",
+        "occlusion"
+      ],
+      "properties": {
+        "lighting": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "bright",
+              "dim",
+              "backlit",
+              "glare"
+            ]
+          }
+        },
+        "angle": {
+          "enum": [
+            "straight",
+            "30",
+            "60"
+          ]
+        },
+        "background": {
+          "type": "string",
+          "minLength": 1
+        },
+        "focus": {
+          "enum": [
+            "sharp",
+            "blurred",
+            "partial"
+          ]
+        },
+        "occlusion": {
+          "enum": [
+            "none",
+            "partial",
+            "severe"
+          ]
+        }
+      }
+    },
+    "expected_behavior": {
+      "enum": [
+        "read",
+        "refuse"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "labelers",
+        "status",
+        "disagreements",
+        "adjudicator"
+      ],
+      "properties": {
+        "labelers": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "agreed",
+            "adjudicated"
+          ]
+        },
+        "disagreements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field",
+              "labeler_1_value",
+              "labeler_2_value",
+              "resolution"
+            ],
+            "properties": {
+              "field": {
+                "type": "string",
+                "minLength": 1
+              },
+              "labeler_1_value": {},
+              "labeler_2_value": {},
+              "resolution": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "adjudicator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SafeDose independent vision image label v1"
+}

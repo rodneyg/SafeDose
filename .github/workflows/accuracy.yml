@@ -50,6 +50,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run check:vision-labeling
       - run: npm run typecheck:vision
       - run: npm run test:vision
       - name: Offline vision eval (accuracy informational pending verification)
