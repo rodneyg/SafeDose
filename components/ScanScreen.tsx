@@ -337,6 +337,7 @@ export default function ScanScreen({
           <Text style={styles.errorText}>
             Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
           </Text>
+          {scanError && <Text accessibilityRole="alert" style={styles.errorText}>{scanError}</Text>}
           <TouchableOpacity
             style={[styles.button, isMobileWeb && styles.buttonMobile, isProcessing && styles.disabledButton]}
             onPress={handleButtonPress}

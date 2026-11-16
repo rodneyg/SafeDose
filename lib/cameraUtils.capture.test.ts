@@ -22,7 +22,7 @@ it('reports an empty native capture and resets processing without analyzing or c
   });
 
   expect(result).toBeNull();
-  expect(setScanError).toHaveBeenLastCalledWith('Error: Camera returned no picture');
+  expect(setScanError).toHaveBeenLastCalledWith('Camera returned no picture');
   expect(setIsProcessing.mock.calls).toEqual([[true], [false]]);
   expect(readScan).not.toHaveBeenCalled();
   expect(incrementScansUsed).not.toHaveBeenCalled();

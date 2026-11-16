@@ -139,3 +139,20 @@ describe('ScanScreen Autocapture', () => {
     expect(getByText('Position both syringe and vial clearly in view')).toBeTruthy();
   });
 });
+it('shows upload errors when camera permission has been denied', () => {
+  const utils = jest.requireMock('../lib/utils');
+  utils.isWeb = true;
+  try {
+    const screen = render(<ScanScreen {...({
+      permission: { status: 'denied' }, permissionStatus: 'denied', mobileWebPermissionDenied: true,
+      isProcessing: false, scanError: 'Image analysis failed. Please try again.', cameraRef: { current: null },
+      onCapture: jest.fn(), setScreenStep: jest.fn(), requestWebCameraPermission: jest.fn(),
+      setIsProcessing: jest.fn(), setScanError: jest.fn(),
+    } as any)} />);
+    expect(screen.getByRole('alert').props.children).toBe('Image analysis failed. Please try again.');
+    expect(screen.getByText('Take or Upload Photo')).toBeTruthy();
+    screen.unmount();
+  } finally {
+    utils.isWeb = false;
+  }
+});

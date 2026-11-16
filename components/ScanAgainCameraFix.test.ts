@@ -9,8 +9,9 @@ jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(k
 jest.mock('expo-camera', () => ({ CameraView: 'CameraView', useCameraPermissions: () => [null, jest.fn()] }));
 jest.mock('../lib/utils', () => ({ isWeb: true, isMobileWeb: false }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
-jest.mock('../lib/cameraUtils', () => ({}));
-jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+const mockCapture = jest.fn();
+jest.mock('../lib/cameraUtils', () => ({ captureAndProcessImage: (...args: any[]) => mockCapture(...args) }));
+jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: { uid: 'guest-test' } }) }));
 let mockFocused = true;
 let mockFocusRuns = 0;
 const mockNavigation = {};
@@ -30,7 +31,7 @@ jest.mock('expo-router', () => ({
 }));
 const mockNoop = jest.fn();
 const mockCalculator = new Proxy({
-  resetFullForm: jest.fn(),
+  resetFullForm: jest.fn(), setManualSyringe: jest.fn(), setTotalAmount: jest.fn(), setConcentrationAmount: jest.fn(), setSubstanceName: jest.fn(), setScreenStep: jest.fn(), handleCapture: jest.fn(async () => true),
   screenStep: 'intro', manualStep: 'finalResult', stateHealth: 'healthy',
   manualSyringe: { type: 'Standard', volume: '3 ml' }, logUsageData: { plan: 'free' },
   recommendedMarking: '1 mL', calculatedVolume: 1, dose: '1', unit: 'mL',
@@ -38,9 +39,9 @@ const mockCalculator = new Proxy({
 jest.mock('../lib/hooks/useDoseCalculator', () => ({ __esModule: true, default: () => mockCalculator }));
 jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' } }) }));
 jest.mock('../lib/hooks/useFeedbackStorage', () => ({ useFeedbackStorage: () => ({}) }));
-jest.mock('../lib/hooks/useSignUpPrompt', () => ({ useSignUpPrompt: () => ({}) }));
+jest.mock('../lib/hooks/useSignUpPrompt', () => ({ useSignUpPrompt: () => ({ trackInteraction: jest.fn() }) }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({}) }));
-jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({}) }));
+jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({ captureUserInteraction: jest.fn(async () => {}) }) }));
 jest.mock('./IntroScreen', () => 'IntroScreen');
 jest.mock('./BeforeFirstScanScreen', () => 'BeforeFirstScanScreen');
 jest.mock('./ScanScreen', () => 'ScanScreen');
@@ -75,6 +76,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks();
   mockGetUserMedia.mockReset();
+  mockGetUserMedia.mockRejectedValue(Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' }));
   mockCalculator.screenStep = 'intro';
   mockFocusRuns = 0;
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { addEventListener: jest.fn(), removeEventListener: jest.fn() } });
@@ -155,4 +157,46 @@ it('does not start another acquisition while camera permission is pending', asyn
   await act(async () => { resolveStream(active); });
   expect(camera().props.webCameraStream).toBe(active);
   expect(camera().props.permissionStatus).toBe('granted');
+});
+
+
+it.each(['Could not reach the scan service. Please try again.', 'We could not read the syringe size or vial strength safely.'])('keeps a failed scan visible and preserves the form: %s', async message => {
+  navigate('scan');
+  mockCapture.mockImplementationOnce(async (props: any) => {
+    props.setScanError(message);
+    return null;
+  });
+  await act(async () => { await camera().props.onCapture(); });
+  expect(camera().props.scanError).toBe(message);
+  expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+  expect(mockCalculator.setManualSyringe).not.toHaveBeenCalled();
+  expect(mockCalculator.setTotalAmount).not.toHaveBeenCalled();
+  expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+});
+
+it('provides a visible fallback if capture returns no result or error', async () => {
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(null);
+  await act(async () => { await camera().props.onCapture(); });
+  expect(camera().props.scanError).toMatch(/could not read this photo/i);
+  expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+});
+
+it('keeps unexpected capture failures visible without navigating to Manual', async () => {
+  navigate('scan');
+  mockCapture.mockRejectedValueOnce(new Error('unexpected transport failure'));
+  await act(async () => { await camera().props.onCapture(); });
+  expect(camera().props.scanError).toMatch(/could not process this photo/i);
+  expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+});
+
+it('shows a successful scan in the image preview', async () => {
+  navigate('scan');
+  const result = { syringe: {}, vial: {}, capturedImage: { uri: 'data:image/jpeg;base64,test', mimeType: 'image/jpeg' } };
+  mockCapture.mockResolvedValueOnce(result);
+  await act(async () => { await camera().props.onCapture(); });
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  expect(preview.props.visible).toBe(true);
+  expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
 });

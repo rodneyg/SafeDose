@@ -263,7 +263,7 @@ export async function captureAndProcessImage({
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
-      throw new Error(`I couldn't read the syringe size / vial strength safely. Retake or enter it manually. Keep the syringe scale and vial strength in focus, avoid glare, and include all units. ${mapped.reasons.join(' ')}`);
+      throw new Error("We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.");
     }
 
     await incrementScansUsed();
@@ -281,7 +281,7 @@ export async function captureAndProcessImage({
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
-    let message = 'An unexpected error occurred during scanning';
+    let message = 'We could not process this photo. Please try another photo or enter the details manually.';
     if (error instanceof Error) {
       if (error.message.includes('format is not recognized')) {
         message = 'Image format could not be processed';
@@ -292,7 +292,7 @@ export async function captureAndProcessImage({
       } else if (error.message.includes('cancelled')) {
         message = 'Image selection cancelled';
       } else {
-        message = `Error: ${error.message}`;
+        message = error.message;
       }
     }
     setScanError(message);
