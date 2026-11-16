@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c2-b2-s1",
+  "image_sha256": "650e779dc2921e9a66461b655078d126e806db18ab26d129a0d336f8c3a9e782",
+  "split": "holdout",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-100",
+    "capacity_ml": 1,
+    "brand": "Terumo",
+    "gradation": {
+      "value": 2,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 2,
+    "ml": 0.02,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "dim"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

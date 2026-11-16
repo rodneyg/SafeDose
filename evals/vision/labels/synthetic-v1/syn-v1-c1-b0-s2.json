@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c1-b0-s2",
+  "image_sha256": "5e10b950a4c06e479f7b623f3e68a322b710615e64018486fad07b8aad426386",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-100",
+    "capacity_ml": 0.5,
+    "brand": "BD",
+    "gradation": {
+      "value": 1,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 25,
+    "ml": 0.25,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "glare"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

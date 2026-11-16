@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c3-b0-s1",
+  "image_sha256": "53118b5e3f1bb8149bf0606009feee9a1229ff4e61dac7e2781dee8397c91d93",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-40",
+    "capacity_ml": 0.5,
+    "brand": "BD",
+    "gradation": {
+      "value": 1,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 1,
+    "ml": 0.025,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "30",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "refuse",
+  "reason": "U-40 vision conversion unsupported.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

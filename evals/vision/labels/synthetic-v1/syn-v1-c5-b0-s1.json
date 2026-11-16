@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c5-b0-s1",
+  "image_sha256": "53ceb532cc96dc27dbf43f77e9607c5d67d0a469a9627c38c6b55d5ef95c5666",
+  "split": "holdout",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 1,
+    "brand": "BD",
+    "gradation": {
+      "value": 0.01,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 0.01,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "backlit"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

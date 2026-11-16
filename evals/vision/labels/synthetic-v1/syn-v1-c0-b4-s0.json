@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c0-b4-s0",
+  "image_sha256": "33e0d216005c755bfc871196b8d4da9455b6f3ffe8f24d8c0d6de7109ef50338",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-100",
+    "capacity_ml": 0.3,
+    "brand": "EasyTouch",
+    "gradation": {
+      "value": 0.5,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 0.0,
+    "ml": 0.0,
+    "plunger_visible": true,
+    "empty": true
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

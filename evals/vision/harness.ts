@@ -4,12 +4,13 @@ import { resolve, sep } from 'node:path';
 import { calculateDose, type CalculateDoseParams, type CalculateDoseResult } from '../../lib/dosing';
 import { mapScanToDoseInputs, parseScanQuantity, type ScanResult } from '../../lib/scan';
 
-export const REPORT_HEADER = 'LABELS PENDING RODNEY VERIFICATION — scores are not an official accuracy gate.';
+export const REPORT_HEADER = 'LABELS PENDING RODNEY VERIFICATION: scores are not an official accuracy gate.';
 export type Classification = 'exact-correct' | 'refused-or-asked' | 'wrong-number-shown';
 export type Fields = Record<string, string | number | boolean | null>;
 export interface EvalLabel {
   id: string;
   file?: string;
+  split?: 'development' | 'holdout';
   sha256: string;
   group: string;
   verified_by?: string;
@@ -257,7 +258,7 @@ export function renderMarkdown(summary: EvalSummary, gate: ReturnType<typeof eva
   const pct = (v: number | null) => v === null ? 'not evaluated' : `${(v * 100).toFixed(2)}%`;
   const safe = (v: string) => v.replace(/[|\r\n]/g, ' ');
   const lines = [`# ${REPORT_HEADER}`, '', `Mode: ${context.mode}. Commit: ${context.commit}. Local label set: ${context.manifest_count}. Live baseline: **${context.mode === 'live' ? 'this run; labels pending verification' : 'not yet run'}**.`, '',
-    'Synthetic fixtures are authored test doubles, not recorded predictions from the 111 images. Missing recordings are not accuracy observations. Strict field equality is used; photo estimates and their tolerances still need Rodney review.', '',
+    'Synthetic fixtures are authored test doubles, not recorded image predictions. Missing recordings are not accuracy observations. Strict field equality is used; photo estimates and their tolerances still need Rodney review.', '',
     `Observed: ${summary.observed}/${summary.total}. Not evaluated: ${summary.not_evaluated}. Refusal rate (observed only): ${pct(summary.refusal_rate)}.`, '',
     '| Class | Count |', '| --- | ---: |', ...Object.entries(summary.classes).map(([key, value]) => `| ${key} | ${value} |`), '',
     'Unevaluated rows are placed in refused-or-asked with an explicit not-evaluated reason. They are excluded from field accuracy and refusal-rate denominators.', '',
