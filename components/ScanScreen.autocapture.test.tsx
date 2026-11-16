@@ -3,12 +3,13 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ScanScreen from './ScanScreen';
 
 // Mock the lucide-react-native icons
-jest.mock('lucide-react-native', () => ({
-  Camera: ({ color }: { color: string }) => `Camera-${color}`,
-  Flashlight: ({ color }: { color: string }) => `Flashlight-${color}`,
-  Zap: ({ color }: { color: string }) => `Zap-${color}`,
-  ZapOff: ({ color }: { color: string }) => `ZapOff-${color}`,
-}));
+jest.mock('lucide-react-native', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  const icon = (name: string) => ({ color }: { color: string }) =>
+    React.createElement(Text, null, `${name}-${color}`);
+  return { Camera: icon('Camera'), Flashlight: icon('Flashlight'), Zap: icon('Zap'), ZapOff: icon('ZapOff') };
+});
 
 // Mock expo-camera
 jest.mock('expo-camera', () => ({
@@ -58,15 +59,28 @@ describe('ScanScreen Autocapture', () => {
     toggleWebFlashlight: jest.fn(),
   };
 
-  it('should render autocapture toggle button', () => {
+  // These scenarios start with autocapture off, selected through its real toggle.
+  const renderWithAutocaptureOff = (props: typeof defaultProps) => {
+    const screen = render(<ScanScreen {...props} />);
+    fireEvent.press(screen.getByText('Zap-#000').parent);
+    return screen;
+  };
+
+  it('should enable autocapture by default', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} />);
+    expect(getByText('Zap-#000')).toBeTruthy();
+    expect(getByText('Auto-capture is ON - will capture when conditions are perfect')).toBeTruthy();
+  });
+
+  it('should render autocapture toggle button', () => {
+    const { getByText } = renderWithAutocaptureOff(defaultProps);
     
     // The autocapture toggle should be present (using ZapOff icon initially)
     expect(getByText('ZapOff-#fff')).toBeTruthy();
   });
 
   it('should toggle autocapture when autocapture button is pressed', () => {
-    const { getByText } = render(<ScanScreen {...defaultProps} />);
+    const { getByText } = renderWithAutocaptureOff(defaultProps);
     
     // Initially should show ZapOff (autocapture disabled)
     expect(getByText('ZapOff-#fff')).toBeTruthy();
@@ -80,7 +94,7 @@ describe('ScanScreen Autocapture', () => {
   });
 
   it('should show quality indicator when autocapture is enabled', async () => {
-    const { getByText } = render(<ScanScreen {...defaultProps} />);
+    const { getByText } = renderWithAutocaptureOff(defaultProps);
     
     // Enable autocapture
     const autocaptureButton = getByText('ZapOff-#fff').parent;
@@ -92,8 +106,8 @@ describe('ScanScreen Autocapture', () => {
     });
   });
 
-  it('should show countdown when quality is excellent', async () => {
-    const { getByText, queryByText } = render(<ScanScreen {...defaultProps} />);
+  it('should wait for excellent quality before showing countdown', async () => {
+    const { getByText, queryByLabelText } = renderWithAutocaptureOff(defaultProps);
     
     // Enable autocapture
     const autocaptureButton = getByText('ZapOff-#fff').parent;
@@ -104,12 +118,12 @@ describe('ScanScreen Autocapture', () => {
     // For now, we just verify the UI structure is present
     
     // The countdown functionality is tested indirectly through integration
-    expect(queryByText('Cancel')).toBeFalsy(); // Should not show until countdown starts
+    expect(queryByLabelText('Cancel auto-capture')).toBeFalsy(); // Should not show until countdown starts
   });
 
   it('should maintain existing capture functionality', () => {
     const onCapture = jest.fn();
-    const { getByText } = render(<ScanScreen {...defaultProps} onCapture={onCapture} />);
+    const { getByText } = renderWithAutocaptureOff({ ...defaultProps, onCapture });
     
     // Find and press the manual capture button
     const captureButton = getByText('Camera-#fff').parent;
@@ -120,7 +134,7 @@ describe('ScanScreen Autocapture', () => {
   });
 
   it('should show instructions text', () => {
-    const { getByText } = render(<ScanScreen {...defaultProps} />);
+    const { getByText } = renderWithAutocaptureOff(defaultProps);
     
     expect(getByText('Position both syringe and vial clearly in view')).toBeTruthy();
   });

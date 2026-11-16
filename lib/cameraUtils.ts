@@ -191,6 +191,7 @@ export async function captureAndProcessImage({
         base64: true,
         quality: 0.5,
       });
+      if (!photo) throw new Error('Camera returned no picture');
       console.log('[Capture] Picture taken successfully');
 
       base64Image = photo.base64;
