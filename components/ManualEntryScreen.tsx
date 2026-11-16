@@ -1,6 +1,6 @@
 import { getManualProgress } from '../lib/manualProgress';
 import { SyringeSelection } from '../lib/dosing';
-import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
+import { AmountUnit, formatDoseNumber, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -360,14 +360,21 @@ export default function ManualEntryScreen({
       );
       break;
     case 'preDoseConfirmation':
+      // Total-amount entry leaves concentrationAmount empty (or from an earlier path).
+      // Use the calculator's derived strength for both review summaries.
+      const reviewConcentrationAmount = medicationInputType === 'totalAmount'
+        ? (calculatedConcentration != null && calculatedConcentration > 0
+          ? formatDoseNumber(calculatedConcentration, 3)
+          : '')
+        : concentrationAmount;
       currentStepComponent = (
         <PreDoseConfirmationStep
           substanceName={substanceName}
-          inputSummary={`${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${concentrationAmount} ${concentrationUnit}
+          inputSummary={`${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${reviewConcentrationAmount} ${concentrationUnit}
 ${totalAmountHint?.includes('scan') ? 'Scanned vial amount: ' : 'Vial amount: '}${totalAmount || 'Not provided'} ${totalAmountUnit || ''}
 Solution volume: ${solutionVolume || 'Not used'} mL
 ${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyringe.type} ${manualSyringe.volume} ${manualSyringe.type === 'Insulin' ? manualSyringe.insulinScale || 'U-100' : 'mL scale'}`}
-          concentrationAmount={concentrationAmount}
+          concentrationAmount={reviewConcentrationAmount}
           concentrationUnit={concentrationUnit}
           doseValue={doseValue}
           unit={unit}
