@@ -1,0 +1,41 @@
+[
+  {
+    "id": "2026-11-16",
+    "date": "2026-11-16",
+    "title": "Easier sign-in and clearer photo scans",
+    "status": "published",
+    "prs": [
+      425,
+      428,
+      432
+    ],
+    "sections": {
+      "New": [
+        "Add SafeDose to your home screen, with offline startup after an online visit."
+      ],
+      "Improved": [
+        "Returning users can sign in from the welcome screen and go straight to the calculator.",
+        "When offline, camera entry takes you to the manual calculator with a visible notice."
+      ],
+      "Fixed": [
+        "Failed photo scans show an error and preserve your entered values.",
+        "The progress counter reflects all seven steps, and calculated strength displays correctly."
+      ]
+    }
+  },
+  {
+    "id": "2026-11-15",
+    "date": "2026-11-15",
+    "title": "Free calculator and optional Photo Check",
+    "status": "published",
+    "prs": [
+      424
+    ],
+    "sections": {
+      "Improved": [
+        "Pricing now separates the free calculator from the optional Photo Check subscription.",
+        "Free accounts have the same allowance of three photo scans per month as guests."
+      ]
+    }
+  }
+]
