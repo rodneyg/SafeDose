@@ -11,7 +11,28 @@ function seed(print=true){mkdir(WORK);const body=json(fixture());fs.writeFileSyn
 function ensureSeed(){if(!fs.existsSync(path.join(WORK,'state.json')))seed(false);}
 async function flow(name){ensureSeed();const f=fixture();
  if(name==='onboarding')return{flow:name,ok:true,result:{finalRoute:'/(tabs)/new-dose',steps:['/onboarding','/onboarding/age','/onboarding/child-safety','/onboarding/demo','/onboarding/userType'],userId:f.users.new.id}};
- if(name==='returning-user-signin'){const s=fs.readFileSync(path.join(ROOT,'app/index.tsx'),'utf8'),ok=s.includes("onboardingComplete !== 'true'")&&s.includes('else if (!userProfile)')&&s.includes("router.replace('/(tabs)/new-dose')");return{flow:name,ok,result:{finalRoute:ok?'/(tabs)/new-dose':'/onboarding',profilePresent:true,skipped:['Age','Child safety','Demo','User type'],userId:f.users.returning.id}};}
+ if(name==='returning-user-signin'){
+  // Execute the production router with in-memory boundaries, not source-text checks.
+  const filename=path.join(ROOT,'lib/onboardingState.ts');
+  const Module=require('node:module'),mod=new Module(filename,module);
+  mod.filename=filename;
+  mod.require=id=>{
+   if(id==='@react-native-async-storage/async-storage')return {default:storage,__esModule:true};
+   if(id==='firebase/firestore')return {};
+   if(id==='./firebase')return {db:{}};
+   throw Error(`Unexpected onboarding dependency: ${id}`);
+  };
+  const state={},storage={getItem:async key=>state[key]??null,setItem:async(key,value)=>{state[key]=value;}};
+  mod._compile(ts.transpileModule(fs.readFileSync(filename,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText,filename);
+  const {resolveLaunchRoute,routeAfterGoogleSignIn}=mod.exports;
+  const user={uid:f.users.returning.id,isAnonymous:false};
+  const profile={...f.users.returning.profile,userId:user.uid,isLicensedProfessional:false};
+  const options={user,storage,loadRemoteProfile:async()=>profile};
+  const launchRoute=await resolveLaunchRoute(options);
+  const finalRoute=await routeAfterGoogleSignIn({...options,fallbackRoute:'/onboarding/age'});
+  const ok=launchRoute==='/(tabs)/new-dose'&&finalRoute===launchRoute&&state.onboardingComplete==='true'&&JSON.parse(state.userProfile).userId===user.uid;
+  return{flow:name,ok,result:{finalRoute,profilePresent:Boolean(state.userProfile),skipped:['Age','Child safety','Demo','User type'],userId:user.uid}};
+ }
  if(name==='dose-calculation'){const {calculateDose}=require(path.join(ROOT,'lib/dosing/calculateDose.ts'));const input={...f.doseCase,concentrationExact:null,totalAmount:null,totalAmountUnit:null,solutionVolume:null},output=calculateDose(input);return{flow:name,ok:!output.calculationError&&output.calculatedVolume===0.2,result:{input:f.doseCase,output}};}
  if(name==='photo-scan'){const {readScan,mapScanToDoseInputs}=require(path.join(ROOT,'lib/scan/index.ts')),plans=require(path.join(ROOT,'lib/plans.js')),confidence={};for(const k of ['type','capacity_ml','scale','markings'])confidence[`syringe.${k}`]=0.99;for(const k of ['substance','totalAmount','concentration','expiration'])confidence[`vial.${k}`]=0.99;for(const k of ['units','ml','plunger_visible'])confidence[`fill.${k}`]=0.99;const scan=await readScan('fixture://scan.png',{modelOutput:JSON.stringify({...f.scan,confidence,refuse:false,refuse_reason:null})}),mapped=mapScanToDoseInputs(scan);return{flow:name,ok:mapped.status==='ready',result:{freeTier:{capacityAfterThird:plans.hasScanCapacity(3,plans.FREE_SCAN_LIMIT),capacityBeforeThird:plans.hasScanCapacity(2,plans.FREE_SCAN_LIMIT),limit:plans.FREE_SCAN_LIMIT},mapped,model:require(path.join(ROOT,'lib/scan/request.js')).SCAN_MODEL}};}
  if(name==='photo-check-paywall'){const {resolveCheckoutPriceId}=require(path.join(ROOT,'lib/photoCheckStripe.js')),plans=require(path.join(ROOT,'lib/plans.js')),stripe={prices:{list:async({lookup_keys})=>({data:[{id:`fixture_${lookup_keys[0]}`}]})}},offers=[];for(const offerKey of ['photo_check_monthly','photo_check_annual']){const r=await resolveCheckoutPriceId(stripe,{offerKey},{mode:'test',env:{}}),o=plans.PHOTO_CHECK_OFFERS[offerKey];offers.push({amount:o.unitAmount,interval:o.interval,lookupKey:o.lookupKey,priceId:r.priceId});}return{flow:name,ok:offers[0].amount===299&&offers[1].amount===2699,result:{calculator:'free',checkout:'mocked',offers}};}
