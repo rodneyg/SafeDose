@@ -1,0 +1,24 @@
+{
+  "flow": "dose-calculation",
+  "ok": true,
+  "result": {
+    "input": {
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "doseValue": 0.5,
+      "manualSyringe": {
+        "insulinScale": "U-100",
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "unit": "mg"
+    },
+    "output": {
+      "calculatedConcentration": null,
+      "calculatedVolume": 0.2,
+      "calculationError": null,
+      "guidance": null,
+      "recommendedMarking": "20"
+    }
+  }
+}
