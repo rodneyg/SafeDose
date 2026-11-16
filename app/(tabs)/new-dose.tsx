@@ -296,6 +296,7 @@ export default function NewDoseScreen() {
   const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
+  const webCameraRequestInFlight = useRef(false);
 
   // Image preview modal state
   const [showImagePreview, setShowImagePreview] = useState(false);
@@ -338,7 +339,8 @@ export default function NewDoseScreen() {
 
   // Define requestWebCameraPermission before the useEffect that uses it
   const requestWebCameraPermission = useCallback(async () => {
-    if (!isWeb) return;
+    if (!isWeb || webCameraRequestInFlight.current) return;
+    webCameraRequestInFlight.current = true;
     
     try {
       // Release any existing stream first to avoid multiple active streams
@@ -363,11 +365,10 @@ export default function NewDoseScreen() {
       
       // Permission granted - we got a stream
       console.log("[WebCamera] Camera permission granted");
+      // Publish the stream before state updates can trigger the camera effect.
+      webCameraStreamRef.current = stream;
       setPermissionStatus('granted');
       setMobileWebPermissionDenied(false);
-      
-      // Store the stream for later use instead of stopping it
-      webCameraStreamRef.current = stream;
       
       // Check if torch is supported
       const videoTrack = stream.getVideoTracks()[0];
@@ -391,6 +392,8 @@ export default function NewDoseScreen() {
       
       setPermissionStatus('denied');
       setMobileWebPermissionDenied(true);
+    } finally {
+      webCameraRequestInFlight.current = false;
     }
   }, [isWeb]);
 
@@ -412,11 +415,8 @@ export default function NewDoseScreen() {
       setPermissionStatus('undetermined');
       setMobileWebPermissionDenied(false);
       
-      // Small delay to ensure cleanup completes before re-requesting
-      setTimeout(() => {
-        console.log('[NewDoseScreen] 📸 Requesting fresh camera permission after reset');
-        requestWebCameraPermission();
-      }, 200);
+      // The camera effect below owns the fresh request. A second delayed
+      // request would stop the new preview stream and acquire another one.
     }
     
     setLastScreenStep(screenStep);
