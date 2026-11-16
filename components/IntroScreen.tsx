@@ -1,3 +1,4 @@
+import SignInError from './SignInError';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,6 +54,9 @@ export default function IntroScreen({
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
   const router = useRouter();
+
+  const [signInFailed, setSignInFailed] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -149,6 +153,9 @@ export default function IntroScreen({
      HANDLERS
   ========================================================================= */
   const handleSignInPress = useCallback(() => {
+    if (isSigningIn) return;
+    setSignInFailed(false);
+    setIsSigningIn(true);
     console.log('[IntroScreen] ========== SIGN-IN INITIATED ==========');
     console.log('[IntroScreen] Current user before sign-in:', user ? {
       uid: user.uid,
@@ -170,14 +177,15 @@ export default function IntroScreen({
         console.log('[IntroScreen] AuthContext should update automatically via onAuthStateChanged');
       })
       .catch((error) => {
+        setSignInFailed(true);
         console.error('[IntroScreen] ❌ Google Sign-In error:', error.code, error.message);
         console.error('[IntroScreen] Sign-in error details:', {
           code: error.code,
           message: error.message,
           name: error.name
         });
-      });
-  }, [auth, user]);
+      }).finally(() => setIsSigningIn(false));
+  }, [auth, user, isSigningIn]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');
@@ -511,13 +519,15 @@ export default function IntroScreen({
                   <TouchableOpacity
                     style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]}
                     onPress={handleSignInPress}
+                    disabled={isSigningIn}
                     accessibilityRole="button"
                     accessibilityLabel="Sign in with Google"
                     accessibilityHint="Sign in to get more scans"
                   >
                     <LogIn color="#10b981" size={16} />
-                    <Text style={styles.signInButtonText}>Sign In with Google</Text>
+                    <Text style={styles.signInButtonText}>{isSigningIn ? 'Signing In...' : 'Sign In with Google'}</Text>
                   </TouchableOpacity>
+                  {signInFailed && <SignInError onRetry={handleSignInPress} disabled={isSigningIn} />}
                 </View>
               )}
 

@@ -16,7 +16,7 @@ export default function ChildSafety() {
       age
     });
     
-    router.push('/onboarding/demo');
+    router.navigate('/onboarding/demo');
   }, [age, router]);
 
   const handleSeekHelp = useCallback(async () => {

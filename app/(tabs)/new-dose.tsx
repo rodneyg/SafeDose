@@ -1,3 +1,4 @@
+import { hasScanCapacity } from '../../lib/plans';
 import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
 import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -738,6 +739,12 @@ export default function NewDoseScreen() {
       return;
     }
     
+    // A missing guest session is not an exhausted scan allowance.
+    if (!user?.uid) {
+      setScanError('Could not start the scan. Please try again in a moment.');
+      return;
+    }
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -857,7 +864,7 @@ export default function NewDoseScreen() {
     console.log('handleTryAIScan: Called from teaser');
     
     // Check if user has remaining scans
-    const canProceed = await doseCalculator.handleCapture();
+    const canProceed = hasScanCapacity(usageData.scansUsed, usageData.limit);
     if (!canProceed) {
       console.log('handleTryAIScan: Showing LimitModal');
       logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
@@ -870,7 +877,7 @@ export default function NewDoseScreen() {
     
     // Transition to scan screen
     setScreenStep('scan');
-  }, [doseCalculator, setScreenStep]);
+  }, [usageData.scansUsed, usageData.limit, setScreenStep]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;

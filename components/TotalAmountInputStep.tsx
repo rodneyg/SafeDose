@@ -24,7 +24,7 @@ export default function TotalAmountInputStep({
 }: Props) {
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
-      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Enter Total Amount</Text>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Total Amount</Text>
       <Text style={styles.label}>Total Amount in Vial ({unit || 'select unit'}):</Text>
       <View style={{ flexDirection: 'row', gap: 16 }}>
         {(['mg', 'mcg', 'units'] as const).map(option => (

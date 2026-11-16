@@ -9,7 +9,7 @@ type Props = {
 export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Step 2c: Solution Volume</Text>
+      <Text style={styles.title}>Solution Volume</Text>
       <Text style={styles.labelBold}>How much liquid (ml) does the medication contain?</Text>
       <Text style={styles.label}>(e.g., total solution volume in the vial)</Text>
       <View style={styles.presetContainer}>

@@ -13,7 +13,7 @@ export default function Welcome() {
   const [imageError, setImageError] = useState(false);
 
   const handleStart = useCallback(() => {
-    router.push('/onboarding/age');
+    router.navigate('/onboarding/age');
   }, [router]);
 
   const handleImageError = useCallback(() => {

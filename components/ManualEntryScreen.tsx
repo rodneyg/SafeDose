@@ -1,3 +1,4 @@
+import { getManualProgress } from '../lib/manualProgress';
 import { SyringeSelection } from '../lib/dosing';
 import { AmountUnit, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
@@ -277,7 +278,6 @@ export default function ManualEntryScreen({
   ]);
 
   let currentStepComponent;
-  let progress = 0;
 
   // Add logging for step changes
   console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`);
@@ -294,7 +294,6 @@ export default function ManualEntryScreen({
           validateInput={validateDoseInput}
         />
       );
-      progress = 1 / 3;
       break;
     case 'medicationSource':
       currentStepComponent = (
@@ -309,7 +308,6 @@ export default function ManualEntryScreen({
           unit={unit}
         />
       );
-      progress = (2 / 3) - 0.15;
       break;
     case 'concentrationInput':
       currentStepComponent = (
@@ -324,7 +322,6 @@ export default function ManualEntryScreen({
           formError={formError}
         />
       );
-      progress = 3 / 5;
       break;
     case 'totalAmountInput':
       currentStepComponent = (
@@ -338,7 +335,6 @@ export default function ManualEntryScreen({
           dose={dose}
         />
       );
-      progress = 3 / 5;
       break;
     case 'reconstitution':
       currentStepComponent = (
@@ -347,7 +343,6 @@ export default function ManualEntryScreen({
           setSolutionVolume={setSolutionVolume}
         />
       );
-      progress = 2 / 3;
       break;
     case 'syringe':
       currentStepComponent = (
@@ -363,7 +358,6 @@ export default function ManualEntryScreen({
           medicationInputType={medicationInputType}
         />
       );
-      progress = 3 / 3;
       break;
     case 'preDoseConfirmation':
       currentStepComponent = (
@@ -383,7 +377,6 @@ ${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyri
           calculationError={calculationError}
         />
       );
-      progress = 0.95; // Almost complete but not fully
       break;
     case 'finalResult':
       // Calculate the concentration value to pass to FinalResultDisplay
@@ -413,7 +406,6 @@ ${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyri
           onTryAIScan={onTryAIScan}
         />
       );
-      progress = 1;
       break;
     default:
       currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
@@ -432,7 +424,7 @@ ${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyri
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="always"
       >
-        <CustomProgressBar progress={progress} />
+        <CustomProgressBar {...getManualProgress(manualStep, medicationInputType)} />
         <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
           {currentStepComponent}
           {formError && <Text style={styles.errorText}>{formError}</Text>}

@@ -1,3 +1,4 @@
+import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
@@ -136,7 +137,11 @@ export default function SettingsScreen() {
     );
   };
 
+  const [signInFailed, setSignInFailed] = useState(false);
+
   const handleSignIn = useCallback(() => {
+    if (isSigningIn) return;
+    setSignInFailed(false);
     console.log('[SettingsScreen] ========== SIGN-IN INITIATED ==========');
     console.log('[SettingsScreen] Current user before sign-in:', user ? {
       uid: user.uid,
@@ -181,12 +186,12 @@ export default function SettingsScreen() {
           method: 'google', 
           error: error.message 
         });
-        Alert.alert('Sign In Error', 'Could not sign in with Google. Please try again.');
+        setSignInFailed(true);
       })
       .finally(() => {
         setIsSigningIn(false);
       });
-  }, [auth, user]);
+  }, [auth, user, isSigningIn]);
 
   const getPlanDisplayName = (plan: string) => formatPlanDisplayName(plan);
 
@@ -335,6 +340,7 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
           )}
+          {(!user || user.isAnonymous) && signInFailed && <SignInError onRetry={handleSignIn} disabled={isSigningIn} />}
         </View>
       </View>
     </ScrollView>
