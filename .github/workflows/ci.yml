@@ -39,6 +39,8 @@ jobs:
       - run: npm run build:web
       - name: Reject secrets in web export and resolved Expo extra
         run: npm run check:bundle-secrets
+      - name: Onboarding intent guest regression tests
+        run: npx jest lib/hooks/useOnboardingIntentStorage.test.ts --runInBand
       - run: npm run test:scan-api
       - run: npx jest scripts/__tests__/check-bundle-secrets.test.js --runInBand
       - run: npm run typecheck:dosing

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { collection } from 'firebase/firestore';
 import { addDocWithEnv } from '@/lib/firestoreWithEnv';
-import { db } from '@/lib/firebase';
+import { getAuthInstance, getDbInstance } from '@/lib/firebase';
 import { UserProfileAnswers } from '@/types/userProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -52,6 +52,22 @@ const generateDeviceId = (): string => {
   return 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 
+async function saveIntentFallback(intentData: OnboardingIntentData): Promise<void> {
+  const storageKey = 'onboarding_intent_fallback';
+  const existingFallbacks = await AsyncStorage.getItem(storageKey);
+  const fallbackList: OnboardingIntentData[] = existingFallbacks ? JSON.parse(existingFallbacks) : [];
+
+  fallbackList.push(intentData);
+
+  // Keep only the last 5 fallback submissions
+  if (fallbackList.length > 5) {
+    fallbackList.splice(0, fallbackList.length - 5);
+  }
+
+  await AsyncStorage.setItem(storageKey, JSON.stringify(fallbackList));
+  console.log('[OnboardingIntent] ✅ Intent data saved to local fallback storage');
+}
+
 export function useOnboardingIntentStorage() {
   // Submit onboarding intent data to Firestore
   const submitOnboardingIntent = useCallback(async (answers: UserProfileAnswers): Promise<void> => {
@@ -76,8 +92,16 @@ export function useOnboardingIntentStorage() {
 
       console.log('[OnboardingIntent] Submitting intent data:', intentData);
 
-      // Save to Firestore (no authentication required)
-      const onboardingIntentCollection = collection(db, 'onboarding_intent_submissions');
+      // Guests keep their answers locally without initializing Firestore or attempting
+      // an unauthenticated analytics write. Anonymous Firebase users are guests too.
+      const user = getAuthInstance().currentUser;
+      if (!user || user.isAnonymous) {
+        await saveIntentFallback(intentData);
+        return;
+      }
+
+      // Pass the real SDK instance: the legacy db proxy fails SDK type checks.
+      const onboardingIntentCollection = collection(getDbInstance(), 'onboarding_intent_submissions');
       const docRef = await addDocWithEnv(onboardingIntentCollection, intentData);
       
       console.log('[OnboardingIntent] ✅ Intent data saved to Firestore with ID:', docRef.id);
@@ -123,19 +147,7 @@ export function useOnboardingIntentStorage() {
           device_id: generateDeviceId(),
         };
 
-        const storageKey = 'onboarding_intent_fallback';
-        const existingFallbacks = await AsyncStorage.getItem(storageKey);
-        const fallbackList: OnboardingIntentData[] = existingFallbacks ? JSON.parse(existingFallbacks) : [];
-        
-        fallbackList.push(fallbackData);
-        
-        // Keep only the last 5 fallback submissions
-        if (fallbackList.length > 5) {
-          fallbackList.splice(0, fallbackList.length - 5);
-        }
-        
-        await AsyncStorage.setItem(storageKey, JSON.stringify(fallbackList));
-        console.log('[OnboardingIntent] ✅ Intent data saved to local fallback storage');
+        await saveIntentFallback(fallbackData);
       } catch (fallbackError) {
         console.error('[OnboardingIntent] ❌ Failed to save intent data to fallback storage:', fallbackError);
         // At this point, we've exhausted all options, but don't throw to avoid breaking onboarding
