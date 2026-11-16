@@ -79,3 +79,24 @@ it('returns a successful photo scan for preview and counts it once', async () =>
   expect(options.setScanError).toHaveBeenLastCalledWith(null);
   expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
 });
+
+it.each([
+  'ERR_VISION_FAILED: internal provider details',
+  'File size ERR_INTERNAL: private server details',
+  'No file selected ERR_INTERNAL',
+  'Request cancelled ERR_INTERNAL',
+])('sanitizes untrusted server error text: %s', async (error) => {
+  (fetch as jest.Mock).mockResolvedValue({ ok: false, json: async () => ({ error }) });
+  expect(await captureAndProcessImage(options)).toBeNull();
+  expect(options.setScanError).toHaveBeenLastCalledWith('We could not process this photo. Please try another photo or enter the details manually.');
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(options.incrementScansUsed).not.toHaveBeenCalled();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('reports the authored size limit message without uploading an oversized photo', async () => {
+  mockFile.size = 6 * 1024 * 1024;
+  expect(await captureAndProcessImage(options)).toBeNull();
+  expect(options.setScanError).toHaveBeenLastCalledWith('Selected image exceeds the 5 MB limit. Please choose a smaller image.');
+  expect(fetch).not.toHaveBeenCalled();
+});

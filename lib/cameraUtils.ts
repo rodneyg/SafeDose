@@ -6,6 +6,28 @@ import * as FileSystem from 'expo-file-system';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
 import { CameraView } from 'expo-camera';
 
+const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
+const UNREADABLE_PHOTO_MESSAGE = 'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.';
+
+// Only exact, authored messages may cross the capture/upload boundary into the UI.
+const PHOTO_ERROR_MESSAGES = new Map<string, string>([
+  ['No file selected or user cancelled', 'No image selected'],
+  ['File selection cancelled after timeout', 'Image selection cancelled'],
+  ['Selected image exceeds the 5 MB limit. Please choose a smaller image.', 'Selected image exceeds the 5 MB limit. Please choose a smaller image.'],
+  ['Camera not ready', 'Camera not ready'],
+  ['Camera permission required', 'Camera permission required'],
+  ['Camera returned no picture', 'Camera returned no picture'],
+  ['Failed to capture image data', 'Failed to capture image data'],
+  ['Unrecognized image format', 'Image format could not be processed'],
+  ['Failed to read image data', 'Failed to read image data'],
+  ['Failed to read image', 'Failed to read image'],
+  ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
+  ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
+  ['Invalid response from image analysis', 'Invalid response from image analysis'],
+  ['API request timed out after 45 seconds', 'Image analysis took too long. Please try again.'],
+  [UNREADABLE_PHOTO_MESSAGE, UNREADABLE_PHOTO_MESSAGE],
+]);
+
 interface CameraRef {
   takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
 }
@@ -106,7 +128,7 @@ export async function captureAndProcessImage({
               if (document.body.contains(input)) {
                 document.body.removeChild(input);
               }
-              reject(new Error(`File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds 5 MB limit`));
+              reject(new Error('Selected image exceeds the 5 MB limit. Please choose a smaller image.'));
               return;
             }
             resolve({ file });
@@ -263,7 +285,7 @@ export async function captureAndProcessImage({
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
-      throw new Error("We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.");
+      throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
 
     await incrementScansUsed();
@@ -281,20 +303,9 @@ export async function captureAndProcessImage({
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
-    let message = 'We could not process this photo. Please try another photo or enter the details manually.';
-    if (error instanceof Error) {
-      if (error.message.includes('format is not recognized')) {
-        message = 'Image format could not be processed';
-      } else if (error.message.includes('No file selected')) {
-        message = 'No image selected';
-      } else if (error.message.includes('File size')) {
-        message = error.message;
-      } else if (error.message.includes('cancelled')) {
-        message = 'Image selection cancelled';
-      } else {
-        message = error.message;
-      }
-    }
+    const message = error instanceof Error
+      ? PHOTO_ERROR_MESSAGES.get(error.message) ?? PHOTO_ERROR_FALLBACK
+      : PHOTO_ERROR_FALLBACK;
     setScanError(message);
     return null;
   } finally {
