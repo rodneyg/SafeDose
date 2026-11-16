@@ -7,6 +7,7 @@
     "prs": [
       425,
       428,
+      430,
       432
     ],
     "sections": {
@@ -19,7 +20,10 @@
       ],
       "Fixed": [
         "Failed photo scans show an error and preserve your entered values.",
-        "The progress counter reflects all seven steps, and calculated strength displays correctly."
+        "The progress counter reflects all seven steps, and calculated strength displays correctly.",
+        "Birth dates and ages entered during setup no longer appear in page URLs.",
+        "Dose results and popups no longer stay visible when you switch to Reference or Log.",
+        "Save no longer gets stuck after a canceled or failed sign-in, so you can try again."
       ]
     }
   },
