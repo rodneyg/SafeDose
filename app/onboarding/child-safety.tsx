@@ -171,6 +171,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
+  subtitleMobile: {
+    fontSize: 14,
+  },
   subtitle: {
     fontSize: 17,
     color: '#6B7280',

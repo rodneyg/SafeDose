@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard, Platform } from 'react-native';
 import { isMobileWeb } from '../lib/utils';
 
 type Props = {
@@ -57,9 +57,7 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
         blurOnSubmit={true}
         onSubmitEditing={() => {
           // Dismiss keyboard on submit
-          if (typeof window !== 'undefined' && window.Keyboard) {
-            window.Keyboard.dismiss();
-          }
+          Keyboard.dismiss();
         }}
       />
       <Text style={styles.label}>Unit:</Text>
@@ -129,7 +127,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     margin: 0,
-    outlineStyle: 'none'
+    ...Platform.select({ web: { outlineStyle: 'none' as const } })
   },
   inputMobile: {
     paddingVertical: 8, // Reduced vertical padding for small screens

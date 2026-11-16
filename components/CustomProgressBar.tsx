@@ -8,7 +8,7 @@ type Props = {
 
 export default function CustomProgressBar({ currentStep, totalSteps }: Props) {
   const progress = currentStep / totalSteps;
-  const progressWidth = `${progress * 100}%`;
+  const progressWidth: `${number}%` = `${progress * 100}%`;
 
   return (
     <View style={styles.container}>
