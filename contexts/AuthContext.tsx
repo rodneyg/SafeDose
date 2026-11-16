@@ -104,9 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AuthContext] ❌ Error signing out:', error);
       console.error('[AuthContext] Error details:', {
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'No error code',
-        name: error?.name || 'Unknown error type'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code',
+        name: error instanceof Error ? error.name : 'Unknown error type'
       });
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
@@ -200,8 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .catch((error) => {
               console.error('[AuthContext] ❌ Error signing in anonymously:', error);
               console.error('[AuthContext] Anonymous sign-in error details:', {
-                message: error?.message || 'Unknown error',
-                code: error?.code || 'No error code'
+                message: error instanceof Error ? error.message : 'Unknown error',
+                code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
               });
               isSigningInAnonymouslyRef.current = false;
             });
@@ -226,8 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   .catch((error) => {
                     console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
                     console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
-                      message: error?.message || 'Unknown error',
-                      code: error?.code || 'No error code'
+                      message: error instanceof Error ? error.message : 'Unknown error',
+                      code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
                     });
                     isSigningInAnonymouslyRef.current = false;
                     // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck

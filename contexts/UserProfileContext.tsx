@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { setDocWithEnv } from '@/lib/firestoreWithEnv';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -243,7 +243,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
             
             const storedProfile = await AsyncStorage.getItem(USER_PROFILE_STORAGE_KEY);
             if (storedProfile) {
-              profileData = JSON.parse(storedProfile);
+              profileData = JSON.parse(storedProfile) as UserProfile;
               dataSource = 'local_storage_fallback';
               console.log('[UserProfile] ✅ Profile loaded from local storage (fallback):', profileData);
               
@@ -330,7 +330,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
           
           const storedProfile = await AsyncStorage.getItem(USER_PROFILE_STORAGE_KEY);
           if (storedProfile) {
-            profileData = JSON.parse(storedProfile);
+            profileData = JSON.parse(storedProfile) as UserProfile;
             dataSource = 'local_storage_no_user';
             console.log('[UserProfile] ✅ Profile loaded from local storage (no user):', profileData);
           }
