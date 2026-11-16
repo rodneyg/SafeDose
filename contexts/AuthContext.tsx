@@ -10,6 +10,7 @@ interface AuthContextType {
   auth: Auth;
   logout: () => Promise<void>;
   isSigningOut: boolean;
+  hasSignedOut?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [hasSignedOut, setHasSignedOut] = useState(false);
   const isSigningOutRef = useRef(false);
   const isSigningInAnonymouslyRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[AuthContext] Calling Firebase signOut...');
       await signOut(auth);
+      // Guest auth state alone never means a logout occurred.
+      setHasSignedOut(true);
       console.log('[AuthContext] Firebase signOut completed successfully');
       
       console.log('[AuthContext] Clearing user state...');
@@ -171,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isAnonymous: firebaseUser.isAnonymous
         });
         setUser(firebaseUser);
+        if (!firebaseUser.isAnonymous) setHasSignedOut(false);
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
         isSigningOutRef.current = false;
@@ -269,7 +274,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, auth, logout, isSigningOut }}>
+    <AuthContext.Provider value={{ user, auth, logout, isSigningOut, hasSignedOut }}>
       {children}
     </AuthContext.Provider>
   );
