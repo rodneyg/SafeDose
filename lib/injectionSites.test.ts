@@ -6,7 +6,7 @@ import {
   getLastUsedDate,
   formatInjectionSiteForDisplay 
 } from './injectionSites';
-import { InjectionSite, DoseLog } from '../../types/doseLog';
+import { InjectionSite, DoseLog } from '../types/doseLog';
 
 describe('Injection Sites', () => {
   const createMockLog = (

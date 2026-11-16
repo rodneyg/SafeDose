@@ -27,7 +27,7 @@ let mockUser: any = null;
 const mockLogDose = jest.fn(async () => ({ success: true }));
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser, auth: {} }) }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: mockLogDose, isLogging: false }) }));
-jest.mock('firebase/auth', () => ({ signInWithPopup: jest.fn(), GoogleAuthProvider: class { setCustomParameters() {} } }));
+jest.mock('firebase/auth', () => ({ signInWithPopup: jest.fn(), signInWithRedirect: jest.fn().mockResolvedValue(undefined), GoogleAuthProvider: class { setCustomParameters() {} } }));
 let renderer: ReactTestRenderer;
 const resultProps: React.ComponentProps<typeof FinalResultDisplay> = {
   calculationError: null, recommendedMarking: '10', doseValue: 1, unit: 'mg', substanceName: 'Test',

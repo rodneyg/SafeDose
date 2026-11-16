@@ -1,5 +1,5 @@
 import SignInError from './SignInError';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,7 +21,8 @@ import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithGoogle } from '../lib/googleAuth';
+import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
 
@@ -149,10 +150,21 @@ export default function IntroScreen({
     }, [checkLastDoseAvailability])
   );
 
+  // After a Google redirect, remount home so the signed-in state is visible.
+  const previousAnonymousRef = useRef(user?.isAnonymous ?? true);
+  useEffect(() => {
+    const wasAnonymous = previousAnonymousRef.current;
+    const isSignedIn = Boolean(user && !user.isAnonymous);
+    previousAnonymousRef.current = user?.isAnonymous ?? !user;
+    if (wasAnonymous && isSignedIn) {
+      router.replace(HOME_ROUTE as any);
+    }
+  }, [router, user, user?.isAnonymous, user?.uid]);
+
   /* =========================================================================
      HANDLERS
   ========================================================================= */
-  const handleSignInPress = useCallback(() => {
+  const handleSignInPress = useCallback(async () => {
     if (isSigningIn) return;
     setSignInFailed(false);
     setIsSigningIn(true);
@@ -162,30 +174,30 @@ export default function IntroScreen({
       isAnonymous: user.isAnonymous,
       displayName: user.displayName
     } : 'No user');
-    
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
 
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log('[IntroScreen] ✅ Google Sign-In successful:', {
-          uid: result.user.uid,
-          displayName: result.user.displayName,
-          email: result.user.email,
-          isAnonymous: result.user.isAnonymous
-        });
-        console.log('[IntroScreen] AuthContext should update automatically via onAuthStateChanged');
-      })
-      .catch((error) => {
-        setSignInFailed(true);
-        console.error('[IntroScreen] ❌ Google Sign-In error:', error.code, error.message);
-        console.error('[IntroScreen] Sign-in error details:', {
-          code: error.code,
-          message: error.message,
-          name: error.name
-        });
-      }).finally(() => setIsSigningIn(false));
-  }, [auth, user, isSigningIn]);
+    try {
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return;
+      console.log('[IntroScreen] ✅ Google Sign-In successful:', {
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        isAnonymous: result.user.isAnonymous
+      });
+      const route = await routeAfterGoogleSignIn({
+        user: result.user,
+        loadRemoteProfile: loadRemoteUserProfile,
+        fallbackRoute: HOME_ROUTE,
+      });
+      // Replace even if already on home so the signed-in UI remounts after a redirect.
+      router.replace(route as any);
+    } catch (error: any) {
+      console.error('[IntroScreen] ❌ Google Sign-In error:', error.code, error.message);
+      setSignInFailed(true);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [auth, router, user, isSigningIn]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');

@@ -34,7 +34,8 @@ jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_E
 jest.mock('expo-constants', () => ({ expoConfig: { extra: {} } }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: async () => null }));
 const mockNavigate = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockNavigate }), useFocusEffect: () => {} }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockNavigate, replace: mockNavigate }), useFocusEffect: () => {} }));
+jest.mock('../lib/onboardingState', () => ({ HOME_ROUTE: '/(tabs)/new-dose', routeAfterGoogleSignIn: jest.fn(async () => '/(tabs)/new-dose'), loadRemoteUserProfile: jest.fn() }));
 const mockPopup = jest.fn();
 jest.mock('firebase/auth', () => ({ signInWithPopup: (...args: unknown[]) => mockPopup(...args), GoogleAuthProvider: class { setCustomParameters() {} } }));
 
@@ -46,11 +47,10 @@ it.each([false, true])('year options are in an isolated modal at mobile=%s and s
   let tree: ReactTestRenderer;
   act(() => { tree = create(<DatePickerSelect label="Year" value="" onValueChange={onValueChange} items={[{ label: '1990', value: '1990' }]} />); });
   act(() => tree!.root.findByProps({ accessibilityLabel: 'Year' }).props.onPress());
-  const modal = tree!.root.findByType('Modal' as any);
-  expect(modal.props.visible).toBe(true);
-  act(() => modal.findByProps({ accessibilityLabel: '1990' }).props.onPress());
+  expect(tree!.root.findAllByProps({ accessibilityLabel: '1990' })).toHaveLength(1);
+  act(() => tree!.root.findByProps({ accessibilityLabel: '1990' }).props.onPress());
   expect(onValueChange).toHaveBeenCalledWith('1990');
-  expect(tree!.root.findByType('Modal' as any).props.visible).toBe(false);
+  expect(tree!.root.findAllByProps({ accessibilityLabel: '1990' })).toHaveLength(0);
   act(() => tree!.unmount());
 });
 

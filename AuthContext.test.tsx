@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { AuthProvider } from './contexts/AuthContext';
 import { signOut, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { logAnalyticsEvent } from '@/lib/analytics';
@@ -13,7 +13,7 @@ jest.mock('react-native', () => ({
 jest.mock('firebase/auth', () => ({
   signOut: jest.fn(),
   signInAnonymously: jest.fn(),
-  onAuthStateChanged: jest.fn(),
+  getRedirectResult: jest.fn().mockResolvedValue(null), onAuthStateChanged: jest.fn(),
 }));
 
 // Mock analytics
@@ -29,9 +29,10 @@ jest.mock('@/lib/analytics', () => ({
 }));
 
 // Mock Firebase config
-jest.mock('@/lib/firebase', () => ({
-  auth: {},
-}));
+jest.mock('@/lib/firebase', () => {
+  const auth = {};
+  return { auth, getAuthInstance: () => auth };
+});
 
 const mockSignOut = signOut as jest.MockedFunction<typeof signOut>;
 const mockSignInAnonymously = signInAnonymously as jest.MockedFunction<typeof signInAnonymously>;
@@ -41,15 +42,9 @@ const mockLogAnalyticsEvent = logAnalyticsEvent as jest.MockedFunction<typeof lo
 describe('AuthContext Sign Out Functionality', () => {
   let authStateCallback: (user: any) => void;
   let unsubscribeFn: jest.Mock;
-  let renderer: TestRenderer.ReactTestRenderer | undefined;
+  let renderer: ReactTestRenderer;
 
-  const mountProvider = () => {
-    act(() => {
-      renderer = TestRenderer.create(React.createElement(AuthProvider, { children: null }));
-    });
-  };
-
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     
@@ -63,27 +58,21 @@ describe('AuthContext Sign Out Functionality', () => {
     
     mockSignOut.mockResolvedValue();
     mockSignInAnonymously.mockResolvedValue({} as any);
+    await act(async () => { renderer = create(<AuthProvider><></></AuthProvider>); });
   });
 
   afterEach(() => {
-    if (renderer) {
-      act(() => renderer?.unmount());
-      renderer = undefined;
-    }
+    act(() => renderer.unmount());
     jest.useRealTimers();
   });
 
   it('should setup auth state listener correctly', () => {
-    // Mount the provider so its subscription effect runs
-    mountProvider();
     
     expect(mockOnAuthStateChanged).toHaveBeenCalledTimes(1);
     expect(typeof authStateCallback).toBe('function');
   });
 
   it('should call signInAnonymously when user is null and not signing out', () => {
-    // Mount the provider so its subscription effect runs
-    mountProvider();
     
     // Simulate no user and not signing out
     act(() => authStateCallback(null));
@@ -92,8 +81,6 @@ describe('AuthContext Sign Out Functionality', () => {
   });
 
   it('should prevent duplicate anonymous sign-in attempts', () => {
-    // Mount the provider so its subscription effect runs
-    mountProvider();
     
     // Simulate rapid multiple auth state changes with null user
     act(() => authStateCallback(null));

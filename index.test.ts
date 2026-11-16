@@ -1,10 +1,10 @@
 import { build } from 'esbuild'
-import { writeFiles } from 'test-support'
+import { writeFiles } from './tests/helpers/writeFiles'
 import fs from 'fs'
-import NodeModulesPolyfillsPlugin from '.'
-import NodeGlobalsPolyfillsPlugin from '@esbuild-plugins/node-globals-polyfill'
+import { NodeModulesPolyfillPlugin as NodeModulesPolyfillsPlugin } from '@esbuild-plugins/node-modules-polyfill'
+import { NodeGlobalsPolyfillPlugin as NodeGlobalsPolyfillsPlugin } from '@esbuild-plugins/node-globals-polyfill'
 
-require('debug').enable(require('../package.json').name)
+// Retained dependency regression tests use the installed polyfill plugins.
 
 test('works', async () => {
     const {
@@ -25,7 +25,7 @@ test('works', async () => {
     })
     eval(res.outputFiles[0].text)
     // console.log(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test('works with SafeBuffer and other package consumers', async () => {
@@ -54,7 +54,7 @@ test('works with SafeBuffer and other package consumers', async () => {
     //         .join('\n'),
     // )
     eval(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test('events works', async () => {
@@ -82,7 +82,7 @@ test('events works', async () => {
     })
     // console.log(res.outputFiles[0].text)
     eval(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test('require can use default export', async () => {
@@ -107,7 +107,7 @@ test('require can use default export', async () => {
     })
     // console.log(res.outputFiles[0].text)
     eval(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test.skip('crypto', async () => {
@@ -128,7 +128,7 @@ test.skip('crypto', async () => {
     })
     eval(res.outputFiles[0].text)
     // console.log(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 test.skip('fs', async () => {
     const {
@@ -148,7 +148,7 @@ test.skip('fs', async () => {
     })
     eval(res.outputFiles[0].text)
     // console.log(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test('does not include global keyword', async () => {
@@ -170,9 +170,9 @@ test('does not include global keyword', async () => {
     })
     const text = res.outputFiles[0].text
     eval(text)
-    expect(text).not.toContain(/\bglobal\b/)
+    expect(text).not.toMatch(/\bglobal\b/)
     // console.log(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })
 
 test('works with globals polyfills', async () => {
@@ -196,5 +196,5 @@ test('works with globals polyfills', async () => {
     eval(text)
     console.log(text)
     // console.log(res.outputFiles[0].text)
-    unlink()
+    await unlink()
 })

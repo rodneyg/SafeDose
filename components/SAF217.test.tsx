@@ -9,7 +9,7 @@ jest.mock('react-native', () => ({ ...jest.requireActual('../__mocks__/react-nat
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 jest.mock('react-native-reanimated', () => ({ __esModule: true, default: { View: 'AnimatedView' }, FadeIn: { duration: () => ({}) } }));
-jest.mock('../lib/firebase', () => ({ auth: {} }));
+jest.mock('../lib/firebase', () => { const auth = {}; return { auth, getAuthInstance: () => auth }; });
 jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: '', profile: null, isLoading: false }) }));
 jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { scansUsed: 0, limit: 3, plan: 'free' } }) }));
@@ -19,8 +19,8 @@ jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), setAnalytic
 jest.mock('expo-constants', () => ({ expoConfig: { extra: {} } }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: async () => null, removeItem: async () => {} }));
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useFocusEffect: () => {} }));
-jest.mock('firebase/auth', () => ({ onAuthStateChanged: jest.fn(), signOut: jest.fn(), signInAnonymously: jest.fn(async () => ({})) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }), useFocusEffect: () => {} }));
+jest.mock('firebase/auth', () => ({ getRedirectResult: jest.fn().mockResolvedValue(null), onAuthStateChanged: jest.fn(), signOut: jest.fn(), signInAnonymously: jest.fn(async () => ({})) }));
 let authState: ReturnType<typeof useAuth>;
 let listener: (user: any) => void;
 let tree: ReactTestRenderer;

@@ -79,7 +79,7 @@ beforeEach(() => {
   mockGetUserMedia.mockRejectedValue(Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' }));
   mockCalculator.screenStep = 'intro';
   mockFocusRuns = 0;
-  Object.defineProperty(globalThis, 'window', { configurable: true, value: { addEventListener: jest.fn(), removeEventListener: jest.fn() } });
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { navigator: { onLine: true }, addEventListener: jest.fn(), removeEventListener: jest.fn() } });
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { mediaDevices: { getUserMedia: mockGetUserMedia } } });
   act(() => { renderer = create(React.createElement(NewDoseScreen)); });
 });

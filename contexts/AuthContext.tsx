@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '@/lib/firebase'; // Initialized auth instance
+import { getAuthInstance } from '@/lib/firebase';
+import { completeGoogleRedirect } from '@/lib/googleAuth';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
 interface AuthContextType {
@@ -16,6 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = getAuthInstance();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -75,8 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Clearing cached data...');
       try {
         // Clear any cached user data from local storage (web)
+        // Keep onboardingComplete and userProfile so this device does not restart
+        // onboarding after logout. Usage counters can reset with the session.
         if (typeof window !== 'undefined' && window.localStorage) {
-          const keysToRemove = ['userProfile', 'usage', 'preferences'];
+          const keysToRemove = ['usage', 'preferences'];
           keysToRemove.forEach(key => {
             localStorage.removeItem(key);
             console.log(`[AuthContext] Cleared localStorage key: ${key}`);
@@ -84,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Clear any cached user data from AsyncStorage (React Native)
-        const asyncKeysToRemove = ['userProfile', 'usage', 'preferences', 'onboardingComplete'];
+        const asyncKeysToRemove = ['usage', 'preferences'];
         await Promise.all(
           asyncKeysToRemove.map(async (key) => {
             try {
@@ -132,8 +136,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSigningOut]);
 
   useEffect(() => {
-    // Subscribe to auth state changes on the single `auth` instance
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    let cancelled = false;
+    let unsubscribe: undefined | (() => void);
+
+    const startAuth = async () => {
+      // Finish any Google redirect before creating an anonymous session, otherwise
+      // a post-sign-in reload can overwrite the signed-in user and leave home stale.
+      try {
+        const redirect = await completeGoogleRedirect(auth);
+        if (cancelled) return;
+        if (redirect?.user) {
+          console.log('[AuthContext] Restored Google redirect result', {
+            uid: redirect.user.uid,
+            isAnonymous: redirect.user.isAnonymous,
+          });
+          setUser(redirect.user);
+          setIsSigningOut(false);
+          isSigningOutRef.current = false;
+          isSigningInAnonymouslyRef.current = false;
+        }
+      } catch (error) {
+        console.warn('[AuthContext] Failed to complete Google redirect', error);
+      }
+      if (cancelled) return;
+
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[AuthContext] ========== AUTH STATE CHANGED ==========');
       console.log('[AuthContext] New user state:', firebaseUser ? {
         uid: firebaseUser.uid,
@@ -254,10 +281,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Setting loading to false');
       setLoading(false);
       console.log('[AuthContext] ========== AUTH STATE CHANGE COMPLETE ==========');
-    });
+      });
+    };
+
+    startAuth();
 
     return () => {
-      unsubscribe();
+      cancelled = true;
+      unsubscribe?.();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;

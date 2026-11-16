@@ -33,3 +33,5 @@ jest.mock('expo-router', () => {
     useFocusEffect: (effect) => React.useEffect(effect, [effect]),
   };
 });
+
+jest.mock('expo-network', () => ({ getNetworkStateAsync: jest.fn().mockResolvedValue({ isConnected: true, isInternetReachable: true }) }));
