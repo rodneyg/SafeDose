@@ -1,14 +1,20 @@
+const originalGlobals = new Map(['window', 'document', 'navigator'].map(key =>
+  [key, Object.getOwnPropertyDescriptor(global, key)]));
+
+
 // Mock global variables to simulate different environments
 const mockWindow = (userAgent: string = '', platformOS: string = 'web') => {
   // Mock window and navigator
   Object.defineProperty(global, 'window', {
     value: typeof window !== 'undefined' ? window : {},
     writable: true,
+    configurable: true,
   });
   
   Object.defineProperty(global, 'document', {
     value: typeof document !== 'undefined' ? document : {},
     writable: true,
+    configurable: true,
   });
   
   Object.defineProperty(global, 'navigator', {
@@ -16,6 +22,7 @@ const mockWindow = (userAgent: string = '', platformOS: string = 'web') => {
       userAgent,
     },
     writable: true,
+    configurable: true,
   });
 
   // Mock Platform.OS
@@ -33,6 +40,10 @@ describe('Platform Detection Utils', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    for (const [key, descriptor] of originalGlobals) {
+      if (descriptor) Object.defineProperty(global, key, descriptor);
+      else delete (global as any)[key];
+    }
   });
 
   describe('isWeb', () => {
