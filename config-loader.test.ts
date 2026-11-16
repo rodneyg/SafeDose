@@ -3,7 +3,7 @@ import {
   loadConfig,
   ConfigLoaderFailResult,
   ConfigLoaderSuccessResult,
-} from "../config-loader";
+} from "tsconfig-paths/lib/config-loader";
 import { join } from "path";
 
 describe("config-loader", (): void => {
@@ -76,7 +76,7 @@ describe("config-loader", (): void => {
     // https://github.com/dividab/tsconfig-paths/issues/31
     // do not pass this test case just because of a directory walk looking
     // for tsconfig.json
-    const configFile = join(__dirname, "tsconfig-named.json");
+    const configFile = join(__dirname, "tests/fixtures/tsconfig-paths/tsconfig-named.json");
     const result = loadConfig(configFile);
 
     const successResult = result as ConfigLoaderSuccessResult;

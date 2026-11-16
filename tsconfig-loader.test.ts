@@ -2,7 +2,7 @@ import {
   loadTsconfig,
   tsConfigLoader,
   walkForTsConfig,
-} from "../tsconfig-loader";
+} from "tsconfig-paths/lib/tsconfig-loader";
 import { join } from "path";
 
 describe("tsconfig-loader", () => {
