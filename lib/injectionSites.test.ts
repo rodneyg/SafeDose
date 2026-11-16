@@ -5,7 +5,7 @@ import {
   wasSiteUsedRecently, 
   getLastUsedDate,
   formatInjectionSiteForDisplay 
-} from '../injectionSites';
+} from './injectionSites';
 import { InjectionSite, DoseLog } from '../../types/doseLog';
 
 describe('Injection Sites', () => {

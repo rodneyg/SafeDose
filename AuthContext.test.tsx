@@ -1,3 +1,6 @@
+import React from 'react';
+import TestRenderer, { act } from 'react-test-renderer';
+import { AuthProvider } from './contexts/AuthContext';
 import { signOut, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { logAnalyticsEvent } from '@/lib/analytics';
 
@@ -38,6 +41,13 @@ const mockLogAnalyticsEvent = logAnalyticsEvent as jest.MockedFunction<typeof lo
 describe('AuthContext Sign Out Functionality', () => {
   let authStateCallback: (user: any) => void;
   let unsubscribeFn: jest.Mock;
+  let renderer: TestRenderer.ReactTestRenderer | undefined;
+
+  const mountProvider = () => {
+    act(() => {
+      renderer = TestRenderer.create(React.createElement(AuthProvider, { children: null }));
+    });
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,35 +66,39 @@ describe('AuthContext Sign Out Functionality', () => {
   });
 
   afterEach(() => {
+    if (renderer) {
+      act(() => renderer?.unmount());
+      renderer = undefined;
+    }
     jest.useRealTimers();
   });
 
   it('should setup auth state listener correctly', () => {
-    // Import here to ensure mocks are set up
-    require('./AuthContext');
+    // Mount the provider so its subscription effect runs
+    mountProvider();
     
     expect(mockOnAuthStateChanged).toHaveBeenCalledTimes(1);
     expect(typeof authStateCallback).toBe('function');
   });
 
   it('should call signInAnonymously when user is null and not signing out', () => {
-    // Import here to ensure mocks are set up
-    require('./AuthContext');
+    // Mount the provider so its subscription effect runs
+    mountProvider();
     
     // Simulate no user and not signing out
-    authStateCallback(null);
+    act(() => authStateCallback(null));
     
     expect(mockSignInAnonymously).toHaveBeenCalledTimes(1);
   });
 
   it('should prevent duplicate anonymous sign-in attempts', () => {
-    // Import here to ensure mocks are set up
-    require('./AuthContext');
+    // Mount the provider so its subscription effect runs
+    mountProvider();
     
     // Simulate rapid multiple auth state changes with null user
-    authStateCallback(null);
-    authStateCallback(null);
-    authStateCallback(null);
+    act(() => authStateCallback(null));
+    act(() => authStateCallback(null));
+    act(() => authStateCallback(null));
     
     // Should only call signInAnonymously once despite multiple null user callbacks
     expect(mockSignInAnonymously).toHaveBeenCalledTimes(1);

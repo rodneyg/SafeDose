@@ -1,6 +1,7 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node', // Keep as node since doseUtils is logic-based
+  preset: 'jest-expo',
+  testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
@@ -11,8 +12,6 @@ module.exports = {
     }],
   },
   moduleNameMapper: {
-    // Mock react-native to prevent errors when lib/utils.tsx (imported by doseUtils) tries to import Platform
-    '^react-native$': '<rootDir>/__mocks__/react-native.js',
     // Handle path aliases used in the project
     '^@/(.*)$': '<rootDir>/$1',
   },
@@ -23,5 +22,4 @@ module.exports = {
   coverageThreshold: {
     './lib/dosing/': { branches: 100, lines: 100, functions: 100, statements: 100 },
   },
-  // transformIgnorePatterns might not be needed if react-native is properly mocked
 };

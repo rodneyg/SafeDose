@@ -1,3 +1,6 @@
+jest.mock('../lib/hooks/useDoseLogging', () => ({
+  useDoseLogging: () => ({ getDoseLogHistory: jest.fn().mockResolvedValue([]) }),
+}));
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import IntroScreen from './IntroScreen';
@@ -99,10 +102,10 @@ describe('IntroScreen Sign Out Functionality', () => {
     );
 
     // For authenticated user, should show welcome message with display name
-    expect(queryByText(/Welcome back, Test User/)).toBeTruthy();
+    expect(queryByText(/Hello, Test!/)).toBeTruthy();
 
     // Should not show sign in prompt for authenticated users
-    expect(queryByText(/Sign in to save calculations/)).toBeFalsy();
+    expect(queryByText(/Sign in to get more scans/)).toBeFalsy();
   });
 
   it('should handle signing out state correctly with fallback protection', () => {
@@ -136,7 +139,7 @@ describe('IntroScreen Sign Out Functionality', () => {
 
     // Should show signing out message
     expect(queryByText(/Signing Out/)).toBeTruthy();
-    expect(queryByText(/signed in anonymously shortly/)).toBeTruthy();
+    expect(queryByText(/sign you in anonymously shortly/)).toBeTruthy();
     
     // With our fix, this state should not persist indefinitely
     // The fallback timeout should prevent users from being stuck

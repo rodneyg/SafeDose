@@ -1,4 +1,4 @@
-import { isWeb, isMobileWeb, isMobileDevice } from './utils';
+
 
 // Mock global variables to simulate different environments
 const mockWindow = (userAgent: string = '', platformOS: string = 'web') => {
@@ -40,6 +40,7 @@ describe('Platform Detection Utils', () => {
   describe('isWeb', () => {
     it('should be true when window and document are defined', () => {
       mockWindow();
+      const { isWeb } = require('./utils');
       expect(isWeb).toBe(true);
     });
   });

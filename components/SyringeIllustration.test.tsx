@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import SyringeIllustration from '../SyringeIllustration';
+import SyringeIllustration from './SyringeIllustration';
 
 // Mock syringe options for testing
 const mockSyringeOptions = {
