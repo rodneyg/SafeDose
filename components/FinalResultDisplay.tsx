@@ -1,3 +1,4 @@
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
 import { formatDoseNumber } from '../lib/dosing';
 import { Exact } from '../lib/dosing/exact';
 import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
@@ -233,7 +234,7 @@ export default function FinalResultDisplay({
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
-          <Text style={styles.errorText}>{calculationError}</Text>
+          <Text style={styles.errorText}>{calculationErrorMessage(calculationError)}</Text>
           <Text style={styles.errorHelpText}>
             {calculationError.includes('exceeds total amount') && 
               'Try reducing the dose amount or selecting a medication with a higher total amount.'}
@@ -273,7 +274,7 @@ export default function FinalResultDisplay({
             Draw to {new Exact(recommendedMarking).fixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
           </Text>
           <Text style={styles.instructionNote}>
-            Exact scale value: {recommendedMarking}. Display above rounds to 2 decimals, with halfway values rounded away from zero. No rounding to syringe gradations is applied.
+            Display above rounds to 2 decimals, with halfway values rounded away from zero. No rounding to syringe gradations is applied.
           </Text>
           <Text style={styles.instructionNote}>
             ({manualSyringe.type === 'Insulin' ? `Units mark on ${manualSyringe.insulinScale || 'U-100'} Insulin Syringe` : 'ml mark on Standard Syringe'})

@@ -370,10 +370,14 @@ export default function ManualEntryScreen({
       currentStepComponent = (
         <PreDoseConfirmationStep
           substanceName={substanceName}
-          inputSummary={`${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${reviewConcentrationAmount} ${concentrationUnit}
-${totalAmountHint?.includes('scan') ? 'Scanned vial amount: ' : 'Vial amount: '}${totalAmount || 'Not provided'} ${totalAmountUnit || ''}
-Solution volume: ${solutionVolume || 'Not used'} mL
-${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyringe.type} ${manualSyringe.volume} ${manualSyringe.type === 'Insulin' ? manualSyringe.insulinScale || 'U-100' : 'mL scale'}`}
+          inputSummary={[
+            `${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${reviewConcentrationAmount} ${concentrationUnit}`,
+            `${totalAmountHint?.includes('scan') ? 'Scanned vial amount: ' : 'Vial amount: '}${totalAmount || 'Not provided'} ${totalAmountUnit || ''}`,
+            medicationInputType === 'totalAmount' && unit !== 'mL' && solutionVolume
+              ? `Solution volume: ${solutionVolume} mL`
+              : null,
+            `${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyringe.type} ${String(manualSyringe.volume).replace(/ml/i, 'mL')} syringe (${manualSyringe.type === 'Insulin' ? manualSyringe.insulinScale || 'U-100' : 'mL scale'})`,
+          ].filter(Boolean).join('\n')}
           concentrationAmount={reviewConcentrationAmount}
           concentrationUnit={concentrationUnit}
           doseValue={doseValue}
