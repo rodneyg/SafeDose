@@ -39,6 +39,12 @@ describe('googleAuth', () => {
     expect(mockSignInWithRedirect).toHaveBeenCalled();
   });
 
+  it.each(['auth/popup-closed-by-user', 'auth/cancelled-popup-request'])('does not restart sign-in after cancellation: %s', async code => {
+    mockSignInWithPopup.mockRejectedValue({ code });
+    await expect(signInWithGoogle(auth)).rejects.toMatchObject({ code });
+    expect(mockSignInWithRedirect).not.toHaveBeenCalled();
+  });
+
   it('does not swallow a real sign-in failure', async () => {
     mockSignInWithPopup.mockRejectedValue({ code: 'auth/unauthorized-domain' });
     await expect(signInWithGoogle(auth)).rejects.toMatchObject({ code: 'auth/unauthorized-domain' });

@@ -515,9 +515,7 @@ export default function IntroScreen({
               {(user?.isAnonymous || !user) && (
                 <View style={styles.authSection}>
                   <Text style={styles.authPromptText}>
-                    {!user
-                      ? 'Signed out successfully. Sign in to get more scans'
-                      : 'Sign in to get more scans'}
+                    Sign in to get more scans
                   </Text>
 
                   <TouchableOpacity

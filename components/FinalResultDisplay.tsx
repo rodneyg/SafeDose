@@ -1,7 +1,7 @@
 import { formatDoseNumber } from '../lib/dosing';
 import { Exact } from '../lib/dosing/exact';
 import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
 import { signInWithGoogle } from '../lib/googleAuth';
@@ -57,6 +57,8 @@ export default function FinalResultDisplay({
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const saveInFlight = useRef(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
   
   // Effect to handle automatic saving after successful authentication
@@ -111,6 +113,8 @@ export default function FinalResultDisplay({
       return true;
     } catch (error) {
       console.error('Google Sign-In error:', error);
+      if ((error as { code?: string }).code === 'auth/popup-closed-by-user' ||
+          (error as { code?: string }).code === 'auth/cancelled-popup-request') return false;
       Alert.alert(
         'Sign-in Failed', 
         'There was an error signing in with Google. Please try again.'
@@ -121,23 +125,24 @@ export default function FinalResultDisplay({
 
   // Handler for saving dose
   const handleSaveDose = useCallback(async () => {
-    if (isSaving || isLogging || calculationError || !recommendedMarking) return;
+    if (saveInFlight.current || pendingSave || isSaving || isLogging || calculationError || !recommendedMarking) return;
+    saveInFlight.current = true;
     
     setIsSaving(true);
     
     try {
       // Check if user is authenticated
       if (!user || user.isAnonymous) {
-        // Set pending save flag and trigger Google sign-in
-        setPendingSave(true);
+        // Start sign-in without queuing a save until the popup succeeds
+        setIsSigningIn(true);
         const signInSuccessful = await handleSignIn();
         if (!signInSuccessful) {
           setPendingSave(false);
           setIsSaving(false);
           return;
         }
-        // Note: The useEffect will handle the actual saving once auth completes
-        // Keep isSaving true to show loading state
+        // Queue only after popup success, then wait for AuthContext to update.
+        setPendingSave(true);
         return;
       }
 
@@ -165,10 +170,12 @@ export default function FinalResultDisplay({
       console.error('Error saving dose:', error);
       Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
     } finally {
+      saveInFlight.current = false;
+      setIsSigningIn(false);
       setIsSaving(false);
     }
   }, [
-    isSaving, isLogging, user, handleSignIn, logDose,
+    pendingSave, isSaving, isLogging, user, handleSignIn, logDose,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);
@@ -402,13 +409,11 @@ export default function FinalResultDisplay({
             isMobileWeb && styles.actionButtonMobile
           ]} 
           onPress={handleSaveDose}
-          disabled={isSaving || isLogging || !!calculationError || !recommendedMarking}
+          disabled={isSaving || isSigningIn || pendingSave || isLogging || !!calculationError || !recommendedMarking}
         >
           <Save color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>
-            {isSaving 
-              ? (pendingSave ? 'Signing in...' : 'Saving...') 
-              : 'Save'
+            {isSigningIn || pendingSave ? 'Signing in...' : isSaving || isLogging ? 'Saving...' : 'Save'
             }
           </Text>
         </TouchableOpacity>
