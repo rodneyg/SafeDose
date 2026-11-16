@@ -1,5 +1,5 @@
-import { createMatchPathAsync } from "../match-path-async";
-import * as Tests from "./data/match-path-data";
+import { createMatchPathAsync } from "tsconfig-paths/lib/match-path-async";
+import * as Tests from "./tests/fixtures/tsconfig-paths/match-path-data";
 
 describe("match-path-async", () => {
   Tests.tests.forEach((t) =>

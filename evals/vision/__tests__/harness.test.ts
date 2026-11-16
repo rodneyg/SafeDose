@@ -81,9 +81,9 @@ describe('vision eval full pipeline and gate', () => {
     expect(gate.violations.some(v => v.includes('capacity_ml'))).toBe(true);
     expect(evaluateThresholds(summarize([]), thresholds)).toMatchObject({ would_pass: false, unassessed: ['syringe.type', 'syringe.capacity_ml'] });
   });
-  it('the proposed gate passes exact reads without suggesting owner approval', () => {
+  it('the approved gate passes exact reads and stays informational until labels are verified', () => {
     const summary = summarize([score(fixtures[0])]);
-    expect(evaluateThresholds(summary, thresholds)).toMatchObject({ would_pass: true, status: 'pending-rodney' });
+    expect(evaluateThresholds(summary, thresholds)).toMatchObject({ would_pass: true, status: 'approved-pending-labels' });
     const markdown = renderMarkdown(summary, evaluateThresholds(summary, thresholds), { mode: 'offline', commit: 'test', enforced: false, manifest_count: 111 });
     expect(markdown).toContain(REPORT_HEADER);
     expect(markdown).toContain('informational');

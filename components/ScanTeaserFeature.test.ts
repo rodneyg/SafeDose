@@ -18,7 +18,7 @@ describe('Smart Upgrade Teaser UX', () => {
         lastActionType === 'manual' && 
         !calculationError && 
         !!recommendedMarking && 
-        usageData && 
+        !!usageData &&
         usageData.scansUsed < usageData.limit && 
         !!onTryAIScan
       );

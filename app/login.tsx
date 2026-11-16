@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithGoogle } from '../lib/googleAuth';
+import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 export default function LoginScreen() {
@@ -10,32 +11,30 @@ export default function LoginScreen() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleSignIn = () => {
-    const provider = new GoogleAuthProvider();
-    
+  const handleGoogleSignIn = async () => {
     logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
-    
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log('Google Sign-In successful', result.user);
-        if (user?.isAnonymous) {
-          // The anonymous account will be automatically linked to the signed-in account
-          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
-          console.log('Linked anonymous account with Google');
-        } else {
-          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
-          console.log('Signed in with Google');
-        }
-        router.replace('/(tabs)/new-dose');
-      })
-      .catch((error) => {
-        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
-          method: 'google', 
-          error: error.message 
-        });
-        setError(error.message || 'Failed to sign in with Google');
-        console.error('Google sign-in error:', error);
+    try {
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return;
+      if (user?.isAnonymous) {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
+      } else {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
+      }
+      const route = await routeAfterGoogleSignIn({
+        user: result.user,
+        loadRemoteProfile: loadRemoteUserProfile,
+        fallbackRoute: HOME_ROUTE,
       });
+      router.replace(route as any);
+    } catch (error: any) {
+      logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, {
+        method: 'google',
+        error: error.message,
+      });
+      setError(error.message || 'Failed to sign in with Google');
+      console.error('Google sign-in error:', error);
+    }
   };
 
   return (
