@@ -74,32 +74,32 @@ describe('ScanScreen Autocapture', () => {
 
   it('should render autocapture toggle button', () => {
     const { getByText } = renderWithAutocaptureOff(defaultProps);
-    
+
     // The autocapture toggle should be present (using ZapOff icon initially)
     expect(getByText('ZapOff-#fff')).toBeTruthy();
   });
 
   it('should toggle autocapture when autocapture button is pressed', () => {
     const { getByText } = renderWithAutocaptureOff(defaultProps);
-    
+
     // Initially should show ZapOff (autocapture disabled)
     expect(getByText('ZapOff-#fff')).toBeTruthy();
-    
+
     // Find and press the autocapture toggle button
     const autocaptureButton = getByText('ZapOff-#fff').parent;
     fireEvent.press(autocaptureButton);
-    
+
     // After toggle, should show Zap (autocapture enabled)
     expect(getByText('Zap-#000')).toBeTruthy();
   });
 
   it('should show quality indicator when autocapture is enabled', async () => {
     const { getByText } = renderWithAutocaptureOff(defaultProps);
-    
+
     // Enable autocapture
     const autocaptureButton = getByText('ZapOff-#fff').parent;
     fireEvent.press(autocaptureButton);
-    
+
     // Wait for quality indicator to appear
     await waitFor(() => {
       expect(getByText('Poor')).toBeTruthy();
@@ -108,15 +108,15 @@ describe('ScanScreen Autocapture', () => {
 
   it('should wait for excellent quality before showing countdown', async () => {
     const { getByText, queryByLabelText } = renderWithAutocaptureOff(defaultProps);
-    
+
     // Enable autocapture
     const autocaptureButton = getByText('ZapOff-#fff').parent;
     fireEvent.press(autocaptureButton);
-    
+
     // Mock excellent quality conditions
     // Note: In a real test, we would need to mock the canvas context and video element
     // For now, we just verify the UI structure is present
-    
+
     // The countdown functionality is tested indirectly through integration
     expect(queryByLabelText('Cancel auto-capture')).toBeFalsy(); // Should not show until countdown starts
   });
@@ -124,18 +124,18 @@ describe('ScanScreen Autocapture', () => {
   it('should maintain existing capture functionality', () => {
     const onCapture = jest.fn();
     const { getByText } = renderWithAutocaptureOff({ ...defaultProps, onCapture });
-    
+
     // Find and press the manual capture button
     const captureButton = getByText('Camera-#fff').parent;
     fireEvent.press(captureButton);
-    
+
     // Should call onCapture
     expect(onCapture).toHaveBeenCalled();
   });
 
   it('should show instructions text', () => {
     const { getByText } = renderWithAutocaptureOff(defaultProps);
-    
+
     expect(getByText('Position both syringe and vial clearly in view')).toBeTruthy();
   });
 });
