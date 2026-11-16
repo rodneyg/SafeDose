@@ -69,7 +69,7 @@ it.each([IntroScreen, Settings])('Google sign-in failure displays plain feedback
 });
 
 it.each(['concentration', 'totalAmount'])('progress counts each actual screen once on %s path', inputType => {
-  const steps = ['dose', 'medicationSource', ...(inputType === 'totalAmount' ? ['totalAmountInput', 'reconstitution'] : ['concentrationInput']), 'syringe', 'preDoseConfirmation', 'finalResult'];
+  const steps = ['dose', 'medicationSource', ...(inputType === 'totalAmount' ? ['totalAmountInput', 'reconstitution'] : ['concentrationInput', 'totalAmountInput']), 'syringe', 'preDoseConfirmation', 'finalResult'];
   steps.forEach((step, index) => {
     const props = getManualProgress(step, inputType);
     expect(props).toEqual({ currentStep: index + 1, totalSteps: steps.length });
