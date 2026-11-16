@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'node', // Keep as node since doseUtils is logic-based
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {

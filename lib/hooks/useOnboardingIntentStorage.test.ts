@@ -1,4 +1,5 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { addDoc } from 'firebase/firestore';
+import { renderHook } from '@testing-library/react-native';
 import { useOnboardingIntentStorage } from './useOnboardingIntentStorage';
 
 // Mock Firebase
@@ -8,7 +9,7 @@ jest.mock('@/lib/firebase', () => ({
 
 // Mock Firebase Firestore functions
 jest.mock('firebase/firestore', () => ({
-  collection: jest.fn(),
+  collection: jest.fn(() => ({ path: 'onboarding_intent_submissions' })),
   addDoc: jest.fn(() => Promise.resolve({ id: 'test-doc-id' })),
 }));
 
@@ -34,6 +35,8 @@ describe('useOnboardingIntentStorage', () => {
     const { result } = renderHook(() => useOnboardingIntentStorage());
     
     const answers = {
+      isProfessionalAthlete: null,
+      isPerformanceUse: null,
       isLicensedProfessional: null,
       isPersonalUse: null,
       isCosmeticUse: null,
@@ -41,12 +44,17 @@ describe('useOnboardingIntentStorage', () => {
 
     // Should not throw
     await expect(result.current.submitOnboardingIntent(answers)).resolves.not.toThrow();
+    expect(addDoc).toHaveBeenCalledWith({ path: 'onboarding_intent_submissions' }, expect.objectContaining({
+      isLicensedProfessional: false, isPersonalUse: true, user_segment: 'personal_medical_user',
+    }));
   });
 
   it('should handle boolean answers correctly', async () => {
     const { result } = renderHook(() => useOnboardingIntentStorage());
     
     const answers = {
+      isProfessionalAthlete: false,
+      isPerformanceUse: false,
       isLicensedProfessional: true,
       isPersonalUse: false,
       isCosmeticUse: false,
@@ -54,23 +62,25 @@ describe('useOnboardingIntentStorage', () => {
 
     // Should not throw
     await expect(result.current.submitOnboardingIntent(answers)).resolves.not.toThrow();
+    expect(addDoc).toHaveBeenCalledWith({ path: 'onboarding_intent_submissions' }, expect.objectContaining({
+      isLicensedProfessional: true, isPersonalUse: false, user_segment: 'healthcare_professional',
+    }));
   });
 
-  it('should determine correct user segments', () => {
-    // Test the getUserSegment logic indirectly through the hook
-    // We can't test the internal function directly, but we can verify
-    // the hook doesn't crash with different answer combinations
+  it('should determine correct user segments', async () => {
     const { result } = renderHook(() => useOnboardingIntentStorage());
-    
     const testCases = [
-      { isLicensedProfessional: true, isPersonalUse: false, isCosmeticUse: false },
-      { isLicensedProfessional: false, isPersonalUse: true, isCosmeticUse: true },
-      { isLicensedProfessional: false, isPersonalUse: true, isCosmeticUse: false },
-      { isLicensedProfessional: false, isPersonalUse: false, isCosmeticUse: false },
-    ];
-
-    testCases.forEach(async (answers) => {
-      await expect(result.current.submitOnboardingIntent(answers)).resolves.not.toThrow();
-    });
+      [true, false, false, 'healthcare_professional'],
+      [false, true, true, 'cosmetic_user'],
+      [false, true, false, 'personal_medical_user'],
+      [false, false, false, 'general_user'],
+    ] as const;
+    for (const [isLicensedProfessional, isPersonalUse, isCosmeticUse, segment] of testCases) {
+      await result.current.submitOnboardingIntent({
+        isLicensedProfessional, isPersonalUse, isCosmeticUse,
+        isProfessionalAthlete: false, isPerformanceUse: false,
+      });
+      expect(addDoc).toHaveBeenLastCalledWith({ path: 'onboarding_intent_submissions' }, expect.objectContaining({ user_segment: segment }));
+    }
   });
 });
