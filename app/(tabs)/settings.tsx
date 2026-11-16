@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { formatPlanDisplayName } from '../../lib/plans';
 
 interface SubscriptionStatus {
   hasActiveSubscription: boolean;
@@ -187,15 +188,8 @@ export default function SettingsScreen() {
       });
   }, [auth, user]);
 
-  const getPlanDisplayName = (plan: string) => {
-    switch (plan) {
-      case 'starter': return 'Starter';
-      case 'basic-pro': return 'Basic Pro';
-      case 'full-pro': return 'Full Pro';
-      case 'free': return 'Free';
-      default: return plan;
-    }
-  };
+  const getPlanDisplayName = (plan: string) => formatPlanDisplayName(plan);
+
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleDateString();
@@ -229,7 +223,7 @@ export default function SettingsScreen() {
             
             <Text style={styles.label}>Usage This Month</Text>
             <Text style={styles.value}>
-              {usageData?.scansUsed || 0} / {usageData?.limit === Infinity ? '∞' : (usageData?.limit || 3)} scans
+              {usageData?.scansUsed || 0} / {(usageData?.limit ?? 0) < 0 || usageData?.limit === Infinity ? '∞' : (usageData?.limit || 3)} scans
             </Text>
           </View>
         </View>

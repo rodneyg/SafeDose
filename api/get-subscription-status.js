@@ -1,5 +1,6 @@
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
+const { mapPriceIdToPlan } = require('../lib/plans');
 
 // Try to initialize Firebase Admin if environment variables are available
 let admin = null;
@@ -126,19 +127,10 @@ module.exports = async (req, res) => {
       hasActiveSubscription = ['active', 'trialing'].includes(subscription.status);
       
       if (hasActiveSubscription && subscription.items.data.length > 0) {
-        const priceId = subscription.items.data[0].price.id;
-        
-        // Map price IDs to plan names (you can extend this based on your pricing)
-        const planMapping = {
-          'price_1RYgx7AY2p4W374YR9UxS0vr': 'starter', // Monthly Starter
-          'price_1RYgx7AY2p4W374Yy23EtyIm': 'starter', // Annual Starter
-          'price_1RYgyPAY2p4W374YNbpBpbqv': 'basic-pro', // Monthly Basic Pro
-          'price_1RYgyPAY2p4W374YJOhwDafY': 'basic-pro', // Annual Basic Pro
-          'price_1RUHgxAY2p4W374Yb5EWEtZ0': 'full-pro', // Monthly Full Pro
-          'price_1RYgzUAY2p4W374YHiBBHvuX': 'full-pro', // Annual Full Pro
-        };
-        
-        currentPlan = planMapping[priceId] || 'pro';
+        const price = subscription.items.data[0].price;
+        const priceId = price.id;
+        currentPlan = mapPriceIdToPlan(priceId, process.env, price.lookup_key) || 'photo_check';
+        if (currentPlan === 'free') currentPlan = 'photo_check';
       }
       
       subscriptionData = {

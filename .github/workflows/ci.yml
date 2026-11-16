@@ -9,6 +9,20 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FC_SEED: '1032026'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: ./verify check
+
   # Make test and privacy required checks on main after this stack merges.
   test:
     runs-on: ubuntu-latest
