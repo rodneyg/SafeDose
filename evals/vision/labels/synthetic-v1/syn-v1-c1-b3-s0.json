@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c1-b3-s0",
+  "image_sha256": "62bbb3b912d53dec005ef3ce4058ad87c732aa78bd7d7ab5b6d5749447125117",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-100",
+    "capacity_ml": 0.5,
+    "brand": "Nipro",
+    "gradation": {
+      "value": 1,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 0,
+    "ml": 0.0,
+    "plunger_visible": true,
+    "empty": true
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "30",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

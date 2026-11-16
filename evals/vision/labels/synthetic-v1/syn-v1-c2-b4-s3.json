@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c2-b4-s3",
+  "image_sha256": "6e9f22c4bcf2a087b282a901a6c87765914a877186f51495e58c683698d16a59",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-100",
+    "capacity_ml": 1,
+    "brand": "EasyTouch",
+    "gradation": {
+      "value": 2,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 98,
+    "ml": 0.98,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "dim"
+    ],
+    "angle": "60",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

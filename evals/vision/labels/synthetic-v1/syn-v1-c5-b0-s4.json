@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c5-b0-s4",
+  "image_sha256": "5c5484a4546bfe286d84e2ac3a55233f0719b4e2531a377201593e8d3a5dbe36",
+  "split": "holdout",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 1,
+    "brand": "BD",
+    "gradation": {
+      "value": 0.01,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 0.33,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "dim"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

@@ -28,7 +28,8 @@
     "vision:check-exif": "node evals/vision/check-exif.js",
     "vision:strip-exif": "node evals/vision/strip-exif.js",
     "test:vision-labeling": "jest evals/vision/__tests__/labeling-tools.test.js --runInBand",
-    "check:vision-labeling": "npm run vision:validate-labels && npm run vision:check-exif && npm run test:vision-labeling"
+    "check:vision-labeling": "npm run vision:validate-labels && npm run vision:check-corpus && npm run vision:check-exif && npm run test:vision-labeling",
+    "vision:check-corpus": "node evals/vision/check-corpus.js"
   },
   "vercel": {
     "projectRoot": "."

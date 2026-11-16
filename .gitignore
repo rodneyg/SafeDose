@@ -60,3 +60,6 @@ evals/**/*.webp
 evals/**/*.zip
 review.html
 review_packet.pdf
+
+# SAF-104 private image-store name, if accidentally linked inside a checkout
+safedose-vision-private/

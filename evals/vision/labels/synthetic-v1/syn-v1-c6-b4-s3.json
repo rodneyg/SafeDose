@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c6-b4-s3",
+  "image_sha256": "9872996a26abebd79733dd7359707eb09808c538c46106525cda2f8c9c771aa4",
+  "split": "development",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 3,
+    "brand": "EasyTouch",
+    "gradation": {
+      "value": 0.1,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 2.9,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "dim"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

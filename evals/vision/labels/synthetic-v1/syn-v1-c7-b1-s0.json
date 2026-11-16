@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c7-b1-s0",
+  "image_sha256": "a096536564219f9c2b53c7f792e0be3ebebe4cb0da397fc5ca04f826386bc6df",
+  "split": "development",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 5,
+    "brand": "B. Braun",
+    "gradation": {
+      "value": 0.2,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 0.0,
+    "plunger_visible": true,
+    "empty": true
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "30",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

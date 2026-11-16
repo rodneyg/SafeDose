@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c5-b2-s1",
+  "image_sha256": "68fad2852cbe60ea1e59d1e1bf319b6fe6a5d4f28999ae379de3ee4ebae7551d",
+  "split": "development",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 1,
+    "brand": "Terumo",
+    "gradation": {
+      "value": 0.01,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 0.01,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

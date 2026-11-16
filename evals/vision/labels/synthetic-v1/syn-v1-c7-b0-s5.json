@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c7-b0-s5",
+  "image_sha256": "a835043f808632469f0983319cb9c121962cdadc05d69603a3e78d0c7dffe22c",
+  "split": "development",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 5,
+    "brand": "BD",
+    "gradation": {
+      "value": 0.2,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": null,
+    "plunger_visible": false,
+    "empty": null
+  },
+  "vial": {
+    "substance": null,
+    "total_amount": {
+      "value": null,
+      "unit": null
+    },
+    "concentration": {
+      "value": null,
+      "unit": null
+    },
+    "label_legible": false
+  },
+  "conditions": {
+    "lighting": [
+      "bright"
+    ],
+    "angle": "straight",
+    "background": "plain synthetic bench",
+    "focus": "partial",
+    "occlusion": "severe"
+  },
+  "expected_behavior": "refuse",
+  "reason": "Unreadable scale, leading edge and vial label.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

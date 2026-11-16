@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c4-b2-s4",
+  "image_sha256": "b0f70471fff8881e3ae46454128eefa8fc0fc7a9c3abe7e40fdd7e1f085297c6",
+  "split": "development",
+  "syringe": {
+    "type": "insulin",
+    "scale": "U-40",
+    "capacity_ml": 1,
+    "brand": "Terumo",
+    "gradation": {
+      "value": 1,
+      "unit": "units"
+    }
+  },
+  "fill": {
+    "units": 13,
+    "ml": 0.325,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "BPC-157",
+    "total_amount": {
+      "value": 10,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 5,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "backlit"
+    ],
+    "angle": "60",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "refuse",
+  "reason": "U-40 vision conversion unsupported.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}

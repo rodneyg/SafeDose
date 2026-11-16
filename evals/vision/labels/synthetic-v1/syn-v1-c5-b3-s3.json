@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "image_id": "syn-v1-c5-b3-s3",
+  "image_sha256": "537417fde512e9e631be05ee9e42333ebd97e04572d6eacf69a8ae7d1ed959b3",
+  "split": "development",
+  "syringe": {
+    "type": "standard",
+    "scale": "mL",
+    "capacity_ml": 1,
+    "brand": "Nipro",
+    "gradation": {
+      "value": 0.01,
+      "unit": "mL"
+    }
+  },
+  "fill": {
+    "units": null,
+    "ml": 0.99,
+    "plunger_visible": true,
+    "empty": false
+  },
+  "vial": {
+    "substance": "Testosterone cypionate",
+    "total_amount": {
+      "value": 2000,
+      "unit": "mg"
+    },
+    "concentration": {
+      "value": 200,
+      "unit": "mg/mL"
+    },
+    "label_legible": true
+  },
+  "conditions": {
+    "lighting": [
+      "glare"
+    ],
+    "angle": "60",
+    "background": "plain synthetic bench",
+    "focus": "sharp",
+    "occlusion": "none"
+  },
+  "expected_behavior": "read",
+  "reason": "Supported printed scale, visible leading edge and explicit vial units.",
+  "review": {
+    "labelers": [
+      "generator-v1",
+      "geometry-check-v1"
+    ],
+    "status": "pending",
+    "disagreements": [],
+    "adjudicator": null
+  }
+}
