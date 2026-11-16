@@ -16,7 +16,12 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.eval-cache/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/.eval-cache/',
+    // Upstream dependency tests copied into the root, not SafeDose suites.
+    '<rootDir>/(index|filesystem|config-loader|tsconfig-loader|mapping-entry|match-path-async|match-path-sync)\\.test\\.ts$',
+  ],
   collectCoverageFrom: ['lib/dosing/**/*.ts', '!lib/dosing/**/__tests__/**'],
   coverageReporters: ['json', 'json-summary', 'lcov', 'text', 'clover'],
   coverageThreshold: {
