@@ -60,7 +60,7 @@ beforeEach(() => {
   mockFocusRuns = 0;
   jest.clearAllMocks();
   jest.spyOn(console, 'log').mockImplementation(() => {});
-  (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+  (global as any).window = { navigator: { onLine: true }, addEventListener: jest.fn(), removeEventListener: jest.fn() };
 });
 afterEach(() => { act(() => renderer?.unmount()); jest.restoreAllMocks(); delete (global as any).window; });
 
