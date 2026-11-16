@@ -1,0 +1,15 @@
+{
+  "flow": "onboarding",
+  "ok": true,
+  "result": {
+    "finalRoute": "/(tabs)/new-dose",
+    "steps": [
+      "/onboarding",
+      "/onboarding/age",
+      "/onboarding/child-safety",
+      "/onboarding/demo",
+      "/onboarding/userType"
+    ],
+    "userId": "fixture-new-user"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "clock": "2026-01-15T12:00:00.000Z",
+  "doseCase": { "concentration": 2.5, "concentrationUnit": "mg/ml", "doseValue": 0.5, "manualSyringe": { "insulinScale": "U-100", "type": "Insulin", "volume": "1 ml" }, "unit": "mg" },
+  "rngSeed": 1032026,
+  "scan": {
+    "fill": { "ml": 0.2, "plunger_visible": true, "units": 20 },
+    "syringe": { "markings": "10,20,30,40,50,60,70,80,90,100", "scale": "U-100", "type": "Insulin", "volume": "1 ml" },
+    "vial": { "concentration": "2.5 mg/ml", "expiration": "2027-01", "substance": "Fixture medication", "totalAmount": "5 mg" }
+  },
+  "stripeCatalog": [
+    { "amount": 299, "interval": "month", "lookupKey": "safedose_photo_check_monthly" },
+    { "amount": 2699, "interval": "year", "lookupKey": "safedose_photo_check_annual" }
+  ],
+  "users": {
+    "new": { "id": "fixture-new-user", "onboardingComplete": false, "profile": null },
+    "returning": { "id": "fixture-returning-user", "onboardingComplete": true, "profile": { "userType": "personal" } }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "flow": "returning-user-signin",
+  "ok": true,
+  "result": {
+    "finalRoute": "/(tabs)/new-dose",
+    "profilePresent": true,
+    "skipped": [
+      "Age",
+      "Child safety",
+      "Demo",
+      "User type"
+    ],
+    "userId": "fixture-returning-user"
+  }
+}
