@@ -1,3 +1,4 @@
+Previous SAF-192 implementation notes (historical validation):
 PR: https://github.com/rodneyg/SafeDose/pull/430
 Branch: saf-192-top-bugs. Committed and pushed. Not merged.
 
@@ -8,3 +9,25 @@ Validation: all 12 new regression tests pass; web build passes; changed-file lin
 Live popup cancellation and visual verification remain unverified because the built-in browser host is unavailable. The live bundle already had cancellation rejection handling; this change hardens state/race handling rather than claiming a missing catch. Onboarding memory resets on full reload.
 
 Dosing math and medical logic are unchanged. No Stripe code, Vercel settings, or env files were changed.
+
+Previous SAF-125 implementation notes (historical validation):
+SAF-125 completed on saf-125-pwa-1116.
+PR: https://github.com/rodneyg/SafeDose/pull/428
+
+Added: standalone web manifest, iPhone metadata and icons, generated versioned
+service worker, static offline cache, offline manual-entry routing and notice,
+worker tests, and docs/home-screen-app.md. No dosing math or medical logic changed.
+No merge. No Stripe, Vercel settings, or environment files changed.
+
+Validation: production build passed; metadata, icons, and 56 precache paths
+verified. Eight test suites and 307 tests passed, including 26,000 dosing
+property runs. Changed-file lint has zero errors and the same 15 warnings as
+the original new-dose.tsx. Repository lint fails with 179 errors and 139 warnings.
+Static cache is 4.97 MiB; entry JS is 836 KiB gzip (not a device timing).
+
+Still open: real iPhone/deployed-preview checks for home-screen installation,
+standalone camera permissions/capture, offline manual calculator completion
+after online setup, update activation, and mobile load times. No app windows
+or browser were opened. TASK.md and codex.log were left untracked.
+
+Merge repair 2026-11-16: #425 and #428 merged after all checks passed. #430 is being validated against updated main. See ../RESULT.md for current results in the repair workspace.
