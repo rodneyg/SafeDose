@@ -1,33 +1,27 @@
+import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Heart, Phone, ArrowRight, Shield } from 'lucide-react-native';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { isMobileWeb } from '@/lib/utils';
 
 export default function ChildSafety() {
   const router = useRouter();
-  const { age, birthDate } = useLocalSearchParams<{ age: string; birthDate?: string }>();
+  const { details: { age } } = useOnboardingDetails();
 
   const handleContinue = useCallback(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.CHILD_SAFETY_CONTINUE, {
-      age: age ? parseInt(age) : null
+      age
     });
     
-    // Continue to demo with age and birth date information
-    router.push({
-      pathname: '/onboarding/demo',
-      params: { 
-        age: age || '',
-        birthDate: birthDate || ''
-      }
-    });
-  }, [age, birthDate, router]);
+    router.push('/onboarding/demo');
+  }, [age, router]);
 
   const handleSeekHelp = useCallback(async () => {
     logAnalyticsEvent(ANALYTICS_EVENTS.CHILD_SAFETY_SEEK_HELP, {
-      age: age ? parseInt(age) : null
+      age
     });
 
     // On web, show information about seeking help
@@ -53,7 +47,7 @@ Remember: Medication safety is serious, and it's always best to have adult super
 
   React.useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.CHILD_SAFETY_SCREEN_SHOWN, {
-      age: age ? parseInt(age) : null
+      age
     });
   }, [age]);
 

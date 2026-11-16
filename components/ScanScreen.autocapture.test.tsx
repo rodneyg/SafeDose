@@ -1,13 +1,13 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import ScanScreen from './ScanScreen';
 
 // Mock the lucide-react-native icons
 jest.mock('lucide-react-native', () => ({
-  Camera: ({ color }: { color: string }) => `Camera-${color}`,
-  Flashlight: ({ color }: { color: string }) => `Flashlight-${color}`,
-  Zap: ({ color }: { color: string }) => `Zap-${color}`,
-  ZapOff: ({ color }: { color: string }) => `ZapOff-${color}`,
+  Camera: ({ color }: { color: string }) => require('react').createElement(require('react-native').Text, null, `Camera-${color}`),
+  Flashlight: ({ color }: { color: string }) => require('react').createElement(require('react-native').Text, null, `Flashlight-${color}`),
+  Zap: ({ color }: { color: string }) => require('react').createElement(require('react-native').Text, null, `Zap-${color}`),
+  ZapOff: ({ color }: { color: string }) => require('react').createElement(require('react-native').Text, null, `ZapOff-${color}`),
 }));
 
 // Mock expo-camera
@@ -58,53 +58,45 @@ describe('ScanScreen Autocapture', () => {
     toggleWebFlashlight: jest.fn(),
   };
 
+  beforeEach(() => { jest.useFakeTimers(); jest.clearAllMocks(); });
+  afterEach(() => { jest.useRealTimers(); });
+
   it('should render autocapture toggle button', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} />);
     
-    // The autocapture toggle should be present (using ZapOff icon initially)
-    expect(getByText('ZapOff-#fff')).toBeTruthy();
+    // Auto-capture starts enabled.
+    expect(getByText('Zap-#000')).toBeTruthy();
   });
 
   it('should toggle autocapture when autocapture button is pressed', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} />);
     
-    // Initially should show ZapOff (autocapture disabled)
-    expect(getByText('ZapOff-#fff')).toBeTruthy();
+    // Initially shows Zap (autocapture enabled).
+    expect(getByText('Zap-#000')).toBeTruthy();
     
     // Find and press the autocapture toggle button
-    const autocaptureButton = getByText('ZapOff-#fff').parent;
+    const autocaptureButton = getByText('Zap-#000');
     fireEvent.press(autocaptureButton);
     
-    // After toggle, should show Zap (autocapture enabled)
-    expect(getByText('Zap-#000')).toBeTruthy();
+    // After toggle, autocapture is disabled.
+    expect(getByText('ZapOff-#fff')).toBeTruthy();
   });
 
-  it('should show quality indicator when autocapture is enabled', async () => {
+  it('should show quality indicator when autocapture is enabled', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} />);
-    
-    // Enable autocapture
-    const autocaptureButton = getByText('ZapOff-#fff').parent;
-    fireEvent.press(autocaptureButton);
-    
-    // Wait for quality indicator to appear
-    await waitFor(() => {
-      expect(getByText('Poor')).toBeTruthy();
-    });
+    expect(getByText('Poor')).toBeTruthy();
+    act(() => { jest.advanceTimersByTime(500); });
+    expect(getByText('Good')).toBeTruthy();
   });
 
-  it('should show countdown when quality is excellent', async () => {
-    const { getByText, queryByText } = render(<ScanScreen {...defaultProps} />);
-    
-    // Enable autocapture
-    const autocaptureButton = getByText('ZapOff-#fff').parent;
-    fireEvent.press(autocaptureButton);
-    
-    // Mock excellent quality conditions
-    // Note: In a real test, we would need to mock the canvas context and video element
-    // For now, we just verify the UI structure is present
-    
-    // The countdown functionality is tested indirectly through integration
-    expect(queryByText('Cancel')).toBeFalsy(); // Should not show until countdown starts
+  it('should not start a countdown below excellent quality', () => {
+    const onCapture = jest.fn();
+    const { getByText, queryByText } = render(<ScanScreen {...defaultProps} onCapture={onCapture} />);
+    act(() => { jest.advanceTimersByTime(3500); });
+    // The native fallback score is 70, below the excellent-quality threshold.
+    expect(getByText('Good')).toBeTruthy();
+    expect(queryByText('Capturing in')).toBeNull();
+    expect(onCapture).not.toHaveBeenCalled();
   });
 
   it('should maintain existing capture functionality', () => {
@@ -112,7 +104,7 @@ describe('ScanScreen Autocapture', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} onCapture={onCapture} />);
     
     // Find and press the manual capture button
-    const captureButton = getByText('Camera-#fff').parent;
+    const captureButton = getByText('Camera-#fff');
     fireEvent.press(captureButton);
     
     // Should call onCapture
@@ -122,6 +114,8 @@ describe('ScanScreen Autocapture', () => {
   it('should show instructions text', () => {
     const { getByText } = render(<ScanScreen {...defaultProps} />);
     
+    expect(getByText('Auto-capture is ON - will capture when conditions are perfect')).toBeTruthy();
+    fireEvent.press(getByText('Zap-#000'));
     expect(getByText('Position both syringe and vial clearly in view')).toBeTruthy();
   });
 });

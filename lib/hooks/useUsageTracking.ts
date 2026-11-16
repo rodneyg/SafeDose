@@ -5,20 +5,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNetworkStateAsync } from 'expo-network';
 import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
+import { getLimitForPlan, hasScanCapacity } from '../plans';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
-// Helper function to determine scan limits based on user plan and authentication status
-// Business logic: Anonymous users get minimal scans to encourage sign-up,
-// while authenticated users get progressively more scans based on their subscription tier
-const getLimitForPlan = (plan: string, isAnonymous: boolean) => {
-  if (isAnonymous) return 3; // Anonymous users
-  if (plan === 'plus') return 50; // Plus plan
-  if (plan === 'pro') return 500; // Pro plan
-  return 10; // Signed-in free users
-};
-
+// Unpaid users (anonymous or signed-in) share a monthly gpt-4o photo-scan cap.
+// Paid photo-check and legacy paid plans are not limited by that cap. Limits live in lib/plans.js.
 export function useUsageTracking() {
   const { user } = useAuth();
   const db = getFirestore();
@@ -163,7 +156,7 @@ export function useUsageTracking() {
 
     if (!isOnline) {
       console.log('[useUsageTracking] Checking cached usage limit due to offline status');
-      const hasScansRemaining = usageData.scansUsed < usageData.limit;
+      const hasScansRemaining = hasScanCapacity(usageData.scansUsed, usageData.limit);
       console.log('[useUsageTracking] Offline limit check result:', hasScansRemaining);
       return hasScansRemaining;
     }
@@ -209,12 +202,12 @@ export function useUsageTracking() {
         const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
         setUsageData(newUsageData);
         await saveCachedUsage(newUsageData);
-        return newUsageData.scansUsed < newUsageData.limit;
+        return hasScanCapacity(newUsageData.scansUsed, newUsageData.limit);
       };
       return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
     } catch (error) {
       console.error('Error checking usage limit:', error);
-      return usageData.scansUsed < usageData.limit; // Fallback to cached data
+      return hasScanCapacity(usageData.scansUsed, usageData.limit); // Fallback to cached data
     }
   };
 

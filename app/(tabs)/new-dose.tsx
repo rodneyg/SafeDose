@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
@@ -27,17 +28,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
+import { useWebOffline } from '../../lib/hooks/useWebOffline';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
+  const offline = useWebOffline();
   const { user } = useAuth();
   const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
-  const [isScreenActive, setIsScreenActive] = useState(true);
+  const isScreenActive = useIsFocused();
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
@@ -162,18 +165,20 @@ export default function NewDoseScreen() {
     doseCalculator.setScreenStep(step);
   }, [doseCalculator, setNavigatingFromIntro]);
   
+  const { stateHealth: focusStateHealth, screenStep: focusScreenStep,
+    resetFullForm: resetOnFocus, setScreenStep: setStepOnFocus } = doseCalculator;
+
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
-      setIsScreenActive(true);
-      
+      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: focusScreenStep });
+
       // Don't reset state during initial render or when navigating from intro
       if (hasInitializedAfterNavigation && !navigatingFromIntro) {
-        if (doseCalculator.stateHealth === 'recovering') {
+        if (focusStateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
-          doseCalculator.resetFullForm();
-          doseCalculator.setScreenStep('intro');
+          resetOnFocus();
+          setStepOnFocus('intro');
         }
       } else {
         setHasInitializedAfterNavigation(true);
@@ -186,12 +191,7 @@ export default function NewDoseScreen() {
         }, 500); // Short delay to ensure navigation completes
       }
       
-      return () => {
-        // Cleanup when screen is unfocused
-        console.log('[NewDoseScreen] Screen unfocused');
-        setIsScreenActive(false);
-      };
-    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
+    }, [hasInitializedAfterNavigation, focusStateHealth, focusScreenStep, resetOnFocus, setStepOnFocus, navigatingFromIntro])
   );
   const {
     screenStep,
@@ -284,6 +284,12 @@ export default function NewDoseScreen() {
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
   } = doseCalculator;
+
+  useEffect(() => {
+    if (offline && (screenStep === 'scan' || screenStep === 'beforeFirstScan')) {
+      setScreenStep('manualEntry');
+    }
+  }, [offline, screenStep, setScreenStep]);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
@@ -732,6 +738,10 @@ export default function NewDoseScreen() {
   };
 
   const handleScanAttempt = async () => {
+    if (offline) {
+      setScanError('Photo checks need internet. Use manual entry while offline.');
+      return;
+    }
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
     // Don't proceed if already processing
@@ -965,8 +975,16 @@ export default function NewDoseScreen() {
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
+  // Tabs retain mounted screens. Hide the entire dose flow and its modals on blur.
+  if (!isScreenActive) return null;
+
   return (
     <View style={styles.container}>
+      {offline && (
+        <Text accessibilityRole="alert" style={{ padding: 12, color: '#333333', backgroundColor: '#FFF3CD' }}>
+          Offline. Manual entry is available. Photo checks and account sync need internet.
+        </Text>
+      )}
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
@@ -1012,7 +1030,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
-          onScanPress={doseCalculator.handleScanNavigation}
+          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
         />
       )}
       {screenStep === 'beforeFirstScan' && (

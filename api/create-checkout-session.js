@@ -3,38 +3,9 @@
 
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
-
-// Enhanced error checking and logging
-console.log('create-checkout-session.js Version: 1.6 (deployed with process.env fix)');
-console.log('Loading create-checkout-session with config:', {
-  mode: stripeConfig.mode,
-  hasSecretKey: !!stripeConfig.secretKey,
-  secretKeyFormat: stripeConfig.secretKey ? (stripeConfig.secretKey.startsWith('sk_') ? 'valid' : 'invalid') : 'missing'
-});
+const { resolveCheckoutPriceId } = require('../lib/photoCheckStripe');
 
 module.exports = async (req, res) => {
-  // Direct environment variable logging for diagnostics
-  const stripeMode = process.env.STRIPE_MODE || 'test';
-  const isLiveMode = stripeMode === 'live';
-  
-  console.log('Environment variable diagnostic:', {
-    STRIPE_MODE: stripeMode,
-    isLiveMode: isLiveMode,
-    STRIPE_LIVE_SECRET_KEY: isLiveMode ? 
-      (process.env.STRIPE_LIVE_SECRET_KEY ? `Set (value: ${process.env.STRIPE_LIVE_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
-      'Not applicable (test mode)',
-    STRIPE_TEST_SECRET_KEY: !isLiveMode ? 
-      (process.env.STRIPE_TEST_SECRET_KEY ? `Set (value: ${process.env.STRIPE_TEST_SECRET_KEY.substring(0, 12)}...)` : 'NOT SET') :
-      'Not applicable (live mode)'
-  });
-
-  console.log('Received request to /api/create-checkout-session:', req.body);
-  console.log('Stripe config being used:', {
-    mode: stripeConfig.mode,
-    hasSecretKey: !!stripeConfig.secretKey,
-    secretKeyPrefix: stripeConfig.secretKey ? stripeConfig.secretKey.substring(0, 7) : 'N/A'
-  });
-
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -79,30 +50,37 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { priceId, successUrl, cancelUrl, hasTrial } = req.body;
-  if (!priceId || !successUrl || !cancelUrl) {
-    console.log('Missing parameters:', { priceId, successUrl, cancelUrl });
+  const { priceId, offerKey, successUrl, cancelUrl, hasTrial } = req.body;
+  if ((!priceId && !offerKey) || !successUrl || !cancelUrl) {
+    console.log('Missing parameters:', { priceId: Boolean(priceId), offerKey, successUrl: Boolean(successUrl), cancelUrl: Boolean(cancelUrl) });
     return res.status(400).json({ error: 'Missing parameters' });
   }
 
   try {
     console.log('Attempting to create checkout session with Stripe...');
-    
+    const resolved = await resolveCheckoutPriceId(
+      stripe,
+      { priceId, offerKey },
+      { mode: stripeConfig.mode, env: process.env }
+    );
+    const resolvedPriceId = resolved.priceId;
+    // Photo Check has no trial. Legacy Full Pro price IDs may still pass hasTrial.
+    const allowTrial = Boolean(hasTrial) && !resolved.offerKey;
+
     // Base session configuration
     const sessionConfig = {
       mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: resolvedPriceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: { 
-        source: hasTrial ? 'full_pro_trial' : 'standard_subscription'
+        source: allowTrial ? 'full_pro_trial' : (resolved.offerKey || 'standard_subscription'),
+        offerKey: resolved.offerKey || '',
       },
     };
 
-    // Add trial period for Full Pro plans (both monthly and yearly)
-    if (hasTrial) {
-      console.log('Adding 7-day trial period for Full Pro plan');
+    if (allowTrial) {
+      console.log('Adding 7-day trial period for legacy Full Pro plan');
       sessionConfig.subscription_data = {
         trial_period_days: 7,
       };
@@ -115,7 +93,7 @@ module.exports = async (req, res) => {
     console.error('Error creating checkout session:', err.message);
     console.error('Error type:', err.type);
     console.error('Error code:', err.code);
-    console.error('Full error object:', err);
-    res.status(500).json({ error: err.message });
+    const status = err.statusCode || 500;
+    res.status(status).json({ error: err.message });
   }
 };

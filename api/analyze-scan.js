@@ -21,7 +21,7 @@ function allowedOrigin(origin) {
     return url.protocol === 'https:' && !url.port && (
       url.hostname === 'safedose.rodneygainous.com' ||
       url.hostname === 'safe-dose.vercel.app' ||
-      /^safe-dose-[a-z0-9]+-rodneygs-projects\.vercel\.app$/.test(url.hostname)
+      /^safe-dose-[a-z0-9-]+-rodneygs-projects\.vercel\.app$/.test(url.hostname)
     );
   } catch {
     return false;

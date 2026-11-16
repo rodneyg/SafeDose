@@ -1,3 +1,4 @@
+import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -17,6 +18,7 @@ import {
 
 export default function BirthDateCollection() {
   const router = useRouter();
+  const { setDetails } = useOnboardingDetails();
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -64,35 +66,10 @@ export default function BirthDateCollection() {
 
     const age = calculateAge(birthDate);
     
-    // Log analytics
-    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED, {
-      age,
-      birth_year: selectedYear,
-      birth_month: selectedMonth,
-      age_range: age < 18 ? 'minor' : age < 65 ? 'adult' : 'senior'
-    });
-
-    // Route based on age (same logic as before)
-    if (age < 18) {
-      // Route to child safety screen for minors
-      router.push({
-        pathname: '/onboarding/child-safety',
-        params: { 
-          age: age.toString(),
-          birthDate: birthDate
-        }
-      });
-    } else {
-      // Route to demo for adults
-      router.push({
-        pathname: '/onboarding/demo',
-        params: { 
-          age: age.toString(),
-          birthDate: birthDate
-        }
-      });
-    }
-  }, [isComplete, isValid, validation, birthDate, selectedYear, selectedMonth, router]);
+    setDetails({ age, birthDate, limitedFunctionality: false });
+    logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED);
+    router.push(age < 18 ? '/onboarding/child-safety' : '/onboarding/demo');
+  }, [isComplete, isValid, validation, birthDate, router, setDetails]);
 
   const handleSkip = useCallback(() => {
     // Show safety explanation modal instead of directly skipping
@@ -102,15 +79,9 @@ export default function BirthDateCollection() {
   const handleConfirmSkip = useCallback(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
     setShowSafetyModal(false);
-    // Continue to demo with limited functionality flag
-    router.push({
-      pathname: '/onboarding/demo',
-      params: { 
-        limitedFunctionality: 'true',
-        reason: 'no_birth_date'
-      }
-    });
-  }, [router]);
+    setDetails({ age: null, birthDate: null, limitedFunctionality: true });
+    router.push('/onboarding/demo');
+  }, [router, setDetails]);
 
   const handleCancelSkip = useCallback(() => {
     setShowSafetyModal(false);

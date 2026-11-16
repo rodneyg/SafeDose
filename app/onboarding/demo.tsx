@@ -1,7 +1,8 @@
+import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import { useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,15 +11,11 @@ import { isMobileWeb } from '../../lib/utils';
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
 export default function Demo() {
+  const { details: { limitedFunctionality } } = useOnboardingDetails();
   const [step, setStep] = useState(0);
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { age, limitedFunctionality, reason } = useLocalSearchParams<{ 
-    age: string;
-    limitedFunctionality: string;
-    reason: string;
-  }>();
 
   const handleNext = useCallback(async () => {
     if (step < 2) {
@@ -27,29 +24,15 @@ export default function Demo() {
       try {
         // Persist onboarding completion status
         await AsyncStorage.setItem('onboardingComplete', 'true');
-        // Navigate to user type segmentation screen with age and limitations info
-        router.replace({
-          pathname: '/onboarding/userType',
-          params: { 
-            age: age || '',
-            limitedFunctionality: limitedFunctionality || '',
-            reason: reason || ''
-          }
-        });
+        // Age and limitations remain in onboarding context
+        router.replace('/onboarding/userType');
       } catch (e) {
         console.warn('Error completing onboarding:', e);
         // Fallback navigation in case of error
-        router.replace({
-          pathname: '/onboarding/userType',
-          params: { 
-            age: age || '',
-            limitedFunctionality: limitedFunctionality || '',
-            reason: reason || ''
-          }
-        });
+        router.replace('/onboarding/userType');
       }
     }
-  }, [step, router, age]);
+  }, [step, router]);
 
   const handleImageError = useCallback(() => {
     setImageError(true);
@@ -138,7 +121,7 @@ export default function Demo() {
       </Animated.View>
 
       {/* Limited Functionality Warning Banner */}
-      {limitedFunctionality === 'true' && (
+      {limitedFunctionality && (
         <Animated.View entering={FadeIn.delay(200)} style={[styles.warningBanner, isMobileWeb && styles.warningBannerMobile]}>
           <View style={styles.warningIcon}>
             {Platform.OS === "web" ? (

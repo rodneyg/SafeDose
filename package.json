@@ -7,7 +7,7 @@
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "start": "expo start",
     "web": "expo start --web",
-    "build:web": "rimraf dist && CI=1 EXPO_NO_TELEMETRY=1 expo export --platform web --output-dir dist",
+    "build:web": "rimraf dist && CI=1 EXPO_NO_TELEMETRY=1 expo export --platform web --output-dir dist && node scripts/generate-service-worker.js",
     "build:functions": "esbuild api/*.js --bundle --platform=node --target=node16 --outdir=functions",
     "build": "npm run build:web",
     "test": "jest",
@@ -22,7 +22,8 @@
     "test:dose-flow": "jest components/SAF137.test.tsx --runInBand",
     "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
     "test:scan-api": "jest api/__tests__/analyze-scan.test.js lib/scan/__tests__/completeOnServer.test.ts --runInBand",
-    "check:bundle-secrets": "node scripts/check-bundle-secrets.js"
+    "check:bundle-secrets": "node scripts/check-bundle-secrets.js",
+    "verify": "./verify"
   },
   "vercel": {
     "projectRoot": "."
@@ -80,9 +81,13 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.2",
+    "esbuild": "^0.21.5",
     "eslint": "^8.57.0",
     "eslint-config-expo": "~8.0.1",
     "expo-cli": "^6.3.12",
@@ -91,7 +96,9 @@
     "jest-expo": "^53.0.5",
     "react-test-renderer": "^18.3.1",
     "rimraf": "^6.0.1",
+    "safe-buffer": "^5.2.1",
     "ts-jest": "^29.4.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3",
     "vercel": "^28.4.8"
   },
