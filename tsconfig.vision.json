@@ -6,10 +6,20 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"],
+    "types": [
+      "node",
+      "jest"
+    ],
     "skipLibCheck": true,
     "outDir": ".eval-cache",
-    "rootDir": "."
+    "rootDir": ".",
+    "allowJs": true
   },
-  "include": ["lib/scan/**/*.ts", "lib/scan/**/*.d.ts", "lib/dosing/**/*.ts", "evals/vision/**/*.ts"]
+  "include": [
+    "lib/scan/**/*.ts",
+    "lib/scan/**/*.js",
+    "lib/scan/**/*.d.ts",
+    "lib/dosing/**/*.ts",
+    "evals/vision/**/*.ts"
+  ]
 }
