@@ -2,6 +2,7 @@
  * Test to verify preview environment handling for analytics and Firestore
  */
 
+import type { DocumentReference, SetOptions } from 'firebase/firestore';
 import { isPreviewEnvironment, getCurrentEnvironment } from '../environment';
 import { logAnalyticsEvent, setAnalyticsUserProperties } from '../analytics';
 import { addDocWithEnv, setDocWithEnv } from '../firestoreWithEnv';
@@ -92,7 +93,7 @@ describe('Preview Environment Handling', () => {
       expect(setDoc).toHaveBeenCalledWith(mockDocRef, {
         ...testData,
         env: 'preview'
-      }, undefined);
+      });
       expect(console.log).toHaveBeenCalledWith(
         '[Firestore] Preview environment - adding env field to document (create operation)'
       );
@@ -113,4 +114,21 @@ describe('Preview Environment Handling', () => {
       );
     });
   });
+  describe('setDoc option variants', () => {
+    const cases: { options: SetOptions; tagged: boolean }[] = [
+      { options: { merge: false }, tagged: true },
+      { options: { merge: true }, tagged: false },
+      { options: { mergeFields: ['field1'] }, tagged: false },
+      { options: { mergeFields: [] }, tagged: false },
+    ];
+
+    it.each(cases)('preserves options $options and uses create tagging $tagged', async ({ options, tagged }) => {
+      const { setDoc } = require('firebase/firestore');
+      const reference = {} as DocumentReference;
+      const data = { field1: 'value1' };
+      await setDocWithEnv(reference, data, options);
+      expect(setDoc).toHaveBeenCalledWith(reference, tagged ? { ...data, env: 'preview' } : data, options);
+    });
+  });
+
 });

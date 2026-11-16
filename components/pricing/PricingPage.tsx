@@ -106,9 +106,9 @@ export default function PricingPage() {
       
       // Provide user-friendly error messages
       let description = "Unable to initiate checkout. Please try again.";
-      if (error.message.includes("configuration error")) {
+      if (error instanceof Error && error.message.includes("configuration error")) {
         description = "Payment system configuration error. Please contact support - this issue has been logged.";
-      } else if (error.message.includes("temporarily unavailable")) {
+      } else if (error instanceof Error && error.message.includes("temporarily unavailable")) {
         description = "Payment system temporarily unavailable. Please try again in a few moments.";
       }
       

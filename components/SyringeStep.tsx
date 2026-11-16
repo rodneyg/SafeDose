@@ -54,7 +54,7 @@ export default function SyringeStep({
 
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
-      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 3: Syringe Details</Text>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Syringe Details</Text>
       <Text style={styles.label}>Syringe Type:</Text>
       <View style={styles.infoContainer}>
         <Info color={'#6B7280'} size={12} style={styles.infoIcon} />

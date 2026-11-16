@@ -4,17 +4,44 @@ import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../../lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
+import { signInWithGoogle } from '../../lib/googleAuth';
+import { loadRemoteUserProfile, routeAfterGoogleSignIn } from '../../lib/onboardingState';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
 export default function Welcome() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { auth } = useAuth();
   const [imageError, setImageError] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState('');
 
   const handleStart = useCallback(() => {
-    router.push('/onboarding/age');
+    router.navigate('/onboarding/age');
   }, [router]);
+
+  const handleSignIn = useCallback(async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    setSignInError('');
+    try {
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return; // redirect in progress
+      const route = await routeAfterGoogleSignIn({
+        user: result.user,
+        loadRemoteProfile: loadRemoteUserProfile,
+        fallbackRoute: '/onboarding/age',
+      });
+      router.replace(route as any);
+    } catch (error) {
+      const message = (error as { message?: string })?.message || 'Unable to sign in. Please try again.';
+      setSignInError(message);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [auth, isSigningIn, router]);
 
   const handleImageError = useCallback(() => {
     setImageError(true);
@@ -54,7 +81,23 @@ export default function Welcome() {
             <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
             <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed</Text>
+          <TouchableOpacity
+            onPress={handleSignIn}
+            disabled={isSigningIn}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in"
+            accessibilityHint="Sign in with Google if you already have a SafeDose account"
+            style={styles.signInLink}
+          >
+            <Text style={[styles.signInLinkText, isMobileWeb && styles.disclaimerMobile]}>
+              {isSigningIn ? 'Signing in…' : 'Already have an account? Sign in'}
+            </Text>
+          </TouchableOpacity>
+          {signInError ? (
+            <Text style={[styles.signInError, isMobileWeb && styles.disclaimerMobile]}>{signInError}</Text>
+          ) : (
+            <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed to try</Text>
+          )}
         </Animated.View>
       </View>
     </View>
@@ -128,6 +171,21 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  signInLink: {
+    padding: 12,
+    minHeight: 44,
+  },
+  signInLinkText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  signInError: {
+    color: '#FFB4B4',
+    fontSize: 15,
     textAlign: 'center',
   },
   // Mobile-specific styles

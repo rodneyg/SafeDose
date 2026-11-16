@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
-import { Camera, CameraType, requestCameraPermissionsAsync, getCameraPermissionsAsync, CameraCapturedPicture } from 'expo-camera';
+import { Camera, CameraView, CameraType, CameraCapturedPicture } from 'expo-camera';
 
 export function useCamera() {
   const [permission, setPermission] = useState<boolean | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
-  const [type, setType] = useState(CameraType.back); // Default to back camera
-  const cameraRef = useRef<Camera>(null);
+  const [type, setType] = useState<CameraType>('back'); // Default to back camera
+  const cameraRef = useRef<CameraView>(null);
 
   useEffect(() => {
     (async () => {
-      const existingPermissions = await getCameraPermissionsAsync();
+      const existingPermissions = await Camera.getCameraPermissionsAsync();
       if (existingPermissions.granted) {
         setPermission(true);
       } else {
         // If not granted, request permissions
-        const { status } = await requestCameraPermissionsAsync();
+        const { status } = await Camera.requestCameraPermissionsAsync();
         setPermission(status === 'granted');
       }
     })();
@@ -30,6 +29,7 @@ export function useCamera() {
           // You might want 'fast' for speed or keep default
           // exif: false, // Exif data often not needed and adds size
         });
+        if (!photo) return null;
         console.log('Photo taken:', photo.uri);
         return photo;
       } catch (error) {
@@ -42,13 +42,13 @@ export function useCamera() {
   };
 
   const toggleCameraType = () => {
-    setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
+    setType(current => (current === 'back' ? 'front' : 'back'));
   };
 
   return {
     permission,
     requestPermissionAgain: async () => {
-      const { status } = await requestCameraPermissionsAsync();
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setPermission(status === 'granted');
       return status === 'granted';
     },

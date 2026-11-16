@@ -337,6 +337,7 @@ export default function ScanScreen({
           <Text style={styles.errorText}>
             Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
           </Text>
+          {scanError && <Text accessibilityRole="alert" style={styles.errorText}>{scanError}</Text>}
           <TouchableOpacity
             style={[styles.button, isMobileWeb && styles.buttonMobile, isProcessing && styles.disabledButton]}
             onPress={handleButtonPress}
@@ -379,7 +380,7 @@ export default function ScanScreen({
           {/* Autocapture status */}
           {autoCaptureEnabled && (
             <View style={styles.autocaptureStatus}>
-              <View style={[styles.qualityIndicator, styles[`quality${qualityIndicator.charAt(0).toUpperCase() + qualityIndicator.slice(1)}`]]}>
+              <View style={[styles.qualityIndicator, { poor: styles.qualityPoor, good: styles.qualityGood, excellent: styles.qualityExcellent }[qualityIndicator]]}>
                 <Text style={styles.qualityText}>
                   {qualityIndicator === 'excellent' ? 'Perfect!' : 
                    qualityIndicator === 'good' ? 'Good' : 'Poor'}
@@ -399,7 +400,7 @@ export default function ScanScreen({
               {autoCaptureCountdown && (
                 <View style={styles.countdownContainer}>
                   <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
-                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton}>
+                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton} accessibilityLabel="Cancel auto-capture">
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
@@ -505,7 +506,7 @@ export default function ScanScreen({
           {/* Autocapture status */}
           {autoCaptureEnabled && (
             <View style={styles.autocaptureStatus}>
-              <View style={[styles.qualityIndicator, styles[`quality${qualityIndicator.charAt(0).toUpperCase() + qualityIndicator.slice(1)}`]]}>
+              <View style={[styles.qualityIndicator, { poor: styles.qualityPoor, good: styles.qualityGood, excellent: styles.qualityExcellent }[qualityIndicator]]}>
                 <Text style={styles.qualityText}>
                   {qualityIndicator === 'excellent' ? 'Perfect!' : 
                    qualityIndicator === 'good' ? 'Good' : 'Poor'}
@@ -525,7 +526,7 @@ export default function ScanScreen({
               {autoCaptureCountdown && (
                 <View style={styles.countdownContainer}>
                   <Text style={styles.countdownText}>{autoCaptureCountdown}</Text>
-                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton}>
+                  <TouchableOpacity onPress={cancelAutocapture} style={styles.cancelButton} accessibilityLabel="Cancel auto-capture">
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
@@ -558,11 +559,6 @@ export default function ScanScreen({
                 <Flashlight color={flashMode === 'on' ? '#000' : '#fff'} size={18} />
               </TouchableOpacity>
             )}
-            {console.log('[ScanScreen] Flashlight button visibility', { 
-              shouldShow: !isMobileWeb, 
-              isMobileWeb, 
-              platformOS: Platform.OS 
-            })}
             <TouchableOpacity
               style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={handleButtonPress}

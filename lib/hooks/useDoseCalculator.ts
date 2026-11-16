@@ -573,7 +573,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
         }
       }
       else if (manualStep === 'reconstitution') setManualStep('totalAmountInput');
-      else if (manualStep === 'syringe') setManualStep('totalAmountInput');
+      else if (manualStep === 'syringe') {
+        setManualStep(medicationInputType === 'totalAmount' ? 'reconstitution' : 'totalAmountInput');
+      }
       else if (manualStep === 'preDoseConfirmation') setManualStep('syringe');
       else if (manualStep === 'finalResult') setManualStep('preDoseConfirmation');
 

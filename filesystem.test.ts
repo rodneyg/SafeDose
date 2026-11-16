@@ -1,9 +1,9 @@
-import * as Filesystem from "../filesystem";
+import * as Filesystem from "tsconfig-paths/lib/filesystem";
 import * as path from "path";
 
 describe("filesystem", () => {
-  const fileThatExists = path.join(__dirname, "../../package.json");
-  const fileThatNotExists = path.join(__dirname, "../../package2.json");
+  const fileThatExists = require.resolve("tsconfig-paths/package.json");
+  const fileThatNotExists = path.join(__dirname, "tests/fixtures/missing-package.json");
 
   it("should find file that exists, sync", () => {
     const result = Filesystem.fileExistsSync(fileThatExists);

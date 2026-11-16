@@ -1,10 +1,11 @@
+import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithGoogle } from '../../lib/googleAuth';
 import { formatPlanDisplayName } from '../../lib/plans';
 
 interface SubscriptionStatus {
@@ -136,57 +137,33 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleSignIn = useCallback(() => {
+  const [signInFailed, setSignInFailed] = useState(false);
+
+  const handleSignIn = useCallback(async () => {
+    if (isSigningIn) return;
+    setSignInFailed(false);
     console.log('[SettingsScreen] ========== SIGN-IN INITIATED ==========');
-    console.log('[SettingsScreen] Current user before sign-in:', user ? {
-      uid: user.uid,
-      isAnonymous: user.isAnonymous,
-      displayName: user.displayName,
-      email: user.email
-    } : 'No user');
-    
     setIsSigningIn(true);
-    const provider = new GoogleAuthProvider();
-    
     logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
-    
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        console.log('[SettingsScreen] ✅ Google Sign-In successful:', {
-          uid: result.user.uid,
-          displayName: result.user.displayName,
-          email: result.user.email,
-          isAnonymous: result.user.isAnonymous
-        });
-        console.log('[SettingsScreen] AuthContext should update automatically via onAuthStateChanged');
-        
-        if (user?.isAnonymous) {
-          // The anonymous account will be automatically linked to the signed-in account
-          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
-          console.log('[SettingsScreen] Linked anonymous account with Google');
-        } else {
-          logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
-          console.log('[SettingsScreen] Signed in with Google');
-        }
-        // Removed redundant success alert - the UI will update automatically
-      })
-      .catch((error) => {
-        console.error('[SettingsScreen] ❌ Google Sign-In error:', error.code, error.message);
-        console.error('[SettingsScreen] Sign-in error details:', {
-          code: error.code,
-          message: error.message,
-          name: error.name
-        });
-        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, { 
-          method: 'google', 
-          error: error.message 
-        });
-        Alert.alert('Sign In Error', error.message || 'Failed to sign in with Google');
-      })
-      .finally(() => {
-        setIsSigningIn(false);
+    try {
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return;
+      if (user?.isAnonymous) {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_UP_SUCCESS, { method: 'google' });
+      } else {
+        logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
+      }
+    } catch (error: any) {
+      console.error('[SettingsScreen] ❌ Google Sign-In error:', error.code, error.message);
+      logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_FAILURE, {
+        method: 'google',
+        error: error.message,
       });
-  }, [auth, user]);
+      setSignInFailed(true);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [auth, user, isSigningIn]);
 
   const getPlanDisplayName = (plan: string) => formatPlanDisplayName(plan);
 
@@ -335,6 +312,7 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
           )}
+          {(!user || user.isAnonymous) && signInFailed && <SignInError onRetry={handleSignIn} disabled={isSigningIn} />}
         </View>
       </View>
     </ScrollView>

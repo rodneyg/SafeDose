@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import type { LucideIcon } from 'lucide-react-native';
+import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Camera, History, MessageCircle, Book } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
 
-  const QuickAction = ({ icon: Icon, title, route }) => (
+  const QuickAction = ({ icon: Icon, title, route }: { icon: LucideIcon; title: string; route: Href }) => (
     <TouchableOpacity
       style={styles.actionButton}
       onPress={() => router.push(route)}>

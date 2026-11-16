@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { onAuthStateChanged, signInAnonymously, signOut, User, Auth } from 'firebase/auth';
 import { ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '@/lib/firebase'; // Initialized auth instance
+import { getAuthInstance } from '@/lib/firebase';
+import { completeGoogleRedirect } from '@/lib/googleAuth';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
 interface AuthContextType {
@@ -10,14 +11,17 @@ interface AuthContextType {
   auth: Auth;
   logout: () => Promise<void>;
   isSigningOut: boolean;
+  hasSignedOut?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = getAuthInstance();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [hasSignedOut, setHasSignedOut] = useState(false);
   const isSigningOutRef = useRef(false);
   const isSigningInAnonymouslyRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[AuthContext] Calling Firebase signOut...');
       await signOut(auth);
+      // Guest auth state alone never means a logout occurred.
+      setHasSignedOut(true);
       console.log('[AuthContext] Firebase signOut completed successfully');
       
       console.log('[AuthContext] Clearing user state...');
@@ -71,8 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Clearing cached data...');
       try {
         // Clear any cached user data from local storage (web)
+        // Keep onboardingComplete and userProfile so this device does not restart
+        // onboarding after logout. Usage counters can reset with the session.
         if (typeof window !== 'undefined' && window.localStorage) {
-          const keysToRemove = ['userProfile', 'usage', 'preferences'];
+          const keysToRemove = ['usage', 'preferences'];
           keysToRemove.forEach(key => {
             localStorage.removeItem(key);
             console.log(`[AuthContext] Cleared localStorage key: ${key}`);
@@ -80,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Clear any cached user data from AsyncStorage (React Native)
-        const asyncKeysToRemove = ['userProfile', 'usage', 'preferences', 'onboardingComplete'];
+        const asyncKeysToRemove = ['usage', 'preferences'];
         await Promise.all(
           asyncKeysToRemove.map(async (key) => {
             try {
@@ -104,9 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AuthContext] ❌ Error signing out:', error);
       console.error('[AuthContext] Error details:', {
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'No error code',
-        name: error?.name || 'Unknown error type'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code',
+        name: error instanceof Error ? error.name : 'Unknown error type'
       });
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
@@ -128,8 +136,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSigningOut]);
 
   useEffect(() => {
-    // Subscribe to auth state changes on the single `auth` instance
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    let cancelled = false;
+    let unsubscribe: undefined | (() => void);
+
+    const startAuth = async () => {
+      // Finish any Google redirect before creating an anonymous session, otherwise
+      // a post-sign-in reload can overwrite the signed-in user and leave home stale.
+      try {
+        const redirect = await completeGoogleRedirect(auth);
+        if (cancelled) return;
+        if (redirect?.user) {
+          console.log('[AuthContext] Restored Google redirect result', {
+            uid: redirect.user.uid,
+            isAnonymous: redirect.user.isAnonymous,
+          });
+          setUser(redirect.user);
+          setIsSigningOut(false);
+          isSigningOutRef.current = false;
+          isSigningInAnonymouslyRef.current = false;
+        }
+      } catch (error) {
+        console.warn('[AuthContext] Failed to complete Google redirect', error);
+      }
+      if (cancelled) return;
+
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       console.log('[AuthContext] ========== AUTH STATE CHANGED ==========');
       console.log('[AuthContext] New user state:', firebaseUser ? {
         uid: firebaseUser.uid,
@@ -171,6 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isAnonymous: firebaseUser.isAnonymous
         });
         setUser(firebaseUser);
+        if (!firebaseUser.isAnonymous) setHasSignedOut(false);
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
         isSigningOutRef.current = false;
@@ -200,8 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .catch((error) => {
               console.error('[AuthContext] ❌ Error signing in anonymously:', error);
               console.error('[AuthContext] Anonymous sign-in error details:', {
-                message: error?.message || 'Unknown error',
-                code: error?.code || 'No error code'
+                message: error instanceof Error ? error.message : 'Unknown error',
+                code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
               });
               isSigningInAnonymouslyRef.current = false;
             });
@@ -226,8 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   .catch((error) => {
                     console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
                     console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
-                      message: error?.message || 'Unknown error',
-                      code: error?.code || 'No error code'
+                      message: error instanceof Error ? error.message : 'Unknown error',
+                      code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
                     });
                     isSigningInAnonymouslyRef.current = false;
                     // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck
@@ -249,10 +281,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Setting loading to false');
       setLoading(false);
       console.log('[AuthContext] ========== AUTH STATE CHANGE COMPLETE ==========');
-    });
+      });
+    };
+
+    startAuth();
 
     return () => {
-      unsubscribe();
+      cancelled = true;
+      unsubscribe?.();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -269,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, auth, logout, isSigningOut }}>
+    <AuthContext.Provider value={{ user, auth, logout, isSigningOut, hasSignedOut }}>
       {children}
     </AuthContext.Provider>
   );

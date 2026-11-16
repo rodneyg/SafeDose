@@ -38,7 +38,7 @@ export default function ConcentrationInputStep({
 
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
-      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 4: Enter Concentration</Text>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Concentration</Text>
       <Text style={styles.label}>Concentration Amount:</Text>
       <TextInput
         style={[styles.input, isMobileWeb && styles.inputMobile]}

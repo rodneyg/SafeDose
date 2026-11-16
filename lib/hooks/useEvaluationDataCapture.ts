@@ -237,7 +237,7 @@ export function useEvaluationDataCapture() {
       
       // Filter by quality score and convert to evaluation format
       const highQualityData = dataList
-        .filter(point => point.evaluationMetadata.qualityScore >= minQualityScore)
+        .filter(point => point.evaluationMetadata.qualityScore !== undefined && point.evaluationMetadata.qualityScore >= minQualityScore)
         .map(point => ({
           id: point.id,
           category: point.userIntent === 'scan' ? 'ai_scanning' : 'dose_calculation',
@@ -285,9 +285,9 @@ export function useEvaluationDataCapture() {
           manual_entry: dataList.filter(d => d.userIntent === 'manual_entry').length
         },
         byQuality: {
-          high: dataList.filter(d => d.evaluationMetadata.qualityScore >= 0.8).length,
-          medium: dataList.filter(d => d.evaluationMetadata.qualityScore >= 0.6).length,
-          low: dataList.filter(d => d.evaluationMetadata.qualityScore < 0.6).length
+          high: dataList.filter(d => d.evaluationMetadata.qualityScore !== undefined && d.evaluationMetadata.qualityScore >= 0.8).length,
+          medium: dataList.filter(d => d.evaluationMetadata.qualityScore !== undefined && d.evaluationMetadata.qualityScore >= 0.6).length,
+          low: dataList.filter(d => d.evaluationMetadata.qualityScore !== undefined && d.evaluationMetadata.qualityScore < 0.6).length
         },
         recent: dataList.filter(d => d.timestamp > weekAgo).length
       };

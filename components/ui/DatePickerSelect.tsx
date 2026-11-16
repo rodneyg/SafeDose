@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Platform, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import { ChevronDown } from 'lucide-react-native';
 import { isMobileWeb } from '@/lib/utils';
@@ -23,6 +23,44 @@ export default function DatePickerSelect({
   disabled = false,
   error = false
 }: DatePickerSelectProps) {
+  const [open, setOpen] = useState(false);
+  // A modal keeps the option list outside sibling controls' stacking contexts.
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
+        <Text style={styles.label}>{label}</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ disabled, expanded: open }}
+          disabled={disabled}
+          style={[styles.pickerContainer, disabled && styles.pickerContainerDisabled]}
+          onPress={() => setOpen(true)}
+        >
+          <Text style={styles.pickerInput}>{items.find(item => item.value === value)?.label || placeholder}</Text>
+        </TouchableOpacity>
+        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+          <View style={styles.overlay}>
+            <View style={styles.options} accessibilityViewIsModal>
+              <Text style={styles.label}>Select {label.toLowerCase()}</Text>
+              <ScrollView style={{ maxHeight: 320 }}>
+                {items.map(item => (
+                  <TouchableOpacity key={item.value} accessibilityRole="button"
+                    accessibilityLabel={item.label} accessibilityState={{ selected: item.value === value }}
+                    onPress={() => { onValueChange(item.value); setOpen(false); }}>
+                    <Text style={styles.pickerInput}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setOpen(false)}>
+                <Text style={styles.pickerInput}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[
@@ -62,6 +100,7 @@ export default function DatePickerSelect({
             ],
             inputWeb: [
               styles.pickerInput,
+              styles.pickerInputWeb,
               isMobileWeb && styles.pickerInputMobile,
               disabled && styles.pickerInputDisabled
             ],
@@ -85,6 +124,8 @@ export default function DatePickerSelect({
 }
 
 const styles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  options: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, width: '100%', maxWidth: 350, maxHeight: '85%' },
   container: {
     marginBottom: 16,
   },
@@ -122,6 +163,11 @@ const styles = StyleSheet.create({
     paddingRight: 40,
     color: '#000000',
     fontWeight: '500',
+  },
+  pickerInputWeb: {
+    position: 'relative',
+    width: '100%',
+    height: 54,
   },
   pickerInputDisabled: {
     color: '#8E8E93',

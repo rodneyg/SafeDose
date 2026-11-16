@@ -43,7 +43,7 @@ export default function MedicationSourceStep({
   
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Step 2: Medication Details</Text>
+      <Text style={styles.title}>Medication Details</Text>
       <TextInput
         style={styles.input}
         placeholder="Substance Name (Optional)"
