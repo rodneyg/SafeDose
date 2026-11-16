@@ -62,6 +62,7 @@ export default function DatePickerSelect({
             ],
             inputWeb: [
               styles.pickerInput,
+              styles.pickerInputWeb,
               isMobileWeb && styles.pickerInputMobile,
               disabled && styles.pickerInputDisabled
             ],
@@ -122,6 +123,11 @@ const styles = StyleSheet.create({
     paddingRight: 40,
     color: '#000000',
     fontWeight: '500',
+  },
+  pickerInputWeb: {
+    position: 'relative',
+    width: '100%',
+    height: 54,
   },
   pickerInputDisabled: {
     color: '#8E8E93',

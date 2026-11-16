@@ -181,7 +181,7 @@ export default function SettingsScreen() {
           method: 'google', 
           error: error.message 
         });
-        Alert.alert('Sign In Error', error.message || 'Failed to sign in with Google');
+        Alert.alert('Sign In Error', 'Could not sign in with Google. Please try again.');
       })
       .finally(() => {
         setIsSigningIn(false);

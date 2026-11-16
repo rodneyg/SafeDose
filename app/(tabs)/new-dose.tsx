@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
 import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
@@ -37,7 +38,7 @@ export default function NewDoseScreen() {
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
-  const [isScreenActive, setIsScreenActive] = useState(true);
+  const isScreenActive = useIsFocused();
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
@@ -162,18 +163,20 @@ export default function NewDoseScreen() {
     doseCalculator.setScreenStep(step);
   }, [doseCalculator, setNavigatingFromIntro]);
   
+  const { stateHealth: focusStateHealth, screenStep: focusScreenStep,
+    resetFullForm: resetOnFocus, setScreenStep: setStepOnFocus } = doseCalculator;
+
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
-      setIsScreenActive(true);
-      
+      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: focusScreenStep });
+
       // Don't reset state during initial render or when navigating from intro
       if (hasInitializedAfterNavigation && !navigatingFromIntro) {
-        if (doseCalculator.stateHealth === 'recovering') {
+        if (focusStateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
-          doseCalculator.resetFullForm();
-          doseCalculator.setScreenStep('intro');
+          resetOnFocus();
+          setStepOnFocus('intro');
         }
       } else {
         setHasInitializedAfterNavigation(true);
@@ -186,12 +189,7 @@ export default function NewDoseScreen() {
         }, 500); // Short delay to ensure navigation completes
       }
       
-      return () => {
-        // Cleanup when screen is unfocused
-        console.log('[NewDoseScreen] Screen unfocused');
-        setIsScreenActive(false);
-      };
-    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
+    }, [hasInitializedAfterNavigation, focusStateHealth, focusScreenStep, resetOnFocus, setStepOnFocus, navigatingFromIntro])
   );
   const {
     screenStep,
@@ -964,6 +962,9 @@ export default function NewDoseScreen() {
   }, []);
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
+
+  // Tabs retain mounted screens. Hide the entire dose flow and its modals on blur.
+  if (!isScreenActive) return null;
 
   return (
     <View style={styles.container}>

@@ -1,7 +1,8 @@
+import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Check, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProfile } from '@/contexts/UserProfileContext';
@@ -16,11 +17,7 @@ export default function UserTypeSegmentation() {
   const { user } = useAuth();
   const { saveProfile } = useUserProfile();
   const { submitOnboardingIntent } = useOnboardingIntentStorage();
-  const { age, limitedFunctionality, reason } = useLocalSearchParams<{ 
-    age: string;
-    limitedFunctionality: string;
-    reason: string;
-  }>();
+  const { details: { age, birthDate, limitedFunctionality } } = useOnboardingDetails();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<UserProfileAnswers>({
     isLicensedProfessional: null,
@@ -29,8 +26,8 @@ export default function UserTypeSegmentation() {
     isCosmeticUse: null,
     isPerformanceUse: null,
     isRecoveryUse: null,
-    age: age ? parseInt(age) : null,
-    birthDate: null,
+    age,
+    birthDate,
   });
 
   // Log analytics when step starts
@@ -507,7 +504,7 @@ export default function UserTypeSegmentation() {
         <Animated.View entering={FadeIn.delay(100).duration(800)} style={[styles.header, isMobileWeb && styles.headerMobile]}>
           <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Let's Personalize Your Experience</Text>
           <Text style={[styles.subtitle, isMobileWeb && styles.subtitleMobile]}>
-            Step {currentStep + 1} of 3
+            Setup question {currentStep + 1} of 3
           </Text>
           
           {/* Progress bar */}
@@ -525,7 +522,7 @@ export default function UserTypeSegmentation() {
         </Animated.View>
 
         {/* Limited Functionality Warning Banner */}
-        {limitedFunctionality === 'true' && (
+        {limitedFunctionality && (
           <Animated.View entering={FadeIn.delay(200)} style={[styles.warningBanner, isMobileWeb && styles.warningBannerMobile]}>
             <View style={styles.warningIcon}>
               <AlertTriangle size={18} color="#D97706" />
