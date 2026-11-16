@@ -139,7 +139,9 @@ describe('IntroScreen Sign Out Functionality', () => {
 
     // Should show signing out message
     expect(queryByText(/Signing Out/)).toBeTruthy();
-    expect(queryByText(/sign you in anonymously shortly/)).toBeTruthy();
+    expect(queryByText('Signing you out. Please wait.')).toBeTruthy();
+    expect(queryByText(/You've been signed out/)).toBeFalsy();
+    expect(queryByText(/Signed out successfully/)).toBeFalsy();
     
     // With our fix, this state should not persist indefinitely
     // The fallback timeout should prevent users from being stuck
