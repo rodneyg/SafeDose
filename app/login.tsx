@@ -32,7 +32,7 @@ export default function LoginScreen() {
         method: 'google',
         error: error.message,
       });
-      setError(error.message || 'Failed to sign in with Google');
+      setError('Could not sign in with Google. Please try again.');
       console.error('Google sign-in error:', error);
     }
   };

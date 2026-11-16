@@ -17,8 +17,6 @@ export function shouldFallbackToRedirect(error: unknown): boolean {
   const code = (error as { code?: string } | null)?.code || '';
   return [
     'auth/popup-blocked',
-    'auth/popup-closed-by-user',
-    'auth/cancelled-popup-request',
     'auth/operation-not-supported-in-this-environment',
   ].includes(code);
 }

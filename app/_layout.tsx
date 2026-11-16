@@ -1,6 +1,7 @@
 // app/_layout.tsx
 import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
+import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
@@ -30,7 +31,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <UserProfileProvider>
-        <Slot />
+        <OnboardingProvider>
+          <Slot />
+        </OnboardingProvider>
       </UserProfileProvider>
     </AuthProvider>
   );
