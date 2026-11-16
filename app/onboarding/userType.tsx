@@ -142,8 +142,12 @@ export default function UserTypeSegmentation() {
       // This happens first and independently of profile saving
       console.log('[UserType] Submitting onboarding intent data...');
       try {
-        await submitOnboardingIntent(answers);
-        console.log('[UserType] ✅ Onboarding intent data submitted');
+        const intentResult = await submitOnboardingIntent(answers);
+        if (intentResult === 'cloud') {
+          console.log('[UserType] ✅ Onboarding intent data submitted to Firestore');
+        } else {
+          console.warn('[UserType] Onboarding intent cloud submission unavailable:', intentResult);
+        }
       } catch (intentError) {
         console.warn('[UserType] ⚠️ Failed to submit onboarding intent data:', intentError);
         // Continue with onboarding even if intent submission fails

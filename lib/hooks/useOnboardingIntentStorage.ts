@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { collection } from 'firebase/firestore';
 import { addDocWithEnv } from '@/lib/firestoreWithEnv';
-import { db } from '@/lib/firebase';
+import { getDbInstance } from '@/lib/firebase';
 import { UserProfileAnswers } from '@/types/userProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export type OnboardingIntentStorageResult = 'cloud' | 'local' | 'failed';
 
 export interface OnboardingIntentData {
   timestamp: string;
@@ -54,30 +56,29 @@ const generateDeviceId = (): string => {
 
 export function useOnboardingIntentStorage() {
   // Submit onboarding intent data to Firestore
-  const submitOnboardingIntent = useCallback(async (answers: UserProfileAnswers): Promise<void> => {
-    try {
-      // Convert answers to concrete boolean values (handle null cases)
-      const intentData: OnboardingIntentData = {
-        timestamp: new Date().toISOString(),
+  const submitOnboardingIntent = useCallback(async (answers: UserProfileAnswers): Promise<OnboardingIntentStorageResult> => {
+    // Convert answers to concrete boolean values (handle null cases)
+    const intentData: OnboardingIntentData = {
+      timestamp: new Date().toISOString(),
+      isLicensedProfessional: answers.isLicensedProfessional ?? false,
+      isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
+      isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
+      isCosmeticUse: answers.isCosmeticUse ?? false,
+      isPerformanceUse: answers.isPerformanceUse ?? false,
+      user_segment: getUserSegment({
         isLicensedProfessional: answers.isLicensedProfessional ?? false,
         isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
-        isPersonalUse: answers.isPersonalUse ?? true, // Default to personal use if skipped
+        isPersonalUse: answers.isPersonalUse ?? true,
         isCosmeticUse: answers.isCosmeticUse ?? false,
         isPerformanceUse: answers.isPerformanceUse ?? false,
-        user_segment: getUserSegment({
-          isLicensedProfessional: answers.isLicensedProfessional ?? false,
-          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
-          isPersonalUse: answers.isPersonalUse ?? true,
-          isCosmeticUse: answers.isCosmeticUse ?? false,
-          isPerformanceUse: answers.isPerformanceUse ?? false,
-        }),
-        device_id: generateDeviceId(),
-      };
+      }),
+      device_id: generateDeviceId(),
+    };
 
-      console.log('[OnboardingIntent] Submitting intent data:', intentData);
-
+    try {
+      // Pass the real instance: the legacy db proxy fails Firebase SDK instance checks.
       // Save to Firestore (no authentication required)
-      const onboardingIntentCollection = collection(db, 'onboarding_intent_submissions');
+      const onboardingIntentCollection = collection(getDbInstance(), 'onboarding_intent_submissions');
       const docRef = await addDocWithEnv(onboardingIntentCollection, intentData);
       
       console.log('[OnboardingIntent] ✅ Intent data saved to Firestore with ID:', docRef.id);
@@ -101,33 +102,17 @@ export function useOnboardingIntentStorage() {
         console.warn('[OnboardingIntent] ⚠️ Failed to backup intent data locally:', localError);
         // Don't throw - Firestore save was successful
       }
+      return 'cloud';
     } catch (error) {
       console.error('[OnboardingIntent] ❌ Failed to submit intent data:', error);
       
       // Try to save to local storage as fallback
       try {
-        const fallbackData: OnboardingIntentData = {
-          timestamp: new Date().toISOString(),
-          isLicensedProfessional: answers.isLicensedProfessional ?? false,
-          isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
-          isPersonalUse: answers.isPersonalUse ?? true,
-          isCosmeticUse: answers.isCosmeticUse ?? false,
-          isPerformanceUse: answers.isPerformanceUse ?? false,
-          user_segment: getUserSegment({
-            isLicensedProfessional: answers.isLicensedProfessional ?? false,
-            isProfessionalAthlete: answers.isProfessionalAthlete ?? false,
-            isPersonalUse: answers.isPersonalUse ?? true,
-            isCosmeticUse: answers.isCosmeticUse ?? false,
-            isPerformanceUse: answers.isPerformanceUse ?? false,
-          }),
-          device_id: generateDeviceId(),
-        };
-
         const storageKey = 'onboarding_intent_fallback';
         const existingFallbacks = await AsyncStorage.getItem(storageKey);
         const fallbackList: OnboardingIntentData[] = existingFallbacks ? JSON.parse(existingFallbacks) : [];
         
-        fallbackList.push(fallbackData);
+        fallbackList.push(intentData);
         
         // Keep only the last 5 fallback submissions
         if (fallbackList.length > 5) {
@@ -135,11 +120,13 @@ export function useOnboardingIntentStorage() {
         }
         
         await AsyncStorage.setItem(storageKey, JSON.stringify(fallbackList));
-        console.log('[OnboardingIntent] ✅ Intent data saved to local fallback storage');
+        console.warn('[OnboardingIntent] Intent saved locally only; cloud submission failed');
+        return 'local';
       } catch (fallbackError) {
         console.error('[OnboardingIntent] ❌ Failed to save intent data to fallback storage:', fallbackError);
         // At this point, we've exhausted all options, but don't throw to avoid breaking onboarding
         console.warn('[OnboardingIntent] ⚠️ Intent data collection failed completely, but continuing onboarding');
+        return 'failed';
       }
     }
   }, []);
