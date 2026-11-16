@@ -1,5 +1,5 @@
-import { createMatchPath } from "../match-path-sync";
-import * as Tests from "./data/match-path-data";
+import { createMatchPath } from "tsconfig-paths/lib/match-path-sync";
+import * as Tests from "./tests/fixtures/tsconfig-paths/match-path-data";
 
 describe("match-path-sync", () => {
   Tests.tests.forEach((t) =>
