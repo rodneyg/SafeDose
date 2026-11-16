@@ -19,7 +19,7 @@
     "eval:vision": "tsc -p tsconfig.vision.json && node .eval-cache/evals/vision/run.js",
     "test:vision": "jest lib/scan evals/vision --runInBand",
     "typecheck:vision": "tsc --noEmit -p tsconfig.vision.json",
-    "test:dose-flow": "jest components/SAF137.test.tsx --runInBand",
+    "test:dose-flow": "jest components/SAF137.test.tsx components/SAF314.test.tsx --runInBand",
     "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
     "test:scan-api": "jest api/__tests__/analyze-scan.test.js lib/scan/__tests__/completeOnServer.test.ts --runInBand",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.js",

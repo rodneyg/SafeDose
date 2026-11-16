@@ -1,3 +1,4 @@
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
 import { formatDoseNumber } from '../lib/dosing';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -96,7 +97,7 @@ export default function PreDoseConfirmationStep({
           <View style={styles.errorContainer}>
             <Info color="#DC2626" size={16} />
             <Text style={styles.errorMessage}>
-              {calculationError}
+              {calculationErrorMessage(calculationError ?? '')}
             </Text>
           </View>
         )}
