@@ -4,7 +4,7 @@ import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithGoogle } from '../lib/googleAuth';
 import SyringeIllustration from './SyringeIllustration';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -105,10 +105,8 @@ export default function FinalResultDisplay({
   // Helper function to trigger Google sign-in
   const handleSignIn = useCallback(async (): Promise<boolean> => {
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return false;
       console.log('Google Sign-In OK:', result.user.uid);
       return true;
     } catch (error) {

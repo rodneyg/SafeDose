@@ -7,7 +7,7 @@ import IntroScreen from '../components/IntroScreen';
 jest.mock('firebase/auth', () => ({
   signOut: jest.fn(() => Promise.resolve()),
   signInAnonymously: jest.fn(() => Promise.resolve({ user: { uid: 'anon', isAnonymous: true } })),
-  onAuthStateChanged: jest.fn(),
+  getRedirectResult: jest.fn().mockResolvedValue(null), onAuthStateChanged: jest.fn(),
   GoogleAuthProvider: jest.fn(() => ({ setCustomParameters: jest.fn() })),
   signInWithPopup: jest.fn(() => Promise.resolve({ user: { uid: 'test', displayName: 'Test User', isAnonymous: false } })),
 }));
@@ -27,7 +27,7 @@ jest.mock('../lib/analytics', () => ({
   USER_PROPERTIES: { IS_ANONYMOUS: 'is_anonymous' },
 }));
 
-jest.mock('../lib/firebase', () => ({ auth: {} }));
+jest.mock('../lib/firebase', () => { const auth = {}; return { auth, getAuthInstance: () => auth }; });
 jest.mock('../contexts/UserProfileContext', () => ({
   useUserProfile: () => ({ disclaimerText: 'Test disclaimer', profile: null, isLoading: false }),
 }));
@@ -75,6 +75,7 @@ describe('Login and Logout Issues', () => {
         <TestComponent />
       </AuthProvider>
     );
+    await act(async () => {}); // Finish redirect restoration before auth events.
 
     // Initial state: anonymous user
     act(() => {
@@ -128,6 +129,7 @@ describe('Login and Logout Issues', () => {
         <TestComponent />
       </AuthProvider>
     );
+    await act(async () => {}); // Finish redirect restoration before auth events.
 
     // Start with logged-in user
     act(() => {
@@ -187,6 +189,7 @@ describe('Login and Logout Issues', () => {
         <TestComponent />
       </AuthProvider>
     );
+    await act(async () => {}); // Finish redirect restoration before auth events.
 
     // Start with logged-in user
     act(() => {

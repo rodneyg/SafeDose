@@ -4,9 +4,9 @@ import { onAuthStateChanged, signOut, signInAnonymously } from 'firebase/auth';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 jest.mock('firebase/auth', () => ({
-  onAuthStateChanged: jest.fn(), signOut: jest.fn(), signInAnonymously: jest.fn(),
+  getRedirectResult: jest.fn().mockResolvedValue(null), onAuthStateChanged: jest.fn(), signOut: jest.fn(), signInAnonymously: jest.fn(),
 }));
-jest.mock('../lib/firebase', () => ({ auth: {} }));
+jest.mock('../lib/firebase', () => { const auth = {}; return { auth, getAuthInstance: () => auth }; });
 jest.mock('../lib/analytics', () => ({
   logAnalyticsEvent: jest.fn(), setAnalyticsUserProperties: jest.fn(),
   ANALYTICS_EVENTS: { LOGOUT: 'logout' }, USER_PROPERTIES: { IS_ANONYMOUS: 'is_anonymous' },
@@ -16,7 +16,7 @@ let authStateCallback: (user: any) => void;
 let state: ReturnType<typeof useAuth>;
 function Probe() { state = useAuth(); return null; }
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks();
   jest.useFakeTimers();
   (onAuthStateChanged as jest.Mock).mockImplementation((auth, callback) => {
@@ -26,6 +26,7 @@ beforeEach(() => {
   (signOut as jest.Mock).mockResolvedValue(undefined);
   (signInAnonymously as jest.Mock).mockResolvedValue({ user: { uid: 'anon', isAnonymous: true } });
   render(<AuthProvider><Probe /></AuthProvider>);
+  await act(async () => {}); // Finish redirect restoration before auth events.
 });
 afterEach(() => { jest.useRealTimers(); });
 

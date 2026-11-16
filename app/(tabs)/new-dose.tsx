@@ -27,10 +27,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
+import { useWebOffline } from '../../lib/hooks/useWebOffline';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
+  const offline = useWebOffline();
   const { user } = useAuth();
   const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
@@ -284,6 +286,12 @@ export default function NewDoseScreen() {
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
   } = doseCalculator;
+
+  useEffect(() => {
+    if (offline && (screenStep === 'scan' || screenStep === 'beforeFirstScan')) {
+      setScreenStep('manualEntry');
+    }
+  }, [offline, screenStep, setScreenStep]);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
@@ -732,6 +740,10 @@ export default function NewDoseScreen() {
   };
 
   const handleScanAttempt = async () => {
+    if (offline) {
+      setScanError('Photo checks need internet. Use manual entry while offline.');
+      return;
+    }
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
     // Don't proceed if already processing
@@ -967,6 +979,11 @@ export default function NewDoseScreen() {
 
   return (
     <View style={styles.container}>
+      {offline && (
+        <Text accessibilityRole="alert" style={{ padding: 12, color: '#333333', backgroundColor: '#FFF3CD' }}>
+          Offline. Manual entry is available. Photo checks and account sync need internet.
+        </Text>
+      )}
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
@@ -1012,7 +1029,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
-          onScanPress={doseCalculator.handleScanNavigation}
+          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
         />
       )}
       {screenStep === 'beforeFirstScan' && (
