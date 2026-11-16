@@ -13,7 +13,7 @@ jest.mock('react-native', () => ({
 jest.mock('firebase/auth', () => ({
   signOut: jest.fn(),
   signInAnonymously: jest.fn(),
-  onAuthStateChanged: jest.fn(),
+  getRedirectResult: jest.fn().mockResolvedValue(null), onAuthStateChanged: jest.fn(),
 }));
 
 // Mock analytics
@@ -29,9 +29,10 @@ jest.mock('@/lib/analytics', () => ({
 }));
 
 // Mock Firebase config
-jest.mock('@/lib/firebase', () => ({
-  auth: {},
-}));
+jest.mock('@/lib/firebase', () => {
+  const auth = {};
+  return { auth, getAuthInstance: () => auth };
+});
 
 const mockSignOut = signOut as jest.MockedFunction<typeof signOut>;
 const mockSignInAnonymously = signInAnonymously as jest.MockedFunction<typeof signInAnonymously>;
@@ -43,7 +44,7 @@ describe('AuthContext Sign Out Functionality', () => {
   let unsubscribeFn: jest.Mock;
   let renderer: ReactTestRenderer;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     
@@ -57,7 +58,7 @@ describe('AuthContext Sign Out Functionality', () => {
     
     mockSignOut.mockResolvedValue();
     mockSignInAnonymously.mockResolvedValue({} as any);
-    act(() => { renderer = create(<AuthProvider><></></AuthProvider>); });
+    await act(async () => { renderer = create(<AuthProvider><></></AuthProvider>); });
   });
 
   afterEach(() => {
