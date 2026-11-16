@@ -27,7 +27,6 @@ jest.mock('./TotalAmountInputStep', () => 'TotalAmountInputStep');
 jest.mock('./ReconstitutionStep', () => 'ReconstitutionStep');
 jest.mock('./SyringeStep', () => 'SyringeStep');
 jest.mock('./SyringeIllustration', () => 'SyringeIllustration');
-jest.mock('./CustomProgressBar', () => 'CustomProgressBar');
 
 let renderer: ReactTestRenderer;
 beforeEach(() => { jest.spyOn(console, 'log').mockImplementation(() => {}); });
@@ -197,6 +196,10 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
     'syringe', 'preDoseConfirmation', 'finalResult'];
   const expectStep = (index: number) => {
     expect(state!.manualStep).toBe(steps[index]);
+    const labels = renderer.root.findAllByType('Text' as any).map(node =>
+      React.Children.toArray(node.props.children).join(''));
+    expect(labels).toContain(`Step ${index + 1} of 7`);
+    expect(labels.some(label => /Step \d+ of (6|8)/.test(label))).toBe(false);
     expect(renderer.root.findByType(CustomProgressBar).props).toEqual({ currentStep: index + 1, totalSteps: 7 });
     expect(getManualProgress(state!.manualStep, state!.medicationInputType)).toEqual({ currentStep: index + 1, totalSteps: 7 });
   };
@@ -229,6 +232,11 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
   next('Calculate dose');
   expectStep(5);
   expect(state!.calculationError).toBeNull();
+  const reviewText = renderer.root.findAllByType('Text' as any).map(node =>
+    React.Children.toArray(node.props.children).join(''));
+  const expectedStrength = inputType === 'concentration' ? '10' : '10.000';
+  expect(reviewText).toContain(`Strength: ${expectedStrength} mg/ml`);
+  expect(reviewText).toContain(`${expectedStrength} mg/ml`);
   next('Proceed to result');
   expectStep(6);
   for (let index = 5; index >= 0; index--) {

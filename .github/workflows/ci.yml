@@ -93,6 +93,19 @@ jobs:
       - run: npm ci
       - run: npx jest --runInBand
 
+  demo-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Headless seven-step, strength, and photo-error regressions
+        run: npm run test:demo-leftovers
+
   privacy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
