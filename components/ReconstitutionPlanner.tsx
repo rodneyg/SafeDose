@@ -76,7 +76,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
         setIsProcessing,
         setProcessingMessage: () => {}, // We handle processing state in the component
         setScanError: setError,
-        incrementScansUsed: () => {}, // This is a planning tool, not counted against scans
+        incrementScansUsed: async () => {}, // This is a planning tool, not counted against scans
       });
 
       if (result?.vial) {

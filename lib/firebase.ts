@@ -30,9 +30,9 @@ const getFirebaseApp = (): FirebaseApp => {
     } catch (error) {
       console.error('[Firebase] Failed to initialize Firebase app:', error);
       console.error('[Firebase] Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
+        message: error instanceof Error ? error.message : undefined,
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined
       });
       throw error;
     }
@@ -82,9 +82,9 @@ export const getAnalyticsInstance = (): Analytics | undefined => {
     } catch (error) {
       console.error('[Firebase] Analytics initialization failed:', error);
       console.error('[Firebase] Analytics error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
+        message: error instanceof Error ? error.message : undefined,
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined
       });
       return undefined;
     }

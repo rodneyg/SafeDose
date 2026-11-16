@@ -19,7 +19,7 @@ export default function Welcome() {
   const [signInError, setSignInError] = useState('');
 
   const handleStart = useCallback(() => {
-    router.push('/onboarding/age');
+    router.navigate('/onboarding/age');
   }, [router]);
 
   const handleSignIn = useCallback(async () => {
@@ -171,6 +171,21 @@ const styles = StyleSheet.create({
   disclaimer: {
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  signInLink: {
+    padding: 12,
+    minHeight: 44,
+  },
+  signInLinkText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  signInError: {
+    color: '#FFB4B4',
+    fontSize: 15,
     textAlign: 'center',
   },
   // Mobile-specific styles

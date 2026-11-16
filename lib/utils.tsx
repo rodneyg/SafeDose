@@ -20,4 +20,6 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export { syringeOptions, insulinVolumes, standardVolumes } from './dosing';
 
-export function cn(...inputs: string[]) {   return inputs.join(' ') }
+export function cn(...inputs: (string | null | undefined | false)[]) {
+  return inputs.filter(Boolean).join(' ');
+}

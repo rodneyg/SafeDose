@@ -1,3 +1,7 @@
+jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
+jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
+jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ getDoseLogHistory: jest.fn(async () => []) }) }));
 import React from 'react';
 import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';

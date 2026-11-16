@@ -1,3 +1,4 @@
+import { hasScanCapacity } from '../../lib/plans';
 import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
 import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -303,6 +304,7 @@ export default function NewDoseScreen() {
   const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
+  const webCameraRequestInFlight = useRef(false);
 
   // Image preview modal state
   const [showImagePreview, setShowImagePreview] = useState(false);
@@ -345,7 +347,8 @@ export default function NewDoseScreen() {
 
   // Define requestWebCameraPermission before the useEffect that uses it
   const requestWebCameraPermission = useCallback(async () => {
-    if (!isWeb) return;
+    if (!isWeb || webCameraRequestInFlight.current) return;
+    webCameraRequestInFlight.current = true;
     
     try {
       // Release any existing stream first to avoid multiple active streams
@@ -370,11 +373,10 @@ export default function NewDoseScreen() {
       
       // Permission granted - we got a stream
       console.log("[WebCamera] Camera permission granted");
+      // Publish the stream before state updates can trigger the camera effect.
+      webCameraStreamRef.current = stream;
       setPermissionStatus('granted');
       setMobileWebPermissionDenied(false);
-      
-      // Store the stream for later use instead of stopping it
-      webCameraStreamRef.current = stream;
       
       // Check if torch is supported
       const videoTrack = stream.getVideoTracks()[0];
@@ -398,6 +400,8 @@ export default function NewDoseScreen() {
       
       setPermissionStatus('denied');
       setMobileWebPermissionDenied(true);
+    } finally {
+      webCameraRequestInFlight.current = false;
     }
   }, [isWeb]);
 
@@ -419,11 +423,8 @@ export default function NewDoseScreen() {
       setPermissionStatus('undetermined');
       setMobileWebPermissionDenied(false);
       
-      // Small delay to ensure cleanup completes before re-requesting
-      setTimeout(() => {
-        console.log('[NewDoseScreen] 📸 Requesting fresh camera permission after reset');
-        requestWebCameraPermission();
-      }, 200);
+      // The camera effect below owns the fresh request. A second delayed
+      // request would stop the new preview stream and acquire another one.
     }
     
     setLastScreenStep(screenStep);
@@ -750,6 +751,12 @@ export default function NewDoseScreen() {
       return;
     }
     
+    // A missing guest session is not an exhausted scan allowance.
+    if (!user?.uid) {
+      setScanError('Could not start the scan. Please try again in a moment.');
+      return;
+    }
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -820,15 +827,10 @@ export default function NewDoseScreen() {
         // If no captured image, proceed directly (fallback for older flow)
         applyScanResults(result);
       } else {
-        console.log('[Process] Scan failed, transitioning to manual entry with defaults');
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
-        setManualSyringe({ type: 'Standard', volume: '3 ml' });
-        setSubstanceName('');
-        setMedicationInputType('totalAmount');
-        setConcentrationAmount('');
-        setTotalAmount('');
-        setScreenStep('manualEntry');
-        setManualStep('dose');
+        // The capture utility supplies a specific error. Keep it visible on Scan;
+        // never replace the user's form with defaults after a failed photo.
+        setScanError(error => error || 'We could not read this photo. Try another photo or enter the details manually.');
       }
     } catch (error) {
       console.error('handleScanAttempt: Error=', error);
@@ -847,21 +849,7 @@ export default function NewDoseScreen() {
       // Ensure isProcessing is reset in case of errors
       setIsProcessing(false);
       
-      // Set an informative error message
-      let errorMessage = 'Failed to process scan';
-      if (error instanceof Error) {
-        errorMessage = `Scan error: ${error.message}`;
-      }
-      setScanError(errorMessage);
-      
-      // Still provide a graceful fallback to manual entry
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSubstanceName('');
-      setMedicationInputType('totalAmount');
-      setConcentrationAmount('');
-      setTotalAmount('');
-      setScreenStep('manualEntry');
-      setManualStep('dose');
+      setScanError('We could not process this photo. Please try again or enter the details manually.');
     }
   };
 
@@ -869,7 +857,7 @@ export default function NewDoseScreen() {
     console.log('handleTryAIScan: Called from teaser');
     
     // Check if user has remaining scans
-    const canProceed = await doseCalculator.handleCapture();
+    const canProceed = hasScanCapacity(usageData.scansUsed, usageData.limit);
     if (!canProceed) {
       console.log('handleTryAIScan: Showing LimitModal');
       logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
@@ -882,7 +870,7 @@ export default function NewDoseScreen() {
     
     // Transition to scan screen
     setScreenStep('scan');
-  }, [doseCalculator, setScreenStep]);
+  }, [usageData.scansUsed, usageData.limit, setScreenStep]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;

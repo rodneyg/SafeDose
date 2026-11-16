@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
@@ -17,6 +17,7 @@ export function useBeforeFirstScanPrompt() {
     showCount: 0,
     dontShowAgain: false,
   });
+  const stateRef = useRef(state);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Load the prompt state on mount
@@ -35,12 +36,14 @@ export function useBeforeFirstScanPrompt() {
         const showCount = showCountStored ? parseInt(showCountStored, 10) : 0;
         const dontShowAgain = dontShowStored === 'true';
         
-        setState({ showCount, dontShowAgain });
+        stateRef.current = { showCount, dontShowAgain };
+        setState(stateRef.current);
         console.log(`[BeforeFirstScan] Loaded state for ${userId}:`, { showCount, dontShowAgain });
       } catch (error) {
         console.error('[BeforeFirstScan] Error loading prompt state:', error);
         // Default to initial state if there's an error
-        setState({ showCount: 0, dontShowAgain: false });
+        stateRef.current = { showCount: 0, dontShowAgain: false };
+        setState(stateRef.current);
       } finally {
         setIsLoading(false);
       }
@@ -66,6 +69,8 @@ export function useBeforeFirstScanPrompt() {
         AsyncStorage.setItem(dontShowKey, newState.dontShowAgain.toString()),
       ]);
       
+      // Sequential async handlers can still hold callbacks from an older render.
+      stateRef.current = newState;
       setState(newState);
     } catch (error) {
       console.error('[BeforeFirstScan] Error saving prompt state:', error);
@@ -75,8 +80,8 @@ export function useBeforeFirstScanPrompt() {
   // Mark the prompt as shown (increment count)
   const markPromptAsShown = useCallback(async () => {
     const newState = {
-      ...state,
-      showCount: state.showCount + 1,
+      ...stateRef.current,
+      showCount: stateRef.current.showCount + 1,
     };
     
     await saveState(newState);
@@ -89,12 +94,12 @@ export function useBeforeFirstScanPrompt() {
     });
     
     console.log(`[BeforeFirstScan] Marked prompt as shown for ${user?.uid || 'anonymous'}, count: ${newState.showCount}`);
-  }, [state, saveState, user]);
+  }, [saveState, user]);
 
   // Mark as "don't show again"
   const markDontShowAgain = useCallback(async () => {
     const newState = {
-      ...state,
+      ...stateRef.current,
       dontShowAgain: true,
     };
     
@@ -104,11 +109,11 @@ export function useBeforeFirstScanPrompt() {
     logAnalyticsEvent(ANALYTICS_EVENTS.BEFORE_FIRST_SCAN_DONT_SHOW_AGAIN, {
       userId: user?.uid || 'anonymous',
       isAnonymous: !user || user.isAnonymous,
-      showCount: state.showCount,
+      showCount: newState.showCount,
     });
     
     console.log(`[BeforeFirstScan] Marked as don't show again for ${user?.uid || 'anonymous'}`);
-  }, [state, saveState, user]);
+  }, [saveState, user]);
 
   return {
     shouldShowPrompt,

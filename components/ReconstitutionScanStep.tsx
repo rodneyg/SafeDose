@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { CameraView, CameraPermissionStatus } from 'expo-camera';
+import { CameraView, PermissionResponse } from 'expo-camera';
 import { Camera, AlertCircle } from 'lucide-react-native';
 import { isMobileWeb } from '../lib/utils';
 
 interface Props {
   cameraRef: React.RefObject<CameraView>;
-  permission: any;
-  requestPermission: () => Promise<any>;
+  permission: PermissionResponse | null;
+  requestPermission: () => Promise<PermissionResponse>;
   isProcessing: boolean;
   error: string | null;
   onCapture: () => void;

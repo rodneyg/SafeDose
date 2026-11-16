@@ -1,126 +1,47 @@
-/**
- * Test file for Smart Upgrade Teaser UX in Manual Mode feature
- * Validates that the "Try AI Scan" teaser appears correctly after successful manual calculations
- */
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import FinalResultDisplay from './FinalResultDisplay';
 
-describe('Smart Upgrade Teaser UX', () => {
-  describe('Teaser visibility logic', () => {
-    const shouldShowScanTeaser = (props: {
-      lastActionType: 'manual' | 'scan' | null;
-      calculationError: string | null;
-      recommendedMarking: string | null;
-      usageData?: { scansUsed: number; limit: number; plan: string };
-      onTryAIScan?: () => void;
-    }) => {
-      const { lastActionType, calculationError, recommendedMarking, usageData, onTryAIScan } = props;
-      
-      return (
-        lastActionType === 'manual' && 
-        !calculationError && 
-        !!recommendedMarking && 
-        !!usageData &&
-        usageData.scansUsed < usageData.limit && 
-        !!onTryAIScan
-      );
-    };
+jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null, auth: {} }) }));
+jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: 'Verify your prescription' }) }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: jest.fn(), isLogging: false }) }));
 
-    it('should show teaser for manual users with successful calculation and remaining scans', () => {
-      const props = {
-        lastActionType: 'manual' as const,
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        usageData: { scansUsed: 2, limit: 3, plan: 'free' },
-        onTryAIScan: jest.fn()
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(true);
-    });
+const base: React.ComponentProps<typeof FinalResultDisplay> = {
+  calculationError: null, recommendedMarking: '2.5', doseValue: 5, unit: 'mg',
+  substanceName: 'Test Medication', manualSyringe: { type: 'Standard', volume: '3 ml' },
+  calculatedVolume: 2.5, handleStartOver: jest.fn(), setScreenStep: jest.fn(),
+  handleGoToFeedback: jest.fn(), lastActionType: 'manual', isMobileWeb: false,
+  usageData: { scansUsed: 2, limit: 3, plan: 'free' }, onTryAIScan: jest.fn(),
+};
 
-    it('should not show teaser for scan users', () => {
-      const props = {
-        lastActionType: 'scan' as const,
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        usageData: { scansUsed: 2, limit: 3, plan: 'free' },
-        onTryAIScan: jest.fn()
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(false);
-    });
+it('offers AI Scan after a successful manual calculation and invokes the scan handler', () => {
+  const onTryAIScan = jest.fn();
+  const screen = render(React.createElement(FinalResultDisplay, { ...base, onTryAIScan }));
+  expect(screen.getByText('Want to double-check with a vial/syringe photo?')).toBeTruthy();
+  fireEvent.press(screen.getByLabelText('Try AI Scan to double-check your calculation'));
+  expect(onTryAIScan).toHaveBeenCalledTimes(1);
+});
 
-    it('should not show teaser when there are calculation errors', () => {
-      const props = {
-        lastActionType: 'manual' as const,
-        calculationError: 'Invalid dose calculation',
-        recommendedMarking: null,
-        usageData: { scansUsed: 2, limit: 3, plan: 'free' },
-        onTryAIScan: jest.fn()
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(false);
-    });
+it.each<[string, Partial<React.ComponentProps<typeof FinalResultDisplay>>]>([
+  ['scan result', { lastActionType: 'scan' }],
+  ['no previous action', { lastActionType: null }],
+  ['calculation error', { calculationError: 'Invalid dose calculation', recommendedMarking: null }],
+  ['missing marking', { recommendedMarking: null }],
+  ['exhausted scans', { usageData: { scansUsed: 3, limit: 3, plan: 'free' } }],
+  ['over limit', { usageData: { scansUsed: 4, limit: 3, plan: 'free' } }],
+  ['missing usage data', { usageData: undefined }],
+  ['missing scan handler', { onTryAIScan: undefined }],
+])('hides the teaser for %s', (_name, overrides) => {
+  const screen = render(React.createElement(FinalResultDisplay, { ...base, ...overrides }));
+  expect(screen.queryByText('Try AI Scan')).toBeNull();
+  expect(screen.queryByText('Want to double-check with a vial/syringe photo?')).toBeNull();
+});
 
-    it('should not show teaser when no scans are remaining', () => {
-      const props = {
-        lastActionType: 'manual' as const,
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        usageData: { scansUsed: 3, limit: 3, plan: 'free' },
-        onTryAIScan: jest.fn()
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(false);
-    });
-
-    it('should not show teaser when usage data is not available', () => {
-      const props = {
-        lastActionType: 'manual' as const,
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        usageData: undefined,
-        onTryAIScan: jest.fn()
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(false);
-    });
-
-    it('should not show teaser when no scan handler is provided', () => {
-      const props = {
-        lastActionType: 'manual' as const,
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        usageData: { scansUsed: 2, limit: 3, plan: 'free' },
-        onTryAIScan: undefined
-      };
-      
-      expect(shouldShowScanTeaser(props)).toBe(false);
-    });
-  });
-
-  describe('Integration with existing flow', () => {
-    it('should preserve existing functionality when teaser is not shown', () => {
-      // This test ensures that when the teaser conditions are not met,
-      // the existing FinalResultDisplay behavior is unchanged
-      const mockProps = {
-        calculationError: null,
-        recommendedMarking: '2.5 ml',
-        doseValue: 5,
-        unit: 'mg' as const,
-        substanceName: 'Test Medication',
-        manualSyringe: { type: 'Standard' as const, volume: '3 ml' },
-        calculatedVolume: 2.5,
-        handleStartOver: jest.fn(),
-        setScreenStep: jest.fn(),
-        handleGoToFeedback: jest.fn(),
-        lastActionType: 'scan' as const, // This should prevent teaser from showing
-        isMobileWeb: false,
-        usageData: { scansUsed: 2, limit: 3, plan: 'free' },
-        onTryAIScan: jest.fn()
-      };
-
-      // The component should render normally without the teaser
-      // This would be tested in a React component test
-      expect(mockProps.lastActionType).toBe('scan');
-    });
-  });
+it('keeps result actions working when the teaser is hidden', () => {
+  const handleGoToFeedback = jest.fn();
+  const screen = render(React.createElement(FinalResultDisplay, { ...base, lastActionType: 'scan', handleGoToFeedback }));
+  expect(screen.getByText('Test Medication', { exact: false })).toBeTruthy();
+  fireEvent.press(screen.getByText('Done'));
+  fireEvent.press(screen.getByText('New Dose'));
+  expect(handleGoToFeedback.mock.calls).toEqual([['start_over'], ['new_dose']]);
 });

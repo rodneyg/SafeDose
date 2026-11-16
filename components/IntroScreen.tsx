@@ -1,3 +1,4 @@
+import SignInError from './SignInError';
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,11 +50,14 @@ export default function IntroScreen({
   applyLastDose,
   onScanPress,
 }: IntroScreenProps) {
-  const { user, auth, logout, isSigningOut } = useAuth();
+  const { user, auth, logout, isSigningOut, hasSignedOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
   const router = useRouter();
+
+  const [signInFailed, setSignInFailed] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   // State for logout functionality
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -161,6 +165,9 @@ export default function IntroScreen({
      HANDLERS
   ========================================================================= */
   const handleSignInPress = useCallback(async () => {
+    if (isSigningIn) return;
+    setSignInFailed(false);
+    setIsSigningIn(true);
     console.log('[IntroScreen] ========== SIGN-IN INITIATED ==========');
     console.log('[IntroScreen] Current user before sign-in:', user ? {
       uid: user.uid,
@@ -186,8 +193,11 @@ export default function IntroScreen({
       router.replace(route as any);
     } catch (error: any) {
       console.error('[IntroScreen] ❌ Google Sign-In error:', error.code, error.message);
+      setSignInFailed(true);
+    } finally {
+      setIsSigningIn(false);
     }
-  }, [auth, router, user]);
+  }, [auth, router, user, isSigningIn]);
 
   const handleUpgradePress = useCallback(() => {
     router.push('/pricing');
@@ -385,7 +395,7 @@ export default function IntroScreen({
             <View style={styles.signingOutCard}>
               <Text style={styles.signingOutTitle}>Signing Out</Text>
               <Text style={styles.signingOutText}>
-                You've been signed out. We'll sign you in anonymously shortly.
+                Signing you out. Please wait.
               </Text>
             </View>
           </View>
@@ -483,7 +493,7 @@ export default function IntroScreen({
               </TouchableOpacity>
 
               <View style={styles.scanStatusContainer}>
-                <Text style={styles.scanStatusText}>
+                <Text style={styles.scanStatusText} onPress={handleUpgradePress} accessibilityRole="link" accessibilityHint="View plans and get more scans">
                   {(() => {
                     const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
                     if (scansRemaining <= 0) {
@@ -515,19 +525,21 @@ export default function IntroScreen({
               {(user?.isAnonymous || !user) && (
                 <View style={styles.authSection}>
                   <Text style={styles.authPromptText}>
-                    Sign in to get more scans
+                    {hasSignedOut ? 'Signed out successfully. Sign in to get more scans' : 'Sign in to get more scans'}
                   </Text>
 
                   <TouchableOpacity
                     style={[styles.signInButton, isMobileWeb && styles.signInButtonMobile]}
                     onPress={handleSignInPress}
+                    disabled={isSigningIn}
                     accessibilityRole="button"
                     accessibilityLabel="Sign in with Google"
                     accessibilityHint="Sign in to get more scans"
                   >
                     <LogIn color="#10b981" size={16} />
-                    <Text style={styles.signInButtonText}>Sign In with Google</Text>
+                    <Text style={styles.signInButtonText}>{isSigningIn ? 'Signing In...' : 'Sign In with Google'}</Text>
                   </TouchableOpacity>
+                  {signInFailed && <SignInError onRetry={handleSignInPress} disabled={isSigningIn} />}
                 </View>
               )}
 

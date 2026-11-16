@@ -11,6 +11,7 @@ interface AuthContextType {
   auth: Auth;
   logout: () => Promise<void>;
   isSigningOut: boolean;
+  hasSignedOut?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [hasSignedOut, setHasSignedOut] = useState(false);
   const isSigningOutRef = useRef(false);
   const isSigningInAnonymouslyRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -64,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[AuthContext] Calling Firebase signOut...');
       await signOut(auth);
+      // Guest auth state alone never means a logout occurred.
+      setHasSignedOut(true);
       console.log('[AuthContext] Firebase signOut completed successfully');
       
       console.log('[AuthContext] Clearing user state...');
@@ -108,9 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AuthContext] ❌ Error signing out:', error);
       console.error('[AuthContext] Error details:', {
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'No error code',
-        name: error?.name || 'Unknown error type'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code',
+        name: error instanceof Error ? error.name : 'Unknown error type'
       });
       console.log('[AuthContext] Resetting isSigningOut to false due to error');
       setIsSigningOut(false);
@@ -198,6 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isAnonymous: firebaseUser.isAnonymous
         });
         setUser(firebaseUser);
+        if (!firebaseUser.isAnonymous) setHasSignedOut(false);
         console.log('[AuthContext] User state updated to new user');
         setIsSigningOut(false);
         isSigningOutRef.current = false;
@@ -227,8 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .catch((error) => {
               console.error('[AuthContext] ❌ Error signing in anonymously:', error);
               console.error('[AuthContext] Anonymous sign-in error details:', {
-                message: error?.message || 'Unknown error',
-                code: error?.code || 'No error code'
+                message: error instanceof Error ? error.message : 'Unknown error',
+                code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
               });
               isSigningInAnonymouslyRef.current = false;
             });
@@ -253,8 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   .catch((error) => {
                     console.error('[AuthContext] ❌ Error signing in anonymously after logout:', error);
                     console.error('[AuthContext] Post-logout anonymous sign-in error details:', {
-                      message: error?.message || 'Unknown error',
-                      code: error?.code || 'No error code'
+                      message: error instanceof Error ? error.message : 'Unknown error',
+                      code: error && typeof error === 'object' && 'code' in error ? error.code : 'No error code'
                     });
                     isSigningInAnonymouslyRef.current = false;
                     // If anonymous sign-in fails after logout, reset signing out state to prevent being stuck
@@ -300,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, auth, logout, isSigningOut }}>
+    <AuthContext.Provider value={{ user, auth, logout, isSigningOut, hasSignedOut }}>
       {children}
     </AuthContext.Provider>
   );
