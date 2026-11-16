@@ -49,7 +49,7 @@ export default function IntroScreen({
   applyLastDose,
   onScanPress,
 }: IntroScreenProps) {
-  const { user, auth, logout, isSigningOut } = useAuth();
+  const { user, auth, logout, isSigningOut, hasSignedOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
@@ -383,7 +383,7 @@ export default function IntroScreen({
             <View style={styles.signingOutCard}>
               <Text style={styles.signingOutTitle}>Signing Out</Text>
               <Text style={styles.signingOutText}>
-                You've been signed out. We'll sign you in anonymously shortly.
+                Signing you out. Please wait.
               </Text>
             </View>
           </View>
@@ -481,7 +481,7 @@ export default function IntroScreen({
               </TouchableOpacity>
 
               <View style={styles.scanStatusContainer}>
-                <Text style={styles.scanStatusText}>
+                <Text style={styles.scanStatusText} onPress={handleUpgradePress} accessibilityRole="link" accessibilityHint="View plans and get more scans">
                   {(() => {
                     const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
                     if (scansRemaining <= 0) {
@@ -513,7 +513,7 @@ export default function IntroScreen({
               {(user?.isAnonymous || !user) && (
                 <View style={styles.authSection}>
                   <Text style={styles.authPromptText}>
-                    Sign in to get more scans
+                    {hasSignedOut ? 'Signed out successfully. Sign in to get more scans' : 'Sign in to get more scans'}
                   </Text>
 
                   <TouchableOpacity
