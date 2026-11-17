@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js/pure";
 import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
 import { router } from "expo-router";
@@ -13,11 +13,6 @@ import {
   PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
   FREE_SCAN_LIMIT,
 } from "../lib/plans";
-
-// Initialize Stripe.js with the configuration, handling missing publishable key gracefully
-const stripePromise = stripeConfig.publishableKey
-  ? loadStripe(stripeConfig.publishableKey)
-  : null;
 
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -154,11 +149,16 @@ export default function PricingPage() {
         return;
       }
 
-      const stripe = await stripePromise;
-      console.log("Stripe instance:", stripe);
+      // Load only on checkout, with the rejection handler attached immediately.
+      let stripe;
+      try {
+        stripe = await loadStripe(stripeConfig.publishableKey);
+      } catch {
+        throw new Error("Checkout could not load. Disable your ad blocker or try another browser.");
+      }
       if (!stripe) {
         console.error("Stripe is not initialized");
-        setErrorMessage("Stripe is not initialized. Please try again later.");
+        setErrorMessage("Checkout could not load. Disable your ad blocker or try another browser.");
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
           plan: selectedPlan.id,
           error: 'Stripe not initialized'
