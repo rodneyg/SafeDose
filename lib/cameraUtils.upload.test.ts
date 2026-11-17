@@ -99,9 +99,13 @@ it.each([
   expect(jest.getTimerCount()).toBe(0);
 });
 
-it('reports the authored size limit message without uploading an oversized photo', async () => {
+it('opens manual entry without uploading or charging for an oversized photo', async () => {
   mockFile.size = 6 * 1024 * 1024;
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('Selected image exceeds the 5 MB limit. Please choose a smaller image.');
+  expect(options.setScanError).toHaveBeenLastCalledWith(SCAN_UNAVAILABLE_MESSAGE);
+  expect(options.onScanUnavailable).toHaveBeenCalledTimes(1);
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(options.incrementScansUsed).not.toHaveBeenCalled();
+  expect(jest.getTimerCount()).toBe(0);
   expect(fetch).not.toHaveBeenCalled();
 });
