@@ -1,5 +1,5 @@
 import { expect, test, type Request } from '@playwright/test';
-import path from 'node:path';
+import { generateSyntheticVial } from './synthetic-vial';
 import fs from 'node:fs/promises';
 
 test.skip(process.env.SAFEDOSE_PROD_E2E !== '1', 'Production requires explicit opt-in');
@@ -84,7 +84,7 @@ test('guest photo scan, manual calculation, and pricing', async ({ page, context
       const chooser = await chooserPromise;
       const responsePromise = page.waitForResponse(response =>
         new URL(response.url()).pathname === '/api/analyze-scan', { timeout: 90_000 });
-      await chooser.setFiles(path.join(__dirname, 'fixtures/synthetic-vial.png'));
+      await chooser.setFiles(await generateSyntheticVial(page));
       await screenshot('04-scan-processing');
       const response = await responsePromise;
       expect(response.status()).toBe(200);
