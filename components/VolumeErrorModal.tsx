@@ -1,3 +1,4 @@
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -34,7 +35,7 @@ export default function VolumeErrorModal({ visible, onClose, onReEnterVialData, 
         <View style={styles.modal}>
           <Text style={styles.title}>Warning: Unsafe Dose Volume</Text>
           <Text style={styles.message}>
-            {message?.replace('VOLUME_THRESHOLD_ERROR:', '') || 'This dose is outside of safe volume thresholds. Please verify vial concentration and protocol.'}
+            {(message && calculationErrorMessage(message)) || 'This dose is outside of safe volume thresholds. Please verify vial concentration and protocol.'}
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.reEnterButton]} onPress={handleReEnterVialData}>
