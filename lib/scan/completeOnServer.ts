@@ -1,3 +1,6 @@
+export const SCAN_UNAVAILABLE_MESSAGE = 'Photo scan is unavailable right now. Enter the values by hand.';
+export const SCAN_TIMEOUT_MS = 20000;
+
 const ANALYZE_PATH = '/api/analyze-scan';
 
 export function getScanApiUrl(): string {
@@ -9,33 +12,38 @@ export function getScanApiUrl(): string {
 
 /** Browser/native transport that never receives or stores an OpenAI key. */
 export async function completeScanOnServer(image: string, fetchImpl: typeof fetch = fetch): Promise<string> {
-  let response: Response;
+  let content: string;
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    response = await fetchImpl(getScanApiUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ image }),
-    });
+    // Include response-body reading in the deadline, and discard any late result.
+    const request = async (): Promise<string> => {
+      const response = await fetchImpl(getScanApiUrl(), {
+        signal: controller.signal,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ image }),
+      });
+      if (!response.ok) throw new Error(SCAN_UNAVAILABLE_MESSAGE);
+      const payload = await response.json();
+      if (typeof payload?.content !== 'string' || !payload.content.trim()) {
+        throw new Error(SCAN_UNAVAILABLE_MESSAGE);
+      }
+      return payload.content;
+    };
+    content = await Promise.race([
+      request(),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort();
+          reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+        }, SCAN_TIMEOUT_MS);
+      }),
+    ]);
   } catch {
-    throw new Error('Could not reach the scan service. Please try again.');
+    throw new Error(SCAN_UNAVAILABLE_MESSAGE);
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
-
-  let payload: { content?: unknown; error?: unknown } = {};
-  try {
-    payload = await response.json();
-  } catch {
-    payload = {};
-  }
-
-  if (!response.ok) {
-    const message = typeof payload.error === 'string' && payload.error.trim()
-      ? payload.error
-      : 'Image analysis failed. Please try again.';
-    throw new Error(message);
-  }
-
-  if (typeof payload.content !== 'string' || !payload.content.trim()) {
-    throw new Error('Invalid response from image analysis');
-  }
-  return payload.content;
+  return content;
 }

@@ -48,9 +48,9 @@ afterEach(() => {
 });
 
 it.each([
-  ['network failure', () => Promise.reject(new Error('offline')), /could not reach the scan service/i],
-  ['vision failure', async () => ({ ok: false, json: async () => ({ error: 'Image analysis failed. Please try again.' }) }), /image analysis failed/i],
-  ['invalid response', async () => ({ ok: true, json: async () => ({}) }), /invalid response/i],
+  ['network failure', () => Promise.reject(new Error('offline')), /Photo scan is unavailable right now/i],
+  ['vision failure', async () => ({ ok: false, json: async () => ({ error: 'Image analysis failed. Please try again.' }) }), /Photo scan is unavailable right now/i],
+  ['invalid response', async () => ({ ok: true, json: async () => ({}) }), /Photo scan is unavailable right now/i],
   ['unreadable photo', async () => ({ ok: true, json: async () => ({ content: '{}' }) }), /could not read the syringe size or vial strength safely/i],
 ] as const)('reports %s for a selected photo without camera permission', async (_, response, message) => {
   (fetch as jest.Mock).mockImplementation(response);
@@ -88,7 +88,7 @@ it.each([
 ])('sanitizes untrusted server error text: %s', async (error) => {
   (fetch as jest.Mock).mockResolvedValue({ ok: false, json: async () => ({ error }) });
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('We could not process this photo. Please try another photo or enter the details manually.');
+  expect(options.setScanError).toHaveBeenLastCalledWith('Photo scan is unavailable right now. Enter the values by hand.');
   expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
   expect(jest.getTimerCount()).toBe(0);

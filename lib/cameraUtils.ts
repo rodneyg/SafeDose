@@ -1,6 +1,6 @@
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
-import { completeScanOnServer } from './scan/completeOnServer';
+import { completeScanOnServer, SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
@@ -40,6 +40,7 @@ interface CaptureAndProcessImageProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  onScanUnavailable?: () => void;
   webCameraStream?: MediaStream | null;
 }
 
@@ -51,6 +52,7 @@ export async function captureAndProcessImage({
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  onScanUnavailable,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
@@ -268,19 +270,7 @@ export async function captureAndProcessImage({
     console.log('[Process] Sending image to /api/analyze-scan');
 
     const result = await readScan(imageUrl, {
-      complete: async () => {
-        let timeout: ReturnType<typeof setTimeout> | undefined;
-        try {
-          return await Promise.race([
-            completeScanOnServer(imageUrl),
-            new Promise<string>((_, reject) => {
-              timeout = setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
-            }),
-          ]);
-        } finally {
-          if (timeout) clearTimeout(timeout);
-        }
-      },
+      complete: () => completeScanOnServer(imageUrl),
     });
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
@@ -303,6 +293,11 @@ export async function captureAndProcessImage({
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
+    if (error instanceof Error && error.message === SCAN_UNAVAILABLE_MESSAGE) {
+      setScanError(SCAN_UNAVAILABLE_MESSAGE);
+      onScanUnavailable?.();
+      return null;
+    }
     const message = error instanceof Error
       ? PHOTO_ERROR_MESSAGES.get(error.message) ?? PHOTO_ERROR_FALLBACK
       : PHOTO_ERROR_FALLBACK;
