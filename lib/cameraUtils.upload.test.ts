@@ -1,4 +1,5 @@
 import { captureAndProcessImage } from './cameraUtils';
+import { SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
 
 jest.mock('./utils', () => ({ isWeb: true, MAX_FILE_SIZE: 5 * 1024 * 1024 }));
@@ -34,6 +35,7 @@ beforeEach(() => {
   } });
   globalThis.fetch = jest.fn();
   options = {
+    onScanUnavailable: jest.fn(),
     cameraRef: { current: null }, permission: { status: 'denied' }, isMobileWeb: false,
     setIsProcessing: jest.fn(), setProcessingMessage: jest.fn(), setScanError: jest.fn(), incrementScansUsed: jest.fn(async () => {}),
   };
@@ -65,7 +67,10 @@ it.each([
 it('reports a file read failure before making a scan request', async () => {
   mockReadFails = true;
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('Failed to read image');
+  expect(options.setScanError).toHaveBeenLastCalledWith(SCAN_UNAVAILABLE_MESSAGE);
+  expect(options.onScanUnavailable).toHaveBeenCalledTimes(1);
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(jest.getTimerCount()).toBe(0);
   expect(fetch).not.toHaveBeenCalled();
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
 });

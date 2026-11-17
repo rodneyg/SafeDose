@@ -316,7 +316,8 @@ export default function NewDoseScreen() {
 
   useEffect(() => {
     if (screenStep !== 'scan') {
-      setScanError(null);
+      // Keep the scan failure visible when capture routes to manual entry.
+      setScanError(error => screenStep === 'manualEntry' && error === SCAN_UNAVAILABLE_MESSAGE ? error : null);
       setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }

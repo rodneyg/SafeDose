@@ -19,8 +19,6 @@ const PHOTO_ERROR_MESSAGES = new Map<string, string>([
   ['Camera returned no picture', 'Camera returned no picture'],
   ['Failed to capture image data', 'Failed to capture image data'],
   ['Unrecognized image format', 'Image format could not be processed'],
-  ['Failed to read image data', 'Failed to read image data'],
-  ['Failed to read image', 'Failed to read image'],
   ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
   ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
   ['Invalid response from image analysis', 'Invalid response from image analysis'],
@@ -170,29 +168,37 @@ export async function captureAndProcessImage({
         const { file } = await filePromise;
         setProcessingMessage('Reading image data...');
 
-        const reader = new FileReader();
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
-          reader.onload = () => {
-            console.log('[Capture] FileReader onload triggered');
-            const result = reader.result;
-            if (typeof result !== 'string' || !result.includes(',')) {
-              console.error('[Capture] Invalid FileReader result');
-              reject(new Error('Failed to read image data'));
-              return;
-            }
-            const base64Image = result.split(',')[1];
-            const mimeType = file.type || 'image/jpeg';
-            console.log('[Capture] Image converted to base64, length:', base64Image.length);
-            resolve({ base64Image, mimeType });
-          };
+          try {
+            const reader = new FileReader();
+            reader.onload = () => {
+              console.log('[Capture] FileReader onload triggered');
+              const result = reader.result;
+              if (typeof result !== 'string' || !/^data:image\/[^;,]+;base64,.+$/s.test(result)) {
+                console.error('[Capture] Invalid FileReader result');
+                reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+                return;
+              }
+              const base64Image = result.split(',')[1];
+              const mimeType = file.type || 'image/jpeg';
+              console.log('[Capture] Image converted to base64, length:', base64Image.length);
+              resolve({ base64Image, mimeType });
+            };
 
-          reader.onerror = () => {
-            console.error('[Capture] FileReader error');
-            reject(new Error('Failed to read image'));
-          };
+            reader.onerror = () => {
+              console.error('[Capture] FileReader error');
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+            };
 
-          console.log('[Capture] Starting FileReader readAsDataURL');
-          reader.readAsDataURL(file);
+            // Aborted reads otherwise leave the capture promise pending.
+            reader.onabort = () => reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+
+            console.log('[Capture] Starting FileReader readAsDataURL');
+            reader.readAsDataURL(file);
+          } catch {
+            // Browser read errors use the same manual-entry path as service errors.
+            reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+          }
         });
 
         const result = await readerPromise;

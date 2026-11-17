@@ -17,6 +17,7 @@ const originalFetch = globalThis.fetch;
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
 let selectedSize: number;
+let readFailure: 'error' | 'abort' | 'empty' | 'invalid' | 'throw' | null;
 
 // Keep the screen, capture helper, server-response parsing, and state updates real.
 // Replace only browser APIs and the remote scan service. No camera or network needed.
@@ -51,6 +52,7 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
   selectedSize = 100;
+  readFailure = null;
   const attached = new Set();
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
     querySelectorAll: () => [],
@@ -65,7 +67,16 @@ beforeEach(() => {
   Object.defineProperty(globalThis, 'FileReader', { configurable: true, value: class {
     result = 'data:image/jpeg;base64,/9j/';
     onload = () => {};
-    readAsDataURL() { this.onload(); }
+    onerror = () => {};
+    onabort = () => {};
+    readAsDataURL() {
+      if (readFailure === 'throw') throw new Error('private browser diagnostic');
+      if (readFailure === 'error') return this.onerror();
+      if (readFailure === 'abort') return this.onabort();
+      if (readFailure === 'empty') this.result = 'data:image/jpeg;base64,';
+      if (readFailure === 'invalid') this.result = 'invalid';
+      this.onload();
+    }
   } });
   globalThis.fetch = jest.fn();
 });
@@ -129,3 +140,22 @@ it('keeps a local oversized-file error on the scan screen so the user can choose
   expect(screen.getByText('Take or Upload Photo')).toBeTruthy();
   expect(fetch).not.toHaveBeenCalled();
 });
+
+
+it.each(['error', 'abort', 'empty', 'invalid', 'throw'] as const)(
+  'takes a local image read %s to manual entry with values retained and no request or scan charged',
+  async failure => {
+    readFailure = failure;
+    const screen = render(<PhotoFlow />);
+    fireEvent.press(screen.getByText('Take or Upload Photo'));
+    await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.getByLabelText('Dose').props.value).toBe('12');
+    fireEvent.changeText(screen.getByLabelText('Dose'), '15');
+    expect(screen.getByLabelText('Dose').props.value).toBe('15');
+    expect(screen.queryByText('Processing...')).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(incrementScansUsed).not.toHaveBeenCalled();
+    expect(onResult).not.toHaveBeenCalled();
+  },
+);
