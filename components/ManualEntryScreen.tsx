@@ -422,10 +422,39 @@ export default function ManualEntryScreen({
       currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
   }
 
+  const isReviewStep = manualStep === 'preDoseConfirmation';
+  const stepButtons = (
+    <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
+      <TouchableOpacity
+        style={[styles.backButton, isMobileWeb && styles.backButtonMobile]}
+        onPress={handleBack}
+        accessibilityRole="button"
+        accessibilityLabel="Go back to previous step">
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.nextButton,
+          !isCurrentStepValid() && styles.disabledButton,
+          isMobileWeb && styles.nextButtonMobile
+        ]}
+        onPress={handleNextButtonPress}
+        disabled={!isCurrentStepValid()}
+        accessibilityRole="button"
+        accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : isReviewStep ? "Proceed to result" : "Next step"}
+      >
+        <Text style={styles.buttonText}>
+          {manualStep === 'syringe' ? 'Calculate' : isReviewStep ? 'Confirm' : 'Next'}
+        </Text>
+        {manualStep !== 'syringe' && !isReviewStep && <ArrowRight color="#fff" size={18} />}
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <>
       <ScrollView 
-        style={styles.manualEntryContainer}
+        style={isReviewStep ? [styles.manualEntryContainer, styles.reviewScrollView] : styles.manualEntryContainer}
         contentContainerStyle={styles.scrollViewContent}
         scrollEnabled={true}
         bounces={false}
@@ -436,38 +465,17 @@ export default function ManualEntryScreen({
         keyboardShouldPersistTaps="always"
       >
         <CustomProgressBar {...getManualProgress(manualStep, medicationInputType)} />
-        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
+        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile, isReviewStep && styles.reviewContent]}>
           {currentStepComponent}
           {formError && <Text style={styles.errorText}>{formError}</Text>}
-          {manualStep !== 'finalResult' && (
-            <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
-              <TouchableOpacity 
-                style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
-                onPress={handleBack}
-                accessibilityRole="button"
-                accessibilityLabel="Go back to previous step">
-                <Text style={styles.buttonText}>Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.nextButton,
-                  !isCurrentStepValid() && styles.disabledButton,
-                  isMobileWeb && styles.nextButtonMobile
-                ]}
-                onPress={handleNextButtonPress}
-                disabled={!isCurrentStepValid()}
-                accessibilityRole="button"
-                accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : manualStep === 'preDoseConfirmation' ? "Proceed to result" : "Next step"}
-              >
-                <Text style={styles.buttonText}>
-                  {manualStep === 'syringe' ? 'Calculate' : manualStep === 'preDoseConfirmation' ? 'Confirm' : 'Next'}
-                </Text>
-                {manualStep !== 'syringe' && manualStep !== 'preDoseConfirmation' && <ArrowRight color="#fff" size={18} />}
-              </TouchableOpacity>
-            </View>
-          )}
+          {!isReviewStep && manualStep !== 'finalResult' && stepButtons}
         </View>
       </ScrollView>
+      {isReviewStep && (
+        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
+          {stepButtons}
+        </View>
+      )}
     </>
   );
 }
@@ -477,7 +485,12 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     maxWidth: '100%',
-    overflow: 'hidden'
+  },
+  reviewScrollView: {
+    flexBasis: 'auto',
+    flexGrow: 0,
+    flexShrink: 1,
+    minHeight: 0,
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -496,6 +509,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, // Reduced padding for small screens
     paddingBottom: 16, // Tighter bottom padding
   },
+  reviewContent: { paddingBottom: 0 },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 
     flexDirection: 'row', 

@@ -1,7 +1,7 @@
 import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import { useState, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { Camera, Check, ArrowRight, AlertTriangle } from 'lucide-react-native';
@@ -115,7 +115,7 @@ export default function Demo() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Animated.View entering={FadeIn} style={styles.header}>
         <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>How It Works</Text>
       </Animated.View>
@@ -183,7 +183,7 @@ export default function Demo() {
           )}
         </TouchableOpacity>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -191,6 +191,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     padding: 24,
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
