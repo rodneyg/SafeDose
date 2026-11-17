@@ -19,6 +19,11 @@ test('checks rendered pages, rejects page errors and 5xx, and blocks writes', as
       res.writeHead(broken ? 503 : 400).end('{}');
       return;
     }
+    if (req.url === '/api/health') {
+      res.writeHead(broken ? 503 : 200, { 'Content-Type': 'application/json' })
+        .end(JSON.stringify({ ok: !broken }));
+      return;
+    }
     const text = {
       '/onboarding': 'Verify Materials Calculate Doses',
       '/pricing': 'Photo Check /month /year Calculator stays free',
@@ -33,10 +38,14 @@ test('checks rendered pages, rejects page errors and 5xx, and blocks writes', as
   try {
     const logs = [];
     const origin = `http://127.0.0.1:${server.address().port}`;
-    assert.equal(await runSmoke(origin, { log: line => logs.push(line) }), 0);
+    assert.equal(await runSmoke(origin, { log: line => logs.push(line) }), 0, logs.join('\n'));
     broken = true;
     assert.equal(await runSmoke(origin, { log: line => logs.push(line) }), 1);
     assert.ok(logs.some(line => line.includes('HTTP 503; expected 4xx')));
+    if (requests.some(([, path]) => path === '/api/health')) {
+      assert.ok(logs.includes('PASS health availability on origin/main: HTTP 200, ok=true'));
+      assert.ok(logs.includes('FAIL health availability on origin/main: HTTP 503; expected 200'));
+    }
     assert.ok(logs.some(line => line === 'FAIL page /login: 1 page error(s)'));
     assert.ok(logs.some(line => line.includes('PAGE ERROR /login: Error: private diagnostic')));
     assert.ok(logs.some(line => line.includes('/login:1:')));
