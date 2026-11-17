@@ -20,6 +20,21 @@ export function baseOrigin(input = production) {
   return url.origin;
 }
 
+// Anonymous browser diagnostics only. Strip credentials, URL queries and common tokens.
+export function pageErrorDetail(error) {
+  return String(error.stack || error.message || 'Unknown page error')
+    .replace(/https?:\/\/[^\s)]+/g, value => {
+      try {
+        const url = new URL(value);
+        return `${url.origin}${url.pathname}`;
+      } catch { return '[redacted URL]'; }
+    })
+    .replace(/\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9_]+\b/g, '[redacted key]')
+    .replace(/\bBearer\s+[^\s]+/gi, 'Bearer [redacted]')
+    .replace(/((?:token|secret|password|api[_-]?key)\s*[=:]\s*)[^\s,;]+/gi, '$1[redacted]')
+    .slice(0, 2000);
+}
+
 export async function runSmoke(base = production, { log = console.log } = {}) {
   const origin = baseOrigin(base);
   let failed = 0;
@@ -27,7 +42,7 @@ export async function runSmoke(base = production, { log = console.log } = {}) {
     try { log(`PASS ${name}: ${await action()}`); }
     catch (error) {
       failed++;
-      // Never print response bodies, page text, URLs or exception messages.
+      // Never print response bodies or page text. Browser errors are sanitized below.
       log(`FAIL ${name}: ${error.smokeDetail || 'unavailable, unexpected content or timeout'}`);
     }
   }
@@ -77,7 +92,10 @@ export async function runSmoke(base = production, { log = console.log } = {}) {
           });
           const page = await context.newPage();
           let errors = 0;
-          page.on('pageerror', () => { errors++; });
+          page.on('pageerror', error => {
+            errors++;
+            log(`PAGE ERROR ${path}: ${pageErrorDetail(error)}`);
+          });
           const response = await page.goto(`${origin}${path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
           if (response?.status() !== 200) fail(`HTTP ${response?.status() ?? 'missing'}; expected 200`);
           await page.waitForURL(`${origin}${destination}`, { timeout: 15000 });
