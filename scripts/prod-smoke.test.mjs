@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { baseOrigin, runSmoke } from './prod-smoke.mjs';
+import { baseOrigin, pageErrorDetail, runSmoke } from './prod-smoke.mjs';
 
 test('rejects credentials, paths and non-HTTP origins without echoing them', () => {
   for (const value of ['https://user:private@example.com', 'https://example.com/path',
@@ -38,9 +38,18 @@ test('checks rendered pages, rejects page errors and 5xx, and blocks writes', as
     assert.equal(await runSmoke(origin, { log: line => logs.push(line) }), 1);
     assert.ok(logs.some(line => line.includes('HTTP 503; expected 4xx')));
     assert.ok(logs.some(line => line === 'FAIL page /login: 1 page error(s)'));
-    assert.ok(!logs.some(line => line.includes('private diagnostic')));
+    assert.ok(logs.some(line => line.includes('PAGE ERROR /login: Error: private diagnostic')));
+    assert.ok(logs.some(line => line.includes('/login:1:')));
     assert.ok(requests.every(([method, path]) => method === 'GET' ||
       (method === 'POST' && path === '/api/analyze-scan')));
     assert.ok(!requests.some(([, path]) => path === '/forbidden-write'));
   } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
+test('page diagnostics retain errors and locations while redacting sensitive values', () => {
+  const detail = pageErrorDetail({ stack: 'Error: Failed to load Stripe.js\n at https://user:password@example.com/app.js?token=private#secret:1:2 sk_test_private Bearer private token=private password=private api_key=private' });
+  assert.ok(detail.includes('Failed to load Stripe.js'));
+  assert.ok(detail.includes('https://example.com/app.js'));
+  assert.ok(!detail.includes('private'));
+  assert.ok(!detail.includes('user:password'));
 });
