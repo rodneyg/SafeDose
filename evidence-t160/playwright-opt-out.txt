@@ -1,0 +1,12 @@
+
+> safedose@1.0.0 e2e:prod-scan
+> playwright test --config playwright.prod.config.ts
+
+
+Running 1 test using 1 worker
+
+(node:93748) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -  1 e2e/prod-scan-flow.spec.ts:5:1 › guest photo scan, manual calculation, and pricing
+
+  1 skipped

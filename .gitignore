@@ -63,3 +63,6 @@ review_packet.pdf
 
 # SAF-104 private image-store name, if accidentally linked inside a checkout
 safedose-vision-private/
+
+# Opt-in production Playwright evidence
+.prod-e2e-results/

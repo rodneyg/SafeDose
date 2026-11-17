@@ -35,7 +35,8 @@
     "changelog:add": "node scripts/changelog.js add",
     "prebuild:web": "npm run changelog:build",
     "prestart": "npm run changelog:build",
-    "predev": "npm run changelog:build"
+    "predev": "npm run changelog:build",
+    "e2e:prod-scan": "playwright test --config playwright.prod.config.ts"
   },
   "vercel": {
     "projectRoot": "."
@@ -96,6 +97,7 @@
     "@babel/core": "^7.25.2",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
+    "@playwright/test": "^1.65.1",
     "@testing-library/react-native": "^12.9.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",

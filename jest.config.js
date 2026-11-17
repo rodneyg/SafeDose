@@ -17,6 +17,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   testPathIgnorePatterns: [
+    '<rootDir>/e2e/',
     '/node_modules/',
     '<rootDir>/.eval-cache/',
     // Upstream dependency tests copied into the root, not SafeDose suites.
