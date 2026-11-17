@@ -206,3 +206,14 @@ describe('SAF-305 display rounding boundaries', () => {
     expect(formatConcentration(1995, 'mg', 100)).toBe('20 mg/mL');
   });
 });
+
+it('T-182 guest manual example: 0.5 mg at 2.5 mg/mL with a 5 mg vial and 1 mL U-100 syringe', () => {
+  const result = calculateDose({
+    doseValue: 0.5, unit: 'mg', concentration: 2.5, concentrationUnit: 'mg/ml',
+    totalAmount: 5, totalAmountUnit: 'mg',
+    manualSyringe: { type: 'Insulin', volume: '1 ml', insulinScale: 'U-100' },
+  });
+  expect(result.calculationError).toBeNull();
+  expect(result.calculatedVolume).toBe(0.2);
+  expect(Number(result.recommendedMarking)).toBe(20);
+});

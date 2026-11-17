@@ -98,6 +98,17 @@ export default function UserTypeSegmentation() {
     });
   }, [currentStep]);
 
+  const handleSkipPersonalization = useCallback(async () => {
+    // Record only the decision to skip locally. Do not submit answers or a profile.
+    try {
+      await AsyncStorage.setItem('personalizationSkipped', 'true');
+      router.replace('/(tabs)/new-dose?startManual=true');
+    } catch {
+      // Manual entry remains available even if browser storage is unavailable.
+      router.replace('/(tabs)/new-dose?startManual=true');
+    }
+  }, [router]);
+
   const handleSkip = useCallback(() => {
     // Log the skip
     logAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_SKIP, {
@@ -581,6 +592,15 @@ export default function UserTypeSegmentation() {
           </TouchableOpacity>
         </View>
         
+        <TouchableOpacity
+          style={[styles.skipButton, isMobileWeb && styles.skipButtonMobile]}
+          onPress={handleSkipPersonalization}
+          accessibilityRole="button"
+          accessibilityLabel="Skip personalization and enter dose manually"
+        >
+          <Text style={styles.backButtonText}>Skip to manual entry</Text>
+        </TouchableOpacity>
+
         <Text style={[styles.privacyText, isMobileWeb && styles.privacyTextMobile]}>
           Your answers help us provide appropriate safety features and are stored securely.
         </Text>

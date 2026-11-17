@@ -65,10 +65,14 @@ export async function resolveLaunchRoute(options: {
     }
   }
 
-  const [onboardingComplete, userProfile] = await Promise.all([
+  const [onboardingComplete, userProfile, personalizationSkipped] = await Promise.all([
     storage.getItem(ONBOARDING_COMPLETE_KEY),
     storage.getItem(USER_PROFILE_STORAGE_KEY),
+    storage.getItem('personalizationSkipped'),
   ]);
+  if (onboardingComplete === 'true' && !userProfile && personalizationSkipped === 'true') {
+    return HOME_ROUTE;
+  }
   return routeFromLocalState(onboardingComplete, userProfile);
 }
 
