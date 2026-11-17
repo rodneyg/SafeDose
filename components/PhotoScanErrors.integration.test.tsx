@@ -132,13 +132,18 @@ it('takes a timed-out request to manual entry and ignores a late success', async
   }
 });
 
-it('keeps a local oversized-file error on the scan screen so the user can choose another photo', async () => {
-  selectedSize = 6 * 1024 * 1024;
+it('takes an oversized photo to manual entry with values retained and no request or scan charged', async () => {
+  selectedSize = 16 * 1024 * 1024;
   const screen = render(<PhotoFlow />);
   fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe('Selected image exceeds the 5 MB limit. Please choose a smaller image.'));
-  expect(screen.getByText('Take or Upload Photo')).toBeTruthy();
+  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+  expect(screen.getByLabelText('Dose').props.value).toBe('12');
+  fireEvent.changeText(screen.getByLabelText('Dose'), '15');
+  expect(screen.getByLabelText('Dose').props.value).toBe('15');
+  expect(screen.queryByText('Take or Upload Photo')).toBeNull();
+  expect(screen.queryByText('Processing...')).toBeNull();
   expect(fetch).not.toHaveBeenCalled();
+  expect(incrementScansUsed).not.toHaveBeenCalled();
 });
 
 

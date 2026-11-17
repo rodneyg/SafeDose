@@ -128,7 +128,7 @@ export async function captureAndProcessImage({
               if (document.body.contains(input)) {
                 document.body.removeChild(input);
               }
-              reject(new Error('Selected image exceeds the 5 MB limit. Please choose a smaller image.'));
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
               return;
             }
             resolve({ file });
