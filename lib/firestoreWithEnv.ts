@@ -29,7 +29,11 @@ export const setDocWithEnv = async (
   options?: SetOptions
 ): Promise<void> => {
   // Only add env field if it's a create operation (no merge option or merge is false)
-  const isCreateOperation = !options || (!options.merge && !options.mergeFields);
+  const isMerge = options && (
+    ('merge' in options && options.merge) ||
+    ('mergeFields' in options && options.mergeFields !== undefined)
+  );
+  const isCreateOperation = !isMerge;
   
   const enhancedData = (isPreviewEnvironment() && isCreateOperation)
     ? { ...data, env: 'preview' }
@@ -39,5 +43,5 @@ export const setDocWithEnv = async (
     console.log('[Firestore] Preview environment - adding env field to document (create operation)');
   }
   
-  return setDoc(reference, enhancedData, options);
+  return options ? setDoc(reference, enhancedData, options) : setDoc(reference, enhancedData);
 };

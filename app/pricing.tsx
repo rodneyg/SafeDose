@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image }
 import { router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
-import { CheckCircle, Shield, Zap, Clock } from "lucide-react-native";
+import { CheckCircle, Shield, Zap, Clock, LucideIcon } from "lucide-react-native";
 import { getApiBaseUrl } from "../lib/apiBase";
 import {
   PHOTO_CHECK_MONTHLY_AMOUNT,
@@ -60,7 +60,7 @@ export default function PricingPage() {
     },
   ];
 
-  const getKeyFeatures = (planType) => {
+  const getKeyFeatures = (planType: string): { icon: LucideIcon; text: string; color: string; disabled?: boolean }[] => {
     if (planType === 'photo_check') {
       return [
         { icon: Zap, text: "Unlimited photo checks", color: "#FF6B6B" },
@@ -168,17 +168,15 @@ export default function PricingPage() {
 
       const apiBaseUrl = getApiBaseUrl();
       const offerKey = selectedPlan.offerKey;
-      const priceId = selectedPlan.priceId;
-      console.log("Using offerKey/priceId:", offerKey, priceId);
+      console.log("Using offerKey:", offerKey);
 
-      if (!offerKey && !priceId) {
+      if (!offerKey) {
         setErrorMessage("This offer is not available for checkout yet.");
         return;
       }
 
       console.log(`Calling ${apiBaseUrl}/api/create-checkout-session with:`, {
         offerKey,
-        priceId,
         successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${apiBaseUrl}/pricing`,
         hasTrial: selectedPlan.hasTrial,
@@ -191,7 +189,6 @@ export default function PricingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             offerKey,
-            priceId,
             successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${apiBaseUrl}/pricing`,
             hasTrial: selectedPlan.hasTrial,
@@ -243,7 +240,7 @@ export default function PricingPage() {
       console.log("redirectToCheckout result:", result);
       if (result?.error) {
         console.error("Stripe redirectToCheckout error:", result.error);
-        setErrorMessage(result.error.message);
+        setErrorMessage(result.error.message || "Unable to open checkout. Please try again.");
         logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
           plan: selectedPlan.id,
           error: result.error.message

@@ -68,7 +68,7 @@ export default function BirthDateCollection() {
     
     setDetails({ age, birthDate, limitedFunctionality: false });
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED);
-    router.push(age < 18 ? '/onboarding/child-safety' : '/onboarding/demo');
+    router.navigate(age < 18 ? '/onboarding/child-safety' : '/onboarding/demo');
   }, [isComplete, isValid, validation, birthDate, router, setDetails]);
 
   const handleSkip = useCallback(() => {
@@ -80,7 +80,7 @@ export default function BirthDateCollection() {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
     setShowSafetyModal(false);
     setDetails({ age: null, birthDate: null, limitedFunctionality: true });
-    router.push('/onboarding/demo');
+    router.navigate('/onboarding/demo');
   }, [router, setDetails]);
 
   const handleCancelSkip = useCallback(() => {

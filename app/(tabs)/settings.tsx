@@ -1,3 +1,5 @@
+import { Link } from 'expo-router';
+import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
@@ -136,7 +138,11 @@ export default function SettingsScreen() {
     );
   };
 
+  const [signInFailed, setSignInFailed] = useState(false);
+
   const handleSignIn = useCallback(async () => {
+    if (isSigningIn) return;
+    setSignInFailed(false);
     console.log('[SettingsScreen] ========== SIGN-IN INITIATED ==========');
     setIsSigningIn(true);
     logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
@@ -154,11 +160,11 @@ export default function SettingsScreen() {
         method: 'google',
         error: error.message,
       });
-      Alert.alert('Sign In Error', 'Could not sign in with Google. Please try again.');
+      setSignInFailed(true);
     } finally {
       setIsSigningIn(false);
     }
-  }, [auth, user]);
+  }, [auth, user, isSigningIn]);
 
   const getPlanDisplayName = (plan: string) => formatPlanDisplayName(plan);
 
@@ -170,6 +176,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        <Link href="/changelog" style={{ color: '#007AFF', marginBottom: 24 }}>Changelog</Link>
         {/* Account Information */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -307,6 +314,7 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
           )}
+          {(!user || user.isAnonymous) && signInFailed && <SignInError onRetry={handleSignIn} disabled={isSigningIn} />}
         </View>
       </View>
     </ScrollView>

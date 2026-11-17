@@ -106,12 +106,38 @@ module.exports = async (req, res) => {
     }
     return res.status(200).json({ content });
   } catch (error) {
-    const message = error && error.message ? error.message : 'unknown error';
-    console.error('[analyze-scan] Vision request failed:', message);
-    const timedOut = /timeout/i.test(message);
-    return res.status(timedOut ? 504 : 502).json({
-      error: timedOut ? 'Image analysis timed out. Please try again.' : 'Image analysis failed. Please try again.',
-    });
+    // Never log provider messages or error objects: they can contain credentials
+    // or the submitted image. Only emit a category controlled by this route.
+    const status = error && error.status;
+    const code = error && (error.code || (error.error && error.error.code));
+    if (status === 401 || status === 403) {
+      console.error('[analyze-scan] Vision authentication failed');
+      return res.status(503).json({
+        error: 'Image analysis is unavailable because service authentication failed. Please contact support.',
+      });
+    }
+    const timedOut = error && (
+      error.name === 'APIConnectionTimeoutError' || error.name === 'AbortError' ||
+      code === 'ETIMEDOUT' || status === 408 || status === 504 ||
+      (typeof error.message === 'string' && /timeout|timed out/i.test(error.message))
+    );
+    if (timedOut) {
+      console.error('[analyze-scan] Vision request timed out');
+      return res.status(504).json({ error: 'Image analysis timed out. Please try again.' });
+    }
+    const invalidImageCodes = [
+      'invalid_image', 'invalid_image_format', 'invalid_base64_image',
+      'invalid_image_url', 'image_parse_error', 'image_too_large',
+      'image_too_small', 'image_too_large_for_model', 'unsupported_image',
+    ];
+    if ((status === 400 || status === 422) && invalidImageCodes.includes(code)) {
+      console.error('[analyze-scan] Vision request rejected an invalid image');
+      return res.status(400).json({
+        error: 'The image could not be read. Please upload a clear JPEG, PNG, WebP, or GIF image.',
+      });
+    }
+    console.error('[analyze-scan] Vision request failed');
+    return res.status(502).json({ error: 'Image analysis failed. Please try again.' });
   }
 };
 

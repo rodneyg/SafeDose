@@ -1,0 +1,205 @@
+# SafeDose vision labeling specification, version 1
+
+Status: pending human verification. SAF-104 now adds a provisional 240-scene
+procedural corpus, strict labels, an automated consistency audit, and an adapter
+into the existing SAF-107 runner. Pixels remain outside git. See [COVERAGE.md](COVERAGE.md)
+and [RUN_REPORT.md](RUN_REPORT.md). Synthetic brand text does not establish real
+product coverage. Automated checks do not replace the independent human review
+and release requirements below. All corpus labels remain `pending` for SAF-166.
+
+## Dataset acceptance and split
+
+Recruit at least 200 distinct, consented syringe/vial images in a future approved
+collection. The release inventory must demonstrate all of the following, with
+counts recorded by split and by category (categories may overlap):
+
+| Dimension | Required coverage |
+| --- | --- |
+| Brands | At least 5 identifiable brands |
+| Insulin U-100 | Every supported capacity: 0.3, 0.5, 1 mL |
+| Insulin U-40 | 0.5 and 1 mL, including refusal cases |
+| Standard mL | Every supported capacity: 1, 3, 5 mL |
+| Lighting | All 4: bright, dim, backlit, glare |
+| Camera angle | All 3: straight, 30 degrees, 60 degrees |
+| Unreadable | At least 30 shots with expected refusal |
+| Vial labels | At least 40 shots containing a vial label, including illegible labels |
+| Fill | Empty, near-empty, midrange, near-capacity, and obscured leading edges |
+
+Count unique images, not reviewer drafts or crops, toward the total. Record the
+brand by capacity/scale matrix and address gaps before declaring readiness.
+Capacity lists come from `lib/dosing/syringes.ts` and `lib/dosing/inputs.ts`;
+recheck them when those files change. Current vision parsing refuses U-40 even
+though manual dosing supports some U-40 selections. Label U-40 as `refuse` until
+vision support is explicitly reviewed. Coverage must include unsafe/unsupported
+configurations rather than silently excluding them.
+
+Before prompt development, assign 20% of the final set to a locked holdout
+(round upward, e.g. 40 of 200 or 41 of 201). Group near-duplicates, frames from
+one capture, crops, and the same physical syringe/vial session in the same split.
+Stratify across the coverage dimensions where possible. A designated custodian
+locks a versioned ID/hash/split inventory and restricts holdout pixels, labels,
+and individual results from prompt tuners. Never use holdout examples or errors
+for prompt tuning. Evaluate only a frozen candidate; if holdout feedback is used
+to develop a new prompt, retire that holdout and create a fresh locked set.
+Document access and release versions. Automated per-label checks do not enforce
+these collection counts, access controls, or split independence.
+
+## Privacy and ingest
+
+Keep all pixels outside git in a restricted private store. This repository's
+privacy CI intentionally rejects newly committed eval images. Reject images
+containing faces, tattoos, rings, names, pharmacy labels with patient names,
+Rx numbers, or addresses. Review the entire frame, reflections, and background.
+Do not retain excluded identifying material as a crop or thumbnail. A metadata
+check cannot establish visual privacy.
+
+1. Stage approved source files outside the eval image folder. Use opaque IDs,
+   never patient information in paths, labels, reviewer IDs, or free text.
+2. Strip EXIF/GPS and other removable metadata into a new destination with
+   `npm run vision:strip-exif -- SOURCE NEW_DESTINATION`. Source and destination
+   must use the same supported extension. Existing files are never overwritten.
+   The source stays in restricted staging; no `_original` backup is created in
+   the clean store. Apply the organization's retention policy to staging.
+3. Visually review the sanitized result for prohibited content and intact image
+   orientation/appearance. Metadata removal can remove orientation and color
+   information; reject or normalize orientation before final review and hashing.
+4. Run `npm run vision:check-exif -- /private/store/images`. It recursively
+   examines every file, including nested/hidden image files. Any EXIF group
+   (including GPS, maker notes and thumbnails), XMP, IPTC, GPS tag, unreadable
+   image, symlink, or unsupported file fails closed. JPEG, PNG, WebP, HEIC/HEIF,
+   are accepted for inspection; TIFF and other formats fail closed because
+   TIFF stores required structural tags in EXIF IFDs; actual stripping depends on ExifTool's
+   write support. A failed strip removes its new output. Never bypass a failure.
+5. Hash the final sanitized bytes with SHA-256 and use that digest in the label.
+   Keep clean pixels and structured labels in separate directories. Recheck
+   metadata on every ingest and before evaluation. An explicit missing path is
+   an error. Without an argument, both `evals/vision/images` and `evals/images`
+   are checked if present; absent default stores mean an empty checkout only.
+
+Tooling uses the vendored ExifTool executable and needs no remote API or image
+service. On macOS/Linux it requires Perl, available on the current CI runners.
+This guard targets metadata, not steganography or identifying text in pixels.
+
+## One JSON label per image
+
+`label.schema.json` is the strict draft-07 contract. Use UTF-8 JSON objects in
+`evals/vision/labels` (or a private labels directory). All keys are required;
+unknown or unreadable facts are `null`, never guesses, empty strings, or zero.
+Do not infer the syringe scale from its color or medication concentration.
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version`, `image_id`, `image_sha256`, `split` | Version 1, opaque stable ID, sanitized byte hash, development or holdout |
+| `syringe.type` | `insulin`, `standard`, `other`, or null if unreadable |
+| `syringe.scale` | `U-100`, `U-40`, `mL`, or null; copy visible scale |
+| `syringe.capacity_ml` | Positive barrel capacity in mL, or null |
+| `syringe.brand` | Visible brand text, or null; never guess from appearance |
+| `syringe.gradation` | `{value, unit}`: smallest visible graduation spacing in `units` or `mL`; both null if unreadable |
+| `fill.units`, `fill.ml` | Nonnegative observed fill, measured at the plunger leading edge nearest the needle; null when unreadable |
+| `fill.plunger_visible` | Whether the leading edge can be seen clearly enough to measure |
+| `fill.empty` | True only when visibly empty; false when visibly filled; null when uncertain |
+| `vial.substance` | Printed substance text, or null |
+| `vial.total_amount` | `{value, unit}`, e.g. `{ "value": 10, "unit": "mg" }`; both null if unknown |
+| `vial.concentration` | Printed `{value, unit}`, e.g. `{ "value": 5, "unit": "mg/mL" }`; both null if unknown |
+| `vial.label_legible` | True for readable required vial facts, false for an unreadable/partial label, null when no vial label is present |
+| `conditions.lighting` | Nonempty array from bright, dim, backlit, glare; multiple may apply |
+| `conditions.angle` | `straight`, `30`, or `60`, nearest nominal view angle from perpendicular to barrel scale |
+| `conditions.background` | Short nonidentifying description, e.g. plain light or cluttered dark |
+| `conditions.focus` | sharp, blurred, or partial |
+| `conditions.occlusion` | none, partial, or severe |
+| `expected_behavior`, `reason` | `read` or `refuse`, with a short evidence-based explanation |
+| `review` | Two distinct pseudonymous labelers, status, disagreements, independent adjudicator |
+
+Use the leading edge, not the rear of the rubber stopper or the liquid meniscus.
+Read the visible printed graduations; record a value only to the precision the
+image supports. Do not calculate a treatment dose. For a readable insulin scale,
+units and mL may be cross-checked using its explicit scale; they must agree.
+For mL scales, `fill.units` is null. An empty visible barrel has `fill.ml: 0` and
+units zero if applicable. A hidden edge requires all fill readings and empty
+state to be null. Capacity bounds and quantity/unit pairing are validated.
+Do not derive a missing printed vial concentration from total amount or assume
+a reconstitution volume. Preserve explicit printed units, including denominator.
+
+Use `read` only when all facts needed for the pictured task are legible,
+supported, unambiguous, and consistent. Use `refuse` for a hidden leading edge,
+blurred or obscured scale, illegible required vial text, unknown/contradictory
+scale, unsupported syringe, U-40 vision conversion, or any ambiguous numerical
+reading. Preserve readable partial facts in refusal labels, but leave unknowns
+null. Record the specific refusal reason. These are reference expectations,
+never model output or a source of values sent into the model.
+
+## Independent review and disagreement log
+
+Two trained labelers independently inspect each sanitized image, blinded to one
+another's labels, model responses, and prompt decisions. Each creates a full
+schema-valid draft in a separate restricted reviewer directory. Preserve both
+original drafts with image hash and review timestamp in the audit inventory.
+Do not place duplicate drafts in the final label directory.
+
+Compare every field. If all agree, the final record has `review.status: agreed`,
+two distinct `review.labelers`, an empty `review.disagreements` array, and null
+`review.adjudicator`. If anything differs, log one entry per field with `field`
+(a JSON pointer), `labeler_1_value`, `labeler_2_value`, and `resolution: null`;
+keep status pending. A third independent adjudicator reviews evidence, documents
+a nonempty resolution for each entry, selects the final values, and sets status
+to adjudicated with their pseudonymous ID. Never erase disagreement history or
+average incompatible numerical readings. If ambiguity remains, refuse and retain
+null values. Pending labels must not enter scored releases. Schema validity
+alone is not certification of independent review or correctness.
+
+Validate with `npm run vision:validate-labels -- /private/store/labels`.
+The command recursively validates JSON files, rejects duplicate image IDs, and
+returns nonzero for invalid labels or unreadable inputs. With no argument it
+checks the repository's intentionally empty labels directory. Empty checks pass
+for developer checkouts but do not establish readiness. Before a dataset release,
+manually audit the coverage matrix, exact 20% holdout allocation, hash matches,
+review completion, privacy approvals, and lock/access records. The existing
+SAF-107 manifest has a different contract; this schema does not retroactively
+verify it or automatically convert it. A reviewed adapter is still required.
+
+Run `npm run test:vision-labeling` for tiny in-memory/temporary synthetic metadata
+fixtures and validator cases. These fixtures never become corpus images.
+
+## Independent labeling and adjudication
+
+1. Give each image to two independent labelers using pseudonymous IDs. Neither
+   sees the other's draft, model outputs, or prompt predictions. Each writes all
+   observation fields independently using the same schema. Keep their immutable
+   drafts in separate private review directories, outside the final labels folder.
+2. Compare every observation, condition, expected behavior, and reason. Log each
+   differing field in `review.disagreements` using a dotted field path, both
+   original JSON values in `labeler_1_value` and `labeler_2_value`, and a resolution
+   (null while unresolved). Do not silently average numerical readings.
+3. When both drafts agree, publish one canonical per-image label with status
+   `agreed`. Otherwise keep status `pending` and have a third independent
+   adjudicator inspect the image, document a resolution for each disagreement,
+   update canonical values, and set status `adjudicated` with their pseudonymous
+   ID. If the image cannot support a value, resolve to null and refusal. Preserve
+   both drafts and the disagreement history, including after later corrections.
+4. Only `agreed` or fully `adjudicated` labels enter a released evaluation set.
+   Pending drafts can pass structural validation but are not verified labels.
+   The release custodian separately checks complete review, hashes, split locks,
+   coverage quotas, and access restrictions. Changes to a released label require
+   a new dataset version and audit entry.
+
+## Local commands and limits
+
+```sh
+npm ci
+npm run vision:validate-labels
+npm run vision:validate-labels -- /private/store/labels
+npm run vision:strip-exif -- /private/intake/source.png /private/store/images/new.png
+npm run vision:check-exif -- /private/store/images
+npm run check:vision-labeling
+```
+
+The validator reads one JSON object per file, recursively scans label directories,
+and rejects duplicate image IDs within an invocation. Validate the final canonical
+folder separately from independent drafts, whose image IDs intentionally overlap.
+The metadata check accepts one optional image directory. `check:vision-labeling`
+runs the default label and image checks and the synthetic unit tests. CI runs it
+in the existing Accuracy vision job. Empty label/image stores pass tooling checks
+with an explicit count; they never satisfy dataset acceptance. The schema is a new
+labeling contract, not a migration of legacy test-set JSON or the SAF-107 manifest.
+The synthetic corpus adapter in `corpus.ts` maps quantities into the runner;
+its pending-label results remain provisional until human release review.

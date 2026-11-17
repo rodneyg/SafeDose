@@ -16,8 +16,10 @@ describe('POST /api/analyze-scan', () => {
   const originalKey = process.env.OPENAI_API_KEY;
   let create;
   let handler;
+  let errorLog;
 
   beforeEach(() => {
+    errorLog = jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.resetModules();
     create = jest.fn();
     jest.doMock('openai', () =>
@@ -32,6 +34,7 @@ describe('POST /api/analyze-scan', () => {
     if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = originalKey;
     jest.dontMock('openai');
+    errorLog.mockRestore();
   });
 
   it('rejects non-POST methods', async () => {
@@ -46,7 +49,7 @@ describe('POST /api/analyze-scan', () => {
     const res = mockRes();
     await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
     expect(res.statusCode).toBe(503);
-    expect(res.body.error).toMatch(/not configured/);
+    expect(res.body.error).toBe('Vision analysis is not configured.');
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -56,9 +59,63 @@ describe('POST /api/analyze-scan', () => {
       const res = mockRes();
       await handler({ method: 'POST', body: { image } }, res);
       expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/image/i);
     }
     expect(create).not.toHaveBeenCalled();
   });
+
+  it.each([401, 403])('maps rejected service credentials (%s) to a safe 503', async status => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    create.mockRejectedValue({ status, message: 'sensitive provider details: timeout', code: 'invalid_api_key' });
+    const res = mockRes();
+    await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+    expect(res.statusCode).toBe(503);
+    expect(res.body.error).toBe('Image analysis is unavailable because service authentication failed. Please contact support.');
+    expect(JSON.stringify([res.body, errorLog.mock.calls])).not.toContain('sensitive provider details');
+    expect(JSON.stringify([res.body, errorLog.mock.calls])).not.toContain('test-key');
+  });
+
+  it.each([
+    { name: 'APIConnectionTimeoutError', message: 'Request timed out.' },
+    { code: 'ETIMEDOUT' },
+    { name: 'AbortError' },
+    { status: 408 },
+    { status: 504 },
+    { message: 'Connection timeout' },
+  ])('maps timeout %j to 504', async error => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    create.mockRejectedValue(error);
+    const res = mockRes();
+    await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+    expect(res.statusCode).toBe(504);
+    expect(res.body.error).toBe('Image analysis timed out. Please try again.');
+  });
+
+  it.each([
+    { status: 400, code: 'invalid_image' },
+    { status: 400, code: 'image_parse_error' },
+    { status: 422, error: { code: 'invalid_image_format' } },
+  ])('maps provider image rejection %j to a safe 400', async error => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    create.mockRejectedValue({ ...error, message: 'sensitive provider details' });
+    const res = mockRes();
+    await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('The image could not be read. Please upload a clear JPEG, PNG, WebP, or GIF image.');
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain('sensitive provider details');
+  });
+
+  it.each([{ status: 500 }, { status: 400, code: 'invalid_request_error' }, null])(
+    'preserves the safe generic fallback for %j', async error => {
+      process.env.OPENAI_API_KEY = 'test-key';
+      create.mockRejectedValue(error && { ...error, message: 'sensitive provider details' });
+      const res = mockRes();
+      await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+      expect(res.statusCode).toBe(502);
+      expect(res.body.error).toBe('Image analysis failed. Please try again.');
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain('sensitive provider details');
+    },
+  );
 
   it('returns model content and never reads Expo client config', async () => {
     process.env.OPENAI_API_KEY = 'test-key';

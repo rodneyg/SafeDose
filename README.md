@@ -160,3 +160,10 @@ By using this project, you agree not to market it as a certified medical device 
 
 Built by SafeLab — advancing open tools for human systems.
 
+
+### Changelog updates
+- `changelog/*.md` is the source of truth for public `/changelog`; entries use date, title, status, prs frontmatter and New/Improved/Fixed bullet groups.
+- Run `npm run changelog:add` with authenticated GitHub CLI to draft merged PRs since the latest published date; same-day PRs are deduplicated by number.
+- On merges to main, the Draft changelog Action uses only GITHUB_TOKEN to push a `changelog/pr-*` branch and open a draft PR, preferring a `## Changelog` section over the PR title.
+- Review user-facing wording, discard internal-only drafts, set `status: published`, and run `npm run changelog:build` to refresh `lib/changelog.json`; web builds regenerate it too.
+- If repository policy blocks token-created PRs, the pushed draft branch remains available for a manual PR. No secrets or setting changes are needed; changelog branches do not trigger more drafts.

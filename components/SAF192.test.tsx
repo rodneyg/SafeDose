@@ -15,7 +15,7 @@ jest.mock('react-native-reanimated', () => {
   const animation = { delay: () => animation, duration: () => animation };
   return { __esModule: true, default: { View: 'AnimatedView' }, FadeIn: animation, FadeInDown: animation, FadeInRight: animation, FadeInLeft: animation };
 });
-const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
+const mockRouter = { navigate: jest.fn(), replace: jest.fn(), back: jest.fn() };
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ setItem: jest.fn(async () => {}) }));
 jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
@@ -73,7 +73,7 @@ it.each([['1990', '/onboarding/demo'], [String(new Date().getFullYear() - 15), '
     act(() => renderer.root.findAllByType('DatePickerSelect' as any).find(p => p.props.label === label)!.props.onValueChange(value));
   }
   act(() => renderer.root.findByProps({ accessibilityLabel: 'Continue with birth date' }).props.onPress());
-  expect(mockRouter.push).toHaveBeenLastCalledWith(route);
+  expect(mockRouter.navigate).toHaveBeenLastCalledWith(route);
   expect(details.birthDate).toBe(`${year}-01-02`);
   expect(typeof details.age).toBe('number');
 });
@@ -81,7 +81,7 @@ it.each([['1990', '/onboarding/demo'], [String(new Date().getFullYear() - 15), '
 it('child safety and demo forward no personal route parameters', async () => {
   act(() => { renderer = create(<OnboardingProvider><ChildSafety /></OnboardingProvider>); });
   act(() => renderer.root.findByProps({ accessibilityLabel: 'Continue to app' }).props.onPress());
-  expect(mockRouter.push).toHaveBeenLastCalledWith('/onboarding/demo');
+  expect(mockRouter.navigate).toHaveBeenLastCalledWith('/onboarding/demo');
   act(() => renderer.unmount());
   act(() => { renderer = create(<OnboardingProvider><Demo /></OnboardingProvider>); });
   for (let i = 0; i < 3; i++) {

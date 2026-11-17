@@ -1,74 +1,56 @@
-jest.mock('../contexts/AuthContext', () => ({ useAuth: jest.fn() }));
-jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: jest.fn() }));
-jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: jest.fn() }));
-jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: jest.fn() }));
-jest.mock('expo-router', () => ({ useRouter: jest.fn(), useFocusEffect: jest.fn() }));
-// Simple test to verify the style fix is applied correctly
+import React from 'react';
+import { Modal, Platform, StyleSheet, View } from 'react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import IntroScreen from './IntroScreen';
 
-describe('IntroScreen Styling Fix', () => {
-  it('should have correct z-index values in styles to fix overlay issue', () => {
-    // Import the component to access its styles
-    const IntroScreenModule = require('./IntroScreen');
-    
-    // Check if the component file contains the fixed styles
-    // This is a simple way to verify the fix without complex UI testing
-    const componentSource = IntroScreenModule.default.toString();
-    
-    // These assertions verify that our style fixes are present
-    expect(componentSource).toBeDefined();
-    
-    // Since the styles are defined as a separate object, we can't directly access them
-    // but we can verify the component exists and the file was modified
-    expect(typeof IntroScreenModule.default).toBe('function');
-  });
+const mockLogout = jest.fn();
+const mockUser = { uid: 'test-user', isAnonymous: false, displayName: 'Test User' };
+const mockProfile = { isLicensedProfessional: true };
+jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser, logout: mockLogout, isSigningOut: false }) }));
+jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: mockProfile, disclaimerText: 'Verify your prescription', isLoading: false }) }));
+jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { scansUsed: 1, limit: 3, plan: 'free' } }) }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ getDoseLogHistory: jest.fn().mockResolvedValue([]) }) }));
 
-  it('should export the IntroScreen component', () => {
-    expect(IntroScreen).toBeDefined();
-    expect(typeof IntroScreen).toBe('function');
-  });
+let originalOS: typeof Platform.OS;
+beforeEach(() => {
+  originalOS = Platform.OS;
+  Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
+  mockLogout.mockReset().mockResolvedValue(undefined);
+});
+afterEach(() => Object.defineProperty(Platform, 'OS', { configurable: true, value: originalOS }));
+
+it('places the web sign-out confirmation in a native Modal above screen content', async () => {
+  const screen = render(<IntroScreen setScreenStep={jest.fn()} resetFullForm={jest.fn()} />);
+  // The old profile/auth menu z-index styles were removed. The current overlay
+  // uses Modal, so exercise its visible state, actual layout, and hit targets.
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(false);
+  fireEvent.press(screen.getByTestId('sign-out-button'));
+  const modal = screen.UNSAFE_getByType(Modal);
+  expect(modal.props.visible).toBe(true);
+  expect(modal.props.transparent).toBe(true);
+  expect(modal.props.animationType).toBe('fade');
+  const views = modal.findAllByType(View);
+  const overlay = StyleSheet.flatten(views[0].props.style);
+  expect(overlay).toMatchObject({ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' });
+  const card = StyleSheet.flatten(views[1].props.style);
+  expect(card).toMatchObject({ backgroundColor: '#FFFFFF', width: '85%', maxWidth: 400 });
+  expect(screen.getByText('Are you sure you want to sign out?')).toBeTruthy();
+  expect(mockLogout).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByText('Cancel'));
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(false);
+  expect(mockLogout).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByTestId('sign-out-button'));
+  await act(async () => fireEvent.press(screen.getByText('Confirm')));
+  expect(mockLogout).toHaveBeenCalledTimes(1);
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(false);
 });
 
-// Test the style configuration more directly
-describe('IntroScreen Styles Configuration', () => {
-  // Mock StyleSheet to capture the styles that were created
-  const mockCreate = jest.fn((styles) => styles);
-  
-  beforeAll(() => {
-    jest.doMock('react-native', () => ({
-      StyleSheet: {
-        create: mockCreate,
-      },
-      Platform: { OS: 'web' },
-      View: 'View',
-      Text: 'Text',
-      TouchableOpacity: 'TouchableOpacity',
-      SafeAreaView: 'SafeAreaView',
-      Modal: 'Modal',
-      ActivityIndicator: 'ActivityIndicator',
-    }));
-  });
-
-  it('should use the current layout without obsolete menu overlays', () => {
-    // Clear previous mock calls
-    mockCreate.mockClear();
-    
-    // Import the module after mocking
-    jest.isolateModules(() => { require('./IntroScreen'); });
-    
-    // Check if StyleSheet.create was called with our fixed styles
-    expect(mockCreate).toHaveBeenCalled();
-    
-    const stylesCreated = mockCreate.mock.calls.map(([styles]) => styles)
-      .find(styles => styles.safeArea && styles.debugOverlay);
-    expect(stylesCreated).toBeDefined();
-    expect(stylesCreated.container).toEqual({ flex: 1 });
-    expect(stylesCreated.debugOverlay).toEqual(expect.objectContaining({
-      position: 'absolute', zIndex: 1000,
-    }));
-    // Logout confirmation now uses a Modal rather than these old menu layers.
-    expect(stylesCreated).not.toHaveProperty('profileMenu');
-    expect(stylesCreated).not.toHaveProperty('authMenu');
-    expect(stylesCreated).not.toHaveProperty('menuOverlay');
-  });
+it('dismisses the overlay through the platform back/close callback and allows reopening', () => {
+  const screen = render(<IntroScreen setScreenStep={jest.fn()} resetFullForm={jest.fn()} />);
+  fireEvent.press(screen.getByTestId('sign-out-button'));
+  act(() => screen.UNSAFE_getByType(Modal).props.onRequestClose());
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(false);
+  expect(mockLogout).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByTestId('sign-out-button'));
+  expect(screen.UNSAFE_getByType(Modal).props.visible).toBe(true);
 });

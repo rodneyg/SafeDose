@@ -76,12 +76,10 @@ jobs:
             coverage/summary.md
           if-no-files-found: error
 
-  # Informational: main has 25 pre-existing failing suites. Make this required
-  # once those failures are fixed, and remove continue-on-error at that point.
+  # Run all Jest suites as a blocking check so regressions fail CI.
   full-suite:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     env:
       FC_SEED: '1032026'
     steps:
@@ -92,6 +90,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx jest --runInBand
+
+  demo-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Headless seven-step, strength, and photo-error regressions
+        run: npm run test:demo-leftovers
 
   privacy:
     runs-on: ubuntu-latest

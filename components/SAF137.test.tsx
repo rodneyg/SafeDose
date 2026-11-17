@@ -4,6 +4,8 @@ import useDoseCalculator from '../lib/hooks/useDoseCalculator';
 import ManualEntryScreen from './ManualEntryScreen';
 import FinalResultDisplay from './FinalResultDisplay';
 import { calculateDose } from '../lib/dosing';
+import { getManualProgress } from '../lib/manualProgress';
+import CustomProgressBar from './CustomProgressBar';
 
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 jest.mock('react-native', () => ({ ...jest.requireActual('../__mocks__/react-native'), ScrollView: 'ScrollView' }));
@@ -25,7 +27,6 @@ jest.mock('./TotalAmountInputStep', () => 'TotalAmountInputStep');
 jest.mock('./ReconstitutionStep', () => 'ReconstitutionStep');
 jest.mock('./SyringeStep', () => 'SyringeStep');
 jest.mock('./SyringeIllustration', () => 'SyringeIllustration');
-jest.mock('./CustomProgressBar', () => 'CustomProgressBar');
 
 let renderer: ReactTestRenderer;
 beforeEach(() => { jest.spyOn(console, 'log').mockImplementation(() => {}); });
@@ -180,4 +181,66 @@ it('SAF-109 records each scanned edit and each repeated refusal without recordin
   act(() => h().handleCalculateFinal());
   act(() => h().handleCalculateFinal());
   expect(logAnalyticsEvent.mock.calls.filter((call: any[]) => call[1]?.stage === 'calculation')).toHaveLength(2);
+});
+
+
+it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through forward and backward navigation on the %s path', inputType => {
+  let state: ReturnType<typeof useDoseCalculator>;
+  function Flow() {
+    state = useDoseCalculator({ checkUsageLimit: async () => true });
+    return <ManualEntryScreen {...state as any} />;
+  }
+  act(() => { renderer = create(<Flow />); });
+  const steps = ['dose', 'medicationSource',
+    ...(inputType === 'concentration' ? ['concentrationInput', 'totalAmountInput'] : ['totalAmountInput', 'reconstitution']),
+    'syringe', 'preDoseConfirmation', 'finalResult'];
+  const expectStep = (index: number) => {
+    expect(state!.manualStep).toBe(steps[index]);
+    const labels = renderer.root.findAllByType('Text' as any).map(node =>
+      React.Children.toArray(node.props.children).join(''));
+    expect(labels).toContain(`Step ${index + 1} of 7`);
+    expect(labels.some(label => /Step \d+ of (6|8)/.test(label))).toBe(false);
+    expect(renderer.root.findByType(CustomProgressBar).props).toEqual({ currentStep: index + 1, totalSteps: 7 });
+    expect(getManualProgress(state!.manualStep, state!.medicationInputType)).toEqual({ currentStep: index + 1, totalSteps: 7 });
+  };
+  const next = (label = 'Next step') => {
+    const button = renderer.root.findByProps({ accessibilityLabel: label });
+    expect(button.props.disabled).toBe(false);
+    act(() => button.props.onPress());
+  };
+  expectStep(0);
+  act(() => { state!.setDose('5'); state!.setUnit('mg'); });
+  next();
+  expectStep(1);
+  act(() => state!.setMedicationInputType(inputType));
+  next();
+  expectStep(2);
+  if (inputType === 'concentration') {
+    act(() => state!.setConcentrationAmount('10'));
+    next();
+    expectStep(3);
+  }
+  act(() => { state!.setTotalAmount('20'); state!.setTotalAmountUnit('mg'); });
+  next();
+  if (inputType === 'totalAmount') {
+    expectStep(3);
+    act(() => state!.setSolutionVolume('2'));
+    next();
+  }
+  expectStep(4);
+  act(() => state!.setManualSyringe({ type: 'Standard', volume: '1 ml' }));
+  next('Calculate dose');
+  expectStep(5);
+  expect(state!.calculationError).toBeNull();
+  const reviewText = renderer.root.findAllByType('Text' as any).map(node =>
+    React.Children.toArray(node.props.children).join(''));
+  const expectedStrength = inputType === 'concentration' ? '10' : '10.000';
+  expect(reviewText).toContain(`Strength: ${expectedStrength} mg/ml`);
+  expect(reviewText).toContain(`${expectedStrength} mg/ml`);
+  next('Proceed to result');
+  expectStep(6);
+  for (let index = 5; index >= 0; index--) {
+    act(() => state!.handleBack());
+    expectStep(index);
+  }
 });

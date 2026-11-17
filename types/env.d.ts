@@ -1,4 +1,5 @@
-// types/env.d.ts
+// Augment the installed Expo declarations instead of shadowing the module.
+import 'expo-constants';
 declare module 'expo-constants' {
     interface Constants {
       expoConfig: {

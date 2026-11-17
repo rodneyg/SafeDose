@@ -16,7 +16,7 @@ export default function ChildSafety() {
       age
     });
     
-    router.push('/onboarding/demo');
+    router.navigate('/onboarding/demo');
   }, [age, router]);
 
   const handleSeekHelp = useCallback(async () => {
@@ -170,6 +170,9 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
     marginBottom: 8,
+  },
+  subtitleMobile: {
+    fontSize: 14,
   },
   subtitle: {
     fontSize: 17,
