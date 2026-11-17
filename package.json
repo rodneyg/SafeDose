@@ -35,7 +35,8 @@
     "changelog:add": "node scripts/changelog.js add",
     "prebuild:web": "npm run changelog:build",
     "prestart": "npm run changelog:build",
-    "predev": "npm run changelog:build"
+    "predev": "npm run changelog:build",
+    "smoke:prod": "node scripts/prod-smoke.mjs"
   },
   "vercel": {
     "projectRoot": "."
@@ -109,6 +110,7 @@
     "fast-check": "^4.10.2",
     "jest": "^29.7.0",
     "jest-expo": "~52.0.6",
+    "playwright": "^1.65.1",
     "react-test-renderer": "^18.3.1",
     "rimraf": "^6.0.1",
     "safe-buffer": "^5.2.1",
