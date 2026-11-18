@@ -111,25 +111,6 @@ export default function ScanScreen({
     }
   }, [webCameraStream]);
 
-  // Safeguard: Reset isProcessing state after 20 seconds if it gets stuck
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    if (isProcessing) {
-      console.log('[ScanScreen] Setting safeguard timeout for isProcessing');
-      timeoutId = setTimeout(() => {
-        console.log('[ScanScreen] Safeguard timeout triggered - resetting isProcessing');
-        setIsProcessing(false);
-        setScanError('Operation timed out. Please try again.');
-      }, 20000); // 20 seconds timeout
-    }
-    
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [isProcessing, setIsProcessing, setScanError]);
   const handleNavigateToIntro = () => {
     // Ensure we're using the safest navigation path back to intro
     console.log('[ScanScreen] Navigating back to intro screen');
