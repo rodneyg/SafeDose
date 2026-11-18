@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { getCheckoutStripe } from "../lib/checkoutStripe";
 import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
 import { router } from "expo-router";
@@ -14,10 +14,7 @@ import {
   FREE_SCAN_LIMIT,
 } from "../lib/plans";
 
-// Initialize Stripe.js with the configuration, handling missing publishable key gracefully
-const stripePromise = stripeConfig.publishableKey
-  ? loadStripe(stripeConfig.publishableKey)
-  : null;
+
 
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -154,7 +151,7 @@ export default function PricingPage() {
         return;
       }
 
-      const stripe = await stripePromise;
+      const stripe = await getCheckoutStripe();
       console.log("Stripe instance:", stripe);
       if (!stripe) {
         console.error("Stripe is not initialized");
