@@ -11,6 +11,7 @@
     "build:functions": "esbuild api/*.js --bundle --platform=node --target=node16 --outdir=functions",
     "build": "npm run build:web",
     "test": "jest",
+    "test:vercel-ignore": "node --test scripts/vercel-ignore.test.mjs",
     "lint": "expo lint",
     "android": "expo run:android",
     "ios": "expo run:ios",

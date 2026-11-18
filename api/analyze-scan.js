@@ -98,11 +98,16 @@ module.exports = async (req, res) => {
   try {
     const client = new OpenAI({ apiKey, timeout: 45000, maxRetries: 0 });
     const response = await client.chat.completions.create(buildScanRequest(image.trim()));
-    const content = response && response.choices && response.choices[0] && response.choices[0].message
-      ? response.choices[0].message.content
+    const message = response && response.choices && response.choices[0]
+      ? response.choices[0].message
       : null;
-    if (typeof content !== 'string' || !content.trim()) {
-      return res.status(502).json({ error: 'Invalid response from image analysis.' });
+    const content = message && message.content;
+    // A completed request can contain an SDK refusal instead of scan JSON.
+    // Keep structured scan refusals for the client's existing safety parser.
+    if ((message && message.refusal) || typeof content !== 'string' || !content.trim()) {
+      return res.status(422).json({
+        error: 'We could not read a syringe or vial in this photo. Enter the values manually.',
+      });
     }
     return res.status(200).json({ content });
   } catch (error) {
