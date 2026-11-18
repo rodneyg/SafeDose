@@ -7,7 +7,17 @@ const mockToast = jest.fn();
 const mockRedirect = jest.fn();
 jest.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
 jest.mock('../../lib/stripeConfig', () => ({ __esModule: true, default: { publishableKey: 'mock-publishable' } }));
-jest.mock('@stripe/stripe-js', () => ({ loadStripe: jest.fn(async () => ({ redirectToCheckout: (...args: unknown[]) => mockRedirect(...args) })) }));
+function mockStripeModule() {
+  return {
+    loadStripe: jest.fn(async () => ({
+      redirectToCheckout: (...args: unknown[]) => mockRedirect(...args),
+    })),
+  };
+}
+
+// The PR branch and main use different Stripe entry points during this transition.
+jest.mock('@stripe/stripe-js', () => mockStripeModule());
+jest.mock('@stripe/stripe-js/pure', () => mockStripeModule());
 jest.mock('@/components/pricing/PricingCard', () => 'PricingCard');
 jest.mock('@/components/pricing/PriceToggle', () => 'PriceToggle');
 jest.mock('@/components/pricing/PaymentProviders', () => 'PaymentProviders');
