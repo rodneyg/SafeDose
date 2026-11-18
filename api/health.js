@@ -10,5 +10,6 @@ module.exports = (req, res) => {
     ok: true,
     // Presence only: this does not validate credentials or call the scan provider.
     scanProviderConfigured: Boolean(process.env.OPENAI_API_KEY),
+    commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || null,
   });
 };
