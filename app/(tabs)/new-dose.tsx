@@ -56,6 +56,14 @@ export default function NewDoseScreen() {
     trackInteraction: signUpPrompt.trackInteraction,
   });
   
+  const manualStartAppliedRef = useRef(false);
+  useEffect(() => {
+    if (searchParams.startManual === 'true' && !manualStartAppliedRef.current) {
+      manualStartAppliedRef.current = true;
+      doseCalculator.setScreenStep('manualEntry');
+    }
+  }, [searchParams.startManual, doseCalculator.setScreenStep]);
+
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
     const lockViewport = () => {
