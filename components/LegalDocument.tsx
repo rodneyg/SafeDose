@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LegalDocumentProps = {
   title: string;
-  sections: ReadonlyArray<{ title: string; body: string }>;
+  sections: readonly { title: string; body: string }[];
 };
 
 export default function LegalDocument({ title, sections }: LegalDocumentProps) {
