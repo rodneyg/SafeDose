@@ -1,0 +1,41 @@
+name: Nightly production smoke (informational)
+
+# Scheduled workflows run from the default branch after this stack is merged.
+# This workflow is informational and must not be a required branch check.
+on:
+  schedule:
+    - cron: '23 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch main for health endpoint discovery
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Run anonymous production smoke
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run smoke:prod 2>&1 | tee smoke-output.txt
+      - name: Upload production smoke output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: smoke-output.txt
+          if-no-files-found: warn
+          retention-days: 14
