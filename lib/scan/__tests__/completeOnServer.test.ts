@@ -29,7 +29,7 @@ describe('completeScanOnServer', () => {
   });
 
   it('uses the canonical host when no window origin is available', () => {
-    expect(getScanApiUrl()).toBe('https://safe-dose.vercel.app/api/analyze-scan');
+    expect(getScanApiUrl()).toBe('https://safedose.rodneygainous.com/api/analyze-scan');
   });
 });
 

@@ -8,8 +8,6 @@ import Constants from 'expo-constants';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
 import { getApiBaseUrl } from "../lib/apiBase";
 
-// Base URL for API
-
 export default function SuccessScreen() {
   const { session_id } = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);

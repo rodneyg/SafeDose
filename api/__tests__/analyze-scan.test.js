@@ -172,7 +172,8 @@ describe('POST /api/analyze-scan', () => {
     'https://app.safedoseai.com', 'https://rodneygainous.com', 'https://www.rodneygainous.com',
     'https://safe-dose-attacker.vercel.app',
     'https://safe-dose-abc-team.vercel.app', 'http://safe-dose.vercel.app',
-    'https://safe-dose.vercel.app/path', '',
+    'https://safe-dose.vercel.app/path', '', 'http://safedose.rodneygainous.com',
+    'https://evil.rodneygainous.com', 'https://safedose.rodneygainous.com.evil.com',
   ])('rejects untrusted origin %s before spending credits', async origin => {
     const res = mockRes();
     await handler({ method: 'POST', headers: { origin } }, res);

@@ -7,7 +7,7 @@ export function getScanApiUrl(): string {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return `${window.location.origin}${ANALYZE_PATH}`;
   }
-  return `https://safe-dose.vercel.app${ANALYZE_PATH}`;
+  return `https://safedose.rodneygainous.com${ANALYZE_PATH}`;
 }
 
 /** Browser/native transport that never receives or stores an OpenAI key. */
