@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { getCheckoutStripe, STRIPE_LOAD_ERROR } from "../../lib/checkoutStripe";
 import { useToast } from "@/hooks/use-toast";
-import stripeConfig from "../../lib/stripeConfig";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
 import PriceToggle from "@/components/pricing/PriceToggle";
 import PaymentProviders, { PaymentProvider } from "@/components/pricing/PaymentProviders";
@@ -11,9 +10,7 @@ import {
   PHOTO_CHECK_ANNUAL_AMOUNT,
 } from "../../lib/plans";
 
-const stripePromise = stripeConfig.publishableKey
-  ? loadStripe(stripeConfig.publishableKey)
-  : Promise.reject(new Error("Stripe publishable key is missing"));
+
 
 const pricingPlans: PricingPlan[] = [
   {
@@ -54,22 +51,22 @@ export default function PricingPage() {
 
   const initiateStripeCheckout = async (plan: PricingPlan) => {
     try {
-      const stripe = await stripePromise;
-      if (!stripe) {
-        toast({
-          title: "Error",
-          description: "Stripe is not initialized. Please try again later.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const offerKey = isAnnual ? plan.offerKey?.annual : plan.offerKey?.monthly;
       const priceId = isAnnual ? plan.priceId.annual : plan.priceId.monthly;
       if (!offerKey && !priceId) {
         toast({
           title: "Free Plan Selected",
           description: "No checkout needed for the free calculator.",
+        });
+        return;
+      }
+
+      const stripe = await getCheckoutStripe();
+      if (!stripe) {
+        toast({
+          title: "Error",
+          description: "Stripe is not initialized. Please try again later.",
+          variant: "destructive",
         });
         return;
       }
@@ -106,7 +103,9 @@ export default function PricingPage() {
       
       // Provide user-friendly error messages
       let description = "Unable to initiate checkout. Please try again.";
-      if (error instanceof Error && error.message.includes("configuration error")) {
+      if (error instanceof Error && error.message === STRIPE_LOAD_ERROR) {
+        description = STRIPE_LOAD_ERROR;
+      } else if (error instanceof Error && error.message.includes("configuration error")) {
         description = "Payment system configuration error. Please contact support - this issue has been logged.";
       } else if (error instanceof Error && error.message.includes("temporarily unavailable")) {
         description = "Payment system temporarily unavailable. Please try again in a few moments.";
