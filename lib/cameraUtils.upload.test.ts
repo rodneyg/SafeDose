@@ -1,4 +1,5 @@
 import { captureAndProcessImage } from './cameraUtils';
+import { SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
 
 jest.mock('./utils', () => ({ isWeb: true, MAX_FILE_SIZE: 5 * 1024 * 1024 }));
@@ -34,6 +35,7 @@ beforeEach(() => {
   } });
   globalThis.fetch = jest.fn();
   options = {
+    onScanUnavailable: jest.fn(),
     cameraRef: { current: null }, permission: { status: 'denied' }, isMobileWeb: false,
     setIsProcessing: jest.fn(), setProcessingMessage: jest.fn(), setScanError: jest.fn(), incrementScansUsed: jest.fn(async () => {}),
   };
@@ -48,9 +50,9 @@ afterEach(() => {
 });
 
 it.each([
-  ['network failure', () => Promise.reject(new Error('offline')), /could not reach the scan service/i],
-  ['vision failure', async () => ({ ok: false, json: async () => ({ error: 'Image analysis failed. Please try again.' }) }), /image analysis failed/i],
-  ['invalid response', async () => ({ ok: true, json: async () => ({}) }), /invalid response/i],
+  ['network failure', () => Promise.reject(new Error('offline')), /Photo scan is unavailable right now/i],
+  ['vision failure', async () => ({ ok: false, json: async () => ({ error: 'Image analysis failed. Please try again.' }) }), /Photo scan is unavailable right now/i],
+  ['invalid response', async () => ({ ok: true, json: async () => ({}) }), /Photo scan is unavailable right now/i],
   ['unreadable photo', async () => ({ ok: true, json: async () => ({ content: '{}' }) }), /could not read the syringe size or vial strength safely/i],
 ] as const)('reports %s for a selected photo without camera permission', async (_, response, message) => {
   (fetch as jest.Mock).mockImplementation(response);
@@ -65,7 +67,10 @@ it.each([
 it('reports a file read failure before making a scan request', async () => {
   mockReadFails = true;
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('Failed to read image');
+  expect(options.setScanError).toHaveBeenLastCalledWith(SCAN_UNAVAILABLE_MESSAGE);
+  expect(options.onScanUnavailable).toHaveBeenCalledTimes(1);
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(jest.getTimerCount()).toBe(0);
   expect(fetch).not.toHaveBeenCalled();
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
 });
@@ -88,15 +93,19 @@ it.each([
 ])('sanitizes untrusted server error text: %s', async (error) => {
   (fetch as jest.Mock).mockResolvedValue({ ok: false, json: async () => ({ error }) });
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('We could not process this photo. Please try another photo or enter the details manually.');
+  expect(options.setScanError).toHaveBeenLastCalledWith('Photo scan is unavailable right now. Enter the values by hand.');
   expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
   expect(jest.getTimerCount()).toBe(0);
 });
 
-it('reports the authored size limit message without uploading an oversized photo', async () => {
+it('opens manual entry without uploading or charging for an oversized photo', async () => {
   mockFile.size = 6 * 1024 * 1024;
   expect(await captureAndProcessImage(options)).toBeNull();
-  expect(options.setScanError).toHaveBeenLastCalledWith('Selected image exceeds the 5 MB limit. Please choose a smaller image.');
+  expect(options.setScanError).toHaveBeenLastCalledWith(SCAN_UNAVAILABLE_MESSAGE);
+  expect(options.onScanUnavailable).toHaveBeenCalledTimes(1);
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(options.incrementScansUsed).not.toHaveBeenCalled();
+  expect(jest.getTimerCount()).toBe(0);
   expect(fetch).not.toHaveBeenCalled();
 });
