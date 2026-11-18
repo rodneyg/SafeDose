@@ -11,6 +11,22 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const MAX_RATE_LIMIT_IPS = 10000;
 const requestWindows = new Map();
 
+// Unknown statuses become null; never serialize arbitrary provider fields.
+const PROVIDER_ERROR_STATUSES = [400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504];
+const PROVIDER_ERROR_CODES = [
+  'invalid_api_key', 'permission_denied', 'insufficient_quota',
+  'rate_limit_exceeded', 'model_not_found',
+];
+
+function logProviderFailure(category, status, code) {
+  console.error(JSON.stringify({
+    event: 'analyze-scan.provider_failure',
+    category,
+    upstream_status: PROVIDER_ERROR_STATUSES.includes(status) ? status : null,
+    provider_code: PROVIDER_ERROR_CODES.includes(code) ? code : 'other',
+  }));
+}
+
 function allowedOrigin(origin) {
   if (origin === undefined) return true; // Native clients do not send Origin.
   if (typeof origin !== 'string') return false;
@@ -112,11 +128,11 @@ module.exports = async (req, res) => {
     return res.status(200).json({ content });
   } catch (error) {
     // Never log provider messages or error objects: they can contain credentials
-    // or the submitted image. Only emit a category controlled by this route.
+    // or the submitted image. Emit only controlled categories and allowlisted fields.
     const status = error && error.status;
     const code = error && (error.code || (error.error && error.error.code));
     if (status === 401 || status === 403) {
-      console.error('[analyze-scan] Vision authentication failed');
+      logProviderFailure('authentication', status, code);
       return res.status(503).json({
         error: 'Image analysis is unavailable because service authentication failed. Please contact support.',
       });
@@ -127,7 +143,7 @@ module.exports = async (req, res) => {
       (typeof error.message === 'string' && /timeout|timed out/i.test(error.message))
     );
     if (timedOut) {
-      console.error('[analyze-scan] Vision request timed out');
+      logProviderFailure('timeout', status, code);
       return res.status(504).json({ error: 'Image analysis timed out. Please try again.' });
     }
     const invalidImageCodes = [
@@ -136,12 +152,12 @@ module.exports = async (req, res) => {
       'image_too_small', 'image_too_large_for_model', 'unsupported_image',
     ];
     if ((status === 400 || status === 422) && invalidImageCodes.includes(code)) {
-      console.error('[analyze-scan] Vision request rejected an invalid image');
+      logProviderFailure('invalid_image', status, code);
       return res.status(400).json({
         error: 'The image could not be read. Please upload a clear JPEG, PNG, WebP, or GIF image.',
       });
     }
-    console.error('[analyze-scan] Vision request failed');
+    logProviderFailure('other', status, code);
     return res.status(502).json({ error: 'Image analysis failed. Please try again.' });
   }
 };
