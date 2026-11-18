@@ -1,4 +1,5 @@
 /* eslint-env jest */
+const SOLID_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 const SMALL_JPEG = 'data:image/jpeg;base64,/9j/4AAQ==';
 
 function mockRes() {
@@ -204,12 +205,25 @@ describe('POST /api/analyze-scan', () => {
     expect(request.messages[0].content[1].image_url.url).toBe(SMALL_JPEG);
   });
 
-  it('returns 502 when the model response is empty', async () => {
+  it.each([
+    ['null content', { content: null }],
+    ['empty content', { content: '' }],
+    ['whitespace content', { content: ' \n\t' }],
+    ['missing content', {}],
+    ['provider refusal', { content: null, refusal: 'private provider refusal' }],
+    ['refusal with content', { content: '{"refuse":false}', refusal: 'private provider refusal' }],
+  ])('returns a safe 422 for %s on a valid solid-color PNG', async (_, message) => {
     process.env.OPENAI_API_KEY = 'test-key';
-    create.mockResolvedValue({ choices: [{ message: { content: null } }] });
+    create.mockResolvedValue({ choices: [{ message }] });
     const res = mockRes();
-    await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
-    expect(res.statusCode).toBe(502);
+    await handler({ method: 'POST', body: { image: SOLID_PNG } }, res);
+    expect(res.statusCode).toBe(422);
+    expect(res.body).toEqual({
+      error: 'We could not read a syringe or vial in this photo. Enter the values manually.',
+    });
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[0][0].messages[0].content[1].image_url.url).toBe(SOLID_PNG);
+    expect(JSON.stringify([res.body, errorLog.mock.calls])).not.toContain('private provider refusal');
   });
   it.each([
     'https://safe-dose.vercel.app',
