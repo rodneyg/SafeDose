@@ -1,6 +1,6 @@
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
-import { completeScanOnServer } from './scan/completeOnServer';
+import { completeScanOnServer, SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
@@ -19,8 +19,6 @@ const PHOTO_ERROR_MESSAGES = new Map<string, string>([
   ['Camera returned no picture', 'Camera returned no picture'],
   ['Failed to capture image data', 'Failed to capture image data'],
   ['Unrecognized image format', 'Image format could not be processed'],
-  ['Failed to read image data', 'Failed to read image data'],
-  ['Failed to read image', 'Failed to read image'],
   ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
   ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
   ['Invalid response from image analysis', 'Invalid response from image analysis'],
@@ -40,6 +38,7 @@ interface CaptureAndProcessImageProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  onScanUnavailable?: () => void;
   webCameraStream?: MediaStream | null;
 }
 
@@ -51,6 +50,7 @@ export async function captureAndProcessImage({
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  onScanUnavailable,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
@@ -128,7 +128,7 @@ export async function captureAndProcessImage({
               if (document.body.contains(input)) {
                 document.body.removeChild(input);
               }
-              reject(new Error('Selected image exceeds the 5 MB limit. Please choose a smaller image.'));
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
               return;
             }
             resolve({ file });
@@ -168,29 +168,37 @@ export async function captureAndProcessImage({
         const { file } = await filePromise;
         setProcessingMessage('Reading image data...');
 
-        const reader = new FileReader();
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
-          reader.onload = () => {
-            console.log('[Capture] FileReader onload triggered');
-            const result = reader.result;
-            if (typeof result !== 'string' || !result.includes(',')) {
-              console.error('[Capture] Invalid FileReader result');
-              reject(new Error('Failed to read image data'));
-              return;
-            }
-            const base64Image = result.split(',')[1];
-            const mimeType = file.type || 'image/jpeg';
-            console.log('[Capture] Image converted to base64, length:', base64Image.length);
-            resolve({ base64Image, mimeType });
-          };
+          try {
+            const reader = new FileReader();
+            reader.onload = () => {
+              console.log('[Capture] FileReader onload triggered');
+              const result = reader.result;
+              if (typeof result !== 'string' || !/^data:image\/[^;,]+;base64,.+$/s.test(result)) {
+                console.error('[Capture] Invalid FileReader result');
+                reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+                return;
+              }
+              const base64Image = result.split(',')[1];
+              const mimeType = file.type || 'image/jpeg';
+              console.log('[Capture] Image converted to base64, length:', base64Image.length);
+              resolve({ base64Image, mimeType });
+            };
 
-          reader.onerror = () => {
-            console.error('[Capture] FileReader error');
-            reject(new Error('Failed to read image'));
-          };
+            reader.onerror = () => {
+              console.error('[Capture] FileReader error');
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+            };
 
-          console.log('[Capture] Starting FileReader readAsDataURL');
-          reader.readAsDataURL(file);
+            // Aborted reads otherwise leave the capture promise pending.
+            reader.onabort = () => reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+
+            console.log('[Capture] Starting FileReader readAsDataURL');
+            reader.readAsDataURL(file);
+          } catch {
+            // Browser read errors use the same manual-entry path as service errors.
+            reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+          }
         });
 
         const result = await readerPromise;
@@ -268,19 +276,7 @@ export async function captureAndProcessImage({
     console.log('[Process] Sending image to /api/analyze-scan');
 
     const result = await readScan(imageUrl, {
-      complete: async () => {
-        let timeout: ReturnType<typeof setTimeout> | undefined;
-        try {
-          return await Promise.race([
-            completeScanOnServer(imageUrl),
-            new Promise<string>((_, reject) => {
-              timeout = setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
-            }),
-          ]);
-        } finally {
-          if (timeout) clearTimeout(timeout);
-        }
-      },
+      complete: () => completeScanOnServer(imageUrl),
     });
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
@@ -303,6 +299,11 @@ export async function captureAndProcessImage({
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
+    if (error instanceof Error && error.message === SCAN_UNAVAILABLE_MESSAGE) {
+      setScanError(SCAN_UNAVAILABLE_MESSAGE);
+      onScanUnavailable?.();
+      return null;
+    }
     const message = error instanceof Error
       ? PHOTO_ERROR_MESSAGES.get(error.message) ?? PHOTO_ERROR_FALLBACK
       : PHOTO_ERROR_FALLBACK;
