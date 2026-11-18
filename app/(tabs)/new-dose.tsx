@@ -1,3 +1,4 @@
+import { SCAN_UNAVAILABLE_MESSAGE } from '../../lib/scan/completeOnServer';
 import { hasScanCapacity } from '../../lib/plans';
 import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
 import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
@@ -315,7 +316,8 @@ export default function NewDoseScreen() {
 
   useEffect(() => {
     if (screenStep !== 'scan') {
-      setScanError(null);
+      // Keep the scan failure visible when capture routes to manual entry.
+      setScanError(error => screenStep === 'manualEntry' && error === SCAN_UNAVAILABLE_MESSAGE ? error : null);
       setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }
@@ -780,6 +782,10 @@ export default function NewDoseScreen() {
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        onScanUnavailable: () => {
+          setManualStep('dose');
+          setScreenStep('manualEntry');
+        },
       });
 
       if (result) {
@@ -1065,6 +1071,9 @@ export default function NewDoseScreen() {
           webFlashlightSupported={webFlashlightSupported}
           toggleWebFlashlight={toggleWebFlashlight}
         />
+      )}
+      {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
+        <Text accessibilityRole="alert">{scanError}</Text>
       )}
       {screenStep === 'manualEntry' && (
         <ManualEntryScreen
