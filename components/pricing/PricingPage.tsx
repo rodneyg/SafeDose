@@ -97,7 +97,8 @@ export default function PricingPage() {
       }
 
       const { sessionId } = await res.json();
-      await stripe.redirectToCheckout({ sessionId });
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) throw new Error(error.message);
     } catch (error) {
       console.error("Checkout error:", error);
       
