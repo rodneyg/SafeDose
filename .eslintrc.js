@@ -4,6 +4,10 @@ module.exports = {
   ignorePatterns: ['/dist/*'],
   overrides: [
     {
+      files: ['scripts/**/*.mjs'],
+      env: { node: true },
+    },
+    {
       files: [
         '**/*.{test,spec}.{js,jsx,ts,tsx}',
         '**/__tests__/**/*.{js,jsx,ts,tsx}',

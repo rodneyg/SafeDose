@@ -167,3 +167,35 @@ Built by SafeLab — advancing open tools for human systems.
 - On merges to main, the Draft changelog Action uses only GITHUB_TOKEN to push a `changelog/pr-*` branch and open a draft PR, preferring a `## Changelog` section over the PR title.
 - Review user-facing wording, discard internal-only drafts, set `status: published`, and run `npm run changelog:build` to refresh `lib/changelog.json`; web builds regenerate it too.
 - If repository policy blocks token-created PRs, the pushed draft branch remains available for a manual PR. No secrets or setting changes are needed; changelog branches do not trigger more drafts.
+
+### Read-only production smoke
+
+```sh
+npm install
+npx playwright install chromium
+git fetch origin main
+npm run smoke:prod
+```
+
+The default target is `https://safedose.rodneygainous.com`. To check a local
+fixture or another public deployment, pass a bare HTTP(S) origin:
+`npm run smoke:prod -- http://127.0.0.1:3000`.
+
+The script checks the welcome route, onboarding, pricing (monthly and yearly
+Photo Check plans), login and changelog for visible text and uncaught page errors.
+Each page uses fresh headless Chromium state. Browser traffic is restricted to
+anonymous same-origin GETs, with service workers and third-party requests blocked.
+This restriction can expose page errors from optional third-party integrations;
+a failure is reported rather than ignored. No buttons are clicked.
+
+The only POST sends `{}` to `/api/analyze-scan` and expects a 4xx validation
+response. No images, keys, sign-in, checkout or authenticated features are used.
+`/api/health` is requested only when `api/health.js` exists in the locally fetched
+`origin/main`; otherwise the script prints SKIP. Fetch main first to make that
+check current. A missing main ref is a failure. Health currently follows draft
+PR #450's `HTTP 200` and `ok: true` contract without adopting its code.
+
+Checks print PASS/FAIL, with a nonzero exit code for any failure. Response bodies,
+page contents and exception messages are never printed. This limited smoke does
+not establish that photo inference or checkout works. Test the smoke runner
+against local HTTP fixtures with `node --test scripts/prod-smoke.test.mjs`.
