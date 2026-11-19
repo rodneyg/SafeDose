@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-19-pr-470",
+    "date": "2026-11-19",
+    "title": "Fix web photo picker cancellation",
+    "status": "published",
+    "prs": [
+      470
+    ],
+    "sections": {
+      "Improved": [
+        "Fix web photo picker cancellation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-469",
     "date": "2026-11-19",
     "title": "T-482: Add SafeDose support, account recovery, and footer navigation",
