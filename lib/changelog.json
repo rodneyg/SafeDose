@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-19-pr-467",
+    "date": "2026-11-19",
+    "title": "Privacy Policy and Terms of Service",
+    "status": "published",
+    "prs": [
+      467
+    ],
+    "sections": {
+      "Improved": [
+        "You can now open the Privacy Policy and Terms of Service from the pricing page."
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-459",
     "date": "2026-11-19",
     "title": "test: verify production guest scan and manual dose flow (SAF-353)",
