@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-19-pr-459",
+    "date": "2026-11-19",
+    "title": "test: verify production guest scan and manual dose flow (SAF-353)",
+    "status": "published",
+    "prs": [
+      459
+    ],
+    "sections": {
+      "Improved": [
+        "test: verify production guest scan and manual dose flow (SAF-353)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-352",
     "date": "2026-11-19",
     "title": "Add repeat last dose shortcut",
