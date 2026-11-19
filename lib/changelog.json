@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-19-pr-469",
+    "date": "2026-11-19",
+    "title": "T-482: Add SafeDose support, account recovery, and footer navigation",
+    "status": "published",
+    "prs": [
+      469
+    ],
+    "sections": {
+      "Improved": [
+        "T-482: Add SafeDose support, account recovery, and footer navigation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-468",
     "date": "2026-11-19",
     "title": "Publish changelog updates automatically",
