@@ -11,7 +11,8 @@ http://localhost:8081/__/auth/handler
 
 ### Production
 ```
-https://safe-dose.vercel.app/__/auth/handler
+https://safedose.rodneygainous.com/__/auth/handler
+https://safe-dose.vercel.app/__/auth/handler   (fallback)
 ```
 
 ## Setting up Google Sign-In in Google Cloud Console
@@ -25,4 +26,4 @@ https://safe-dose.vercel.app/__/auth/handler
 
 These URIs are essential for the OAuth flow to properly redirect back to the application after authentication is complete.
 
-Authorized JavaScript origins: `https://safe-dose.vercel.app` and `http://localhost:8081`. Firebase Auth must authorize `safe-dose.vercel.app` and `localhost`. Preview deployments require their exact hostnames and OAuth origins/redirect URIs; wildcard authorization is not assumed.
+Authorized JavaScript origins: `https://safedose.rodneygainous.com`, `https://safe-dose.vercel.app` (fallback) and `http://localhost:8081`. Firebase Auth must authorize `safedose.rodneygainous.com`, `safe-dose.vercel.app` and `localhost`. Preview deployments require their exact hostnames and OAuth origins/redirect URIs; wildcard authorization is not assumed.

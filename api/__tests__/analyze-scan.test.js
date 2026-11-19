@@ -1,3 +1,4 @@
+/* eslint-env jest */
 const SOLID_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 const SMALL_JPEG = 'data:image/jpeg;base64,/9j/4AAQ==';
 
@@ -118,6 +119,77 @@ describe('POST /api/analyze-scan', () => {
     },
   );
 
+  it.each([
+    [401, 'invalid_api_key', 'authentication', 503],
+    [403, 'permission_denied', 'authentication', 503],
+    [429, 'insufficient_quota', 'other', 502],
+    [429, 'rate_limit_exceeded', 'other', 502],
+    [404, 'model_not_found', 'other', 502],
+    [400, 'invalid_image', 'invalid_image', 400],
+    [504, 'ETIMEDOUT', 'timeout', 504],
+  ])('logs only safe fields for %s / %s (top-level and nested)', async (status, code, category, publicStatus) => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    for (const codeFields of [{ code }, { error: { code } }]) {
+      errorLog.mockClear();
+      create.mockRejectedValue({
+        status, ...codeFields,
+        message: 'private-provider-message',
+        headers: { authorization: 'private-authorization' },
+        image: SMALL_JPEG,
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      const res = mockRes();
+      await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+      expect(res.statusCode).toBe(publicStatus);
+      expect(errorLog).toHaveBeenCalledTimes(1);
+      expect(errorLog.mock.calls).toEqual([[JSON.stringify({
+        event: 'analyze-scan.provider_failure', category,
+        upstream_status: status,
+        provider_code: ['invalid_image', 'ETIMEDOUT'].includes(code) ? 'other' : code,
+      })]]);
+      for (const privateValue of ['private-provider-message', 'private-authorization', SMALL_JPEG, 'test-key']) {
+        expect(JSON.stringify([res.body, errorLog.mock.calls])).not.toContain(privateValue);
+      }
+    }
+  });
+
+  it.each([400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504])(
+    'preserves allowlisted numeric upstream status %s', async status => {
+      process.env.OPENAI_API_KEY = 'test-key';
+      create.mockRejectedValue({ status });
+      await handler({ method: 'POST', body: { image: SMALL_JPEG } }, mockRes());
+      expect(errorLog).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(errorLog.mock.calls[0][0]).upstream_status).toBe(status);
+    },
+  );
+
+  it.each([
+    undefined, null, 200, 418, '401', 'private-status',
+    { credential: 'private-status' },
+  ])('discards unknown or nonnumeric status %# and arbitrary codes', async status => {
+    process.env.OPENAI_API_KEY = 'test-key';
+    create.mockRejectedValue({ status, code: 'private-code', message: 'private-message' });
+    const res = mockRes();
+    await handler({ method: 'POST', body: { image: SMALL_JPEG } }, res);
+    expect(res.body).toEqual({ error: 'Image analysis failed. Please try again.' });
+    expect(errorLog.mock.calls).toEqual([[JSON.stringify({
+      event: 'analyze-scan.provider_failure', category: 'other',
+      upstream_status: null, provider_code: 'other',
+    })]]);
+  });
+
+  it.each([undefined, null, 'INVALID_API_KEY', 'invalid_api_key\nprivate-code', { key: 'private-code' }])(
+    'discards non-allowlisted provider code %#', async code => {
+      process.env.OPENAI_API_KEY = 'test-key';
+      create.mockRejectedValue({ status: 401, code });
+      await handler({ method: 'POST', body: { image: SMALL_JPEG } }, mockRes());
+      expect(errorLog.mock.calls).toEqual([[JSON.stringify({
+        event: 'analyze-scan.provider_failure', category: 'authentication',
+        upstream_status: 401, provider_code: 'other',
+      })]]);
+    },
+  );
+
   it('returns model content and never reads Expo client config', async () => {
     process.env.OPENAI_API_KEY = 'test-key';
     create.mockResolvedValue({ choices: [{ message: { content: '{"refuse":true}' } }] });
@@ -172,7 +244,8 @@ describe('POST /api/analyze-scan', () => {
     'https://app.safedoseai.com', 'https://rodneygainous.com', 'https://www.rodneygainous.com',
     'https://safe-dose-attacker.vercel.app',
     'https://safe-dose-abc-team.vercel.app', 'http://safe-dose.vercel.app',
-    'https://safe-dose.vercel.app/path', '',
+    'https://safe-dose.vercel.app/path', '', 'http://safedose.rodneygainous.com',
+    'https://evil.rodneygainous.com', 'https://safedose.rodneygainous.com.evil.com',
   ])('rejects untrusted origin %s before spending credits', async origin => {
     const res = mockRes();
     await handler({ method: 'POST', headers: { origin } }, res);

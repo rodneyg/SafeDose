@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { getCheckoutStripe } from "../lib/checkoutStripe";
 import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { CheckCircle, Shield, Zap, Clock, LucideIcon } from "lucide-react-native";
@@ -387,13 +387,9 @@ export default function PricingPage() {
 
       {/* Privacy Links */}
       <View style={styles.privacyLinks}>
-        <TouchableOpacity>
-          <Text style={styles.privacyText}>Privacy Policy</Text>
-        </TouchableOpacity>
+        <Link href="/privacy" style={styles.privacyText}>Privacy Policy</Link>
         <Text style={styles.privacySeparator}> • </Text>
-        <TouchableOpacity>
-          <Text style={styles.privacyText}>Terms of Service</Text>
-        </TouchableOpacity>
+        <Link href="/terms" style={styles.privacyText}>Terms of Service</Link>
       </View>
     </Animated.View>
   );
