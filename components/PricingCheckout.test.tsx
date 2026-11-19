@@ -9,7 +9,7 @@ jest.mock('../lib/stripeConfig', () => ({ publishableKey: 'test-placeholder' }))
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('../lib/apiBase', () => ({ getApiBaseUrl: () => 'https://example.invalid' }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: null }) }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+jest.mock('expo-router', () => ({ Link: 'Link', router: { back: jest.fn() } }));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 jest.mock('react-native', () => ({
   ...jest.requireActual('../__mocks__/react-native'),
@@ -46,6 +46,14 @@ it('does not load Stripe while browsing pricing', () => {
   expect(eagerLoader).not.toHaveBeenCalled();
   expect(loader).not.toHaveBeenCalled();
   expect(text()).toContain('Get Photo Check');
+});
+
+it('links the pricing footer to both legal pages', () => {
+  const links = renderer.root.findAllByType('Link' as any);
+  expect(links.map(({ props }) => [props.children, props.href])).toEqual([
+    ['Privacy Policy', '/privacy'],
+    ['Terms of Service', '/terms'],
+  ]);
 });
 
 it.each(['reject', 'null', 'throw'])('handles a %s loader failure and allows retry', async failure => {
