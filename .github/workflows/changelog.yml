@@ -1,43 +1,31 @@
-name: Draft changelog
+name: Publish changelog
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches: [main]
 permissions:
   contents: write
-  pull-requests: write
-concurrency:
-  group: changelog-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
 jobs:
-  draft:
-    if: github.event.pull_request.merged == true && !startsWith(github.event.pull_request.head.ref, 'changelog/')
+  publish:
+    if: github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'skip-changelog') && github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - name: Create draft entries and review PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Update published changelog
         run: |
-          branch="changelog/pr-$PR_NUMBER"
-          if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$branch" >/dev/null 2>&1; then
-            echo 'Draft branch already exists; leaving reviewer changes intact.'
-            exit 0
-          fi
-          npm run changelog:add
-          if [ -z "$(git status --porcelain -- changelog/)" ]; then exit 0; fi
-          git checkout -b "$branch"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add changelog/
-          git commit -m "Draft changelog for PR #$PR_NUMBER"
-          git push origin "$branch"
-          if ! gh pr create --base main --head "$branch" --draft --title "Review changelog for PR #$PR_NUMBER" --body 'Review the draft wording, remove internal-only changes, set status: published, and run npm run changelog:build before merging. Generated entries are hidden from the public page until published.'; then
-            echo "Draft committed to $branch. If repository policy blocks token-created PRs, open its review PR manually."
-          fi
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 scripts/publish-changelog.py
+            npm run changelog:build
+            if git diff --quiet && test -z "$(git ls-files --others --exclude-standard -- changelog lib/changelog.json)"; then exit 0; fi
+            git add changelog lib/changelog.json
+            git commit -m "docs: publish changelog for PR #${{ github.event.pull_request.number }}"
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          echo '::error::Could not update main after five attempts.'
+          exit 1
