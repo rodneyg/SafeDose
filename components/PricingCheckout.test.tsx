@@ -48,11 +48,13 @@ it('does not load Stripe while browsing pricing', () => {
   expect(text()).toContain('Get Photo Check');
 });
 
-it('links the pricing footer to both legal pages', () => {
+it('links the pricing footer to subscription settings, legal pages, and support', () => {
   const links = renderer.root.findAllByType('Link' as any);
   expect(links.map(({ props }) => [props.children, props.href])).toEqual([
-    ['Privacy Policy', '/privacy'],
+    ['Manage subscription', '/settings'],
     ['Terms of Service', '/terms'],
+    ['Privacy Policy', '/privacy'],
+    ['Support', '/support'],
   ]);
 });
 

@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { isMobileWeb } from '../../lib/utils';
+import PublicLinks from '../../components/PublicLinks';
 import { useAuth } from '../../contexts/AuthContext';
 import { signInWithGoogle } from '../../lib/googleAuth';
 import { loadRemoteUserProfile, routeAfterGoogleSignIn } from '../../lib/onboardingState';
@@ -81,23 +82,32 @@ export default function Welcome() {
             <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
             <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSignIn}
-            disabled={isSigningIn}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in"
-            accessibilityHint="Sign in with Google if you already have a SafeDose account"
-            style={styles.signInLink}
-          >
-            <Text style={[styles.signInLinkText, isMobileWeb && styles.disclaimerMobile]}>
-              {isSigningIn ? 'Signing in…' : 'Already have an account? Sign in'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.accountLinks}>
+            <TouchableOpacity
+              onPress={handleSignIn}
+              disabled={isSigningIn}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in"
+              accessibilityHint="Sign in with Google if you already have a SafeDose account"
+              style={styles.signInLink}
+            >
+              <Text style={[styles.signInLinkText, isMobileWeb && styles.disclaimerMobile]}>
+                {isSigningIn ? 'Signing in…' : 'Sign in'}
+              </Text>
+            </TouchableOpacity>
+            <Link
+              href={{ pathname: '/login', params: { from: 'welcome' } }}
+              style={[styles.signInLink, styles.signInLinkText, isMobileWeb && styles.disclaimerMobile]}
+            >
+              Create an account
+            </Link>
+          </View>
           {signInError ? (
             <Text style={[styles.signInError, isMobileWeb && styles.disclaimerMobile]}>{signInError}</Text>
           ) : (
             <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed to try</Text>
           )}
+          <PublicLinks onDarkBackground />
         </Animated.View>
       </View>
     </View>
@@ -173,6 +183,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
   },
+  accountLinks: { flexDirection: 'row', alignItems: 'center' },
   signInLink: {
     padding: 12,
     minHeight: 44,

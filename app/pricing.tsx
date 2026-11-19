@@ -3,6 +3,7 @@ import { getCheckoutStripe } from "../lib/checkoutStripe";
 import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
 import { Link, router } from "expo-router";
+import PublicLinks from "../components/PublicLinks";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { CheckCircle, Shield, Zap, Clock, LucideIcon } from "lucide-react-native";
@@ -195,7 +196,6 @@ export default function PricingPage() {
       console.log("create-checkout-session status:", res.status);
 
       const text = await res.text();
-      console.log("create-checkout-session raw response:", text);
       let data: any;
       try {
         data = JSON.parse(text);
@@ -230,8 +230,6 @@ export default function PricingPage() {
       }
 
       const { sessionId } = data;
-      console.log("Received sessionId:", sessionId);
-
       console.log("Redirecting to Stripe Checkout...");
       const result = await stripe.redirectToCheckout({ sessionId });
       console.log("redirectToCheckout result:", result);
@@ -256,7 +254,8 @@ export default function PricingPage() {
   };
 
   const handleCancel = () => {
-    router.back();
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
   };
 
   return (
@@ -380,17 +379,10 @@ export default function PricingPage() {
         
         <View style={styles.footerSeparator} />
         
-        <TouchableOpacity>
-          <Text style={styles.footerLink}>Restore Purchase</Text>
-        </TouchableOpacity>
+        <Link href="/settings" style={styles.footerLink}>Manage subscription</Link>
       </View>
 
-      {/* Privacy Links */}
-      <View style={styles.privacyLinks}>
-        <Link href="/privacy" style={styles.privacyText}>Privacy Policy</Link>
-        <Text style={styles.privacySeparator}> • </Text>
-        <Link href="/terms" style={styles.privacyText}>Terms of Service</Link>
-      </View>
+      <PublicLinks />
     </Animated.View>
   );
 }
@@ -669,22 +661,6 @@ const styles = StyleSheet.create({
     height: 16,
     backgroundColor: '#E5E5EA',
     marginHorizontal: 16,
-  },
-
-  // Privacy
-  privacyLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: screenHeight <= 667 ? 10 : 0, // Add small bottom margin for iPhone SE
-  },
-  privacyText: {
-    color: '#8E8E93',
-    fontSize: 12,
-  },
-  privacySeparator: {
-    color: '#8E8E93',
-    fontSize: 12,
   },
 
   // Badge text (shared)

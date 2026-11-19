@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { signInWithGoogle } from '../lib/googleAuth';
 import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
@@ -9,9 +9,14 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 export default function LoginScreen() {
   const { user, auth } = useAuth();
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const [error, setError] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const handleGoogleSignIn = async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    setError(null);
     logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_ATTEMPT, { method: 'google' });
     try {
       const result = await signInWithGoogle(auth);
@@ -24,7 +29,7 @@ export default function LoginScreen() {
       const route = await routeAfterGoogleSignIn({
         user: result.user,
         loadRemoteProfile: loadRemoteUserProfile,
-        fallbackRoute: HOME_ROUTE,
+        fallbackRoute: from === 'welcome' ? '/onboarding/age' : HOME_ROUTE,
       });
       router.replace(route as any);
     } catch (error: any) {
@@ -34,19 +39,29 @@ export default function LoginScreen() {
       });
       setError('Could not sign in with Google. Please try again.');
       console.error('Google sign-in error:', error);
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign In</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
-      <TouchableOpacity style={styles.button} onPress={handleGoogleSignIn}>
-        <Text style={styles.buttonText}>Sign In with Google</Text>
-      </TouchableOpacity>
+      <Text style={styles.description}>Continue with Google to sign in or create your SafeDose account.</Text>
+      {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       <TouchableOpacity
+        accessibilityRole="button"
+        style={styles.button}
+        onPress={handleGoogleSignIn}
+        disabled={isSigningIn}
+      >
+        <Text style={styles.buttonText}>{isSigningIn ? 'Signing in…' : 'Sign In with Google'}</Text>
+      </TouchableOpacity>
+      <Link href="/reset-password" style={styles.helpLink}>Forgot your password?</Link>
+      <TouchableOpacity
+        accessibilityRole="button"
         style={[styles.button, styles.cancelButton]}
-        onPress={() => router.back()}
+        onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
       >
         <Text style={styles.buttonText}>Cancel</Text>
       </TouchableOpacity>
@@ -66,8 +81,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#000000',
-    marginBottom: 20,
+    marginBottom: 12,
   },
+  description: { color: '#374151', textAlign: 'center', marginBottom: 16, maxWidth: 400 },
+  helpLink: { color: '#1d4ed8', paddingVertical: 12, marginBottom: 10, textDecorationLine: 'underline' },
   button: {
     width: '80%',
     backgroundColor: '#007AFF',

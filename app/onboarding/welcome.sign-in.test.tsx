@@ -14,7 +14,7 @@ jest.mock('react-native-reanimated', () => {
 });
 const mockRouter = { navigate: jest.fn(), replace: jest.fn() };
 const mockAuth = {};
-jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+jest.mock('expo-router', () => ({ Link: 'Link', useRouter: () => mockRouter }));
 jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ auth: mockAuth, user: { uid: 'guest', isAnonymous: true } }) }));
 jest.mock('../../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../../lib/googleAuth', () => ({ signInWithGoogle: jest.fn() }));
