@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-19-pr-468",
+    "date": "2026-11-19",
+    "title": "Publish changelog updates automatically",
+    "status": "published",
+    "prs": [
+      468
+    ],
+    "sections": {
+      "Improved": [
+        "Publish changelog updates automatically"
+      ]
+    }
+  },
+  {
     "id": "2026-11-16",
     "date": "2026-11-16",
     "title": "Easier sign-in and clearer photo scans",
