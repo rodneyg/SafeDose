@@ -14,7 +14,7 @@ export default function LegalDocument({ title, sections }: LegalDocumentProps) {
         <View style={styles.document}>
           <Link href="/pricing" style={styles.link}>Back to pricing</Link>
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-          <Text style={styles.notice}>Draft for review</Text>
+          <Text style={styles.notice}>Effective November 18, 2026</Text>
           {sections.map((section) => (
             <View key={section.title} style={styles.section}>
               <Text accessibilityRole="header" style={styles.heading}>{section.title}</Text>
