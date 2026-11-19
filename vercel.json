@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "ignoreCommand": "node scripts/vercel-ignore.mjs",
   "builds": [
     { "src": "package.json",      "use": "@vercel/static-build", "config": { "buildCommand":"npm run build:web", "outputDirectory":"dist" } },
     { "src": "api/**/*.js",       "use": "@vercel/node" }

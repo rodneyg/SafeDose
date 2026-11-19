@@ -1,163 +1,43 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
 import SyringeStep from './SyringeStep';
+import { SyringeSelection } from '../lib/dosing';
 
-// Mock the utils module 
-jest.mock('../lib/utils', () => ({
-  syringeOptions: {
-    Insulin: {
-      '0.3 ml': '5,10,15,20,25,30',
-      '0.5 ml': '5,10,15,20,25,30,35,40,45,50',
-      '1 ml': '10,20,30,40,50,60,70,80,90,100',
-    },
-    Standard: {
-      '1 ml': '0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0',
-      '3 ml': '0.5,1.0,1.5,2.0,2.5,3.0',
-      '5 ml': '1.0,2.0,3.0,4.0,5.0',
-    },
-  },
-  insulinVolumes: ['0.3 ml', '0.5 ml', '1 ml'],
-  standardVolumes: ['1 ml', '3 ml', '5 ml'],
-  isMobileWeb: false,
-}));
+jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
+jest.mock('../lib/utils', () => ({ ...jest.requireActual('../lib/dosing'), isMobileWeb: false }));
+jest.mock('lucide-react-native', () => ({ Info: 'Info' }));
 
-describe('SyringeStep Smart Defaults', () => {
-  const mockSetManualSyringe = jest.fn();
-  const mockSetSyringeHint = jest.fn();
+// Inspect the returned React tree without a native renderer. Exercise actual button callbacks.
+function elements(node: React.ReactNode): React.ReactElement<any>[] {
+  return React.Children.toArray(node).flatMap(child => React.isValidElement(child)
+    ? [child, ...elements((child.props as any).children)] : []);
+}
+const text = (node: React.ReactNode): string => React.Children.toArray(node).map(child =>
+  React.isValidElement(child) ? text((child.props as any).children) : String(child)).join('');
+const render = (manualSyringe: SyringeSelection) => {
+  const setManualSyringe = jest.fn();
+  const tree = SyringeStep({ manualSyringe, setManualSyringe, setSyringeHint: jest.fn(), syringeHint: null, doseValue: 500, unit: 'mcg' });
+  return { tree, setManualSyringe, buttons: elements(tree).filter(node => node.props.onPress) };
+};
 
-  const defaultProps = {
-    manualSyringe: { type: 'Standard' as const, volume: '3 ml' },
-    setManualSyringe: mockSetManualSyringe,
-    setSyringeHint: mockSetSyringeHint,
-    syringeHint: null,
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should suggest insulin syringe for 500mcg dose', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={500}
-        unit="mcg"
-        medicationInputType="totalAmount"
-      />
-    );
-
-    // Should call setManualSyringe with insulin syringe for 500mcg
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Insulin',
-      volume: '1 ml',
-    });
-  });
-
-  it('should suggest insulin syringe for small mcg doses (≤1000mcg)', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={800}
-        unit="mcg"
-        medicationInputType="concentration"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Insulin',
-      volume: '1 ml',
-    });
-  });
-
-  it('should suggest 5ml standard syringe for 100mg TRT dose', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={100}
-        unit="mg"
-        medicationInputType="concentration"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Standard',
-      volume: '5 ml',
-    });
-  });
-
-  it('should suggest insulin for medium mcg dose with total amount input', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={2000}
-        unit="mcg"
-        medicationInputType="totalAmount"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Insulin',
-      volume: '1 ml',
-    });
-  });
-
-  it('should suggest standard 1ml for medium mcg dose with concentration input', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={2000}
-        unit="mcg"
-        medicationInputType="concentration"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Standard',
-      volume: '1 ml',
-    });
-  });
-
-  it('should suggest 3ml standard for medium mg doses', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={25}
-        unit="mg"
-        medicationInputType="concentration"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Standard',
-      volume: '3 ml',
-    });
-  });
-
-  it('should prefer insulin syringe for insulin units', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        doseValue={50}
-        unit="units"
-        concentrationUnit="units/ml"
-      />
-    );
-
-    expect(mockSetManualSyringe).toHaveBeenCalledWith({
-      type: 'Insulin',
-      volume: '1 ml',
-    });
-  });
-
-  it('should handle edge case of no context gracefully', () => {
-    render(
-      <SyringeStep
-        {...defaultProps}
-        manualSyringe={{ type: 'Standard', volume: 'invalid' }}
-      />
-    );
-
-    // Should fall back to default valid syringe
-    expect(mockSetManualSyringe).toHaveBeenCalled();
-  });
+it('SAF-101 #7: rendering never replaces a selected or unreadable syringe', () => {
+  expect(render({ type: 'Standard', volume: '3 ml' }).setManualSyringe).not.toHaveBeenCalled();
+  expect(render({ type: 'Standard', volume: '', needsConfirmation: true }).setManualSyringe).not.toHaveBeenCalled();
+});
+it('SAF-101 #7: unknown scan requires selecting type and volume separately', () => {
+  const screen = render({ type: 'Standard', volume: '', needsConfirmation: true, needsScaleConfirmation: true });
+  expect(screen.buttons).toHaveLength(2);
+  screen.buttons.find(button => text(button).includes('Insulin Syringes'))!.props.onPress();
+  expect(screen.setManualSyringe).toHaveBeenCalledWith({ type: 'Insulin', volume: '', insulinScale: 'U-100', needsScaleConfirmation: true });
+  screen.buttons.find(button => text(button).includes('Standard Syringes'))!.props.onPress();
+  expect(screen.setManualSyringe).toHaveBeenCalledWith({ type: 'Standard', volume: '' });
+  const typed = render({ type: 'Standard', volume: '' });
+  typed.buttons.find(button => text(button) === '3 ml')!.props.onPress();
+  expect(typed.setManualSyringe).toHaveBeenCalledWith({ type: 'Standard', volume: '3 ml' });
+});
+it('SAF-101 #8: U-40 selector and labels use U-40 markings', () => {
+  const screen = render({ type: 'Insulin', volume: '0.5 ml', insulinScale: 'U-40', needsScaleConfirmation: true });
+  expect(screen.buttons.some(button => text(button) === '0.3 ml')).toBe(false);
+  expect(text(screen.tree)).toContain('1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20');
+  screen.buttons.find(button => text(button) === 'U-40')!.props.onPress();
+  expect(screen.setManualSyringe).toHaveBeenCalledWith({ type: 'Insulin', volume: '0.5 ml', insulinScale: 'U-40', needsScaleConfirmation: false });
 });

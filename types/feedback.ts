@@ -24,7 +24,17 @@ export interface FeedbackContextType {
     unit: string;
     calculatedVolume: number | null;
     syringeType?: 'Insulin' | 'Standard' | null;
+    insulinScale?: string;
+    totalAmountUnit?: 'mg' | 'mcg' | 'units';
+    concentrationExact?: string;
     recommendedMarking?: string | null;
     injectionSite?: InjectionSite | null;
+    
+    // Original user inputs for "Use Last Dose" feature
+    medicationInputType?: 'concentration' | 'totalAmount' | null;
+    concentrationAmount?: string;
+    concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
+    totalAmount?: string;
+    solutionVolume?: string;
   };
 }

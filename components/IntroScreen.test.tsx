@@ -1,10 +1,17 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import IntroScreen from './IntroScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useRouter } from 'expo-router';
+
+const mockGetDoseLogHistory = jest.fn();
+
+jest.mock('../lib/hooks/useDoseLogging', () => ({
+  useDoseLogging: () => ({ getDoseLogHistory: mockGetDoseLogHistory }),
+}));
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
@@ -23,7 +30,7 @@ const mockUseUserProfile = useUserProfile as jest.MockedFunction<typeof useUserP
 const mockUseUsageTracking = useUsageTracking as jest.MockedFunction<typeof useUsageTracking>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
-describe('IntroScreen Sign Out Functionality', () => {
+describe('IntroScreen', () => {
   const mockLogout = jest.fn();
   const mockSetScreenStep = jest.fn();
   const mockResetFullForm = jest.fn();
@@ -31,6 +38,7 @@ describe('IntroScreen Sign Out Functionality', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetDoseLogHistory.mockResolvedValue([]);
 
     // Mock authenticated user (not anonymous)
     mockUseAuth.mockReturnValue({
@@ -66,6 +74,30 @@ describe('IntroScreen Sign Out Functionality', () => {
     } as any);
   });
 
+  afterEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('opens manual entry with the last dose applied without resetting the form', async () => {
+    await AsyncStorage.setItem('onboardingComplete', 'true');
+    mockGetDoseLogHistory.mockResolvedValue([{ doseValue: 1, calculatedVolume: 0.5 }]);
+    const applyLastDose = jest.fn().mockResolvedValue(true);
+
+    const { findByRole } = render(
+      <IntroScreen
+        setScreenStep={mockSetScreenStep}
+        resetFullForm={mockResetFullForm}
+        applyLastDose={applyLastDose}
+      />
+    );
+
+    fireEvent.press(await findByRole('button', { name: 'Use Last Dose' }));
+
+    await waitFor(() => expect(mockSetScreenStep).toHaveBeenCalledWith('manualEntry'));
+    expect(applyLastDose).toHaveBeenCalledTimes(1);
+    expect(mockResetFullForm).not.toHaveBeenCalled();
+  });
+
   it('should call logout function when sign out button is pressed', async () => {
     const { getByTestId } = render(
       <IntroScreen
@@ -99,10 +131,10 @@ describe('IntroScreen Sign Out Functionality', () => {
     );
 
     // For authenticated user, should show welcome message with display name
-    expect(queryByText(/Welcome back, Test User/)).toBeTruthy();
+    expect(queryByText(/Hello, Test!/)).toBeTruthy();
 
     // Should not show sign in prompt for authenticated users
-    expect(queryByText(/Sign in to save calculations/)).toBeFalsy();
+    expect(queryByText(/Sign in to get more scans/)).toBeFalsy();
   });
 
   it('should handle signing out state correctly with fallback protection', () => {
@@ -136,7 +168,9 @@ describe('IntroScreen Sign Out Functionality', () => {
 
     // Should show signing out message
     expect(queryByText(/Signing Out/)).toBeTruthy();
-    expect(queryByText(/signed in anonymously shortly/)).toBeTruthy();
+    expect(queryByText('Signing you out. Please wait.')).toBeTruthy();
+    expect(queryByText(/You've been signed out/)).toBeFalsy();
+    expect(queryByText(/Signed out successfully/)).toBeFalsy();
     
     // With our fix, this state should not persist indefinitely
     // The fallback timeout should prevent users from being stuck

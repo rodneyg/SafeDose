@@ -27,7 +27,7 @@ describe('ReferenceScreen', () => {
     const { getByText } = render(<ReferenceScreen />);
     
     // Check for the main title
-    expect(getByText('Common Peptide Doses')).toBeTruthy();
+    expect(getByText('Performance & Recovery Reference')).toBeTruthy();
     
     // Check for disclaimer
     expect(getByText(/This information is for educational purposes only/)).toBeTruthy();

@@ -18,6 +18,8 @@ export const ANALYTICS_EVENTS = {
   SCAN_ATTEMPT: 'scan_attempt',
   SCAN_SUCCESS: 'scan_success',
   SCAN_FAILURE: 'scan_failure',
+  SAFETY_REFUSAL: 'safety_refusal',
+  SCANNED_VALUE_EDIT: 'scanned_value_edit',
   REACH_SCAN_LIMIT: 'reach_scan_limit',
   LIMIT_MODAL_VIEW: 'limit_modal_view',
   LIMIT_MODAL_ACTION: 'limit_modal_action',
@@ -48,9 +50,30 @@ export const ANALYTICS_EVENTS = {
   PMF_SURVEY_SKIPPED: 'pmf_survey_skipped',
   PMF_SURVEY_DISMISSED: 'pmf_survey_dismissed',
   // Sign-up prompt events
+  SIGN_UP_PROMPT_SHOWN: 'sign_up_prompt_shown',
+  SIGN_UP_PROMPT_ACCEPTED: 'sign_up_prompt_accepted',
+  SIGN_UP_PROMPT_DISMISSED: 'sign_up_prompt_dismissed',
+  // Evaluation data capture events
+  EVALUATION_DATA_CAPTURED: 'evaluation_data_captured',
+  EVALUATION_DATA_EXPORTED: 'evaluation_data_exported',
   SIGNUP_PROMPT_SHOWN: 'signup_prompt_shown',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
   SIGNUP_PROMPT_DISMISSED: 'signup_prompt_dismissed',
+  // Birth date collection and safety events
+  BIRTH_DATE_COLLECTION_SHOWN: 'birth_date_collection_shown',
+  BIRTH_DATE_COLLECTION_COMPLETED: 'birth_date_collection_completed',
+  BIRTH_DATE_COLLECTION_SKIPPED: 'birth_date_collection_skipped',
+  // Legacy age collection events (for backwards compatibility)
+  AGE_COLLECTION_SHOWN: 'age_collection_shown',
+  AGE_COLLECTION_COMPLETED: 'age_collection_completed',
+  AGE_COLLECTION_SKIPPED: 'age_collection_skipped',
+  CHILD_SAFETY_SCREEN_SHOWN: 'child_safety_screen_shown',
+  CHILD_SAFETY_CONTINUE: 'child_safety_continue',
+  CHILD_SAFETY_SEEK_HELP: 'child_safety_seek_help',
+  // Before First Scan prompt events
+  BEFORE_FIRST_SCAN_PROMPT_SHOWN: 'before_first_scan_prompt_shown',
+  BEFORE_FIRST_SCAN_DONT_SHOW_AGAIN: 'before_first_scan_dont_show_again',
+  BEFORE_FIRST_SCAN_CONTINUE: 'before_first_scan_continue',
 } as const;
 
 // User property names
@@ -58,8 +81,10 @@ export const USER_PROPERTIES = {
   PLAN_TYPE: 'plan_type',
   IS_ANONYMOUS: 'is_anonymous',
   IS_LICENSED_PROFESSIONAL: 'is_licensed_professional',
+  IS_PROFESSIONAL_ATHLETE: 'is_professional_athlete',
   IS_PERSONAL_USE: 'is_personal_use',
   IS_COSMETIC_USE: 'is_cosmetic_use',
+  IS_PERFORMANCE_USE: 'is_performance_use',
   USER_SEGMENT: 'user_segment', // Derived from profile settings
 } as const;
 
@@ -111,6 +136,10 @@ export const setPersonalizationUserProperties = (profile: any) => {
   let userSegment = 'general_user';
   if (profile.isLicensedProfessional) {
     userSegment = 'healthcare_professional';
+  } else if (profile.isProfessionalAthlete) {
+    userSegment = 'professional_athlete';
+  } else if (profile.isPerformanceUse) {
+    userSegment = 'performance_user';
   } else if (profile.isCosmeticUse) {
     userSegment = 'cosmetic_user';
   } else if (profile.isPersonalUse) {
@@ -119,8 +148,10 @@ export const setPersonalizationUserProperties = (profile: any) => {
 
   setAnalyticsUserProperties({
     [USER_PROPERTIES.IS_LICENSED_PROFESSIONAL]: profile.isLicensedProfessional,
+    [USER_PROPERTIES.IS_PROFESSIONAL_ATHLETE]: profile.isProfessionalAthlete,
     [USER_PROPERTIES.IS_PERSONAL_USE]: profile.isPersonalUse,
     [USER_PROPERTIES.IS_COSMETIC_USE]: profile.isCosmeticUse,
+    [USER_PROPERTIES.IS_PERFORMANCE_USE]: profile.isPerformanceUse,
     [USER_PROPERTIES.USER_SEGMENT]: userSegment,
   });
 };

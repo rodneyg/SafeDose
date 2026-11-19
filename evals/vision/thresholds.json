@@ -1,0 +1,15 @@
+{
+  "status": "approved-pending-labels",
+  "approved_by": "Rodney Gainous Jr (SAF-106, Nov 15, 2026, 3:02 PM ET)",
+  "source": "SAF-106 proposed defaults, approved as written. Enforcement switches on (status \"approved\") once the labeled set is verified in SAF-166; until then CI reports the gate without failing.",
+  "wrong_number_shown_allowed": 0,
+  "syringe_type_min_accuracy": 0.99,
+  "syringe_capacity_min_accuracy": 0.99,
+  "uncaught_syringe_misses_allowed": 0,
+  "scale_u100_vs_u40": "100% correct or refuse; never assume U-100 silently",
+  "vial_concentration_total_amount": "100% exact (number and unit) when shown; otherwise refuse or ask",
+  "fill_level_tolerance": "within half of the smallest gradation; anything outside goes to the low-confidence path",
+  "max_refusal_rate_good_images": 0.10,
+  "unreadable_images_must_refuse": 1.0,
+  "other_thresholds": "Per-tag minimum sample counts and estimated-photo tolerances are not yet specified."
+}

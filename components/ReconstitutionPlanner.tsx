@@ -1,10 +1,9 @@
+import { getPlannerHandoff, parsePlannerScan, formatDoseNumber } from '../lib/dosing';
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { ArrowLeft, Camera, Edit3, Calculator, ArrowRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCameraPermissions, CameraView } from 'expo-camera';
-import OpenAI from 'openai';
-import Constants from 'expo-constants';
 
 import { useReconstitutionPlanner } from '../lib/hooks/useReconstitutionPlanner';
 import { captureAndProcessImage } from '../lib/cameraUtils';
@@ -50,11 +49,6 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     reset,
   } = useReconstitutionPlanner();
 
-  const openai = new OpenAI({
-    apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || '',
-    dangerouslyAllowBrowser: true,
-  });
-
   const handleBack = () => {
     switch (step) {
       case 'manualInput':
@@ -77,35 +71,21 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
       const result = await captureAndProcessImage({
         cameraRef,
         permission,
-        openai,
         isMobileWeb,
         webCameraStream: webCameraStreamRef.current,
         setIsProcessing,
         setProcessingMessage: () => {}, // We handle processing state in the component
         setScanError: setError,
-        incrementScansUsed: () => {}, // This is a planning tool, not counted against scans
+        incrementScansUsed: async () => {}, // This is a planning tool, not counted against scans
       });
 
       if (result?.vial) {
-        // Extract peptide amount from scan result
-        const vial = result.vial;
-        if (vial.totalAmount && vial.totalAmount !== 'unreadable') {
-          const amountMatch = String(vial.totalAmount).match(/([\d.]+)/);
-          if (amountMatch) {
-            setScannedPeptideAmount(amountMatch[1]);
-            setStep('manualInput'); // Continue to manual input for BAC water and dose
-          }
-        } else if (vial.concentration && vial.concentration !== 'unreadable') {
-          // If we got concentration instead of total amount, extract the amount part
-          const concMatch = String(vial.concentration).match(/([\d.]+)/);
-          if (concMatch) {
-            setScannedPeptideAmount(concMatch[1]);
-            setStep('manualInput');
-          }
-        } else {
-          setError('Could not extract peptide amount from vial label. Please enter manually.');
-          setStep('manualInput');
-        }
+        const amount = parsePlannerScan(result.vial);
+        setScannedPeptideAmount(amount.ok ? String(amount.value.amount) : null);
+        setPeptideAmount('');
+        if (amount.ok) setPeptideUnit(amount.value.unit);
+        setStep('manualInput');
+        if (!amount.ok) setError(amount.error);
       } else {
         setError('Could not read vial information. Please enter manually.');
         setStep('manualInput');
@@ -124,11 +104,12 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     // Navigate to main dose calculator with prefilled values for total amount method
     const totalAmountValue = peptideAmount || scannedPeptideAmount || '';
     const totalAmountUnit = peptideUnit;
-    const solutionVolume = result.bacWaterToAdd.toFixed(2); // Total solution volume (BAC water + negligible powder volume)
+    const handoff = getPlannerHandoff(result, peptideUnit);
+    const solutionVolume = handoff.solutionVolume; // Total solution volume (BAC water + negligible powder volume)
     const targetDoseValue = targetDose;
     
     // Use total amount method instead of concentration method for proper syringe calculations
-    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
+    router.push(`/(tabs)/new-dose?prefillTotalAmount=${totalAmountValue}&prefillTotalUnit=${totalAmountUnit}&prefillSolutionVolume=${solutionVolume}&prefillConcentrationExact=${encodeURIComponent(handoff.concentrationExact)}&prefillDose=${targetDoseValue}&prefillDoseUnit=${targetDoseUnit}`);
   };
 
   const getStepTitle = () => {

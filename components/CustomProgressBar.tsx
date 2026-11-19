@@ -2,13 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 type Props = {
-  progress: number;
+  currentStep: number;
+  totalSteps: number;
 };
 
-export default function CustomProgressBar({ progress }: Props) {
-  const totalSteps = 3;
-  const currentStep = Math.round(progress * totalSteps);
-  const progressWidth = `${progress * 100}%`;
+export default function CustomProgressBar({ currentStep, totalSteps }: Props) {
+  const progress = currentStep / totalSteps;
+  const progressWidth: `${number}%` = `${progress * 100}%`;
 
   return (
     <View style={styles.container}>

@@ -1,0 +1,71 @@
+name: Accuracy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dosing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck:dosing
+      - name: Dosing tests and coverage
+        run: npm run test:dosing -- --coverageReporters=text --coverageReporters=json-summary --coverageReporters=lcov
+      - name: Write coverage summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          if (!fs.existsSync('coverage/coverage-summary.json')) process.exit(0);
+          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const rows = ['## Dosing coverage', '', '| File | Statements | Branches | Functions | Lines |', '| --- | ---: | ---: | ---: | ---: |'];
+          for (const [file, value] of Object.entries(coverage)) {
+            rows.push(`| ${file === 'total' ? 'Total' : file.split('/lib/dosing/').pop()} | ${value.statements.pct}% | ${value.branches.pct}% | ${value.functions.pct}% | ${value.lines.pct}% |`);
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows.join('\n') + '\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dosing-coverage
+          path: coverage/
+          if-no-files-found: warn
+
+  eval-vision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:vision-labeling
+      - run: npm run typecheck:vision
+      - run: npm run test:vision
+      - name: Offline vision eval (accuracy informational pending verification)
+        run: npm run eval:vision -- --offline
+      - name: Write eval summary
+        if: always()
+        run: |
+          if compgen -G 'evals/results/*.md' > /dev/null; then
+            cat evals/results/*.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vision-eval-results
+          path: |
+            evals/results/*.md
+            evals/results/*.json
+          if-no-files-found: warn

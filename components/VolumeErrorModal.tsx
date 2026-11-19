@@ -1,13 +1,15 @@
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface VolumeErrorModalProps {
   visible: boolean;
+  message?: string | null;
   onClose: () => void;
   onReEnterVialData: () => void;
 }
 
-export default function VolumeErrorModal({ visible, onClose, onReEnterVialData }: VolumeErrorModalProps) {
+export default function VolumeErrorModal({ visible, onClose, onReEnterVialData, message }: VolumeErrorModalProps) {
   console.log('[VolumeErrorModal] Rendering', { visible });
 
   const handleReEnterVialData = () => {
@@ -33,7 +35,7 @@ export default function VolumeErrorModal({ visible, onClose, onReEnterVialData }
         <View style={styles.modal}>
           <Text style={styles.title}>Warning: Unsafe Dose Volume</Text>
           <Text style={styles.message}>
-            Warning: This dose is outside of safe volume thresholds. Please verify vial concentration and protocol.
+            {(message && calculationErrorMessage(message)) || 'This dose is outside of safe volume thresholds. Please verify vial concentration and protocol.'}
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.reEnterButton]} onPress={handleReEnterVialData}>

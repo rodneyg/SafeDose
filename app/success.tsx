@@ -6,9 +6,7 @@ import { getAuth } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import Constants from 'expo-constants';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
-
-// Base URL for API
-const API_BASE_URL = "https://app.safedoseai.com";
+import { getApiBaseUrl } from "../lib/apiBase";
 
 export default function SuccessScreen() {
   const { session_id } = useLocalSearchParams();
@@ -37,7 +35,7 @@ export default function SuccessScreen() {
 
       try {
         // Call our API to validate the payment session
-        const response = await fetch(`${API_BASE_URL}/api/validate-session`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/validate-session`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

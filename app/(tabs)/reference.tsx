@@ -110,6 +110,59 @@ const COMMON_DOSES: CommonDose[] = [
     dosageRange: '1.6mg 2x/week',
     notes: 'Immune support and anti-aging peptide',
   },
+  // Stem Cell and Advanced Recovery Therapies
+  {
+    compound: 'NAD+',
+    dosageRange: '50–500mg IV',
+    notes: 'Cellular energy and anti-aging (clinical administration)',
+    isPopular: true,
+  },
+  {
+    compound: 'Exosomes',
+    dosageRange: 'Clinical protocols vary',
+    notes: 'Regenerative therapy (professional administration only)',
+  },
+  {
+    compound: 'PRP (Platelet-Rich Plasma)',
+    dosageRange: 'Clinical protocols vary',
+    notes: 'Autologous healing therapy (medical procedure)',
+  },
+  // Performance and Recovery Compounds
+  {
+    compound: 'Cerebrolysin',
+    dosageRange: '5–30ml IV',
+    notes: 'Neuroprotection and cognitive support (clinical use)',
+  },
+  {
+    compound: 'Thymosin Beta-4',
+    dosageRange: '2–5mg weekly',
+    notes: 'Advanced tissue repair and recovery',
+  },
+  {
+    compound: 'Follistatin 344',
+    dosageRange: '100mcg daily',
+    notes: 'Muscle growth and myostatin inhibition',
+  },
+  {
+    compound: 'AOD 9604',
+    dosageRange: '300mcg daily',
+    notes: 'Fat loss peptide derived from growth hormone',
+  },
+  {
+    compound: 'MOTS-c',
+    dosageRange: '5–10mg weekly',
+    notes: 'Mitochondrial peptide for metabolic enhancement',
+  },
+  {
+    compound: 'Humanin',
+    dosageRange: '2–5mg weekly',
+    notes: 'Mitochondrial-derived longevity peptide',
+  },
+  {
+    compound: 'Dihexa',
+    dosageRange: '1–10mg daily',
+    notes: 'Cognitive enhancement and neuroprotection',
+  },
 ];
 
 export default function ReferenceScreen() {
@@ -129,16 +182,28 @@ export default function ReferenceScreen() {
       return;
     }
 
+    console.log('[SuggestCompound] Starting submission...', {
+      compoundName: compoundName.trim(),
+      dosageRange: dosageRange.trim(),
+      notes: notes.trim(),
+    });
+
     setIsSubmitting(true);
     try {
       // Store suggestion in Firebase
-      await addDocWithEnv(collection(db, 'compound-suggestions'), {
+      const docData = {
         compoundName: compoundName.trim(),
         dosageRange: dosageRange.trim(),
         notes: notes.trim(),
         timestamp: new Date(),
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-      });
+      };
+
+      console.log('[SuggestCompound] Submitting to Firebase...', docData);
+      
+      const docRef = await addDocWithEnv(collection(db, 'compound-suggestions'), docData);
+      
+      console.log('[SuggestCompound] Successfully submitted to Firebase', { docId: docRef.id });
 
       Alert.alert(
         'Thank you!',
@@ -151,7 +216,13 @@ export default function ReferenceScreen() {
       setDosageRange('');
       setNotes('');
     } catch (error) {
-      console.error('Error submitting compound suggestion:', error);
+      console.error('[SuggestCompound] Error submitting compound suggestion:', error);
+      console.error('[SuggestCompound] Error details:', {
+        message: (error as Error)?.message || 'Unknown error',
+        stack: (error as Error)?.stack,
+        name: (error as Error)?.name || 'Error'
+      });
+      
       Alert.alert(
         'Error',
         'Failed to submit suggestion. Please try again later.',
@@ -196,7 +267,7 @@ export default function ReferenceScreen() {
       {/* Fixed Disclaimer */}
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerText}>
-          ⚠️ This information is for educational purposes only. SafeDose does not provide medical advice. Always consult a healthcare professional before using any compound.
+          ⚠️ This information is for educational purposes only. SafeDose is NOT a medical device and does NOT provide medical advice, diagnose conditions, or recommend dosages. These dosage ranges are typical examples only - always follow your healthcare provider's prescription exactly. Many of these interventions require professional medical supervision.
         </Text>
       </View>
 
@@ -206,9 +277,9 @@ export default function ReferenceScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Common Peptide Doses</Text>
+          <Text style={styles.title}>Performance & Recovery Reference</Text>
           <Text style={styles.subtitle}>
-            Reference information for popular compounds
+            Peptides, hormones, stem cells, and advanced interventions
           </Text>
         </View>
 
@@ -256,7 +327,13 @@ export default function ReferenceScreen() {
             • Frequency and timing may vary by compound and individual goals
           </Text>
           <Text style={styles.infoText}>
+            • Many advanced therapies require clinical administration
+          </Text>
+          <Text style={styles.infoText}>
             • Always verify compound purity and authenticity
+          </Text>
+          <Text style={styles.infoText}>
+            • Professional athletic use may be subject to anti-doping regulations
           </Text>
         </View>
       </ScrollView>
@@ -264,71 +341,86 @@ export default function ReferenceScreen() {
       {/* Feedback Modal */}
       <Modal
         visible={showFeedbackModal}
-        animationType="slide"
-        presentationStyle="formSheet"
+        animationType="fade"
+        transparent
         onRequestClose={handleCloseFeedbackModal}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Suggest a Compound</Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={handleCloseFeedbackModal}
-            >
-              <X size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalDescription}>
-              Help us expand our reference list by suggesting a compound and its common dosage information.
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Compound Name *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={compoundName}
-                onChangeText={setCompoundName}
-                placeholder="e.g., GHRP-6"
-                placeholderTextColor="#9ca3af"
-              />
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, isMobileWeb && styles.modalContainerMobile]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Suggest a Compound</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={handleCloseFeedbackModal}
+              >
+                <X size={24} color="#666" />
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Common Dosage Range</Text>
-              <TextInput
-                style={styles.textInput}
-                value={dosageRange}
-                onChangeText={setDosageRange}
-                placeholder="e.g., 100-200mcg 2x/day"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Notes / Use Cases</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="e.g., Growth hormone releasing peptide"
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-              onPress={handleSubmitSuggestion}
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
-                {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalDescription}>
+                Help us expand our reference list by suggesting a compound and its common dosage information.
               </Text>
-            </TouchableOpacity>
-          </ScrollView>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Compound Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={compoundName}
+                  onChangeText={setCompoundName}
+                  placeholder="e.g., GHRP-6"
+                  placeholderTextColor="#9ca3af"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Common Dosage Range</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={dosageRange}
+                  onChangeText={setDosageRange}
+                  placeholder="e.g., 100-200mcg 2x/day"
+                  placeholderTextColor="#9ca3af"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Notes / Use Cases</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="e.g., Growth hormone releasing peptide"
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.cancelButton]}
+                  onPress={handleCloseFeedbackModal}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+                  onPress={handleSubmitSuggestion}
+                  disabled={isSubmitting}
+                >
+                  <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -513,79 +605,136 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   // Modal styles
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    margin: 20,
+    maxWidth: 500,
+    width: '90%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalContainerMobile: {
+    margin: 16,
+    width: '95%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
-    ...(!isMobileWeb && {
-      paddingTop: 50, // Account for status bar on mobile
-    }),
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000',
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
+    marginRight: -8,
   },
   modalContent: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   modalDescription: {
     fontSize: 16,
     color: '#666',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 24,
+    marginBottom: 28,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000',
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1.5,
     borderColor: '#E5E5EA',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
     color: '#000',
+    lineHeight: 20,
   },
   textArea: {
-    height: 80,
+    height: 90,
     textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EA',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
   },
   submitButton: {
+    flex: 1.2,
     backgroundColor: '#007AFF',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   submitButtonDisabled: {
     backgroundColor: '#C7C7CC',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitButtonTextDisabled: {
     color: '#8E8E93',

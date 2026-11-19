@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList, ListRenderItemInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
 import { Camera, History, MessageCircle, Book, ArrowRight, Check } from 'lucide-react-native';
@@ -8,30 +8,30 @@ import { isMobileWeb } from '../../lib/utils';
 const features = [
   {
     icon: Camera,
-    title: 'Smart Dose Recognition',
-    description: 'Our AI-powered camera helps you measure and verify medication doses with precision.',
+    title: 'Material Verification',
+    description: 'Use computer vision to scan your medication vial and syringe, then verify the information matches your prescription.',
   },
   {
     icon: History,
-    title: 'Medication Tracking',
-    description: 'Keep a detailed log of your medication schedule and history.',
+    title: 'Dose Logging',
+    description: 'Keep a detailed log of your medication administrations for your records.',
   },
   {
     icon: MessageCircle,
-    title: 'Expert Guidance',
-    description: 'Get real-time answers about your medication from our AI assistant.',
+    title: 'Calculation Support',
+    description: 'Perform unit conversions and dosage calculations based on information you verify.',
   },
   {
     icon: Book,
     title: 'Educational Resources',
-    description: 'Access comprehensive guides and information about your medication.',
+    description: 'Access reference information about common compounds and their typical dosage ranges.',
   },
 ];
 
 export default function Features() {
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<(typeof features)[number]>>(null);
   const router = useRouter();
 
   const handleNext = useCallback(async () => {
@@ -51,7 +51,7 @@ export default function Features() {
     }
   }, [currentIndex, router]);
 
-  const renderFeature = useCallback(({ item, index }) => {
+  const renderFeature = useCallback(({ item, index }: ListRenderItemInfo<(typeof features)[number]>) => {
     const Icon = item.icon;
     return (
       <Animated.View 
@@ -72,7 +72,7 @@ export default function Features() {
       <Animated.View entering={FadeIn} style={styles.header}>
         <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>Key Features</Text>
         <Text style={[styles.headerSubtitle, isMobileWeb && styles.headerSubtitleMobile]}>
-          Discover what SafeDose can do for you
+          Tools to help you execute your prescription accurately
         </Text>
       </Animated.View>
 

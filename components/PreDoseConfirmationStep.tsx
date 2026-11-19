@@ -1,9 +1,12 @@
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
+import { formatDoseNumber } from '../lib/dosing';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { AlertTriangle, CheckCircle, Info } from 'lucide-react-native';
 
 interface PreDoseConfirmationStepProps {
   substanceName: string;
+  inputSummary?: string;
   concentrationAmount: string;
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   doseValue: number | null;
@@ -11,19 +14,19 @@ interface PreDoseConfirmationStepProps {
   calculatedVolume: number | null;
   calculatedConcentration?: number | null;
   calculationError: string | null;
+  guidance?: string | null;
 }
 
 export default function PreDoseConfirmationStep({
   substanceName,
+  inputSummary,
   concentrationAmount,
   concentrationUnit,
   doseValue,
   unit,
-  calculatedVolume,
   calculatedConcentration,
   calculationError,
 }: PreDoseConfirmationStepProps) {
-  const hasVolumeWarning = calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && calculatedVolume > 1;
   const hasError = calculationError !== null;
   
   // Determine which concentration to display
@@ -32,15 +35,15 @@ export default function PreDoseConfirmationStep({
   const displayConcentration = hasManualConcentration 
     ? `${concentrationAmount} ${concentrationUnit}`
     : hasCalculatedConcentration 
-    ? `${calculatedConcentration.toFixed(2)} ${concentrationUnit}`
+    ? `${formatDoseNumber(calculatedConcentration, 3)} ${concentrationUnit}`
     : null;
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Pre-Dose Safety Review</Text>
+        <Text style={styles.title}>Verify Your Information</Text>
         <Text style={styles.subtitle}>
-          Please review the following dose calculation before proceeding
+          Confirm the information below matches your prescription before proceeding
         </Text>
       </View>
 
@@ -84,31 +87,17 @@ export default function PreDoseConfirmationStep({
             </View>
           )}
 
-          {calculatedVolume !== null && calculatedVolume !== undefined && !isNaN(calculatedVolume) && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Volume to Draw:</Text>
-              <Text style={[styles.summaryValue, hasVolumeWarning && styles.warningText]}>
-                {calculatedVolume.toFixed(2)} mL
-                {hasVolumeWarning && ' ⚠️'}
-              </Text>
-            </View>
-          )}
-        </View>
+          {inputSummary?.split('\n').map((line, index) => (
+            <Text key={index} style={[styles.summaryValue, line.startsWith('Scanned') && { backgroundColor: '#DBEAFE', color: '#1E40AF' }]}>{line}</Text>
+          ))}
 
-        {hasVolumeWarning && (
-          <View style={styles.warningContainer}>
-            <AlertTriangle color="#F59E0B" size={16} />
-            <Text style={styles.warningMessage}>
-              Volume exceeds 1 mL. Please verify this dose with a healthcare professional.
-            </Text>
-          </View>
-        )}
+        </View>
 
         {hasError && (
           <View style={styles.errorContainer}>
             <Info color="#DC2626" size={16} />
             <Text style={styles.errorMessage}>
-              {calculationError}
+              {calculationErrorMessage(calculationError ?? '')}
             </Text>
           </View>
         )}
@@ -117,11 +106,10 @@ export default function PreDoseConfirmationStep({
       <View style={styles.safetyContainer}>
         <View style={styles.safetyHeader}>
           <Info color="#6B7280" size={16} />
-          <Text style={styles.safetyTitle}>Safety Reminder</Text>
+          <Text style={styles.safetyTitle}>Important Reminder</Text>
         </View>
         <Text style={styles.safetyText}>
-          Always double-check calculations with a healthcare professional before administration. 
-          Verify the patient, medication, dose, route, and timing.
+          This calculation is based on information YOU verified. Confirm this matches your healthcare provider's prescription exactly before proceeding. SafeDose does not provide medical advice or recommend dosages.
         </Text>
       </View>
     </View>

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { getCompatibleConcentrationUnits } from '../lib/doseUtils';
+import { getCompatibleConcentrationUnits } from '../lib/dosing';
 import { isMobileWeb } from '../lib/utils';
 
 type Props = {
@@ -38,7 +38,7 @@ export default function ConcentrationInputStep({
 
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
-      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Step 4: Enter Concentration</Text>
+      <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Concentration</Text>
       <Text style={styles.label}>Concentration Amount:</Text>
       <TextInput
         style={[styles.input, isMobileWeb && styles.inputMobile]}

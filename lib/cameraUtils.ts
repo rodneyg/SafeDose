@@ -1,8 +1,30 @@
+import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
+import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
+import { completeScanOnServer, SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
 import { CameraView } from 'expo-camera';
+
+const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
+const UNREADABLE_PHOTO_MESSAGE = 'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.';
+
+// Only exact, authored messages may cross the capture/upload boundary into the UI.
+const PHOTO_ERROR_MESSAGES = new Map<string, string>([
+  ['No file selected or user cancelled', 'No image selected'],
+  ['File selection cancelled after timeout', 'Image selection cancelled'],
+  ['Selected image exceeds the 5 MB limit. Please choose a smaller image.', 'Selected image exceeds the 5 MB limit. Please choose a smaller image.'],
+  ['Camera not ready', 'Camera not ready'],
+  ['Camera permission required', 'Camera permission required'],
+  ['Camera returned no picture', 'Camera returned no picture'],
+  ['Failed to capture image data', 'Failed to capture image data'],
+  ['Unrecognized image format', 'Image format could not be processed'],
+  ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
+  ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
+  ['Invalid response from image analysis', 'Invalid response from image analysis'],
+  ['API request timed out after 45 seconds', 'Image analysis took too long. Please try again.'],
+  [UNREADABLE_PHOTO_MESSAGE, UNREADABLE_PHOTO_MESSAGE],
+]);
 
 interface CameraRef {
   takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
@@ -11,55 +33,29 @@ interface CameraRef {
 interface CaptureAndProcessImageProps {
   cameraRef: React.RefObject<CameraRef>;
   permission: { status: string } | null;
-  openai: any;
   isMobileWeb: boolean;
   setIsProcessing: (value: boolean) => void;
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  onScanUnavailable?: () => void;
   webCameraStream?: MediaStream | null;
-}
-
-interface ScanResult {
-  syringe: {
-    type: 'Insulin' | 'Standard' | 'unreadable' | null;
-    volume: string | 'unreadable' | null;
-    markings: string | 'unreadable' | null;
-  };
-  vial: {
-    substance: string | 'unreadable' | null;
-    totalAmount: string | 'unreadable' | null;
-    concentration: string | 'unreadable' | null;
-    expiration: string | 'unreadable' | null;
-  };
-  capturedImage?: {
-    uri: string;
-    mimeType: string;
-  };
 }
 
 export async function captureAndProcessImage({
   cameraRef,
   permission,
-  openai,
   isMobileWeb,
   setIsProcessing,
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  onScanUnavailable,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
 
-  const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error('[Capture] OpenAI API key missing');
-    Alert.alert('Config Error', 'OpenAI Key missing. Please check your configuration.');
-    setScanError('OpenAI configuration error');
-    setIsProcessing(false); // Ensure isProcessing is reset on this error path
-    return null;
-  }
-
+  // OpenAI keys stay on the server. The client only posts the image to /api/analyze-scan.
   // Set the processing state at the beginning
   console.log('[Capture] Setting isProcessing to true');
   setIsProcessing(true);
@@ -132,7 +128,7 @@ export async function captureAndProcessImage({
               if (document.body.contains(input)) {
                 document.body.removeChild(input);
               }
-              reject(new Error(`File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds 5 MB limit`));
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
               return;
             }
             resolve({ file });
@@ -172,29 +168,37 @@ export async function captureAndProcessImage({
         const { file } = await filePromise;
         setProcessingMessage('Reading image data...');
 
-        const reader = new FileReader();
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {
-          reader.onload = () => {
-            console.log('[Capture] FileReader onload triggered');
-            const result = reader.result;
-            if (typeof result !== 'string' || !result.includes(',')) {
-              console.error('[Capture] Invalid FileReader result');
-              reject(new Error('Failed to read image data'));
-              return;
-            }
-            const base64Image = result.split(',')[1];
-            const mimeType = file.type || 'image/jpeg';
-            console.log('[Capture] Image converted to base64, length:', base64Image.length);
-            resolve({ base64Image, mimeType });
-          };
+          try {
+            const reader = new FileReader();
+            reader.onload = () => {
+              console.log('[Capture] FileReader onload triggered');
+              const result = reader.result;
+              if (typeof result !== 'string' || !/^data:image\/[^;,]+;base64,.+$/s.test(result)) {
+                console.error('[Capture] Invalid FileReader result');
+                reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+                return;
+              }
+              const base64Image = result.split(',')[1];
+              const mimeType = file.type || 'image/jpeg';
+              console.log('[Capture] Image converted to base64, length:', base64Image.length);
+              resolve({ base64Image, mimeType });
+            };
 
-          reader.onerror = () => {
-            console.error('[Capture] FileReader error');
-            reject(new Error('Failed to read image'));
-          };
+            reader.onerror = () => {
+              console.error('[Capture] FileReader error');
+              reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+            };
 
-          console.log('[Capture] Starting FileReader readAsDataURL');
-          reader.readAsDataURL(file);
+            // Aborted reads otherwise leave the capture promise pending.
+            reader.onabort = () => reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+
+            console.log('[Capture] Starting FileReader readAsDataURL');
+            reader.readAsDataURL(file);
+          } catch {
+            // Browser read errors use the same manual-entry path as service errors.
+            reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
+          }
         });
 
         const result = await readerPromise;
@@ -217,6 +221,7 @@ export async function captureAndProcessImage({
         base64: true,
         quality: 0.5,
       });
+      if (!photo) throw new Error('Camera returned no picture');
       console.log('[Capture] Picture taken successfully');
 
       base64Image = photo.base64;
@@ -268,70 +273,15 @@ export async function captureAndProcessImage({
 
     const imageUrl = `data:${mimeType};base64,${base64Image}`;
     console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
-    console.log('[Process] Sending request to OpenAI');
+    console.log('[Process] Sending image to /api/analyze-scan');
 
-    // Add timeout protection for the OpenAI API call
-    let responsePromise = openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Analyze the image for syringe and vial details. Provide ONLY a valid JSON object with the following structure: { "syringe": { "type": "Insulin | Standard | unreadable | null", "volume": "e.g., \'1 ml\', \'0.5 ml\', \'unreadable\', null", "markings": "e.g., \'0.1,0.2,...\', \'unreadable\', null" }, "vial": { "substance": "name | unreadable | null", "totalAmount": "e.g., \'20 mg\', \'1000 units\', \'unreadable\', null", "concentration": "e.g., \'100 units/ml\', \'10 mg/ml\', \'unreadable\', null", "expiration": "YYYY-MM-DD | unreadable | null" } }. Use "unreadable" if text is present but illegible. Use null if the information is completely absent or not visible. Do not include any explanatory text before or after the JSON.',
-            },
-            {
-              type: 'image_url',
-              image_url: { url: imageUrl },
-            },
-          ],
-        },
-      ],
+    const result = await readScan(imageUrl, {
+      complete: () => completeScanOnServer(imageUrl),
     });
-
-    // Create a timeout promise
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('API request timed out after 45 seconds')), 45000);
-    });
-
-    // Race the API promise against the timeout
-    const response = await Promise.race([responsePromise, timeoutPromise])
-                      .catch(error => {
-                        console.error('[Process] API call failed:', error);
-                        throw new Error(`API error: ${error.message || 'Network issue'}`);
-                      }) as any;
-
-    console.log('[Process] Received response from OpenAI:', JSON.stringify(response || {}, null, 2));
-
-    // Validate the response
-    if (!response || !response.choices || !response.choices[0] || !response.choices[0].message) {
-      console.error('[Process] Invalid or empty response from OpenAI');
-      throw new Error('Invalid response from image analysis');
-    }
-
-    const content = response.choices[0].message.content;
-    console.log('[Process] Raw OpenAI response content:', content);
-
-    if (!content) {
-      throw new Error('OpenAI returned an empty response');
-    }
-
-    const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
-    const jsonContent = jsonMatch ? jsonMatch[1].trim() : content.trim();
-    console.log('[Process] Extracted JSON content:', jsonContent);
-
-    let result: ScanResult;
-    try {
-      result = JSON.parse(jsonContent);
-      console.log('[Process] Parsed JSON result:', JSON.stringify(result, null, 2));
-      if (typeof result !== 'object' || result === null || !('syringe' in result) || !('vial' in result)) {
-        console.error('[Process] Invalid JSON structure:', result);
-        throw new Error('Invalid JSON structure received from analysis');
-      }
-    } catch (parseError) {
-      console.error('[Process] JSON parse error:', parseError);
-      throw new Error('Could not parse analysis result');
+    const mapped = mapScanToDoseInputs(result);
+    if (mapped.status === 'needs-input') {
+      logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
 
     await incrementScansUsed();
@@ -349,20 +299,14 @@ export async function captureAndProcessImage({
     return result;
   } catch (error) {
     console.error('[Process] Error processing image:', error);
-    let message = 'An unexpected error occurred during scanning';
-    if (error instanceof Error) {
-      if (error.message.includes('format is not recognized')) {
-        message = 'Image format could not be processed';
-      } else if (error.message.includes('No file selected')) {
-        message = 'No image selected';
-      } else if (error.message.includes('File size')) {
-        message = error.message;
-      } else if (error.message.includes('cancelled')) {
-        message = 'Image selection cancelled';
-      } else {
-        message = `Error: ${error.message}`;
-      }
+    if (error instanceof Error && error.message === SCAN_UNAVAILABLE_MESSAGE) {
+      setScanError(SCAN_UNAVAILABLE_MESSAGE);
+      onScanUnavailable?.();
+      return null;
     }
+    const message = error instanceof Error
+      ? PHOTO_ERROR_MESSAGES.get(error.message) ?? PHOTO_ERROR_FALLBACK
+      : PHOTO_ERROR_FALLBACK;
     setScanError(message);
     return null;
   } finally {

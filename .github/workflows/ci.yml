@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FC_SEED: '1032026'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: ./verify check
+
+  # Make test and privacy required checks on main after this stack merges.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FC_SEED: '1032026'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build:web
+      - name: Reject secrets in web export and resolved Expo extra
+        run: npm run check:bundle-secrets
+      - run: npm run test:scan-api
+      - run: npx jest scripts/__tests__/check-bundle-secrets.test.js --runInBand
+      - run: npm run typecheck:dosing
+      - run: npm run test:dose-flow
+      - run: npm run typecheck:api
+      - name: Dosing tests and 100% coverage gate
+        run: |
+          echo "FC_SEED=$FC_SEED"
+          npm run test:dosing
+      - name: Write dosing coverage summary
+        if: ${{ always() && hashFiles('coverage/coverage-summary.json') != '' }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const rows = Object.entries(coverage).map(([file, stats]) => {
+            const label = file === 'total' ? 'All dosing files' : file.split('/lib/dosing/').pop();
+            return `| ${label} | ${stats.statements.pct}% | ${stats.branches.pct}% | ${stats.functions.pct}% | ${stats.lines.pct}% |`;
+          });
+          const summary = [
+            '### Dosing coverage', '', `FC_SEED=${process.env.FC_SEED}`, '',
+            '| File | Statements | Branches | Functions | Lines |',
+            '| --- | ---: | ---: | ---: | ---: |', ...rows, '',
+          ].join('\n');
+          fs.writeFileSync('coverage/summary.md', summary);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+          NODE
+      - name: Upload dosing coverage summary
+        if: ${{ always() && hashFiles('coverage/coverage-summary.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dosing-coverage-summary
+          path: |
+            coverage/coverage-summary.json
+            coverage/summary.md
+          if-no-files-found: error
+
+  # Run all Jest suites as a blocking check so regressions fail CI.
+  full-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FC_SEED: '1032026'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx jest --runInBand
+
+  demo-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Headless seven-step, strength, and photo-error regressions
+        run: npm run test:demo-leftovers
+
+  privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check only added or changed files for private images and GPS metadata
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/check-fixture-privacy.py "$BASE_SHA" "$HEAD_SHA"
+
+  # SAF-107: activate after the offline vision harness is available on this stack.
+  # vision-eval:
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version-file: .nvmrc
+  #         cache: npm
+  #     - run: npm ci
+  #     - run: npm run eval:vision

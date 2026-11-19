@@ -37,16 +37,16 @@ GOOGLE_IOS_CLIENT_ID=your_google_ios_client_id.apps.googleusercontent.com
      - **iOS** (for iOS app)
 
 2. **Configure Authorized Domains:**
-   For the **Web Client ID**, add these authorized domains:
-   - `localhost` (for local development)
-   - `safe-dose-d3kui9xhc-rodneygs-projects.vercel.app` (current Vercel deployment)
-   - `app.safedoseai.com` (production domain)
+   For the **Web Client ID**, add these authorized JavaScript origins:
+   - `http://localhost:8081` (for local development)
+   - `https://safedose.rodneygainous.com` (production JavaScript origin)
+   - `https://safe-dose.vercel.app` (fallback production origin)
 
 3. **Configure Authorized Redirect URIs:**
    For the **Web Client ID**, add these redirect URIs:
    - `http://localhost:8081/__/auth/handler` (local development)
-   - `https://safe-dose-d3kui9xhc-rodneygs-projects.vercel.app/__/auth/handler` (current deployment)
-   - `https://app.safedoseai.com/__/auth/handler` (production)
+   - `https://safedose.rodneygainous.com/__/auth/handler` (production)
+   - `https://safe-dose.vercel.app/__/auth/handler` (fallback)
 
 ### 3. Firebase Console Setup
 
@@ -60,8 +60,10 @@ GOOGLE_IOS_CLIENT_ID=your_google_ios_client_id.apps.googleusercontent.com
    - In "Authentication" > "Settings" > "Authorized domains"
    - Add the same domains as in Google Cloud Console:
      - `localhost`
-     - `safe-dose-d3kui9xhc-rodneygs-projects.vercel.app`
-     - `app.safedoseai.com`
+     - `safedose.rodneygainous.com`
+     - `safe-dose.vercel.app`
+
+Preview deployments use `*.vercel.app`. Register each exact preview hostname/origin and redirect URI when needed; do not assume Firebase Auth or Google OAuth accepts wildcard patterns.
 
 ## Testing the Configuration
 

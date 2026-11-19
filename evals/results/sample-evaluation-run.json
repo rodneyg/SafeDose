@@ -1,0 +1,73 @@
+{
+  "timestamp": "2024-09-25T15:30:00Z",
+  "safedose_version": "1.0.0",
+  "evaluator": "manual",
+  "test_sets": [
+    {
+      "name": "basic-dose-calculations",
+      "total_evaluations": 4,
+      "passed": 4,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "results": [
+        {
+          "id": "basic-001",
+          "status": "passed",
+          "actual_output": {
+            "calculatedVolume": 0.25,
+            "recommendedMarking": "0.25 ml",
+            "calculationError": null
+          },
+          "matches_expected": true
+        },
+        {
+          "id": "basic-002", 
+          "status": "passed",
+          "actual_output": {
+            "calculatedVolume": 0.15,
+            "recommendedMarking": "15 units",
+            "calculationError": null
+          },
+          "matches_expected": true
+        },
+        {
+          "id": "basic-003",
+          "status": "passed", 
+          "actual_output": {
+            "calculatedVolume": 0.5,
+            "recommendedMarking": "0.5 ml",
+            "calculationError": null
+          },
+          "matches_expected": true
+        },
+        {
+          "id": "basic-004",
+          "status": "passed",
+          "actual_output": {
+            "calculatedVolume": 2.0,
+            "recommendedMarking": "2.0 ml",
+            "calculationError": null
+          },
+          "matches_expected": true
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_evaluations": 4,
+    "total_passed": 4,
+    "total_failed": 0,
+    "overall_pass_rate": 1.0,
+    "categories": {
+      "dose-calculation": {
+        "pass_rate": 1.0,
+        "total": 4
+      }
+    }
+  },
+  "notes": [
+    "All basic dose calculations are functioning correctly",
+    "No issues with standard unit conversions",
+    "Syringe selection logic working as expected"
+  ]
+}

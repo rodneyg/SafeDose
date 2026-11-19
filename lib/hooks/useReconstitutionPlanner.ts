@@ -1,16 +1,6 @@
+import { calculateReconstitution, getReconstitutionResult, getReconstitutionInputError } from '../dosing';
+export type { ReconstitutionPlannerParams, ReconstitutionPlannerResult } from '../dosing';
 import { useState, useCallback, useMemo } from 'react';
-
-export interface ReconstitutionPlannerParams {
-  peptideAmountMg: number;
-  targetDoseMg: number;
-  preferredVolumeMl: number;
-}
-
-export interface ReconstitutionPlannerResult {
-  bacWaterToAdd: number; // mL
-  concentration: number; // mg/mL
-  injectionVolume: number; // mL (actual volume needed per dose)
-}
 
 export interface ReconstitutionState {
   step: 'inputMethod' | 'manualInput' | 'scanLabel' | 'output';
@@ -88,85 +78,14 @@ export function useReconstitutionPlanner() {
     setState(prev => ({ ...prev, error }));
   }, []);
 
-  // Calculate reconstitution values
-  const calculateReconstitution = useCallback((params: ReconstitutionPlannerParams): ReconstitutionPlannerResult => {
-    const { peptideAmountMg, targetDoseMg, preferredVolumeMl } = params;
-
-    // Calculate required concentration: target dose (mg) / preferred volume (mL)
-    const requiredConcentration = targetDoseMg / preferredVolumeMl;
-
-    // Calculate BAC water to add: peptide amount (mg) / required concentration (mg/mL)
-    const bacWaterToAdd = peptideAmountMg / requiredConcentration;
-
-    // Actual injection volume will be the preferred volume (since we calculated concentration to achieve this)
-    const injectionVolume = preferredVolumeMl;
-
-    return {
-      bacWaterToAdd,
-      concentration: requiredConcentration,
-      injectionVolume,
-    };
-  }, []);
-
-  // Get current calculation result
-  const result = useMemo(() => {
-    try {
-      const peptideAmountValue = parseFloat(state.peptideAmount || state.scannedPeptideAmount || '0');
-      const targetDoseValue = parseFloat(state.targetDose);
-      const preferredVolumeValue = parseFloat(state.preferredVolume);
-
-      if (!peptideAmountValue || !targetDoseValue || !preferredVolumeValue) {
-        return null;
-      }
-
-      // Convert peptide amount to mg if needed
-      const peptideAmountMg = state.peptideUnit === 'mcg' ? peptideAmountValue / 1000 : peptideAmountValue;
-      
-      // Convert target dose to mg if needed
-      const targetDoseMg = state.targetDoseUnit === 'mcg' ? targetDoseValue / 1000 : targetDoseValue;
-
-      return calculateReconstitution({
-        peptideAmountMg,
-        targetDoseMg,
-        preferredVolumeMl: preferredVolumeValue,
-      });
-    } catch {
-      return null;
-    }
-  }, [state.peptideAmount, state.scannedPeptideAmount, state.peptideUnit, state.targetDose, state.targetDoseUnit, state.preferredVolume, calculateReconstitution]);
+  const result = useMemo(() => getReconstitutionResult(state), [state.peptideAmount, state.scannedPeptideAmount, state.peptideUnit, state.targetDose, state.targetDoseUnit, state.preferredVolume]);
 
   const validateInputs = useCallback(() => {
-    const peptideAmountValue = parseFloat(state.peptideAmount || state.scannedPeptideAmount || '0');
-    const targetDoseValue = parseFloat(state.targetDose);
-    const preferredVolumeValue = parseFloat(state.preferredVolume);
-
-    if (!peptideAmountValue || peptideAmountValue <= 0) {
-      setError('Please enter a valid peptide amount greater than 0');
+    const error = getReconstitutionInputError(state, result);
+    if (error) {
+      setError(error);
       return false;
     }
-
-    if (!targetDoseValue || targetDoseValue <= 0) {
-      setError('Please enter a valid target dose greater than 0');
-      return false;
-    }
-
-    if (!preferredVolumeValue || preferredVolumeValue <= 0) {
-      setError('Please enter a valid preferred volume greater than 0');
-      return false;
-    }
-
-    // Validate BAC water amount is reasonable (between 0.1 mL and 20 mL)
-    if (result) {
-      if (result.bacWaterToAdd < 0.1) {
-        setError('Target dose is too high for this vial size - would require less than 0.1 mL of BAC water. Try a smaller dose or larger injection volume.');
-        return false;
-      }
-      if (result.bacWaterToAdd > 20) {
-        setError('Target dose is too low for this vial size - would require more than 20 mL of BAC water. Try a larger dose or smaller injection volume.');
-        return false;
-      }
-    }
-
     return true;
   }, [state.peptideAmount, state.scannedPeptideAmount, state.targetDose, state.preferredVolume, result, setError]);
 

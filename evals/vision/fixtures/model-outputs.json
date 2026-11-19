@@ -1,0 +1,952 @@
+[
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-exact-read",
+      "sha256": "8b13f83d03aee6f12aa452d186ff5cf279f1c0297b45a8e2c95854bc84258a41"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_ml",
+      "syringe": {
+        "type": "standard",
+        "scale": "mL",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": null,
+        "ml": 0.5,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.5,
+          "recommendedMarking": "0.5"
+        }
+      },
+      "id": "fixture-standard-read",
+      "sha256": "142d8c9c0cee08970ba0164847b3079060214c7b759dd3a4fb608780d2761c1a"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Standard",
+        "volume": "1 ml",
+        "markings": "0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1",
+        "scale": "mL"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": null,
+        "ml": 0.5,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 27.5,
+        "ml": 0.275,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-between-marks",
+      "sha256": "5baebe2a179a5844f319efe01f44f274ba0af3e125afc4162f998c6640e8e387"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 27.5,
+        "ml": 0.275,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-unreadable",
+      "sha256": "c9cd6b7a2ccfd1515aaf861b32b3d2ef5349ba9bee9b31146dac6565fac00453"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "unreadable",
+        "volume": "unreadable",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-garbled-scale",
+      "sha256": "63f352ea9c88108104b889f0c266e9777f18580ce24808ef007f642b35b7a765"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,1,??,3",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-reversed-scale",
+      "sha256": "c674f5c6007076df2bb814097a2c1f58a1e68092f862bfe6f2545e9d8f800bb1"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "100,50,0",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-missing-vial-unit",
+      "sha256": "41bc65583f92ae13a36e71c6447aec7b05a03a4c4faaf778824cd69d6bf9eba1"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-wrong-number",
+      "sha256": "0f258b7bb989689407cdef9584ec05f499e325b80f656e02365787994111d84f"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "20 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-low-confidence",
+      "sha256": "b3b5acf0825a6d8d161b7777ad8de29c92770de6a3da86c4653a0883806b25e6"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.89,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-u40",
+      "sha256": "ec465437664d66623ac4fc6140fde842be95e531ca705a4a7acbbd774ff14a02"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-40"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": 5,
+        "total_unit": "mg",
+        "concentration": null,
+        "concentration_unit": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "read",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 0.5,
+        "unit": "mg",
+        "solutionVolume": "2",
+        "expected": {
+          "calculatedVolume": 0.2,
+          "recommendedMarking": "20"
+        }
+      },
+      "id": "fixture-total-amount",
+      "sha256": "6104c7eca1f7dc69c23eb0b1e983954b59e62a61d5c36dce43d31fdebb9f589d"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": "5 mg",
+        "concentration": null,
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": false
+    }
+  },
+  {
+    "verified_by": "pending-rodney",
+    "provenance": "Synthetic authored model-output fixture. No model call or photo recording; expected arithmetic authored independently. sha256 hashes text-fixture:<id>, not pixels.",
+    "label": {
+      "group": "synthetic_u100",
+      "syringe": {
+        "type": "insulin",
+        "scale": "U-100",
+        "capacity_ml": 1,
+        "brand": "synthetic"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "total_amount": null,
+        "total_unit": null,
+        "concentration": 10,
+        "concentration_unit": "mg/ml"
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true,
+        "ground_truth": "synthetic-authored-not-an-image"
+      },
+      "conditions": {
+        "lighting": "synthetic",
+        "angle": "synthetic"
+      },
+      "expected_behavior": "refuse",
+      "verified_by": "pending-rodney",
+      "review": {
+        "status": "pending",
+        "reviewer": "Rodney"
+      },
+      "dose": {
+        "doseValue": 2.5,
+        "unit": "mg",
+        "expected": {
+          "calculatedVolume": 0.25,
+          "recommendedMarking": "25"
+        }
+      },
+      "id": "fixture-model-refusal",
+      "sha256": "57901902b33329334550cf794c40937a5679f132bc8cf8b6591fa7460f8716fc"
+    },
+    "model_output": {
+      "syringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "markings": "0,10,20,30,40,50,60,70,80,90,100",
+        "scale": "U-100"
+      },
+      "vial": {
+        "substance": "Example compound",
+        "totalAmount": null,
+        "concentration": "10 mg/ml",
+        "expiration": null
+      },
+      "fill": {
+        "units": 25,
+        "ml": 0.25,
+        "plunger_visible": true
+      },
+      "confidence": {
+        "syringe.type": 0.99,
+        "syringe.capacity_ml": 0.99,
+        "syringe.scale": 0.99,
+        "syringe.markings": 0.99,
+        "fill.units": 0.99,
+        "fill.ml": 0.99,
+        "fill.plunger_visible": 0.99,
+        "vial.substance": 0.99,
+        "vial.totalAmount": 0.99,
+        "vial.concentration": 0.99,
+        "vial.expiration": 0.99
+      },
+      "refuse": true,
+      "refuse_reason": "Implausible generated scale"
+    }
+  }
+]

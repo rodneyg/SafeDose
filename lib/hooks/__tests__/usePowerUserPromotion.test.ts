@@ -1,14 +1,17 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePowerUserPromotion } from '../usePowerUserPromotion';
 
+const mockUser = { uid: 'test-user', isAnonymous: false };
+const mockDb = {};
+
 // Mock dependencies
-jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { uid: 'test-user', isAnonymous: false } })
+jest.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: mockUser })
 }));
 
 jest.mock('firebase/firestore', () => ({
-  getFirestore: () => ({}),
+  getFirestore: () => mockDb,
   doc: jest.fn(),
   getDoc: jest.fn().mockResolvedValue({ exists: () => false }),
   setDoc: jest.fn()
@@ -32,9 +35,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'free'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(false);
   });
@@ -47,9 +50,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'free'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(true);
   });
@@ -62,9 +65,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'pro'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(false);
   });
@@ -78,9 +81,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'free'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(false);
   });
@@ -94,9 +97,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'free'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(true);
   });
@@ -109,9 +112,9 @@ describe('usePowerUserPromotion', () => {
       plan: 'free'
     }));
 
-    const { result, waitForNextUpdate } = renderHook(() => usePowerUserPromotion());
+    const { result } = renderHook(() => usePowerUserPromotion());
     
-    await waitForNextUpdate();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     await act(async () => {
       await result.current.incrementDoseCount();

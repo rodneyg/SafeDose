@@ -1,16 +1,21 @@
 // app/_layout.tsx
 import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
+import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
 import "../global.css";
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   console.log('[RootLayout] ========== ROOT LAYOUT RENDER ==========');
   
   useEffect(() => {
-    console.log('[RootLayout] Root layout effect running - hiding splash screen');
+    console.log('[RootLayout] Root layout effect running - hiding native splash screen');
+    // Hide the native splash screen to show our custom animated one
     SplashScreen.hideAsync();
     
     // Initialize Firebase Analytics lazily
@@ -26,7 +31,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <UserProfileProvider>
-        <Slot />
+        <OnboardingProvider>
+          <Slot />
+        </OnboardingProvider>
       </UserProfileProvider>
     </AuthProvider>
   );

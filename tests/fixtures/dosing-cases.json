@@ -1,0 +1,1726 @@
+[
+  {
+    "id": "peptide-01",
+    "description": "100 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 100,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.04,
+      "marking": "4"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-02",
+    "description": "125 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 125,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.05,
+      "marking": "5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-03",
+    "description": "250 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-04",
+    "description": "375 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 375,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.15,
+      "marking": "15"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-05",
+    "description": "500 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 500,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.2,
+      "marking": "20"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-06",
+    "description": "625 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 625,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-07",
+    "description": "750 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 750,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.3,
+      "marking": "30"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-08",
+    "description": "1000 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 1000,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.4,
+      "marking": "40"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-09",
+    "description": "1250 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 1250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-10",
+    "description": "1500 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 1500,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.6,
+      "marking": "60"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-11",
+    "description": "1750 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 1750,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.7,
+      "marking": "70"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "peptide-12",
+    "description": "2000 mcg from 5 mg vial plus 2 mL BAC",
+    "inputs": {
+      "doseValue": 2000,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.8,
+      "marking": "80"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-01",
+    "description": "50 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 50,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "0.25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-02",
+    "description": "75 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 75,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.375,
+      "marking": "0.375"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-03",
+    "description": "100 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 100,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "0.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-04",
+    "description": "125 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 125,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.625,
+      "marking": "0.625"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-05",
+    "description": "150 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 150,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.75,
+      "marking": "0.75"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-06",
+    "description": "175 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 175,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.875,
+      "marking": "0.875"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-07",
+    "description": "200 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 200,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.0,
+      "marking": "1"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-08",
+    "description": "225 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 225,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.125,
+      "marking": "1.125"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "trt-09",
+    "description": "250 mg testosterone cypionate at 200 mg/mL",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mg",
+      "concentration": 200,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.25,
+      "marking": "1.25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-01",
+    "description": "0.25 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 0.25,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-02",
+    "description": "0.5 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.2,
+      "marking": "20"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-03",
+    "description": "0.75 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 0.75,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.3,
+      "marking": "30"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-04",
+    "description": "1 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.4,
+      "marking": "40"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-05",
+    "description": "1.25 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 1.25,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-06",
+    "description": "1.5 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 1.5,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.6,
+      "marking": "60"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-07",
+    "description": "2 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 2,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.8,
+      "marking": "80"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "semaglutide-08",
+    "description": "2.5 mg dose at 2.5 mg/mL (semaglutide-style arithmetic)",
+    "inputs": {
+      "doseValue": 2.5,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.0,
+      "marking": "100"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-01",
+    "description": "2.5 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 2.5,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.125,
+      "marking": "12.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-02",
+    "description": "5 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 5,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-03",
+    "description": "7.5 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 7.5,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.375,
+      "marking": "37.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-04",
+    "description": "10 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 10,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-05",
+    "description": "12.5 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 12.5,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.625,
+      "marking": "62.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "tirzepatide-06",
+    "description": "15 mg dose at 20 mg/mL (tirzepatide-style arithmetic)",
+    "inputs": {
+      "doseValue": 15,
+      "unit": "mg",
+      "concentration": 20,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.75,
+      "marking": "75"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-01",
+    "description": "5 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 5,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.05,
+      "marking": "5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-02",
+    "description": "10 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 10,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-03",
+    "description": "15 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 15,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.15,
+      "marking": "15"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-04",
+    "description": "20 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 20,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.2,
+      "marking": "20"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-05",
+    "description": "25 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 25,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-06",
+    "description": "29 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 29,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.29,
+      "marking": "29"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-07",
+    "description": "30 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 30,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.3,
+      "marking": "30"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-08",
+    "description": "40 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 40,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.4,
+      "marking": "40"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "insulin-09",
+    "description": "50 units at 100 units/mL on U-100 syringe",
+    "inputs": {
+      "doseValue": 50,
+      "unit": "units",
+      "concentration": 100,
+      "concentrationUnit": "units/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-01",
+    "description": "25 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 25,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.05,
+      "marking": "5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-02",
+    "description": "50 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 50,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-03",
+    "description": "100 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 100,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.2,
+      "marking": "20"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-04",
+    "description": "125 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 125,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-05",
+    "description": "250 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mcg-06",
+    "description": "500 mcg at 500 mcg/mL",
+    "inputs": {
+      "doseValue": 500,
+      "unit": "mcg",
+      "concentration": 500,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.0,
+      "marking": "100"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-01",
+    "description": "0.05 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 0.05,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.05,
+      "marking": "0.05"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-02",
+    "description": "0.1 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 0.1,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "0.1"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-03",
+    "description": "0.25 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 0.25,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "0.25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-04",
+    "description": "0.5 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "0.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-05",
+    "description": "1 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.0,
+      "marking": "1"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-06",
+    "description": "1.5 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 1.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.5,
+      "marking": "1.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-07",
+    "description": "2 mL direct volume with concentration populated",
+    "inputs": {
+      "doseValue": 2,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 2.0,
+      "marking": "2"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mg-to-mcg-01",
+    "description": "0.1 mg at 1000 mcg/mL",
+    "inputs": {
+      "doseValue": 0.1,
+      "unit": "mg",
+      "concentration": 1000,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mg-to-mcg-02",
+    "description": "0.25 mg at 1000 mcg/mL",
+    "inputs": {
+      "doseValue": 0.25,
+      "unit": "mg",
+      "concentration": 1000,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "25"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mg-to-mcg-03",
+    "description": "0.5 mg at 1000 mcg/mL",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mg",
+      "concentration": 1000,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "50"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "mg-to-mcg-04",
+    "description": "1 mg at 1000 mcg/mL",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": 1000,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 1.0,
+      "marking": "100"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "direct-no-concentration",
+    "description": "0.5 mL direct volume without concentration",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mL",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "0.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-01",
+    "description": "250 mcg from scanned 5000 mcg vial in 2 mL",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-02",
+    "description": "Planner prefill 5000 mcg vial in 2 mL, 250 mcg dose",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03",
+    "description": "Planner scanned 1,000 mcg vial, 100 mcg in 0.1 mL",
+    "inputs": {
+      "doseValue": 100,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 1000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "1"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-04",
+    "description": "10 mg vial, 300 mcg target in 0.1 mL: exact concentration 3 mg/mL",
+    "inputs": {
+      "doseValue": 300,
+      "unit": "mcg",
+      "concentration": 3,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      },
+      "totalAmount": 10,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "10/3",
+      "concentrationExact": "3"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-05",
+    "description": "0.29 mg at 1 mg/mL gives marking 29",
+    "inputs": {
+      "doseValue": 0.29,
+      "unit": "mg",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.29,
+      "marking": "29"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06",
+    "description": "5 mg / mL normalized before 0.5 mg dose calculation",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mg",
+      "concentration": 5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "10"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07",
+    "description": "Confirmed Standard 3 mL syringe after unreadable scan",
+    "inputs": {
+      "doseValue": 0.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.5,
+      "marking": "0.5"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-08",
+    "description": "250 mcg from 5000 mcg in 2 mL on U-40: 4 scale units",
+    "inputs": {
+      "doseValue": 250,
+      "unit": "mcg",
+      "concentration": null,
+      "concentrationUnit": "mcg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "1 ml",
+        "insulinScale": "U-40"
+      },
+      "totalAmount": 5000,
+      "totalAmountUnit": "mcg",
+      "solutionVolume": "2"
+    },
+    "expected": {
+      "volume_mL": 0.1,
+      "marking": "4"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-09",
+    "description": "2.5 mL on 5 mL syringe is blocked by unchanged 2 mL policy",
+    "inputs": {
+      "doseValue": 2.5,
+      "unit": "mL",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "5 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-10",
+    "description": "0.25 mg at 1 mg/mL with Standard 1 mL: advice is guidance",
+    "inputs": {
+      "doseValue": 0.25,
+      "unit": "mg",
+      "concentration": 1,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "1 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": 0.25,
+      "marking": "0.25",
+      "error": null,
+      "guidance": "Draw to 0.25 ml, which is between the 0.2 ml and 0.3 ml marks."
+    },
+    "computed_by": "independent hand calculation",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03-concentration",
+    "description": "Planner concentration must not become vial amount",
+    "operation": "plannerScan",
+    "inputs": {
+      "concentration": "5 mg/mL"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-03-thousands",
+    "description": "Planner thousands and explicit mcg unit",
+    "operation": "plannerScan",
+    "inputs": {
+      "totalAmount": "1,000 mcg"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "amount": 1000,
+        "unit": "mcg"
+      }
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06-unknown",
+    "description": "Unknown IU/mL concentration blocks",
+    "operation": "concentrationScan",
+    "inputs": {
+      "text": "5 IU/mL"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-06-spacing",
+    "description": "Harmless concentration whitespace normalizes",
+    "operation": "concentrationScan",
+    "inputs": {
+      "text": "5 mg / mL"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "amount": 5,
+        "unit": "mg/ml"
+      }
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07-volume",
+    "description": "Unreadable syringe volume blocks",
+    "operation": "syringeScan",
+    "inputs": {
+      "type": "Insulin",
+      "volume": "unreadable",
+      "scale": "U-100"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf101-07-type",
+    "description": "Unknown syringe type blocks",
+    "operation": "syringeScan",
+    "inputs": {
+      "type": "unknown",
+      "volume": "3 ml"
+    },
+    "expected": {
+      "ok": false
+    },
+    "computed_by": "independent label contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-below-minimum",
+    "description": "Shrunk direct-volume counterexample: 0.001 mL returns no numeric result",
+    "inputs": {
+      "doseValue": 0.001,
+      "unit": "mL",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "0.3 ml",
+        "insulinScale": "U-100"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "VOLUME_THRESHOLD_ERROR:"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-extreme-dose",
+    "description": "Shrunk extreme-dose counterexample: 1e308 / 10 must return no numeric result",
+    "inputs": {
+      "doseValue": 1e+308,
+      "unit": "mg",
+      "concentration": 10,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-overflow",
+    "description": "Finite operands whose quotient overflows must return no numeric result",
+    "inputs": {
+      "doseValue": 1e+308,
+      "unit": "mg",
+      "concentration": 1e-308,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "2 mL per-injection safety limit"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-capacity",
+    "description": "0.4 mL on a 0.3 mL syringe returns no numeric result",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": 2.5,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Insulin",
+        "volume": "0.3 ml",
+        "insulinScale": "U-100"
+      }
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "exceeds syringe capacity"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-availability",
+    "description": "0.001 mg requested from 0.0005 mg available returns no numeric result",
+    "inputs": {
+      "doseValue": 0.001,
+      "unit": "mg",
+      "concentration": 0.002,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      },
+      "totalAmount": 0.0005,
+      "totalAmountUnit": "mg"
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "exceeds total amount available"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  },
+  {
+    "id": "saf103-low-concentration",
+    "description": "Rejected derived concentration must not remain a numeric output",
+    "inputs": {
+      "doseValue": 1,
+      "unit": "mg",
+      "concentration": null,
+      "concentrationUnit": "mg/ml",
+      "manualSyringe": {
+        "type": "Standard",
+        "volume": "3 ml"
+      },
+      "totalAmount": 0.001,
+      "totalAmountUnit": "mg",
+      "solutionVolume": "1"
+    },
+    "expected": {
+      "volume_mL": null,
+      "marking": null,
+      "calculatedConcentration": null,
+      "error_contains": "extremely low"
+    },
+    "computed_by": "independent safety contract",
+    "verified_by": "pending-rodney"
+  }
+]

@@ -1,15 +1,17 @@
+import { useOnboardingDetails } from '@/contexts/OnboardingContext';
 import { useState, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
-import { Camera, Check, ArrowRight } from 'lucide-react-native';
+import { Camera, Check, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isMobileWeb } from '../../lib/utils';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
 export default function Demo() {
+  const { details: { limitedFunctionality } } = useOnboardingDetails();
   const [step, setStep] = useState(0);
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -22,7 +24,7 @@ export default function Demo() {
       try {
         // Persist onboarding completion status
         await AsyncStorage.setItem('onboardingComplete', 'true');
-        // Navigate to user type segmentation screen
+        // Age and limitations remain in onboarding context
         router.replace('/onboarding/userType');
       } catch (e) {
         console.warn('Error completing onboarding:', e);
@@ -61,9 +63,9 @@ export default function Demo() {
                 )}
               </View>
             </View>
-            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Smart Recognition</Text>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Scan & Verify</Text>
             <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-              Point your camera at your medication and syringe. Our AI will guide you through the process.
+              Scan your medication and syringe. The app uses computer vision to identify them, then you confirm the information matches your prescription.
             </Text>
           </Animated.View>
         );
@@ -78,11 +80,11 @@ export default function Demo() {
                 <Text style={styles.doseText}>0.5ml</Text>
               </View>
               <View style={styles.doseLine} />
-              <Text style={styles.doseLabel}>Recommended Dose</Text>
+              <Text style={styles.doseLabel}>Calculated Volume</Text>
             </View>
-            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Real-time Guidance</Text>
+            <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Calculate & Confirm</Text>
             <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-              Get precise measurements and instant verification of your medication dose.
+              The app calculates the volume to draw based on your verified information. You confirm it matches your prescription.
             </Text>
           </Animated.View>
         );
@@ -102,7 +104,7 @@ export default function Demo() {
               </View>
               <Text style={[styles.stepTitle, isMobileWeb && styles.stepTitleMobile]}>Ready to Start</Text>
               <Text style={[styles.stepDescription, isMobileWeb && styles.stepDescriptionMobile]}>
-                Let's prepare your first dose together with real-time guidance.
+                You're ready to verify materials and calculate doses based on your prescription.
               </Text>
             </View>
           </Animated.View>
@@ -113,10 +115,31 @@ export default function Demo() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Animated.View entering={FadeIn} style={styles.header}>
         <Text style={[styles.headerTitle, isMobileWeb && styles.headerTitleMobile]}>How It Works</Text>
       </Animated.View>
+
+      {/* Limited Functionality Warning Banner */}
+      {limitedFunctionality && (
+        <Animated.View entering={FadeIn.delay(200)} style={[styles.warningBanner, isMobileWeb && styles.warningBannerMobile]}>
+          <View style={styles.warningIcon}>
+            {Platform.OS === "web" ? (
+              <Text style={{ color: '#D97706', fontSize: 18 }}>⚠</Text>
+            ) : (
+              <AlertTriangle size={18} color="#D97706" />
+            )}
+          </View>
+          <View style={styles.warningContent}>
+            <Text style={[styles.warningTitle, isMobileWeb && styles.warningTitleMobile]}>
+              Limited Functionality Mode
+            </Text>
+            <Text style={[styles.warningText, isMobileWeb && styles.warningTextMobile]}>
+              Without birth date information, some age-appropriate safety features will be limited.
+            </Text>
+          </View>
+        </Animated.View>
+      )}
 
       <View style={styles.content}>
         {renderStep()}
@@ -160,7 +183,7 @@ export default function Demo() {
           )}
         </TouchableOpacity>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -168,6 +191,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     padding: 24,
@@ -179,8 +205,38 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000000',
   },
-  content: {
+  // Warning banner styles
+  warningBanner: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    margin: 16,
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  warningIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  warningContent: {
     flex: 1,
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#92400E',
+    lineHeight: 20,
+  },
+  content: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -308,5 +364,19 @@ const styles = StyleSheet.create({
   },
   headerTitleMobile: {
     fontSize: 28, // Smaller header on mobile
+  },
+  // Mobile warning styles
+  warningBannerMobile: {
+    margin: 12,
+    marginTop: 6,
+    padding: 12,
+  },
+  warningTitleMobile: {
+    fontSize: 15,
+    marginBottom: 3,
+  },
+  warningTextMobile: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

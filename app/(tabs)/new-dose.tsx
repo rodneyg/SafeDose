@@ -1,11 +1,15 @@
+import { SCAN_UNAVAILABLE_MESSAGE } from '../../lib/scan/completeOnServer';
+import { hasScanCapacity } from '../../lib/plans';
+import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
+import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import OpenAI from 'openai';
-import Constants from 'expo-constants';
 import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { isMobileWeb, isWeb, insulinVolumes, standardVolumes } from '../../lib/utils';
+import { useIsFocused } from '@react-navigation/native';
+import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
+import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
 import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
@@ -25,29 +29,41 @@ import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
+import { useWebOffline } from '../../lib/hooks/useWebOffline';
 
-type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
 
 export default function NewDoseScreen() {
+  const offline = useWebOffline();
   const { user } = useAuth();
   const navigation = useNavigation();
   const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
-  const [isScreenActive, setIsScreenActive] = useState(true);
+  const isScreenActive = useIsFocused();
   const [navigatingFromIntro, setNavigatingFromIntro] = useState(false);
   const prefillAppliedRef = useRef(false);
 
   const feedbackStorage = useFeedbackStorage();
   const signUpPrompt = useSignUpPrompt();
   const { getDoseLogHistory } = useDoseLogging();
+  const evaluationDataCapture = useEvaluationDataCapture();
   
   const doseCalculator = useDoseCalculator({ 
     checkUsageLimit,
     trackInteraction: signUpPrompt.trackInteraction,
   });
   
+  const manualStartAppliedRef = useRef(false);
+  useEffect(() => {
+    if (searchParams.startManual === 'true' && !manualStartAppliedRef.current) {
+      manualStartAppliedRef.current = true;
+      doseCalculator.setScreenStep('manualEntry');
+    }
+  }, [searchParams.startManual, doseCalculator.setScreenStep]);
+
   // Add useEffect to enforce viewport constraints for mobile web
   useEffect(() => {
     const lockViewport = () => {
@@ -105,19 +121,24 @@ export default function NewDoseScreen() {
     const prefillDoseUnit = searchParams.prefillDoseUnit as string;
     
     // Reset the applied flag when params change
-    if (!prefillTotalAmount || !prefillTotalUnit) {
+    if (!prefillTotalAmount) {
       prefillAppliedRef.current = false;
     }
     
     // Only apply prefill if we have total amount data, haven't applied it yet, and doseCalculator is on the intro screen
-    if (prefillTotalAmount && prefillTotalUnit && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
+    if (prefillTotalAmount && !prefillAppliedRef.current && doseCalculator.screenStep === 'intro') {
       console.log('[NewDoseScreen] Applying prefilled total amount data from reconstitution planner');
       prefillAppliedRef.current = true;
       
       // Set up the dose calculator with prefilled total amount data (not concentration)
-      doseCalculator.setTotalAmount(prefillTotalAmount);
+      const prefill = parsePlannerPrefill({ prefillTotalAmount, prefillTotalUnit, prefillSolutionVolume, prefillConcentrationExact: searchParams.prefillConcentrationExact as string });
+      doseCalculator.setTotalAmountUnit(prefill.ok ? prefill.value.totalAmountUnit : null);
+      doseCalculator.setTotalAmount(prefill.ok ? String(prefill.value.totalAmount) : '');
+      doseCalculator.setConcentration(null);
+      doseCalculator.setConcentrationAmount('');
+      if (prefill.ok) doseCalculator.setConcentrationUnit(prefill.value.concentrationUnit);
       doseCalculator.setMedicationInputType('totalAmount');
-      doseCalculator.setTotalAmountHint('From reconstitution planner');
+      doseCalculator.setTotalAmountHint(prefill.ok ? 'From reconstitution planner' : prefill.error);
       
       // Prefill solution volume if provided
       if (prefillSolutionVolume) {
@@ -125,6 +146,8 @@ export default function NewDoseScreen() {
         console.log('[NewDoseScreen] Prefilled solution volume:', prefillSolutionVolume);
       }
       
+      doseCalculator.setConcentrationExact(prefill.ok ? prefill.value.concentrationExact || null : null);
+
       // Prefill dose if provided
       if (prefillDose && prefillDoseUnit) {
         doseCalculator.setDose(prefillDose);
@@ -138,7 +161,7 @@ export default function NewDoseScreen() {
       
       console.log('[NewDoseScreen] ✅ Prefilled total amount data applied, starting from dose step');
     }
-  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, doseCalculator.screenStep]);
+  }, [searchParams.prefillTotalAmount, searchParams.prefillTotalUnit, searchParams.prefillSolutionVolume, searchParams.prefillDose, searchParams.prefillDoseUnit, searchParams.prefillConcentrationExact, doseCalculator.screenStep]);
   
   // Special override for setScreenStep to ensure navigation state is tracked
   const handleSetScreenStep = useCallback((step: 'intro' | 'scan' | 'manualEntry') => {
@@ -151,64 +174,21 @@ export default function NewDoseScreen() {
     
     doseCalculator.setScreenStep(step);
   }, [doseCalculator, setNavigatingFromIntro]);
-
-  const handleUseLastDose = useCallback(async () => {
-    try {
-      const history = await getDoseLogHistory();
-      if (!history || history.length === 0) {
-        Alert.alert('No Saved Doses', 'You have no previous doses to reuse.');
-        return;
-      }
-
-      const last = history[0];
-
-      setNavigatingFromIntro(true);
-
-      resetFullForm('finalResult');
-
-      setDose(last.doseValue.toString());
-      setDoseValue(last.doseValue);
-      setUnit(last.unit as any);
-      setSubstanceName(last.substanceName);
-      setCalculatedVolume(last.calculatedVolume);
-      setRecommendedMarking(last.recommendedMarking || null);
-
-      setManualSyringe({
-        type: last.syringeType || 'Standard',
-        volume: last.syringeType === 'Insulin' ? '1 ml' : '3 ml',
-      });
-
-      if (last.calculatedVolume) {
-        const conc = last.doseValue / last.calculatedVolume;
-        setConcentration(conc);
-        setCalculatedConcentration(conc);
-        setConcentrationAmount(conc.toString());
-        setMedicationInputType('concentration');
-        if (last.unit === 'mg') setConcentrationUnit('mg/ml');
-        else if (last.unit === 'mcg') setConcentrationUnit('mcg/ml');
-        else if (last.unit === 'units') setConcentrationUnit('units/ml');
-      }
-
-      setManualStep('finalResult');
-      doseCalculator.setScreenStep('manualEntry');
-    } catch (error) {
-      console.error('Error applying last dose', error);
-      Alert.alert('Error', 'Failed to load last dose');
-    }
-  }, [getDoseLogHistory, resetFullForm, setNavigatingFromIntro, setDose, setDoseValue, setUnit, setSubstanceName, setCalculatedVolume, setRecommendedMarking, setManualSyringe, setConcentration, setCalculatedConcentration, setConcentrationAmount, setMedicationInputType, setConcentrationUnit, setManualStep, doseCalculator]);
   
+  const { stateHealth: focusStateHealth, screenStep: focusScreenStep,
+    resetFullForm: resetOnFocus, setScreenStep: setStepOnFocus } = doseCalculator;
+
   // Handle screen focus events to ensure state is properly initialized after navigation
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: doseCalculator.screenStep });
-      setIsScreenActive(true);
-      
+      console.log('[NewDoseScreen] Screen focused', { navigatingFromIntro, screenStep: focusScreenStep });
+
       // Don't reset state during initial render or when navigating from intro
       if (hasInitializedAfterNavigation && !navigatingFromIntro) {
-        if (doseCalculator.stateHealth === 'recovering') {
+        if (focusStateHealth === 'recovering') {
           console.log('[NewDoseScreen] Resetting due to recovering state');
-          doseCalculator.resetFullForm();
-          doseCalculator.setScreenStep('intro');
+          resetOnFocus();
+          setStepOnFocus('intro');
         }
       } else {
         setHasInitializedAfterNavigation(true);
@@ -221,12 +201,7 @@ export default function NewDoseScreen() {
         }, 500); // Short delay to ensure navigation completes
       }
       
-      return () => {
-        // Cleanup when screen is unfocused
-        console.log('[NewDoseScreen] Screen unfocused');
-        setIsScreenActive(false);
-      };
-    }, [hasInitializedAfterNavigation, doseCalculator, navigatingFromIntro])
+    }, [hasInitializedAfterNavigation, focusStateHealth, focusScreenStep, resetOnFocus, setStepOnFocus, navigatingFromIntro])
   );
   const {
     screenStep,
@@ -287,7 +262,9 @@ export default function NewDoseScreen() {
     handleCapture,
     // Destructure new state and handlers
     showVolumeErrorModal,
+    setShowVolumeErrorModal,
     volumeErrorValue,
+    setVolumeErrorValue,
     handleCloseVolumeErrorModal,
     handleReEnterVialData,
     // Feedback context
@@ -318,6 +295,12 @@ export default function NewDoseScreen() {
     handleInjectionSiteCancel,
   } = doseCalculator;
 
+  useEffect(() => {
+    if (offline && (screenStep === 'scan' || screenStep === 'beforeFirstScan')) {
+      setScreenStep('manualEntry');
+    }
+  }, [offline, screenStep, setScreenStep]);
+
   const [permission, requestPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
@@ -330,22 +313,19 @@ export default function NewDoseScreen() {
   const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
   const cameraRef = useRef<CameraView>(null);
   const webCameraStreamRef = useRef<MediaStream | null>(null);
+  const webCameraRequestInFlight = useRef(false);
 
   // Image preview modal state
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [capturedImageUri, setCapturedImageUri] = useState<string>('');
   const [pendingScanResult, setPendingScanResult] = useState<any>(null);
 
-  const openai = new OpenAI({
-    apiKey: (Constants as any).expoConfig?.extra?.OPENAI_API_KEY || '',
-    dangerouslyAllowBrowser: true,
-  });
-
   console.log('Usage Data:', usageData);
 
   useEffect(() => {
     if (screenStep !== 'scan') {
-      setScanError(null);
+      // Keep the scan failure visible when capture routes to manual entry.
+      setScanError(error => screenStep === 'manualEntry' && error === SCAN_UNAVAILABLE_MESSAGE ? error : null);
       setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }
@@ -377,7 +357,8 @@ export default function NewDoseScreen() {
 
   // Define requestWebCameraPermission before the useEffect that uses it
   const requestWebCameraPermission = useCallback(async () => {
-    if (!isWeb) return;
+    if (!isWeb || webCameraRequestInFlight.current) return;
+    webCameraRequestInFlight.current = true;
     
     try {
       // Release any existing stream first to avoid multiple active streams
@@ -402,11 +383,10 @@ export default function NewDoseScreen() {
       
       // Permission granted - we got a stream
       console.log("[WebCamera] Camera permission granted");
+      // Publish the stream before state updates can trigger the camera effect.
+      webCameraStreamRef.current = stream;
       setPermissionStatus('granted');
       setMobileWebPermissionDenied(false);
-      
-      // Store the stream for later use instead of stopping it
-      webCameraStreamRef.current = stream;
       
       // Check if torch is supported
       const videoTrack = stream.getVideoTracks()[0];
@@ -430,6 +410,8 @@ export default function NewDoseScreen() {
       
       setPermissionStatus('denied');
       setMobileWebPermissionDenied(true);
+    } finally {
+      webCameraRequestInFlight.current = false;
     }
   }, [isWeb]);
 
@@ -451,11 +433,8 @@ export default function NewDoseScreen() {
       setPermissionStatus('undetermined');
       setMobileWebPermissionDenied(false);
       
-      // Small delay to ensure cleanup completes before re-requesting
-      setTimeout(() => {
-        console.log('[NewDoseScreen] 📸 Requesting fresh camera permission after reset');
-        requestWebCameraPermission();
-      }, 200);
+      // The camera effect below owns the fresh request. A second delayed
+      // request would stop the new preview stream and acquire another one.
     }
     
     setLastScreenStep(screenStep);
@@ -525,72 +504,65 @@ export default function NewDoseScreen() {
   }, [screenStep, getDoseLogHistory]);
 
   // Function to apply scan results to form state
-  const applyScanResults = (result: any) => {
-    const scannedSyringe = result.syringe || {};
-    const scannedVial = result.vial || {};
-
-    const scannedType = scannedSyringe.type === 'Insulin' ? 'Insulin' : 'Standard';
-    const scannedVolume = scannedSyringe.volume;
-    const targetVolumes = scannedType === 'Insulin' ? insulinVolumes : standardVolumes;
-    const defaultVolume = scannedType === 'Insulin' ? '1 ml' : '3 ml';
-    let selectedVolume = defaultVolume;
-
-    if (scannedVolume && scannedVolume !== 'unreadable' && scannedVolume !== null) {
-      const normalizedScan = String(scannedVolume).replace(/\s+/g, '').toLowerCase();
-      selectedVolume = targetVolumes.find(v => v.replace(/\s+/g, '').toLowerCase() === normalizedScan) || defaultVolume;
-      console.log(`[Process] Detected syringe volume: ${scannedVolume}, selected: ${selectedVolume}`);
-    } else {
-      console.log(`[Process] Syringe volume unreadable/null (${scannedVolume}), using default: ${selectedVolume}`);
+  const applyScanResults = (result: ScanResult) => {
+    const mapped = mapScanToDoseInputs(result);
+    if (mapped.status === 'needs-input') {
+      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+      return;
     }
-    setManualSyringe({ type: scannedType, volume: selectedVolume });
-    setSyringeHint('Detected from image scan');
-
-    if (scannedVial.substance && scannedVial.substance !== 'unreadable') {
-      setSubstanceName(String(scannedVial.substance));
+    const scanned = mapped.inputs;
+    if (scanned.manualSyringe) {
+      setManualSyringe(scanned.manualSyringe);
+      setSyringeHint('Detected from image scan');
+    }
+    if (scanned.substance) {
+      setSubstanceName(scanned.substance);
       setSubstanceNameHint('Detected from vial scan');
-      console.log('[Process] Set substance name:', scannedVial.substance);
     }
-
-    const vialConcentration = scannedVial.concentration;
-    const vialTotalAmount = scannedVial.totalAmount;
-
-    if (vialConcentration && vialConcentration !== 'unreadable') {
-      const concMatch = String(vialConcentration).match(/([\d.]+)\s*(\w+\/?\w+)/);
-      if (concMatch) {
-        setConcentrationAmount(concMatch[1]);
-        const detectedUnit = concMatch[2].toLowerCase();
-        if (detectedUnit === 'units/ml' || detectedUnit === 'u/ml') setConcentrationUnit('units/ml');
-        else if (detectedUnit === 'mg/ml') setConcentrationUnit('mg/ml');
-        else if (detectedUnit === 'mcg/ml') setConcentrationUnit('mcg/ml');
-        console.log(`[Process] Detected concentration: ${concMatch[1]} ${detectedUnit}`);
-      } else {
-        setConcentrationAmount(String(vialConcentration));
-        console.log(`[Process] Detected concentration (raw): ${vialConcentration}`);
-      }
+    // Clear previous medication values so an absent field cannot reuse a stale number.
+    setConcentrationAmount('');
+    setConcentration(null);
+    setCalculatedConcentration(null);
+    setTotalAmount('');
+    doseCalculator.setTotalAmountUnit(null);
+    setSolutionVolume('');
+    if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
+      setTotalAmount(String(scanned.totalAmount));
+      doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
+      setTotalAmountHint('Detected from vial scan');
+    }
+    if (scanned.concentration !== null && scanned.concentrationUnit) {
+      setConcentrationAmount(String(scanned.concentration));
+      setConcentrationUnit(scanned.concentrationUnit);
       setMedicationInputType('concentration');
       setConcentrationHint('Detected from vial scan');
-      setTotalAmountHint(null);
-    } else if (vialTotalAmount && vialTotalAmount !== 'unreadable') {
-      const amountMatch = String(vialTotalAmount).match(/([\d.]+)/);
-      if (amountMatch) {
-        setTotalAmount(amountMatch[1]);
-        console.log(`[Process] Detected total amount: ${amountMatch[1]}`);
-      } else {
-        setTotalAmount(String(vialTotalAmount));
-        console.log(`[Process] Detected total amount (raw): ${vialTotalAmount}`);
-      }
+      if (scanned.totalAmount === null) setTotalAmountHint(null);
+    } else if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
+      doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
+      setTotalAmount(String(scanned.totalAmount));
+      setConcentrationUnit(`${scanned.totalAmountUnit}/ml`);
       setMedicationInputType('totalAmount');
       setTotalAmountHint('Detected from vial scan');
       setConcentrationHint(null);
     } else {
-      console.log('[Process] No reliable concentration or total amount detected');
       setMedicationInputType(null);
       setConcentrationHint('No concentration detected, please enter manually');
       setTotalAmountHint('No total amount detected, please enter manually');
     }
 
+    doseCalculator.registerScannedFields({
+      ...(scanned.substance ? { substanceName: scanned.substance } : {}),
+      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      ...(scanned.concentration !== null && scanned.concentrationUnit ? {
+        concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
+      } : {}),
+      ...(scanned.totalAmount !== null && scanned.totalAmountUnit ? {
+        totalAmount: String(scanned.totalAmount), totalAmountUnit: scanned.totalAmountUnit,
+      } : {}),
+    });
     console.log('[Process] Scan successful, transitioning to manual entry');
     // Clear calculation-related state without resetting the scan results
+    doseCalculator.setGuidance(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
     setCalculationError(null);
@@ -600,7 +572,187 @@ export default function NewDoseScreen() {
     setManualStep('dose');
   };
 
+  // Function to apply last dose from history to form state
+  const applyLastDose = async (): Promise<boolean> => {
+    try {
+      console.log('[applyLastDose] ========== STARTING APPLY LAST DOSE ==========');
+      console.log('[applyLastDose] Getting dose history...');
+      const doseHistory = await getDoseLogHistory();
+      
+      if (doseHistory.length === 0) {
+        console.log('[applyLastDose] No dose history found');
+        return false;
+      }
+      
+      const lastDose = doseHistory[0];
+      console.log('[applyLastDose] Found last dose:', JSON.stringify(lastDose, null, 2));
+      
+      // Validate that we have the minimum required data
+      if (!lastDose.doseValue || !lastDose.calculatedVolume) {
+        console.log('[applyLastDose] Last dose missing required calculation fields');
+        return false;
+      }
+
+      console.log('[applyLastDose] ========== APPLYING DOSE DATA ==========');
+      
+      doseCalculator.setTotalAmountUnit(lastDose.totalAmountUnit || null);
+
+      // Apply basic dose information with fallbacks for missing data
+      const substanceNameValue = lastDose.substanceName || 'Previous Substance';
+      const doseValue = lastDose.doseValue.toString();
+      const unitValue = (lastDose.unit || 'mg') as 'mg' | 'mcg' | 'units' | 'mL';
+      
+      console.log('[applyLastDose] Applying values:', {
+        substanceName: substanceNameValue,
+        dose: doseValue,
+        unit: unitValue,
+        syringeType: lastDose.syringeType,
+        injectionSite: lastDose.injectionSite,
+        medicationInputType: lastDose.medicationInputType,
+        originalData: {
+          concentrationAmount: lastDose.concentrationAmount,
+          concentrationUnit: lastDose.concentrationUnit,
+          totalAmount: lastDose.totalAmount,
+          solutionVolume: lastDose.solutionVolume,
+        }
+      });
+      
+      // Clear calculation state first
+      setCalculatedVolume(null);
+      setRecommendedMarking(null);
+      setCalculationError(null);
+      setFormError(null);
+      setShowVolumeErrorModal(false);
+      setVolumeErrorValue(null);
+      
+      // Set basic dose information
+      setSubstanceName(substanceNameValue);
+      setSubstanceNameHint(lastDose.substanceName ? 'From your last dose' : 'Substance name was not saved - please update');
+      setDose(doseValue);
+      setUnit(unitValue);
+      
+      // Apply syringe information if available
+      if (lastDose.syringeType) {
+        const defaultVolume = lastDose.syringeType === 'Insulin' ? '1 ml' : '3 ml';
+        setManualSyringe({ insulinScale: lastDose.insulinScale, type: lastDose.syringeType, volume: defaultVolume });
+        setSyringeHint('Syringe type from your last dose');
+      } else {
+        setManualSyringe({ type: 'Standard', volume: '3 ml' });
+        setSyringeHint(null);
+      }
+      
+      // Set injection site if available
+      if (lastDose.injectionSite) {
+        setSelectedInjectionSite(lastDose.injectionSite);
+      }
+      
+      // Restore original medication input method and values if available
+      if (lastDose.medicationInputType && lastDose.medicationInputType === 'concentration') {
+        // User originally entered concentration
+        setMedicationInputType('concentration');
+        setConcentrationAmount(lastDose.concentrationAmount || '');
+        setConcentrationUnit((lastDose.concentrationUnit || 'mg/ml') as 'mg/ml' | 'mcg/ml' | 'units/ml');
+        setConcentrationHint('From your last dose');
+        
+        // Clear total amount fields
+        setTotalAmount('');
+        setSolutionVolume('');
+        setTotalAmountHint(null);
+        
+        console.log('[applyLastDose] Restored concentration inputs:', {
+          amount: lastDose.concentrationAmount,
+          unit: lastDose.concentrationUnit
+        });
+        
+      } else if (lastDose.medicationInputType && lastDose.medicationInputType === 'totalAmount') {
+        // User originally entered total amount
+        setMedicationInputType('totalAmount');
+        setTotalAmount(lastDose.totalAmount || '');
+        setSolutionVolume(lastDose.solutionVolume || '');
+        setTotalAmountHint('From your last dose');
+        
+        // Clear concentration fields
+        setConcentrationAmount('');
+        if (lastDose.totalAmountUnit) setConcentrationUnit(lastDose.concentrationUnit || `${lastDose.totalAmountUnit}/ml`);
+        doseCalculator.setConcentrationExact(lastDose.concentrationExact || null);
+        setConcentrationHint(null);
+        
+        console.log('[applyLastDose] Restored total amount inputs:', {
+          totalAmount: lastDose.totalAmount,
+          solutionVolume: lastDose.solutionVolume
+        });
+        
+      } else {
+        // Fallback for older logs without original input data
+        // Try to calculate concentration from dose/volume ratio as before
+        console.log('[applyLastDose] No original input data found, falling back to calculated concentration');
+        
+        if (lastDose.calculatedVolume && lastDose.doseValue) {
+          const calculatedConcentration = concentrationFromDose(lastDose.doseValue, lastDose.calculatedVolume);
+          const concentrationAmountValue = calculatedConcentration.toString();
+          
+          setConcentrationAmount(concentrationAmountValue);
+          setMedicationInputType('concentration');
+          setConcentrationHint('Calculated from your last dose (original input not available)');
+          
+          // Set concentration unit based on dose unit
+          if (lastDose.unit === 'mg') {
+            setConcentrationUnit('mg/ml');
+          } else if (lastDose.unit === 'mcg') {
+            setConcentrationUnit('mcg/ml');
+          } else if (lastDose.unit === 'units') {
+            setConcentrationUnit('units/ml');
+          }
+          
+          // Clear total amount fields
+          setTotalAmount('');
+          setSolutionVolume('');
+          setTotalAmountHint(null);
+        } else {
+          // If we can't calculate concentration, default to total amount mode
+          setMedicationInputType('totalAmount');
+          setConcentrationAmount('');
+          setConcentrationUnit('mg/ml');
+          setConcentrationHint(null);
+          setTotalAmountHint('Please enter the medication strength');
+          setTotalAmount('');
+          setSolutionVolume('');
+        }
+      }
+      
+      // Set to dose step
+      setManualStep('dose');
+      
+      // Add a longer delay to ensure all state updates are complete
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('[applyLastDose] ========== APPLY LAST DOSE COMPLETE ==========');
+      console.log('[applyLastDose] Successfully applied last dose, final state should be:', {
+        dose: doseValue,
+        unit: unitValue,
+        substanceName: substanceNameValue,
+        medicationInputType: lastDose.medicationInputType || 'concentration',
+        manualStep: 'dose'
+      });
+      
+      // Additional debug: Log current state after delay
+      console.log('[applyLastDose] 🔍 STATE CHECK: Current dose value after delay:', dose);
+      console.log('[applyLastDose] 🔍 STATE CHECK: Current substanceName after delay:', substanceName);
+      console.log('[applyLastDose] 🔍 STATE CHECK: Current medicationInputType after delay:', medicationInputType);
+      
+      return true;
+    } catch (error) {
+      console.error('[applyLastDose] ========== ERROR IN APPLY LAST DOSE ==========');
+      console.error('[applyLastDose] Error applying last dose:', error);
+      return false;
+    }
+  };
+
   const handleScanAttempt = async () => {
+    if (offline) {
+      setScanError('Photo checks need internet. Use manual entry while offline.');
+      return;
+    }
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
     // Don't proceed if already processing
@@ -609,6 +761,12 @@ export default function NewDoseScreen() {
       return;
     }
     
+    // A missing guest session is not an exhausted scan allowance.
+    if (!user?.uid) {
+      setScanError('Could not start the scan. Please try again in a moment.');
+      return;
+    }
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -626,13 +784,16 @@ export default function NewDoseScreen() {
       const result = await captureAndProcessImage({
         cameraRef,
         permission,
-        openai,
         isMobileWeb,
         webCameraStream: webCameraStreamRef.current,
         setIsProcessing,
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        onScanUnavailable: () => {
+          setManualStep('dose');
+          setScreenStep('manualEntry');
+        },
       });
 
       if (result) {
@@ -641,6 +802,32 @@ export default function NewDoseScreen() {
         
         // Track interaction for sign-up prompt
         signUpPrompt.trackInteraction();
+
+        // Capture evaluation data for scan result
+        if (evaluationDataCapture && !evaluationDataCapture.isCapturing) {
+          const prompt = `Analyze image for syringe and vial details. Identify syringe type, volume, markings and vial substance, concentration, total amount.`;
+          
+          evaluationDataCapture.captureUserInteraction({
+            image: result.capturedImage ? {
+              uri: result.capturedImage.uri,
+              mimeType: result.capturedImage.mimeType
+            } : undefined,
+            prompt,
+            userIntent: 'scan',
+            inputParameters: {
+              scanMode: 'ai_vision'
+            },
+            result: {
+              scanResult: {
+                syringe: result.syringe,
+                vial: result.vial
+              },
+              success: !!(result.syringe || result.vial)
+            }
+          }).catch(error => {
+            console.error('[NewDoseScreen] Error capturing scan evaluation data:', error);
+          });
+        }
         
         // If we have a captured image, show the preview modal first
         if (result.capturedImage?.uri) {
@@ -654,15 +841,10 @@ export default function NewDoseScreen() {
         // If no captured image, proceed directly (fallback for older flow)
         applyScanResults(result);
       } else {
-        console.log('[Process] Scan failed, transitioning to manual entry with defaults');
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
-        setManualSyringe({ type: 'Standard', volume: '3 ml' });
-        setSubstanceName('');
-        setMedicationInputType('totalAmount');
-        setConcentrationAmount('');
-        setTotalAmount('');
-        setScreenStep('manualEntry');
-        setManualStep('dose');
+        // The capture utility supplies a specific error. Keep it visible on Scan;
+        // never replace the user's form with defaults after a failed photo.
+        setScanError(error => error || 'We could not read this photo. Try another photo or enter the details manually.');
       }
     } catch (error) {
       console.error('handleScanAttempt: Error=', error);
@@ -681,21 +863,7 @@ export default function NewDoseScreen() {
       // Ensure isProcessing is reset in case of errors
       setIsProcessing(false);
       
-      // Set an informative error message
-      let errorMessage = 'Failed to process scan';
-      if (error instanceof Error) {
-        errorMessage = `Scan error: ${error.message}`;
-      }
-      setScanError(errorMessage);
-      
-      // Still provide a graceful fallback to manual entry
-      setManualSyringe({ type: 'Standard', volume: '3 ml' });
-      setSubstanceName('');
-      setMedicationInputType('totalAmount');
-      setConcentrationAmount('');
-      setTotalAmount('');
-      setScreenStep('manualEntry');
-      setManualStep('dose');
+      setScanError('We could not process this photo. Please try again or enter the details manually.');
     }
   };
 
@@ -703,7 +871,7 @@ export default function NewDoseScreen() {
     console.log('handleTryAIScan: Called from teaser');
     
     // Check if user has remaining scans
-    const canProceed = await doseCalculator.handleCapture();
+    const canProceed = hasScanCapacity(usageData.scansUsed, usageData.limit);
     if (!canProceed) {
       console.log('handleTryAIScan: Showing LimitModal');
       logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
@@ -716,7 +884,7 @@ export default function NewDoseScreen() {
     
     // Transition to scan screen
     setScreenStep('scan');
-  }, [doseCalculator, setScreenStep]);
+  }, [usageData.scansUsed, usageData.limit, setScreenStep]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
@@ -809,13 +977,22 @@ export default function NewDoseScreen() {
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
+  // Tabs retain mounted screens. Hide the entire dose flow and its modals on blur.
+  if (!isScreenActive) return null;
+
   return (
     <View style={styles.container}>
+      {offline && (
+        <Text accessibilityRole="alert" style={{ padding: 12, color: '#333333', backgroundColor: '#FFF3CD' }}>
+          Offline. Manual entry is available. Photo checks and account sync need internet.
+        </Text>
+      )}
       <View style={styles.header}>
         <Text style={styles.title}>SafeDose</Text>
         {/* Only show subtitle for non-intro screens to avoid redundant "Welcome" text */}
         {screenStep !== 'intro' && (
           <Text style={styles.subtitle}>
+            {screenStep === 'beforeFirstScan' && 'Before You Scan'}
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
             {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
@@ -854,7 +1031,20 @@ export default function NewDoseScreen() {
           setScreenStep={handleSetScreenStep}
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
-          onUseLastDose={handleUseLastDose}
+          applyLastDose={applyLastDose}
+          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
+        />
+      )}
+      {screenStep === 'beforeFirstScan' && (
+        <BeforeFirstScanScreen
+          onContinue={doseCalculator.handleBeforeFirstScanContinue}
+          onBack={doseCalculator.handleBeforeFirstScanBack}
+          onDontShowAgain={
+            doseCalculator.beforeFirstScanPrompt.showCount > 0
+              ? doseCalculator.handleBeforeFirstScanDontShowAgain
+              : undefined
+          }
+          showDontShowAgain={doseCalculator.beforeFirstScanPrompt.showCount > 0}
         />
       )}
       {screenStep === 'scan' && (
@@ -866,7 +1056,6 @@ export default function NewDoseScreen() {
           scanError={scanError}
           cameraRef={cameraRef}
           webCameraStream={webCameraStreamRef.current}
-          openai={openai}
           setScreenStep={handleSetScreenStep}
           setManualStep={setManualStep}
           setManualSyringe={(syringe) => setManualSyringe(syringe.volume)}
@@ -891,6 +1080,9 @@ export default function NewDoseScreen() {
           toggleWebFlashlight={toggleWebFlashlight}
         />
       )}
+      {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
+        <Text accessibilityRole="alert">{scanError}</Text>
+      )}
       {screenStep === 'manualEntry' && (
         <ManualEntryScreen
           manualStep={manualStep}
@@ -906,6 +1098,8 @@ export default function NewDoseScreen() {
           setConcentrationAmount={setConcentrationAmount}
           concentrationUnit={concentrationUnit}
           setConcentrationUnit={setConcentrationUnit}
+          totalAmountUnit={doseCalculator.totalAmountUnit}
+          setTotalAmountUnit={doseCalculator.setTotalAmountUnit}
           totalAmount={totalAmount}
           setTotalAmount={setTotalAmount}
           solutionVolume={solutionVolume}
@@ -916,6 +1110,7 @@ export default function NewDoseScreen() {
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
           recommendedMarking={recommendedMarking}
+          guidance={doseCalculator.guidance}
           calculationError={calculationError}
           formError={formError}
           substanceNameHint={substanceNameHint}
@@ -992,6 +1187,7 @@ export default function NewDoseScreen() {
         triggerReason={logLimitModalTriggerReason}
       />
       <VolumeErrorModal
+        message={calculationError}
         visible={showVolumeErrorModal}
         onClose={handleCloseVolumeErrorModal}
         onReEnterVialData={handleReEnterVialData}

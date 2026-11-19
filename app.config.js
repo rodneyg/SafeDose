@@ -9,13 +9,18 @@ module.exports = {
   icon: './assets/images/icon.png',
   scheme: 'myapp',
   userInterfaceStyle: 'automatic',
+  splash: {
+    image: './assets/images/icon.png',
+    resizeMode: 'contain',
+    backgroundColor: '#000000',
+  },
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.safedoseapp.boltexponativewind',
     infoPlist: {
       NSCameraUsageDescription:
-        'This app uses the camera to scan your syringe and medication vial for preparation guidance.',
+        'This app uses the camera to scan your syringe and medication vial to help you verify materials match your prescription and calculate doses.',
     },
   },
   android: {
@@ -34,17 +39,21 @@ module.exports = {
   },
   extra: {
     NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    // Never put OPENAI_API_KEY (or other secrets) in extra — Expo bakes extra into the client bundle.
+    // Scan analysis reads process.env.OPENAI_API_KEY only in /api/analyze-scan on the server.
     // Legacy Stripe keys for backward compatibility
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     // New Stripe configuration with feature flag support
     STRIPE_MODE: process.env.STRIPE_MODE || 'test',
     STRIPE_TEST_PUBLISHABLE_KEY: process.env.STRIPE_TEST_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY,
-    STRIPE_TEST_SECRET_KEY: process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY,
+    // Never put Stripe secret keys in extra — Expo bakes extra into the client bundle.
+    // Server routes read STRIPE_*_SECRET_KEY from process.env via lib/stripeConfig.server.js.
     STRIPE_LIVE_PUBLISHABLE_KEY: process.env.STRIPE_LIVE_PUBLISHABLE_KEY,
-    STRIPE_LIVE_SECRET_KEY: process.env.STRIPE_LIVE_SECRET_KEY,
     STRIPE_TEST_PRICE_ID: process.env.STRIPE_TEST_PRICE_ID || 'price_1REyzMPE5x6FmwJPyJVJIEXe',
     STRIPE_LIVE_PRICE_ID: process.env.STRIPE_LIVE_PRICE_ID,
+    // Public price IDs only (not secret keys). Optional; checkout can also resolve by lookup key.
+    STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID: process.env.STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID,
+    STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID: process.env.STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID,
     TEST_LOGIN: process.env.REACT_APP_TEST_LOGIN === 'true', // Environment flag for auto-login testing
     firebase: {
       apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCOcwQe3AOdanV43iSwYlNxhzSKSRIOq34",
@@ -59,7 +68,8 @@ module.exports = {
       // Google Sign-In redirect URIs
       redirectUris: {
         local: "http://localhost:8081/__/auth/handler",
-        production: "https://app.safedoseai.com/__/auth/handler"
+        production: "https://safedose.rodneygainous.com/__/auth/handler",
+        fallback: "https://safe-dose.vercel.app/__/auth/handler"
       }
     },
     googleAuth: {

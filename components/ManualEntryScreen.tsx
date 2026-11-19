@@ -1,3 +1,6 @@
+import { getManualProgress } from '../lib/manualProgress';
+import { SyringeSelection } from '../lib/dosing';
+import { AmountUnit, formatDoseNumber, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -27,17 +30,20 @@ interface ManualEntryScreenProps {
   setConcentrationAmount: (value: string) => void;
   concentrationUnit: 'mg/ml' | 'mcg/ml' | 'units/ml';
   setConcentrationUnit: (value: 'mg/ml' | 'mcg/ml' | 'units/ml') => void;
+  totalAmountUnit: AmountUnit | null;
+  setTotalAmountUnit: (value: AmountUnit) => void;
   totalAmount: string;
   setTotalAmount: (value: string) => void;
   solutionVolume: string;
   setSolutionVolume: (value: string) => void;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
-  setManualSyringe: (value: { type: 'Insulin' | 'Standard'; volume: string }) => void;
+  manualSyringe: SyringeSelection;
+  setManualSyringe: (value: SyringeSelection) => void;
   doseValue: number | null;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration
   recommendedMarking: string | null;
   calculationError: string | null;
+  guidance?: string | null;
   formError: string | null;
   substanceNameHint: string | null;
   setSubstanceNameHint: (value: string | null) => void;
@@ -81,6 +87,8 @@ export default function ManualEntryScreen({
   setConcentrationUnit,
   totalAmount,
   setTotalAmount,
+  totalAmountUnit,
+  setTotalAmountUnit,
   solutionVolume,
   setSolutionVolume,
   manualSyringe,
@@ -90,6 +98,7 @@ export default function ManualEntryScreen({
   calculatedConcentration,
   recommendedMarking,
   calculationError,
+  guidance,
   formError,
   substanceNameHint,
   setSubstanceNameHint,
@@ -120,9 +129,28 @@ export default function ManualEntryScreen({
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
   }, []); // Empty dependency array ensures this runs only on mount
 
+  // Debug: Log the props being received to diagnose "Use Last Dose" prefill issue
+  useEffect(() => {
+    console.log('[ManualEntryScreen] ========== PROPS RECEIVED ==========');
+    console.log('[ManualEntryScreen] Props received:', {
+      manualStep,
+      dose: dose || '(empty)',
+      unit,
+      substanceName: substanceName || '(empty)',
+      medicationInputType,
+      concentrationAmount: concentrationAmount || '(empty)',
+      concentrationUnit,
+      substanceNameHint: substanceNameHint || '(none)',
+      concentrationHint: concentrationHint || '(none)',
+      syringeHint: syringeHint || '(none)',
+      manualSyringe: manualSyringe || '(none)'
+    });
+    console.log('[ManualEntryScreen] ==========================================');
+  }, [manualStep, dose, unit, substanceName, medicationInputType, concentrationAmount, concentrationUnit, substanceNameHint, concentrationHint, syringeHint, manualSyringe]);
+
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
-    return Boolean(dose && !isNaN(parseFloat(dose)));
+    return Boolean(dose && !isNaN(parseDoseInput(dose)));
   };
 
   const isMedicationSourceStepValid = (): boolean => {
@@ -131,11 +159,10 @@ export default function ManualEntryScreen({
 
   const isConcentrationInputStepValid = (): boolean => {
     // Check for valid concentration input
-    const valid = Boolean(concentrationAmount && !isNaN(parseFloat(concentrationAmount)));
+    const valid = Boolean(concentrationAmount && !isNaN(parseDoseInput(concentrationAmount)));
     
     // Also validate unit compatibility if both units are set
     if (valid && unit && concentrationUnit) {
-      const { validateUnitCompatibility } = require('../lib/doseUtils');
       const compatibility = validateUnitCompatibility(unit, concentrationUnit);
       if (!compatibility.isValid) {
         return false;
@@ -146,13 +173,13 @@ export default function ManualEntryScreen({
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
-    const isValid = Boolean(totalAmount && !isNaN(parseFloat(totalAmount)));
+    const isValid = Boolean(totalAmount && !isNaN(parseDoseInput(totalAmount)));
     console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
     return isValid;
   };
 
   const isReconstitutionStepValid = (): boolean => {
-    return Boolean(solutionVolume && !isNaN(parseFloat(solutionVolume)));
+    return Boolean(solutionVolume && !isNaN(parseDoseInput(solutionVolume)));
   };
 
   const isSyringeStepValid = (): boolean => {
@@ -160,8 +187,8 @@ export default function ManualEntryScreen({
   };
 
   const isPreDoseConfirmationStepValid = (): boolean => {
-    // Pre-dose confirmation is valid if calculations are done (even with errors)
-    return calculatedVolume !== null;
+    // Blocking errors prevent progression; guidance does not.
+    return calculatedVolume !== null && !calculationError && recommendedMarking !== null;
   };
 
   // Function to check if current step is valid
@@ -251,7 +278,6 @@ export default function ManualEntryScreen({
   ]);
 
   let currentStepComponent;
-  let progress = 0;
 
   // Add logging for step changes
   console.log(`[ManualEntryScreen] Rendering step: ${manualStep}`);
@@ -268,7 +294,6 @@ export default function ManualEntryScreen({
           validateInput={validateDoseInput}
         />
       );
-      progress = 1 / 3;
       break;
     case 'medicationSource':
       currentStepComponent = (
@@ -283,7 +308,6 @@ export default function ManualEntryScreen({
           unit={unit}
         />
       );
-      progress = (2 / 3) - 0.15;
       break;
     case 'concentrationInput':
       currentStepComponent = (
@@ -298,7 +322,6 @@ export default function ManualEntryScreen({
           formError={formError}
         />
       );
-      progress = 3 / 5;
       break;
     case 'totalAmountInput':
       currentStepComponent = (
@@ -307,11 +330,11 @@ export default function ManualEntryScreen({
           setTotalAmount={setTotalAmount}
           setTotalAmountHint={setTotalAmountHint}
           totalAmountHint={totalAmountHint}
-          unit={unit}
+          unit={totalAmountUnit}
+          setUnit={setTotalAmountUnit}
           dose={dose}
         />
       );
-      progress = 3 / 5;
       break;
     case 'reconstitution':
       currentStepComponent = (
@@ -320,7 +343,6 @@ export default function ManualEntryScreen({
           setSolutionVolume={setSolutionVolume}
         />
       );
-      progress = 2 / 3;
       break;
     case 'syringe':
       currentStepComponent = (
@@ -330,37 +352,52 @@ export default function ManualEntryScreen({
           setSyringeHint={setSyringeHint}
           syringeHint={syringeHint}
           doseValue={doseValue}
-          concentration={medicationInputType === 'concentration' ? parseFloat(concentrationAmount) || null : null}
+          concentration={medicationInputType === 'concentration' ? parseDoseInput(concentrationAmount) || null : null}
           unit={unit}
           concentrationUnit={concentrationUnit}
           medicationInputType={medicationInputType}
         />
       );
-      progress = 3 / 3;
       break;
     case 'preDoseConfirmation':
+      // Total-amount entry leaves concentrationAmount empty (or from an earlier path).
+      // Use the calculator's derived strength for both review summaries.
+      const reviewConcentrationAmount = medicationInputType === 'totalAmount'
+        ? (calculatedConcentration != null && calculatedConcentration > 0
+          ? formatDoseNumber(calculatedConcentration, 3)
+          : '')
+        : concentrationAmount;
       currentStepComponent = (
         <PreDoseConfirmationStep
           substanceName={substanceName}
-          concentrationAmount={concentrationAmount}
+          inputSummary={[
+            `${concentrationHint?.includes('scan') ? 'Scanned strength: ' : 'Strength: '}${reviewConcentrationAmount} ${concentrationUnit}`,
+            `${totalAmountHint?.includes('scan') ? 'Scanned vial amount: ' : 'Vial amount: '}${totalAmount || 'Not provided'} ${totalAmountUnit || ''}`,
+            medicationInputType === 'totalAmount' && unit !== 'mL' && solutionVolume
+              ? `Solution volume: ${solutionVolume} mL`
+              : null,
+            `${syringeHint?.includes('scan') ? 'Scanned syringe: ' : 'Syringe: '}${manualSyringe.type} ${String(manualSyringe.volume).replace(/ml/i, 'mL')} syringe (${manualSyringe.type === 'Insulin' ? manualSyringe.insulinScale || 'U-100' : 'mL scale'})`,
+          ].filter(Boolean).join('\n')}
+          concentrationAmount={reviewConcentrationAmount}
           concentrationUnit={concentrationUnit}
           doseValue={doseValue}
           unit={unit}
           calculatedVolume={calculatedVolume}
           calculatedConcentration={calculatedConcentration}
+          guidance={guidance}
           calculationError={calculationError}
         />
       );
-      progress = 0.95; // Almost complete but not fully
       break;
     case 'finalResult':
       // Calculate the concentration value to pass to FinalResultDisplay
       const concentrationValue = medicationInputType === 'concentration' 
-        ? (parseFloat(concentrationAmount) || null)
+        ? (parseDoseInput(concentrationAmount) || null)
         : (calculatedConcentration || null);
         
       currentStepComponent = (
         <FinalResultDisplay
+          guidance={guidance}
           calculationError={calculationError}
           recommendedMarking={recommendedMarking}
           doseValue={doseValue}
@@ -380,16 +417,44 @@ export default function ManualEntryScreen({
           onTryAIScan={onTryAIScan}
         />
       );
-      progress = 1;
       break;
     default:
       currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
   }
 
+  const isReviewStep = manualStep === 'preDoseConfirmation';
+  const stepButtons = (
+    <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
+      <TouchableOpacity
+        style={[styles.backButton, isMobileWeb && styles.backButtonMobile]}
+        onPress={handleBack}
+        accessibilityRole="button"
+        accessibilityLabel="Go back to previous step">
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.nextButton,
+          !isCurrentStepValid() && styles.disabledButton,
+          isMobileWeb && styles.nextButtonMobile
+        ]}
+        onPress={handleNextButtonPress}
+        disabled={!isCurrentStepValid()}
+        accessibilityRole="button"
+        accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : isReviewStep ? "Proceed to result" : "Next step"}
+      >
+        <Text style={styles.buttonText}>
+          {manualStep === 'syringe' ? 'Calculate' : isReviewStep ? 'Confirm' : 'Next'}
+        </Text>
+        {manualStep !== 'syringe' && !isReviewStep && <ArrowRight color="#fff" size={18} />}
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <>
       <ScrollView 
-        style={styles.manualEntryContainer}
+        style={isReviewStep ? [styles.manualEntryContainer, styles.reviewScrollView] : styles.manualEntryContainer}
         contentContainerStyle={styles.scrollViewContent}
         scrollEnabled={true}
         bounces={false}
@@ -399,39 +464,18 @@ export default function ManualEntryScreen({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="always"
       >
-        <CustomProgressBar progress={progress} />
-        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
+        <CustomProgressBar {...getManualProgress(manualStep, medicationInputType)} />
+        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile, isReviewStep && styles.reviewContent]}>
           {currentStepComponent}
           {formError && <Text style={styles.errorText}>{formError}</Text>}
-          {manualStep !== 'finalResult' && (
-            <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
-              <TouchableOpacity 
-                style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} 
-                onPress={handleBack}
-                accessibilityRole="button"
-                accessibilityLabel="Go back to previous step">
-                <Text style={styles.buttonText}>Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.nextButton,
-                  !isCurrentStepValid() && styles.disabledButton,
-                  isMobileWeb && styles.nextButtonMobile
-                ]}
-                onPress={handleNextButtonPress}
-                disabled={!isCurrentStepValid()}
-                accessibilityRole="button"
-                accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : manualStep === 'preDoseConfirmation' ? "Proceed to result" : "Next step"}
-              >
-                <Text style={styles.buttonText}>
-                  {manualStep === 'syringe' ? 'Calculate' : manualStep === 'preDoseConfirmation' ? 'Proceed to Result' : 'Next'}
-                </Text>
-                {manualStep !== 'syringe' && manualStep !== 'preDoseConfirmation' && <ArrowRight color="#fff" size={18} />}
-              </TouchableOpacity>
-            </View>
-          )}
+          {!isReviewStep && manualStep !== 'finalResult' && stepButtons}
         </View>
       </ScrollView>
+      {isReviewStep && (
+        <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile]}>
+          {stepButtons}
+        </View>
+      )}
     </>
   );
 }
@@ -441,7 +485,12 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     maxWidth: '100%',
-    overflow: 'hidden'
+  },
+  reviewScrollView: {
+    flexBasis: 'auto',
+    flexGrow: 0,
+    flexShrink: 1,
+    minHeight: 0,
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -460,6 +509,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, // Reduced padding for small screens
     paddingBottom: 16, // Tighter bottom padding
   },
+  reviewContent: { paddingBottom: 0 },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 
     flexDirection: 'row', 

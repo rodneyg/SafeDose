@@ -1,21 +1,25 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { calculationErrorMessage } from '../lib/calculationErrorMessage';
+import { formatDoseNumber } from '../lib/dosing';
+import { Exact } from '../lib/dosing/exact';
+import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithGoogle } from '../lib/googleAuth';
 import SyringeIllustration from './SyringeIllustration';
-import { syringeOptions } from "../lib/utils";
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
 
 type Props = {
   calculationError: string | null;
+  guidance?: string | null;
   recommendedMarking: string | null;
   doseValue: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
   concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml'; // Add concentrationUnit prop
   substanceName: string;
-  manualSyringe: { type: 'Insulin' | 'Standard'; volume: string };
+  manualSyringe: SyringeSelection;
   calculatedVolume: number | null;
   calculatedConcentration?: number | null; // Add calculated concentration prop
   concentration?: number | null; // Add concentration prop for breakdown display
@@ -30,6 +34,7 @@ type Props = {
 
 export default function FinalResultDisplay({
   calculationError,
+  guidance,
   recommendedMarking,
   doseValue,
   unit,
@@ -53,12 +58,14 @@ export default function FinalResultDisplay({
 
   const [showCalculationBreakdown, setShowCalculationBreakdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const saveInFlight = useRef(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
   
   // Effect to handle automatic saving after successful authentication
   useEffect(() => {
     const handleAuthenticatedSave = async () => {
-      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging) {
+      if (pendingSave && user && !user.isAnonymous && !isSaving && !isLogging && !calculationError && recommendedMarking) {
         setPendingSave(false);
         setIsSaving(true);
         
@@ -70,6 +77,7 @@ export default function FinalResultDisplay({
             calculatedVolume,
             syringeType: manualSyringe.type as 'Insulin' | 'Standard',
             recommendedMarking,
+            insulinScale: manualSyringe.insulinScale,
           };
 
           const result = await logDose(doseInfo);
@@ -94,20 +102,20 @@ export default function FinalResultDisplay({
   }, [
     pendingSave, user, isSaving, isLogging, logDose,
     substanceName, doseValue, unit, calculatedVolume, 
-    manualSyringe, recommendedMarking
+    manualSyringe, recommendedMarking, calculationError
   ]);
   
   // Helper function to trigger Google sign-in
   const handleSignIn = useCallback(async (): Promise<boolean> => {
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithGoogle(auth);
+      if (!result?.user) return false;
       console.log('Google Sign-In OK:', result.user.uid);
       return true;
     } catch (error) {
       console.error('Google Sign-In error:', error);
+      if ((error as { code?: string }).code === 'auth/popup-closed-by-user' ||
+          (error as { code?: string }).code === 'auth/cancelled-popup-request') return false;
       Alert.alert(
         'Sign-in Failed', 
         'There was an error signing in with Google. Please try again.'
@@ -118,23 +126,24 @@ export default function FinalResultDisplay({
 
   // Handler for saving dose
   const handleSaveDose = useCallback(async () => {
-    if (isSaving || isLogging) return;
+    if (saveInFlight.current || pendingSave || isSaving || isLogging || calculationError || !recommendedMarking) return;
+    saveInFlight.current = true;
     
     setIsSaving(true);
     
     try {
       // Check if user is authenticated
       if (!user || user.isAnonymous) {
-        // Set pending save flag and trigger Google sign-in
-        setPendingSave(true);
+        // Start sign-in without queuing a save until the popup succeeds
+        setIsSigningIn(true);
         const signInSuccessful = await handleSignIn();
         if (!signInSuccessful) {
           setPendingSave(false);
           setIsSaving(false);
           return;
         }
-        // Note: The useEffect will handle the actual saving once auth completes
-        // Keep isSaving true to show loading state
+        // Queue only after popup success, then wait for AuthContext to update.
+        setPendingSave(true);
         return;
       }
 
@@ -146,6 +155,7 @@ export default function FinalResultDisplay({
         calculatedVolume,
         syringeType: manualSyringe.type as 'Insulin' | 'Standard',
         recommendedMarking,
+        insulinScale: manualSyringe.insulinScale,
       };
 
       const result = await logDose(doseInfo);
@@ -161,12 +171,14 @@ export default function FinalResultDisplay({
       console.error('Error saving dose:', error);
       Alert.alert('Save Failed', 'There was an error saving your dose. Please try again.');
     } finally {
+      saveInFlight.current = false;
+      setIsSigningIn(false);
       setIsSaving(false);
     }
   }, [
-    isSaving, isLogging, user, handleSignIn, logDose,
+    pendingSave, isSaving, isLogging, user, handleSignIn, logDose,
     substanceName, doseValue, unit, calculatedVolume, 
-    manualSyringe, recommendedMarking
+    manualSyringe, recommendedMarking, calculationError
   ]);
   
   // Helper function to get the calculation formula based on unit types
@@ -218,11 +230,11 @@ export default function FinalResultDisplay({
   });
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {calculationError && !recommendedMarking && (
+      {calculationError && (
         <View style={[styles.instructionCard, { backgroundColor: '#FEE2E2', borderColor: '#F87171', flexDirection: 'column', alignItems: 'center' }]}>
           <X color="#f87171" size={24} style={{ marginBottom: 10 }} />
           <Text style={styles.errorTitle}>Calculation Error</Text>
-          <Text style={styles.errorText}>{calculationError}</Text>
+          <Text style={styles.errorText}>{calculationErrorMessage(calculationError)}</Text>
           <Text style={styles.errorHelpText}>
             {calculationError.includes('exceeds total amount') && 
               'Try reducing the dose amount or selecting a medication with a higher total amount.'}
@@ -236,63 +248,68 @@ export default function FinalResultDisplay({
       {!calculationError && !recommendedMarking && (
         <View style={[styles.instructionCard, { backgroundColor: '#EFF6FF', borderColor: '#60A5FA' }]}>
           <Text style={[styles.instructionTitle, { color: '#1E40AF' }]}>
-            Dose Calculation
+            Calculation Result
           </Text>
           <Text style={[styles.instructionText, { color: '#1E40AF' }]}>
             {doseValue ? `For ${doseValue} ${unit} dose` : 'For the requested dose'} 
             {substanceName ? ` of ${substanceName}` : ''}:
           </Text>
           <Text style={[styles.instructionTextLarge, { color: '#1E40AF' }]}>
-            No specific recommendation available
+            Unable to calculate volume
           </Text>
           <Text style={[styles.instructionNote, { color: '#1E40AF' }]}>
-            Please check your inputs and try again, or consult a healthcare professional.
+            Please check your inputs and try again. Confirm all values match your prescription.
           </Text>
         </View>
       )}
-      {recommendedMarking && (
-        <View style={[styles.instructionCard, calculationError && !calculationError.includes('Draw to') ? { backgroundColor: '#FEF3C7', borderColor: '#FBBF24' } : { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
+      {!calculationError && recommendedMarking && (
+        <View style={[styles.instructionCard, { backgroundColor: '#D1FAE5', borderColor: '#34D399' }]}>
           <Text style={styles.instructionTitle}>
-            {calculationError && !calculationError.includes('Draw to') ? '⚠️ Dose Recommendation' : '✅ Dose Calculation Result'}
+            ✅ Calculation Result
           </Text>
           <Text style={styles.instructionText}>
             For a {doseValue} {unit} dose of {substanceName || 'this medication'}:
           </Text>
           <Text style={styles.instructionTextLarge}>
-            Draw to {parseFloat(recommendedMarking).toFixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
+            Draw to {new Exact(recommendedMarking).fixed(2)} {manualSyringe.type === 'Insulin' ? 'units' : 'ml'}
           </Text>
           <Text style={styles.instructionNote}>
-            ({manualSyringe.type === 'Insulin' ? 'Units mark on Insulin Syringe' : 'ml mark on Standard Syringe'})
+            Display above rounds to 2 decimals, with halfway values rounded away from zero. No rounding to syringe gradations is applied.
+          </Text>
+          <Text style={styles.instructionNote}>
+            ({manualSyringe.type === 'Insulin' ? `Units mark on ${manualSyringe.insulinScale || 'U-100'} Insulin Syringe` : 'ml mark on Standard Syringe'})
           </Text>
           {calculatedVolume !== null && calculatedVolume !== undefined && (
             <Text style={styles.instructionNote}>
-              (Exact calculated volume: {calculatedVolume.toFixed(3)} ml)
+              (Calculated volume: {calculatedVolume} ml; no rounding to syringe marks applied)
             </Text>
           )}
           {calculatedConcentration !== null && calculatedConcentration !== undefined && (
             <Text style={styles.instructionNote}>
-              (Calculated concentration: {calculatedConcentration.toFixed(2)} {concentrationUnit || 'mg/mL'})
+              (Calculated concentration: {formatDoseNumber(calculatedConcentration, 3)} {concentrationUnit || 'mg/mL'})
             </Text>
           )}
-          {calculationError && (
-            <Text style={calculationError.includes('Draw to') ? styles.guidanceText : styles.warningText}>
-              {calculationError}
-            </Text>
-          )}
+          {guidance && <Text style={styles.guidanceText}>{guidance}</Text>}
           <View style={styles.illustrationContainer}>
-            <Text style={styles.instructionNote}>Syringe Illustration (recommended mark highlighted)</Text>
+            <Text style={styles.instructionNote}>Syringe Illustration (calculated mark highlighted)</Text>
             <SyringeIllustration
               syringeType={manualSyringe.type}
               syringeVolume={manualSyringe.volume}
               recommendedMarking={recommendedMarking}
-              syringeOptions={syringeOptions}
+              syringeOptions={{ [manualSyringe.type]: { [manualSyringe.volume]: getSyringeMarkings(manualSyringe) || '' } }}
             />
+          </View>
+          <View style={styles.verificationReminder}>
+            <Info color="#065F46" size={14} />
+            <Text style={styles.verificationReminderText}>
+              Confirm this matches your healthcare provider's prescription before proceeding.
+            </Text>
           </View>
         </View>
       )}
       
       {/* Calculation Breakdown Toggle - only show when we have valid calculation results */}
-      {(recommendedMarking || (!calculationError && calculatedVolume !== null)) && (
+      {(!calculationError && (recommendedMarking || calculatedVolume !== null)) && (
         <View style={styles.calculationBreakdownContainer}>
           <TouchableOpacity 
             style={styles.calculationToggleButton}
@@ -321,7 +338,7 @@ export default function FinalResultDisplay({
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>Concentration Used:</Text>
                   <Text style={styles.breakdownValue}>
-                    {getConcentrationForDisplay()?.toFixed(2)} {concentrationUnit || 'mg/ml'}
+                    {formatDoseNumber(getConcentrationForDisplay()!, 3)} {concentrationUnit || 'mg/ml'}
                   </Text>
                 </View>
               )}
@@ -330,7 +347,7 @@ export default function FinalResultDisplay({
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>Final Volume to Draw:</Text>
                   <Text style={styles.breakdownValue}>
-                    {calculatedVolume.toFixed(3)} ml
+                    {formatDoseNumber(calculatedVolume, 3)} ml
                   </Text>
                 </View>
               )}
@@ -393,13 +410,11 @@ export default function FinalResultDisplay({
             isMobileWeb && styles.actionButtonMobile
           ]} 
           onPress={handleSaveDose}
-          disabled={isSaving || isLogging}
+          disabled={isSaving || isSigningIn || pendingSave || isLogging || !!calculationError || !recommendedMarking}
         >
           <Save color="#fff" size={18} style={{ marginRight: 8 }} />
           <Text style={styles.buttonText}>
-            {isSaving 
-              ? (pendingSave ? 'Signing in...' : 'Saving...') 
-              : 'Save'
+            {isSigningIn || pendingSave ? 'Signing in...' : isSaving || isLogging ? 'Saving...' : 'Save'
             }
           </Text>
         </TouchableOpacity>
@@ -534,6 +549,21 @@ const styles = StyleSheet.create({
   scanTeaserButtonText: {
     fontSize: 12,
     color: '#007AFF',
+    fontWeight: '500',
+  },
+  verificationReminder: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(6, 95, 70, 0.2)',
+    gap: 8,
+  },
+  verificationReminderText: {
+    fontSize: 13,
+    color: '#065F46',
+    flex: 1,
     fontWeight: '500',
   },
 });
