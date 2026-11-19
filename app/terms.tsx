@@ -27,7 +27,7 @@ const sections = [
   },
   {
     title: "Missing terms",
-    body: "Contact email: [NEEDS RODNEY]. Legal entity details: [NEEDS RODNEY]. Effective date: [NEEDS RODNEY]. Jurisdiction: [NEEDS RODNEY]. Retention periods: [NEEDS RODNEY]. Account deletion request process: [NEEDS RODNEY]. Actual training use and provider retention settings: [NEEDS RODNEY].",
+    body: "Contact email: support@safedoseai.com. Legal entity details: [NEEDS RODNEY]. Effective date: November 18, 2026. Jurisdiction: [NEEDS RODNEY]. Retention periods: [NEEDS RODNEY]. Account deletion request process: [NEEDS RODNEY]. Actual training use and provider retention settings: [NEEDS RODNEY].",
   },
 ];
 

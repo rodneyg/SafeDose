@@ -31,7 +31,7 @@ const sections = [
   },
   {
     title: "Contact and missing facts",
-    body: "The README, pricing and app screens reviewed show no support or privacy email address. Contact email: [NEEDS RODNEY]. Refund rules: [NEEDS RODNEY]. Legal entity details: [NEEDS RODNEY]. Effective date: [NEEDS RODNEY]. Jurisdiction: [NEEDS RODNEY]. Retention periods: [NEEDS RODNEY]. Account deletion request process: [NEEDS RODNEY].",
+    body: "Contact email: privacy@safedoseai.com. Refund rules: [NEEDS RODNEY]. Legal entity details: [NEEDS RODNEY]. Effective date: November 18, 2026. Jurisdiction: [NEEDS RODNEY]. Retention periods: [NEEDS RODNEY]. Account deletion request process: [NEEDS RODNEY].",
   },
 ];
 
