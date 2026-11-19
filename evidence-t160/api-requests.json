@@ -1,0 +1,7 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/analyze-scan",
+    "status": 200
+  }
+]

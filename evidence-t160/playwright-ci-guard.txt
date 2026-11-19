@@ -1,0 +1,10 @@
+
+> safedose@1.0.0 e2e:prod-scan
+> playwright test --config playwright.prod.config.ts
+
+
+Running 1 test using 1 worker
+
+  -  1 e2e/prod-scan-flow.spec.ts:8:1 › guest photo scan, manual calculation, and pricing
+
+  1 skipped

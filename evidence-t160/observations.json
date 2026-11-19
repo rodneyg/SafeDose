@@ -1,0 +1,8 @@
+{
+  "guestStart": "PASS: app automatic anonymous session, no login",
+  "photoScan": "PASS: HTTP 200 friendly refusal",
+  "refusal": "We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.",
+  "manualEntry": "PASS: 0.5 mg / 2.5 mg/ml = 0.2 ml = 20.00 U-100 units",
+  "pricing": "PASS: monthly $2.99 and yearly $26.99 plans rendered; no checkout",
+  "analyzeRequests": 0
+}
