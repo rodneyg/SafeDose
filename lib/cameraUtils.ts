@@ -89,83 +89,39 @@ export async function captureAndProcessImage({
       if (!base64Image) {
         console.log('[Capture] Web platform detected, using file input');
 
-        // Clean up any existing file inputs first
-        const existingInputs = document.querySelectorAll('input[type="file"]');
-        existingInputs.forEach(input => {
-          if (document.body.contains(input)) {
-            document.body.removeChild(input);
-          }
-        });
-        console.log('[Capture] Cleared existing file inputs');
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        let fileInputTimeout: ReturnType<typeof setTimeout> | undefined;
 
-        const filePromise = new Promise<{ file: File }>((resolve, reject) => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.capture = 'environment';
-          let fileInputTimeoutId: any = null;
-
+        const file = await new Promise<File>((resolve, reject) => {
+          const cancel = () => reject(new Error('No file selected or user cancelled'));
+          input.oncancel = cancel;
           input.onchange = (event) => {
-            console.log('[Capture] File input change event');
-            // Clear timeout since we got a response
-            if (fileInputTimeoutId) {
-              clearTimeout(fileInputTimeoutId);
-              fileInputTimeoutId = null;
-            }
-            
-            const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (!file) {
-              console.log('[Capture] No file selected');
-              if (document.body.contains(input)) {
-                document.body.removeChild(input);
-              }
-              reject(new Error('No file selected or user cancelled'));
+            const selected = (event.target as HTMLInputElement).files?.[0];
+            if (!selected) {
+              cancel();
               return;
             }
-            console.log('[Capture] File selected:', file.name, 'Size:', file.size);
-            if (file.size > MAX_FILE_SIZE) {
-              if (document.body.contains(input)) {
-                document.body.removeChild(input);
-              }
+            if (selected.size > MAX_FILE_SIZE) {
               reject(new Error(SCAN_UNAVAILABLE_MESSAGE));
               return;
             }
-            resolve({ file });
-            if (document.body.contains(input)) {
-              document.body.removeChild(input);
-              console.log('[Capture] File input removed after selection');
-            }
+            resolve(selected);
           };
-
-          input.onerror = (error) => {
-            console.error('[Capture] File input error:', error);
-            if (fileInputTimeoutId) {
-              clearTimeout(fileInputTimeoutId);
-              fileInputTimeoutId = null;
-            }
-            if (document.body.contains(input)) {
-              document.body.removeChild(input);
-              console.log('[Capture] File input removed on error');
-            }
-            reject(new Error('File input failed'));
-          };
+          input.onerror = () => reject(new Error('File input failed'));
 
           document.body.appendChild(input);
-          console.log('[Capture] Triggering file input click');
+          // Fallback for browsers that do not report picker cancellation.
+          fileInputTimeout = setTimeout(() => {
+            reject(new Error('File selection cancelled after timeout'));
+          }, 30000);
           input.click();
-
-          // Set a timeout to clean up if the user doesn't select a file
-          fileInputTimeoutId = setTimeout(() => {
-            if (document.body.contains(input)) {
-              document.body.removeChild(input);
-              console.log('[Capture] File input cancelled due to timeout');
-              reject(new Error('File selection cancelled after timeout'));
-            }
-          }, 30000); // 30 seconds timeout
+        }).finally(() => {
+          if (fileInputTimeout !== undefined) clearTimeout(fileInputTimeout);
+          if (document.body.contains(input)) document.body.removeChild(input);
         });
-
-        const { file } = await filePromise;
         setProcessingMessage('Reading image data...');
 
         const readerPromise = new Promise<{ base64Image: string; mimeType: string }>((resolve, reject) => {

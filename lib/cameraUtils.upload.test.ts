@@ -10,6 +10,7 @@ const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
 const originalReader = Object.getOwnPropertyDescriptor(globalThis, 'FileReader');
 const originalFetch = globalThis.fetch;
 let mockReadFails = false;
+let mockCancel = false;
 let mockFile = { name: 'syringe.jpg', type: 'image/jpeg', size: 100 };
 let input: any;
 let options: Parameters<typeof captureAndProcessImage>[0];
@@ -17,6 +18,7 @@ let options: Parameters<typeof captureAndProcessImage>[0];
 beforeEach(() => {
   jest.useFakeTimers();
   mockReadFails = false;
+  mockCancel = false;
   mockFile = { name: 'syringe.jpg', type: 'image/jpeg', size: 100 };
   const attached = new Set();
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
@@ -24,7 +26,10 @@ beforeEach(() => {
     body: { appendChild: (node: any) => attached.add(node), contains: (node: any) => attached.has(node), removeChild: (node: any) => attached.delete(node) },
     createElement: () => (input = { click: () => {
       // A real picker dispatches change asynchronously after click returns.
-      Promise.resolve().then(() => input.onchange({ target: { files: [mockFile] } }));
+      Promise.resolve().then(() => {
+        if (mockCancel) input.oncancel?.();
+        else input.onchange({ target: { files: [mockFile] } });
+      });
     } }),
   } });
   Object.defineProperty(globalThis, 'FileReader', { configurable: true, value: class {
@@ -62,6 +67,21 @@ it.each([
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
   expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/\/api\/analyze-scan$/), expect.objectContaining({ method: 'POST' }));
   expect(jest.getTimerCount()).toBe(0);
+});
+
+it('clears processing immediately when the browser cancels the photo picker', async () => {
+  mockCancel = true;
+  const result = captureAndProcessImage(options);
+  await jest.advanceTimersByTimeAsync(0);
+
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(options.setScanError).toHaveBeenLastCalledWith('No image selected');
+  expect(document.body.contains(input)).toBe(false);
+  expect(jest.getTimerCount()).toBe(0);
+  expect(await result).toBeNull();
+  expect(options.onScanUnavailable).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+  expect(options.incrementScansUsed).not.toHaveBeenCalled();
 });
 
 it('reports a file read failure before making a scan request', async () => {
