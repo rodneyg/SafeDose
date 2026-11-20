@@ -22,7 +22,9 @@ import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the 
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
 import SignUpPrompt from '../../components/SignUpPrompt'; // Import sign-up prompt
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
-import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { useUsageTracking, type ScanUsage } from '../../lib/hooks/useUsageTracking';
+import UpgradeNudge from '../../components/UpgradeNudge';
+import { isFreeScanPlan, photoUpgradeNudge, recordSuccessfulScan, type UpgradeNudgeKind } from '../../lib/upgradeNudges';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
@@ -38,7 +40,12 @@ export default function NewDoseScreen() {
   const offline = useWebOffline();
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
+  const { usageData, hasVerifiedUsage, checkUsageLimit, incrementScansUsed } = useUsageTracking();
+  const [scanNudge, setScanNudge] = useState<{
+    userId: string;
+    kind: ReturnType<typeof photoUpgradeNudge>;
+  } | null>(null);
+  const scanAttemptInProgress = useRef(false);
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -756,7 +763,7 @@ export default function NewDoseScreen() {
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
     // Don't proceed if already processing
-    if (isProcessing) {
+    if (scanAttemptInProgress.current || isProcessing) {
       console.log('handleScanAttempt: Already processing, ignoring request');
       return;
     }
@@ -770,8 +777,11 @@ export default function NewDoseScreen() {
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
+    scanAttemptInProgress.current = true;
+    setScanNudge(null);
     try {
-      const canProceed = await handleCapture();
+      const checked: { usage?: ScanUsage } = {};
+      const canProceed = await handleCapture(usage => { checked.usage = usage; });
       console.log('handleScanAttempt: canProceed=', canProceed);
       if (!canProceed) {
         console.log('handleScanAttempt: Showing LimitModal');
@@ -799,6 +809,10 @@ export default function NewDoseScreen() {
       if (result) {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
+        const firstLocalScan = await recordSuccessfulScan(user.uid);
+        if (checked.usage) {
+          setScanNudge({ userId: user.uid, kind: photoUpgradeNudge(checked.usage, firstLocalScan) });
+        }
         
         // Track interaction for sign-up prompt
         signUpPrompt.trackInteraction();
@@ -864,6 +878,8 @@ export default function NewDoseScreen() {
       setIsProcessing(false);
       
       setScanError('We could not process this photo. Please try again or enter the details manually.');
+    } finally {
+      scanAttemptInProgress.current = false;
     }
   };
 
@@ -924,6 +940,7 @@ export default function NewDoseScreen() {
     setShowImagePreview(false);
     setCapturedImageUri('');
     setPendingScanResult(null);
+    setScanNudge(null);
     // Stay on scan screen for retake
   }, []);
 
@@ -976,6 +993,16 @@ export default function NewDoseScreen() {
   }, []);
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
+
+  const canOfferUpgrade = user?.uid && hasVerifiedUsage && !offline && isFreeScanPlan(usageData);
+  const showScanNudge = manualStep === 'dose' && !showImagePreview && scanNudge?.userId === user?.uid;
+  const showManualNudge = manualStep === 'finalResult' && !calculationError && recommendedMarking &&
+    lastActionType !== 'scan' && usageData.scansUsed === 0;
+  let nudgeKind: UpgradeNudgeKind | null = null;
+  if (screenStep === 'manualEntry' && canOfferUpgrade) {
+    if (showScanNudge) nudgeKind = scanNudge?.kind ?? null;
+    if (showManualNudge) nudgeKind = 'manualEntry';
+  }
 
   // Tabs retain mounted screens. Hide the entire dose flow and its modals on blur.
   if (!isScreenActive) return null;
@@ -1082,6 +1109,9 @@ export default function NewDoseScreen() {
       )}
       {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
         <Text accessibilityRole="alert">{scanError}</Text>
+      )}
+      {nudgeKind && user?.uid && (
+        <UpgradeNudge key={`${user.uid}:${nudgeKind}`} userId={user.uid} kind={nudgeKind} />
       )}
       {screenStep === 'manualEntry' && (
         <ManualEntryScreen
