@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-473",
+    "date": "2026-11-20",
+    "title": "Add dismissible Photo Check upgrade nudges",
+    "status": "published",
+    "prs": [
+      473
+    ],
+    "sections": {
+      "Improved": [
+        "Add dismissible Photo Check upgrade nudges"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-472",
     "date": "2026-11-20",
     "title": "Test last dose prefill and empty history",
