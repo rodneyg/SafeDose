@@ -1,0 +1,5 @@
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-884	board	Tasks	T-884	Status	In progress	2026-11-19 20:21:35 EST
+T-884\tboard\tTasks\tT-884\tStatus\tDone\t2026-11-19 20:22:51 EST
+T-884\tboard\tTasks\tT-884\tDone at (ET)\t2026-11-19 20:22:51 EST\t2026-11-19 20:22:51 EST
+T-884\tboard\tTasks\tT-884\tResult\tAdded labeled button semantics for capture, retake, and cancel controls with focused tests.\t2026-11-19 20:22:51 EST
