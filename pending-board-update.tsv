@@ -1,0 +1,5 @@
+task_id\tsheet\ttab\trow_or_key\tfield\tvalue\trecorded_at_et
+T-919\tboard\tTasks\tT-919\tStatus\tIn progress\t2026-11-19 20:55:01 EST
+T-919\tboard\tTasks\tT-919\tStatus\tDone\t2026-11-19 20:56:09 EST
+T-919\tboard\tTasks\tT-919\tDone at (ET)\t2026-11-19 20:56:09 EST\t2026-11-19 20:56:09 EST
+T-919\tboard\tTasks\tT-919\tResult\tAlready covered on main by focused before-first-scan integration tests; focused Jest and TypeScript checks pass.\t2026-11-19 20:56:09 EST

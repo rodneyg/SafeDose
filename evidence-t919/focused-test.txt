@@ -1,0 +1,192 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand components/BeforeFirstScanIntegration.test.ts
+
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+  console.log
+    [Utils] Platform detection {
+      isWeb: false,
+      userAgent: 'Node.js/24',
+      isMobileDevice: false,
+      platformOS: 'ios',
+      isMobileWeb: false,
+      calculation: 'false && false && false = false'
+    }
+
+      at Object.log (lib/utils.tsx:10:9)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 0, dontShowAgain: false }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Showing before first scan prompt
+
+      at log (lib/hooks/useDoseCalculator.ts:796:15)
+
+  console.log
+    [useDoseCalculator] Before first scan continue pressed
+
+      at log (lib/hooks/useDoseCalculator.ts:806:13)
+
+  console.log
+    [BeforeFirstScan] Marked prompt as shown for test-user, count: 1
+
+      at Object.log (lib/hooks/useBeforeFirstScanPrompt.ts:96:13)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 1, dontShowAgain: false }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Showing before first scan prompt
+
+      at log (lib/hooks/useDoseCalculator.ts:796:15)
+
+  console.log
+    [useDoseCalculator] Before first scan dont show again pressed
+
+      at log (lib/hooks/useDoseCalculator.ts:821:13)
+
+  console.log
+    [BeforeFirstScan] Marked as don't show again for test-user
+
+      at Object.log (lib/hooks/useBeforeFirstScanPrompt.ts:115:13)
+
+  console.log
+    [BeforeFirstScan] Marked prompt as shown for test-user, count: 2
+
+      at Object.log (lib/hooks/useBeforeFirstScanPrompt.ts:96:13)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 2, dontShowAgain: true }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Going directly to scan
+
+      at log (lib/hooks/useDoseCalculator.ts:799:15)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 2, dontShowAgain: false }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Going directly to scan
+
+      at log (lib/hooks/useDoseCalculator.ts:799:15)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 1, dontShowAgain: true }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Going directly to scan
+
+      at log (lib/hooks/useDoseCalculator.ts:799:15)
+
+  console.log
+    [useDoseCalculator] ⚠️ FIRST TIME INITIALIZATION: Setting up hook
+
+      at log (lib/hooks/useDoseCalculator.ts:234:15)
+
+  console.log
+    [BeforeFirstScan] Loaded state for test-user: { showCount: 0, dontShowAgain: false }
+
+      at log (lib/hooks/useBeforeFirstScanPrompt.ts:41:17)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Showing before first scan prompt
+
+      at log (lib/hooks/useDoseCalculator.ts:796:15)
+
+  console.log
+    [useDoseCalculator] Before first scan back pressed
+
+      at log (lib/hooks/useDoseCalculator.ts:832:13)
+
+  console.log
+    [useDoseCalculator] Checking if before first scan prompt should be shown
+
+      at log (lib/hooks/useDoseCalculator.ts:793:13)
+
+  console.log
+    [useDoseCalculator] Showing before first scan prompt
+
+      at log (lib/hooks/useDoseCalculator.ts:796:15)
+
+PASS components/BeforeFirstScanIntegration.test.ts (13.288 s)
+  ✓ shows the first prompt, persists Continue, and tracks the real analytics (1890 ms)
+  ✓ persists the second-view opt-out without overwriting it when incrementing the count (186 ms)
+  ✓ bypasses the prompt for saved count 2 and opt-out false (58 ms)
+  ✓ bypasses the prompt for saved count 1 and opt-out true (57 ms)
+  ✓ Back returns to intro without consuming a viewing (88 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        13.723 s
+Ran all test suites matching /components\/BeforeFirstScanIntegration.test.ts/i.
