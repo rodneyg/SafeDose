@@ -244,3 +244,15 @@
     overflow-x: hidden;
   }
 }
+
+[role="tablist"] [role="tab"]:focus-visible,
+#dose-log-screen [role="button"]:focus-visible,
+#suggest-compound-section [role="button"]:focus-visible,
+#suggest-compound-dialog :is([role="button"], input, textarea):focus-visible {
+  outline: 2px solid #004085;
+  outline-offset: 2px;
+}
+
+[role="tablist"] [role="tab"]:focus-visible {
+  outline-offset: -3px;
+}
