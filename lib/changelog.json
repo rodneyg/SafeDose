@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-489",
+    "date": "2026-11-20",
+    "title": "Add unit tests for usePowerUserPromotion",
+    "status": "published",
+    "prs": [
+      489
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for usePowerUserPromotion"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-488",
     "date": "2026-11-20",
     "title": "Expose dose calculator input types",
@@ -14,6 +28,34 @@
     }
   },
   {
+    "id": "2026-11-20-pr-485",
+    "date": "2026-11-20",
+    "title": "Add unit tests for scanner processing state",
+    "status": "published",
+    "prs": [
+      485
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for scanner processing state"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-484",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to scan hook",
+    "status": "published",
+    "prs": [
+      484
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to scan hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-482",
     "date": "2026-11-20",
     "title": "Add JSDoc to useAuth",
@@ -24,6 +66,20 @@
     "sections": {
       "Improved": [
         "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-481",
+    "date": "2026-11-20",
+    "title": "Fix SafeDose native Metro bundling on iOS and Android",
+    "status": "published",
+    "prs": [
+      481
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose native Metro bundling on iOS and Android"
       ]
     }
   },

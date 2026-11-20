@@ -1,2 +1,2 @@
 issue	files	pr_url	checks	status
-376	components/ScanScreen.tsx, components/ImagePreviewModal.tsx, components/ScanScreen.autocapture.test.tsx, components/PhotoScanSuccess.integration.test.tsx	prepared with make_pr	npm focused tests (11 passed); git diff --check	SUCCESS
+376	lib/cameraUtils.upload.test.ts	not-created (make_pr metadata prepared)	npx jest lib/cameraUtils.upload.test.ts --runInBand; npx tsc --noEmit --pretty false	SUCCESS
