@@ -1,2 +1,0 @@
-issue	pr_url	status	checks	evidence
-T-1311	not-returned-by-make_pr	open	focused tests pass; lint pass with warnings; typecheck pass; web build pass; full tests 108/110 suites	committed on fix/scan-copy-no-false-check; evidence/copy-search.log; evidence/screenshots/; evidence/focused-tests.log

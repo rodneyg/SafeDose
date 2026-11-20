@@ -1,4 +1,0 @@
-78bff7d00fb87211e70339841df355d115e9ee6a533755f619999c80f0a130f4  evidence/screenshots/final-result-after.png
-2fbd685712fec7da0a5669e3f4fbdcc6d1b525b4a27ee9d64f2b53e65f5ebb5c  evidence/screenshots/final-result-before.png
-b6e2a1ff49a2a0747961a0b91ff2d3746275e39cf548732b74efbdf50157735b  evidence/screenshots/pricing-after.png
-c1faab9d8bf306f8dffaafb4e69a2e7a7abacf17422909ccf94a0e359807bcea  evidence/screenshots/pricing-before.png

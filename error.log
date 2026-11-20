@@ -4,6 +4,3 @@
 [2026-11-20T01:59:02.011470+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
 [2026-11-20T01:59:02.013575+00:00] auth: mode=ChatGPT account_id=29915b65-6737-41fd-b476-a68605d919cc
 [2026-11-20T01:59:02.015497+00:00] auth: set ChatGPT-Account-Id header: 29915b65-6737-41fd-b476-a68605d919cc
-[2026-11-20T14:31:28.251638+00:00] startup: base_url=https://chatgpt.com/backend-api path_style=wham
-[2026-11-20T14:31:28.251720+00:00] auth: mode=ChatGPT account_id=29915b65-6737-41fd-b476-a68605d919cc
-[2026-11-20T14:31:28.251782+00:00] auth: set ChatGPT-Account-Id header: 29915b65-6737-41fd-b476-a68605d919cc

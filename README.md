@@ -14,7 +14,7 @@ Whether you're working with mg/ml, reconstituted peptides, or insulin units, Saf
 SafeDose today works in two steps:
 
 1. **Specify Dose**: The user enters their prescribed dose (e.g., "2.5 mg Semaglutide")
-2. **Scan & Verify**: They scan their supplies. The app uses computer vision to identify the syringe and vial, which the user confirms. It then calculates the volume to draw based on the verified information.
+2. **Scan & Review**: The scan reads details from a syringe or vial photo for the user to confirm. The calculator uses the details the user confirms.
 
 This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided verification flow with user confirmation at each step.
 

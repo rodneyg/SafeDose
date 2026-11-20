@@ -46,6 +46,8 @@ it('does not load Stripe while browsing pricing', () => {
   expect(eagerLoader).not.toHaveBeenCalled();
   expect(loader).not.toHaveBeenCalled();
   expect(text()).toContain('Get Photo Scan');
+  expect(text()).toContain('Unlimited photo scans');
+  expect(text()).not.toMatch(/photo checks?/i);
 });
 
 it('links the pricing footer to subscription settings, legal pages, and support', () => {
