@@ -196,6 +196,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-474",
+    "date": "2026-11-20",
+    "title": "T-775: Add optional email capture to the scan limit prompt",
+    "status": "published",
+    "prs": [
+      474
+    ],
+    "sections": {
+      "Improved": [
+        "T-775: Add optional email capture to the scan limit prompt"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-473",
     "date": "2026-11-20",
     "title": "Add dismissible Photo Check upgrade nudges",
