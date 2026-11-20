@@ -523,16 +523,21 @@ export default function NewDoseScreen() {
 
   // Only called by the user's verification action in ImagePreviewModal.
   const applyVerifiedScanResults = (result: ScanResult) => {
-    const mapped = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
-    if (mapped.status !== 'ready') {
-      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+    const { inputs: scanned, status, reasons } = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
+    const { manualSyringe: scannedSyringe } = scanned;
+    if (!scannedSyringe) {
+      resetFullForm('dose');
+      setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
+      setSyringeHint('Check the syringe label and select its capacity manually.');
+      setScreenStep('manualEntry');
       return;
     }
-    const scanned = mapped.inputs;
-    if (scanned.manualSyringe) {
-      setManualSyringe(scanned.manualSyringe);
-      setSyringeHint('Detected from image scan');
+    if (status !== 'ready') {
+      setScanError(`Scan needs manual input: ${reasons.join(' ')}`);
+      return;
     }
+    setManualSyringe(scannedSyringe);
+    setSyringeHint('Detected from image scan');
     if (scanned.substance) {
       setSubstanceName(scanned.substance);
       setSubstanceNameHint('Detected from vial scan');
@@ -570,7 +575,7 @@ export default function NewDoseScreen() {
 
     doseCalculator.registerScannedFields({
       ...(scanned.substance ? { substanceName: scanned.substance } : {}),
-      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      manualSyringe: JSON.stringify(scannedSyringe),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
       } : {}),
