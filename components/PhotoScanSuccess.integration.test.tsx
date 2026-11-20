@@ -4,6 +4,7 @@ import ScanScreen from './ScanScreen';
 import ImagePreviewModal from './ImagePreviewModal';
 import { captureAndProcessImage } from '../lib/cameraUtils';
 import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
+import { SCAN_UNAVAILABLE_MESSAGE } from '../lib/scan/completeOnServer';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
 
@@ -26,6 +27,7 @@ const MODEL_OUTPUT = fixtures.find(f => f.label.id === 'fixture-exact-read')!.mo
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
 const onVerify = jest.fn();
+const onScanUnavailable = jest.fn();
 const originalKey = process.env.OPENAI_API_KEY;
 const originalFetch = globalThis.fetch;
 const browserDescriptors = ['document', 'FileReader'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const);
@@ -46,7 +48,7 @@ function PhotoFlow() {
       onCapture: async () => {
         const captured = await captureAndProcessImage({
           cameraRef, permission, isMobileWeb: false, setIsProcessing, setScanError,
-          setProcessingMessage: jest.fn(), incrementScansUsed,
+          setProcessingMessage: jest.fn(), incrementScansUsed, onScanUnavailable,
         });
         if (captured) { onResult(captured); setResult(captured); }
       },
@@ -108,8 +110,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it('uploads a photo through the API and displays the parsed syringe and vial values', async () => {
-  const content = JSON.stringify(MODEL_OUTPUT);
+it.each([
+  ['fixture-exact-read', 'Insulin', 'U-100', { units: 25, ml: 0.25, plunger_visible: true }],
+  ['fixture-standard-read', 'Standard', 'mL', { units: null, ml: 0.5, plunger_visible: true }],
+] as const)('uploads %s through the API and displays the parsed syringe and vial values', async (fixtureId, type, scale, fill) => {
+  const content = JSON.stringify(fixtures.find(f => f.label.id === fixtureId)!.model_output);
   mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
   const screen = render(<PhotoFlow />);
   fireEvent.press(screen.getByText('Take or Upload Photo'));
@@ -129,17 +134,17 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
   const result = onResult.mock.calls[0][0] as ScanResult;
   expect(result).toMatchObject({
     refuse: false, reasons: [], raw: content,
-    syringe: { type: 'Insulin', volume: '1 ml', scale: 'U-100', capacity_ml: 1 },
+    syringe: { type, volume: '1 ml', scale, capacity_ml: 1 },
     vial: { substance: 'Example compound', concentration: '10 mg/ml', totalAmount: null },
-    fill: { units: 25, ml: 0.25, plunger_visible: true },
+    fill,
     capturedImage: { uri: PHOTO, mimeType: 'image/png' },
   });
   // This is the same mapper used by NewDoseScreen to prefill ManualEntryScreen.
   expect(mapScanToDoseInputs(result)).toEqual({ status: 'needs-verification', reasons: [], inputs: {
-    manualSyringe: { type: 'Insulin', volume: '1 ml' }, substance: 'Example compound',
+    manualSyringe: { type, volume: '1 ml' }, substance: 'Example compound',
     concentration: 10, concentrationUnit: 'mg/ml', totalAmount: null, totalAmountUnit: null,
   } });
-  for (const value of ['Insulin', '1 ml', 'Example compound', '10 mg/ml', 'Not detected']) {
+  for (const value of [type, '1 ml', 'Example compound', '10 mg/ml', 'Not detected']) {
     expect(screen.getAllByText(value).length).toBeGreaterThan(0);
   }
   expect(screen.queryByRole('alert')).toBeNull();
@@ -178,8 +183,13 @@ it.each([
   }
 });
 
-it('refuses malformed provider JSON after an otherwise successful API response', async () => {
-  const content = '{"syringe":';
+it.each([
+  ['malformed JSON', '{"syringe":'],
+  ...['syringe.capacity_ml', 'vial.concentration'].map(field => [
+    `low confidence in ${field}`,
+    JSON.stringify({ ...MODEL_OUTPUT, confidence: { ...MODEL_OUTPUT.confidence, [field]: 0.89 } }),
+  ]),
+])('refuses %s after an otherwise successful API response', async (_, content) => {
   mockCreate.mockResolvedValue({ choices: [{ message: { content } }] });
   const screen = render(<PhotoFlow />);
   fireEvent.press(screen.getByText('Take or Upload Photo'));
@@ -194,6 +204,24 @@ it('refuses malformed provider JSON after an otherwise successful API response',
   expect(incrementScansUsed).not.toHaveBeenCalled();
   expect(screen.queryByText('Review Your Scan')).toBeNull();
   expect(screen.queryByText('Example compound')).toBeNull();
+  expect(screen.queryByText('Processing...')).toBeNull();
+  screen.unmount();
+});
+
+it('offers manual entry if the real scan route cannot complete a provider request', async () => {
+  mockCreate.mockRejectedValue(new Error('private provider diagnostic'));
+  const screen = render(<PhotoFlow />);
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(mockCreate).toHaveBeenCalledTimes(1);
+  expect(routeStatus).toBe(502);
+  expect(routeBody).toEqual({ error: 'Image analysis failed. Please try again.' });
+  expect(onScanUnavailable).toHaveBeenCalledTimes(1);
+  expect(onResult).not.toHaveBeenCalled();
+  expect(incrementScansUsed).not.toHaveBeenCalled();
+  expect(screen.queryByText('Review Your Scan')).toBeNull();
   expect(screen.queryByText('Processing...')).toBeNull();
   screen.unmount();
 });
