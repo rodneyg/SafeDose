@@ -28,6 +28,7 @@ import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
+import { recordLandingCtaStart } from '../../lib/landingCtaExperiment';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
@@ -802,6 +803,7 @@ export default function NewDoseScreen() {
         return;
       }
 
+      recordLandingCtaStart('scan');
       console.log('handleScanAttempt: Processing image');
       const result = await captureAndProcessImage({
         cameraRef,
