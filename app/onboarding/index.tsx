@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } 
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Link, useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
+import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../../lib/analytics';
 import { isMobileWeb } from '../../lib/utils';
 import PublicLinks from '../../components/PublicLinks';
 import { useAuth } from '../../contexts/AuthContext';
@@ -75,7 +76,10 @@ export default function Welcome() {
         <Animated.View entering={FadeInUp.delay(900).duration(800)} style={[styles.footer, isMobileWeb && styles.footerMobile]}>
           <TouchableOpacity 
             style={[styles.button, isMobileWeb && styles.buttonMobile]} 
-            onPress={handleStart}
+            onPress={() => {
+              logAnalyticsEvent(ANALYTICS_EVENTS.WELCOME_PRIMARY_CTA_CLICK);
+              handleStart();
+            }}
             accessibilityRole="button"
             accessibilityLabel="Start demo"
             accessibilityHint="Begins the SafeDose app demonstration">
@@ -107,7 +111,7 @@ export default function Welcome() {
           ) : (
             <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed to try</Text>
           )}
-          <PublicLinks onDarkBackground />
+          <PublicLinks onDarkBackground showChangelog />
         </Animated.View>
       </View>
     </View>
