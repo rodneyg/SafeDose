@@ -98,6 +98,16 @@ describe('IntroScreen', () => {
     expect(mockResetFullForm).not.toHaveBeenCalled();
   });
 
+  it('hides the shortcut when there is no dose history', async () => {
+    await AsyncStorage.setItem('onboardingComplete', 'true');
+    const { queryByRole } = render(
+      <IntroScreen setScreenStep={mockSetScreenStep} resetFullForm={mockResetFullForm} />
+    );
+    await waitFor(() => expect(mockGetDoseLogHistory).toHaveBeenCalled());
+    expect(queryByRole('button', { name: 'Use Last Dose' })).toBeNull();
+    expect(mockSetScreenStep).not.toHaveBeenCalled();
+  });
+
   it('should call logout function when sign out button is pressed', async () => {
     const { getByTestId } = render(
       <IntroScreen
