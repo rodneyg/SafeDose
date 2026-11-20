@@ -38,6 +38,15 @@ const doseInfo = {
   calculatedVolume: 0.5,
 };
 
+const queuedLog = (id: string) => ({
+  id,
+  substanceName: 'Queued Medication',
+  doseValue: 5,
+  unit: 'mg',
+  calculatedVolume: 0.25,
+  timestamp: '2026-11-20T12:00:00.000Z',
+});
+
 describe('useDoseLogging', () => {
   const checkLogUsageLimit = jest.fn();
   const incrementLogsUsed = jest.fn();
@@ -116,5 +125,63 @@ describe('useDoseLogging', () => {
     });
     expect(storage.setItem).toHaveBeenCalledTimes(1);
     expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
+  });
+
+  it('queues a dose locally when the Firestore save fails', async () => {
+    mockAddDocWithEnv.mockRejectedValueOnce(new Error('offline'));
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.logDose(doseInfo);
+    });
+
+    const savedLogs = JSON.parse(storage.setItem.mock.calls[0][1]) as { firestoreId?: string }[];
+    expect(savedLogs).toHaveLength(1);
+    expect(savedLogs[0].firestoreId).toBeUndefined();
+  });
+
+  it('flushes queued local doses to Firestore', async () => {
+    const logs = [queuedLog('queued-1'), queuedLog('queued-2')];
+    storage.getItem.mockResolvedValue(JSON.stringify(logs));
+    mockAddDocWithEnv
+      .mockResolvedValueOnce({ id: 'remote-1' } as never)
+      .mockResolvedValueOnce({ id: 'remote-2' } as never);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.syncLogsToFirestore();
+    });
+
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(storage.setItem.mock.calls[0][1])).toEqual([
+      expect.objectContaining({ id: 'queued-1', firestoreId: 'remote-1' }),
+      expect.objectContaining({ id: 'queued-2', firestoreId: 'remote-2' }),
+    ]);
+  });
+
+  it('leaves a failed item queued and retries it on the next flush', async () => {
+    let storedLogs = [queuedLog('retry-me'), queuedLog('already-synced')];
+    storage.getItem.mockImplementation(async () => JSON.stringify(storedLogs));
+    storage.setItem.mockImplementation(async (_key, value) => {
+      storedLogs = JSON.parse(value);
+    });
+    mockAddDocWithEnv
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce({ id: 'remote-2' } as never)
+      .mockResolvedValueOnce({ id: 'remote-1' } as never);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.syncLogsToFirestore();
+    });
+    expect(storedLogs[0]).toEqual(expect.objectContaining({ id: 'retry-me' }));
+    expect(storedLogs[0].firestoreId).toBeUndefined();
+    expect(storedLogs[1]).toEqual(expect.objectContaining({ id: 'already-synced', firestoreId: 'remote-2' }));
+
+    await act(async () => {
+      await result.current.syncLogsToFirestore();
+    });
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(3);
+    expect(storedLogs[0]).toEqual(expect.objectContaining({ id: 'retry-me', firestoreId: 'remote-1' }));
   });
 });
