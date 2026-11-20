@@ -1,2 +1,0 @@
-issue	files	pr_url	checks	status
-378	lib/hooks/__tests__/usePowerUserPromotion.test.ts		focused Jest: pass; ESLint: pass; git diff --check: pass	SUCCESS
