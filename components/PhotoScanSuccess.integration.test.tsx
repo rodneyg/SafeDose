@@ -113,6 +113,8 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
   fireEvent.press(screen.getByText('Take or Upload Photo'));
   await waitFor(() => expect(screen.getByText('Review Your Scan')).toBeTruthy());
 
+  expect(screen.getByLabelText('Retake photo').props.accessibilityRole).toBe('button');
+
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({

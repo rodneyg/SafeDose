@@ -54,6 +54,7 @@ const generateDeviceId = (): string => {
   return 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 
+/** Persists onboarding intent answers to Firestore with a local backup. */
 export function useOnboardingIntentStorage() {
   // Submit onboarding intent data to Firestore
   const submitOnboardingIntent = useCallback(async (answers: UserProfileAnswers): Promise<OnboardingIntentStorageResult> => {

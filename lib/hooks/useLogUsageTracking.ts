@@ -15,6 +15,7 @@ const getLogLimitForPlan = (plan: string, isAnonymous: boolean) => {
   return 10; // Signed-in free users get 10 logs
 };
 
+/** Tracks dose-log usage and enforces the current plan's log limit. */
 export function useLogUsageTracking() {
   const { user } = useAuth();
   const db = getFirestore();

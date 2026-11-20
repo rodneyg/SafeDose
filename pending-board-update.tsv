@@ -1,3 +1,5 @@
-board_id	tab	row_id	status	done_at_et	result
-1JTpsqMj6pWvJNHn9kRnVDMmrFU4bqCLoKsAYMCiBV90	Tasks	T-759	In progress		Started T-800 optional protocol scheduler work
-1JTpsqMj6pWvJNHn9kRnVDMmrFU4bqCLoKsAYMCiBV90	Tasks	T-759	Blocked	2026-11-19 19:06:43 EST	Implementation and local checks complete; GitHub and Sheets access unavailable
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-881	board	Tasks	T-881	Status	In progress	2026-11-19 20:18:28 ET
+T-881	board	Tasks	T-881	Status	Done	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Done at (ET)	2026-11-19 20:19:15 ET	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Result	Added focused success and error tests for scanner processing state ordering and finally cleanup.	2026-11-19 20:19:15 ET

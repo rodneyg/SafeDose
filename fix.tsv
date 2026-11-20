@@ -1,2 +1,2 @@
-issue	pr_url	checks	merged_at_et	status
-368		local tests passed; GitHub checks unavailable		BLOCKED
+issue	files	pr_url	checks	status
+376	lib/cameraUtils.upload.test.ts	not-created (make_pr metadata prepared)	npx jest lib/cameraUtils.upload.test.ts --runInBand; npx tsc --noEmit --pretty false	SUCCESS

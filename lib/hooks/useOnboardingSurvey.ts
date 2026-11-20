@@ -15,6 +15,7 @@ type SurveyPrompt = {
   includeWhyHere: boolean;
 };
 
+/** Coordinates eligibility, display, and storage for the onboarding survey. */
 export function useOnboardingSurvey() {
   const { user } = useAuth();
   const userId = user?.uid;
