@@ -12,7 +12,8 @@ jest.mock('react-native-reanimated', () => ({ __esModule: true, default: { View:
 jest.mock('../lib/firebase', () => { const auth = {}; return { auth, getAuthInstance: () => auth }; });
 jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: '', profile: null, isLoading: false }) }));
-jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { scansUsed: 0, limit: 3, plan: 'free' } }) }));
+const mockUsage = { scansUsed: 0, limit: 3, plan: 'free' };
+jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: mockUsage }) }));
 const mockHistory = async () => [];
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ getDoseLogHistory: mockHistory }) }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), setAnalyticsUserProperties: jest.fn(), ANALYTICS_EVENTS: {}, USER_PROPERTIES: {} }));
@@ -24,7 +25,12 @@ jest.mock('firebase/auth', () => ({ getRedirectResult: jest.fn().mockResolvedVal
 let authState: ReturnType<typeof useAuth>;
 let listener: (user: any) => void;
 let tree: ReactTestRenderer;
-function Probe() { authState = useAuth(); return <IntroScreen setScreenStep={jest.fn()} resetFullForm={jest.fn()} />; }
+const onScanLimit = jest.fn();
+const onScanPress = jest.fn();
+function Probe() {
+  authState = useAuth();
+  return <IntroScreen setScreenStep={jest.fn()} resetFullForm={jest.fn()} onScanLimit={onScanLimit} onScanPress={onScanPress} />;
+}
 const guest = { uid: 'guest', isAnonymous: true };
 const member = { uid: 'member', isAnonymous: false, displayName: 'Test' };
 async function mount(user: any) {
@@ -34,6 +40,7 @@ async function mount(user: any) {
 function output() { return JSON.stringify(tree.toJSON()); }
 beforeEach(() => {
   jest.clearAllMocks();
+  Object.assign(mockUsage, { scansUsed: 0, limit: 3, plan: 'free' });
   (globalThis as any).__DEV__ = false;
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -83,4 +90,28 @@ it('opens pricing from both the scans remaining text and Upgrade', async () => {
   act(() => upgrade.props.onPress());
   expect(mockPush).toHaveBeenCalledTimes(2);
   expect(mockPush).toHaveBeenLastCalledWith('/pricing');
+});
+
+it('opens the limit modal from both home upgrade actions after the third scan', async () => {
+  mockUsage.scansUsed = 3;
+  await mount(guest);
+  const labels = tree.root.findAllByType('Text' as any).filter(node => node.props.children === 'Upgrade');
+  act(() => labels.find(node => node.props.onPress)!.props.onPress());
+  const button = tree.root.findAllByType('TouchableOpacity' as any).find(node =>
+    node.findAllByType('Text' as any).some(label => label.props.children === 'Upgrade'),
+  )!;
+  act(() => button.props.onPress());
+  expect(onScanLimit).toHaveBeenCalledTimes(2);
+  expect(mockPush).not.toHaveBeenCalled();
+});
+
+it('preserves normal scanning for unlimited paid usage', async () => {
+  Object.assign(mockUsage, { scansUsed: 8, limit: -1, plan: 'photo_check' });
+  await mount(member);
+  const button = tree.root.findAllByType('TouchableOpacity' as any).find(node =>
+    node.findAllByType('Text' as any).some(label => label.props.children === 'Scan'),
+  )!;
+  act(() => button.props.onPress());
+  expect(onScanPress).toHaveBeenCalledTimes(1);
+  expect(onScanLimit).not.toHaveBeenCalled();
 });

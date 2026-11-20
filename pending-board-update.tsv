@@ -1,5 +1,5 @@
-task_id\tsheet\ttab\trow_or_key\tfield\tvalue\trecorded_at_et
-T-919\tboard\tTasks\tT-919\tStatus\tIn progress\t2026-11-19 20:55:01 EST
-T-919\tboard\tTasks\tT-919\tStatus\tDone\t2026-11-19 20:56:09 EST
-T-919\tboard\tTasks\tT-919\tDone at (ET)\t2026-11-19 20:56:09 EST\t2026-11-19 20:56:09 EST
-T-919\tboard\tTasks\tT-919\tResult\tAlready covered on main by focused before-first-scan integration tests; focused Jest and TypeScript checks pass.\t2026-11-19 20:56:09 EST
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-881	board	Tasks	T-881	Status	In progress	2026-11-19 20:18:28 ET
+T-881	board	Tasks	T-881	Status	Done	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Done at (ET)	2026-11-19 20:19:15 ET	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Result	Added focused success and error tests for scanner processing state ordering and finally cleanup.	2026-11-19 20:19:15 ET

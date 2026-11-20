@@ -1,2 +1,2 @@
 issue	files	pr_url	checks	status
-#378	components/BeforeFirstScanIntegration.test.ts	N/A (already done on main)	npm test -- --runInBand components/BeforeFirstScanIntegration.test.ts; npx tsc --noEmit	SUCCESS
+376	lib/cameraUtils.upload.test.ts	not-created (make_pr metadata prepared)	npx jest lib/cameraUtils.upload.test.ts --runInBand; npx tsc --noEmit --pretty false	SUCCESS

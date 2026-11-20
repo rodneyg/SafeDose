@@ -1,20 +1,18 @@
 STATUS: SUCCESS
 
-Issue #378 is already covered on main. The focused tests exercise the real `useBeforeFirstScanPrompt` behavior for the first and second displays, saved count limit, persisted opt-out, and returning without consuming a display. No application or test source change was needed.
+Added focused tests for issue #376 that prove processing is enabled before capture and disabled by the final cleanup on both success and error.
 
 ## ATTEMPTS
 
-- Inspected the hook and focused integration coverage.
-- Ran the focused Jest suite successfully.
-- Ran the full TypeScript no-emit check successfully.
+- Inspected the current scanner implementation and existing upload tests.
+- Added a focused parameterized test for the success and error paths.
 
 Evidence paths:
-
-- `components/BeforeFirstScanIntegration.test.ts`
-- `evidence-t919/focused-test.txt`
-- `evidence-t919/typecheck.txt`
+- `lib/cameraUtils.upload.test.ts`
+- `fix.tsv`
+- `pending-board-update.tsv`
 
 ## How we verified
 
-1. `npm test -- --runInBand components/BeforeFirstScanIntegration.test.ts` passed all five focused tests.
-2. `npx tsc --noEmit --pretty false` passed.
+- `npx jest lib/cameraUtils.upload.test.ts --runInBand` passed with 14 tests.
+- `npx tsc --noEmit --pretty false` passed.

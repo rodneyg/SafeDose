@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["type-tests/dose-calculator-props.ts"],
+  "exclude": ["node_modules"]
+}

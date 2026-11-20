@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseFeedback, FeedbackType } from '../../types/feedback';
 
+/** Stores post-dose feedback locally and, when available, in Firestore. */
 export function useFeedbackStorage() {
   const { user } = useAuth();
   const db = getFirestore();

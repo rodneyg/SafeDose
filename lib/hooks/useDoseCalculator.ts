@@ -20,8 +20,11 @@ type ManualStep = 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmo
 type Syringe = SyringeSelection;
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
-interface UseDoseCalculatorProps {
+/** Inputs used by the dose calculator flow. */
+export interface UseDoseCalculatorProps {
+  /** Check scan access and optionally receive the verified usage. */
   checkUsageLimit: (onVerifiedUsage?: (usage: ScanUsage) => void) => Promise<boolean>;
+  /** Record an interaction when tracking is available. */
   trackInteraction?: () => void;
 }
 
@@ -31,6 +34,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
+/** Manages the complete manual-entry and photo-scan dose calculation workflow. */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());

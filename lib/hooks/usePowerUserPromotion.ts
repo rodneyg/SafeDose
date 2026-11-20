@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
-interface PowerUserPromotionData {
+export interface PowerUserPromotionData {
   doseCount: number;
   lastShownDate: string | null;
   hasActiveSubscription: boolean;
@@ -14,7 +14,31 @@ const POWER_USER_STORAGE_KEY = 'powerUserPromotion_v2'; // Added v2 to force fre
 const MIN_DOSES_FOR_PROMOTION = 4;
 const DAYS_BETWEEN_PROMOTIONS = 14; // 2 weeks
 
-export function usePowerUserPromotion() {
+export interface UsePowerUserPromotionResult {
+  promotionData: PowerUserPromotionData;
+  isLoading: boolean;
+  shouldShowPromotion: () => boolean;
+  incrementDoseCount: () => Promise<void>;
+  markPromotionShown: () => Promise<void>;
+  clearPromotionData: () => Promise<void>;
+}
+
+/**
+ * Tracks whether the current user should see the power-user subscription promotion.
+ *
+ * Takes no parameters. The current user is read from `useAuth()`.
+ *
+ * @returns The stored promotion data and loading state, a synchronous eligibility
+ * check, and async actions to increment the dose count, record that the promotion
+ * was shown, or clear the promotion data.
+ *
+ * @remarks On mount and whenever the authenticated user changes, the hook reads
+ * promotion data from AsyncStorage. For a signed-in, non-anonymous user it also
+ * reads the user's plan from Firestore. The returned actions update React state
+ * and persist promotion data to AsyncStorage; `clearPromotionData` removes it.
+ * Read and write failures are logged and are not thrown to callers.
+ */
+export function usePowerUserPromotion(): UsePowerUserPromotionResult {
   const { user } = useAuth();
   const db = getFirestore();
   const [promotionData, setPromotionData] = useState<PowerUserPromotionData>({

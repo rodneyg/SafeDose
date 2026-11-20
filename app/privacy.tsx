@@ -14,6 +14,10 @@ const sections = [
     body: "Onboarding can collect professional or athlete status, intended use, and an optional birth date and derived age. The app can save profile details, plan status and usage counters locally and in Google Firebase Cloud Firestore. This includes guests with a Firebase ID. Firestore also has submission paths for onboarding intent, surveys, feedback and compound suggestions.",
   },
   {
+    title: "Optional email updates",
+    body: "If you choose to save your email after reaching the free scan limit, SafeDose stores it in a private Firebase database with your opt-in time, whether you were a guest or signed in with Google, and where you signed up. SafeDose uses it to follow up with SafeDose updates. To withdraw your opt-in and request removal, email rodney.gainous@gmail.com from the address you submitted.",
+  },
+  {
     title: "Calculations and dose logs",
     body: "Manual calculation and dose log data may include substance, concentration, entered dose, calculated volume, syringe details, site and timing. Dose logs are stored on device and can sync to Firestore for non-guest users. Individual log deletion removes the local entry and attempts to delete its synced record. Scan and manual calculation evaluation records can include inputs, results, identifiers and quality metadata. Local evaluation records can include an encoded photo. The Firestore evaluation write substitutes image metadata for image bytes.",
   },

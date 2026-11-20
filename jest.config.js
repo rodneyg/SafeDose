@@ -20,6 +20,7 @@ module.exports = {
     '<rootDir>/e2e/',
     '/node_modules/',
     '<rootDir>/.eval-cache/',
+    '<rootDir>/.verify/',
     // Upstream dependency tests copied into the root, not SafeDose suites.
     '<rootDir>/(index|filesystem|config-loader|tsconfig-loader|mapping-entry|match-path-async|match-path-sync)\\.test\\.ts$',
   ],

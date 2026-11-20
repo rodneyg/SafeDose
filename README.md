@@ -48,6 +48,19 @@ The current mobile flow is scaffolding. The end-state is an **eyes-up, real-time
 
 A hosted version of SafeDose: https://safedose.rodneygainous.com/ (fallback: https://safe-dose.vercel.app/)
 
+### Versioning and rollback
+
+Every merge to `main` creates a semver tag and a GitHub Release. The bump is a patch by default. Add a `minor` or `major` label on the PR, or start the title with `feat:` or `feat!:`, to bump those instead.
+
+To put a previous tagged build back on production:
+
+```bash
+npm run rollback -- v1.0.0
+```
+
+Use `--dry-run` to print the Vercel promotion command without changing production. See [ROLLBACK.md](ROLLBACK.md) for details.
+
+
 ---
 
 ## 💻 Local Development
