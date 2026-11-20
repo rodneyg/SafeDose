@@ -27,6 +27,7 @@
     "test:scan-api": "jest api/__tests__/analyze-scan.test.js lib/scan/__tests__/completeOnServer.test.ts --runInBand",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.js",
     "verify": "./verify",
+    "rollback": "node scripts/rollback.mjs",
     "vision:validate-labels": "node evals/vision/validate-labels.js",
     "vision:check-exif": "node evals/vision/check-exif.js",
     "vision:strip-exif": "node evals/vision/strip-exif.js",
