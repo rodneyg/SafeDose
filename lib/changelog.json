@@ -126,6 +126,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-478",
+    "date": "2026-11-20",
+    "title": "Add user-defined dosing presets",
+    "status": "published",
+    "prs": [
+      478
+    ],
+    "sections": {
+      "Improved": [
+        "Add user-defined dosing presets"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-477",
     "date": "2026-11-20",
     "title": "Add optional SafeDose protocol scheduler",
