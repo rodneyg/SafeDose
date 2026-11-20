@@ -15,6 +15,8 @@ import ReconstitutionStep from '../components/ReconstitutionStep';
 import SyringeStep from '../components/SyringeStep';
 import PreDoseConfirmationStep from '../components/PreDoseConfirmationStep';
 import FinalResultDisplay from '../components/FinalResultDisplay';
+import DosingPresets from '../components/DosingPresets';
+import { DosingPreset } from '../lib/dosingPresets';
 
 interface ManualEntryScreenProps {
   manualStep: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'preDoseConfirmation' | 'finalResult';
@@ -70,6 +72,7 @@ interface ManualEntryScreenProps {
   validateConcentrationInput?: (amount: string, unit: 'mg/ml' | 'mcg/ml' | 'units/ml') => boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
   onTryAIScan?: () => void;
+  onApplyPreset?: (preset: DosingPreset) => void;
 }
 
 export default function ManualEntryScreen({
@@ -126,6 +129,7 @@ export default function ManualEntryScreen({
   validateConcentrationInput,
   usageData,
   onTryAIScan,
+  onApplyPreset,
 }: ManualEntryScreenProps) {
   useEffect(() => {
     logAnalyticsEvent(ANALYTICS_EVENTS.MANUAL_ENTRY_STARTED);
@@ -287,14 +291,14 @@ export default function ManualEntryScreen({
   switch (manualStep) {
     case 'dose':
       currentStepComponent = (
-        <DoseInputStep
+        <><DosingPresets mode="apply" onApply={onApplyPreset} /><DoseInputStep
           dose={dose}
           setDose={setDose}
           unit={unit}
           setUnit={setUnit}
           formError={formError}
           validateInput={validateDoseInput}
-        />
+        /></>
       );
       break;
     case 'medicationSource':
@@ -398,7 +402,7 @@ export default function ManualEntryScreen({
         : (calculatedConcentration || null);
         
       currentStepComponent = (
-        <FinalResultDisplay
+        <><FinalResultDisplay
           guidance={guidance}
           calculationError={calculationError}
           recommendedMarking={recommendedMarking}
@@ -418,7 +422,7 @@ export default function ManualEntryScreen({
           isMobileWeb={isMobileWeb}
           usageData={usageData}
           onTryAIScan={onTryAIScan}
-        />
+        /><DosingPresets mode="save" preset={{ dose, unit, substanceName, medicationInputType: medicationInputType || 'concentration', concentrationAmount, concentrationUnit, totalAmount, totalAmountUnit, solutionVolume, manualSyringe }} /></>
       );
       break;
     default:

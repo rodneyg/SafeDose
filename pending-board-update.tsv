@@ -1,0 +1,2 @@
+task_id	status	done_at_et	result
+T-759	Done	2026-11-19 19:07:15 EST	Implemented user-defined dosing presets with save, apply, and empty-state tests; PR metadata recorded through make_pr.
