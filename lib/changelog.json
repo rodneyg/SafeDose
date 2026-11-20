@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-493",
+    "date": "2026-11-20",
+    "title": "Add unit tests for useDoseLogging",
+    "status": "published",
+    "prs": [
+      493
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useDoseLogging"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-489",
     "date": "2026-11-20",
     "title": "Add unit tests for usePowerUserPromotion",
