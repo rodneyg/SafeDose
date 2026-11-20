@@ -32,4 +32,10 @@ describe('scheduleProtocol', () => {
       'Start date must use YYYY-MM-DD format.',
     );
   });
+
+  it.each([-1, 0, 1.5])('rejects invalid protocol day %s when scheduling', (day) => {
+    expect(() => scheduleProtocol([{ day, dose: protocol[0].dose }], '2026-03-07')).toThrow(
+      'Protocol days must be positive whole numbers.',
+    );
+  });
 });
