@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { Text, TextInput, View } from 'react-native';
 import { SCAN_UNAVAILABLE_MESSAGE, SCAN_TIMEOUT_MS } from '../lib/scan/completeOnServer';
 import ScanScreen from './ScanScreen';
@@ -14,6 +14,7 @@ jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(k
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
 const originalReader = Object.getOwnPropertyDescriptor(globalThis, 'FileReader');
 const originalFetch = globalThis.fetch;
+const capturePhoto = jest.fn(captureAndProcessImage);
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
 let selectedSize: number;
@@ -37,7 +38,7 @@ function PhotoFlow() {
     cameraRef, webCameraStream: null, isProcessing, scanError,
     setIsProcessing, setScanError, setScreenStep: jest.fn(), requestWebCameraPermission: jest.fn(),
     onCapture: async () => {
-      const result = await captureAndProcessImage({
+      const result = await capturePhoto({
         cameraRef, permission, isMobileWeb: false, setIsProcessing, setScanError,
         setProcessingMessage: jest.fn(), incrementScansUsed,
         onScanUnavailable: () => setStep('manualEntry'),
@@ -45,6 +46,15 @@ function PhotoFlow() {
       if (result) onResult(result);
     },
   } as React.ComponentProps<typeof ScanScreen>)} />;
+}
+
+// Wait for the in-process capture to finish so the assertions do not poll on a wall clock.
+async function uploadPhoto(screen: ReturnType<typeof render>) {
+  await act(async () => {
+    fireEvent.press(screen.getByText('Take or Upload Photo'));
+    expect(capturePhoto).toHaveBeenCalledTimes(1);
+    await capturePhoto.mock.results[0].value;
+  });
 }
 
 beforeEach(() => {
@@ -98,8 +108,8 @@ it.each([
 ] as const)('takes %s to manual entry with the dose intact and no scan charged', async (_, response) => {
   (fetch as jest.Mock).mockImplementation(response);
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+  await uploadPhoto(screen);
+  expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE);
   expect(screen.getAllByRole('alert')).toHaveLength(1);
   expect(screen.getByLabelText('Dose').props.value).toBe('12');
   fireEvent.changeText(screen.getByLabelText('Dose'), '15');
@@ -118,8 +128,14 @@ it('takes a timed-out request to manual entry and ignores a late success', async
   (fetch as jest.Mock).mockImplementation(() => new Promise(resolve => { resolveLate = resolve; }));
   const screen = render(<PhotoFlow />);
   try {
-    fireEvent.press(screen.getByText('Take or Upload Photo'));
-    await act(async () => { await jest.advanceTimersByTimeAsync(SCAN_TIMEOUT_MS); });
+    await act(async () => {
+      fireEvent.press(screen.getByText('Take or Upload Photo'));
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SCAN_TIMEOUT_MS);
+      await capturePhoto.mock.results[0].value;
+    });
     expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE);
     expect(screen.getByLabelText('Dose').props.value).toBe('12');
     await act(async () => { resolveLate({ ok: true, json: async () => ({ content: '{}' }) }); });
@@ -135,8 +151,8 @@ it('takes a timed-out request to manual entry and ignores a late success', async
 it('takes an oversized photo to manual entry with values retained and no request or scan charged', async () => {
   selectedSize = 16 * 1024 * 1024;
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+  await uploadPhoto(screen);
+  expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE);
   expect(screen.getByLabelText('Dose').props.value).toBe('12');
   fireEvent.changeText(screen.getByLabelText('Dose'), '15');
   expect(screen.getByLabelText('Dose').props.value).toBe('15');
@@ -152,8 +168,8 @@ it.each(['error', 'abort', 'empty', 'invalid', 'throw'] as const)(
   async failure => {
     readFailure = failure;
     const screen = render(<PhotoFlow />);
-    fireEvent.press(screen.getByText('Take or Upload Photo'));
-    await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+    await uploadPhoto(screen);
+    expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE);
     expect(screen.getAllByRole('alert')).toHaveLength(1);
     expect(screen.getByLabelText('Dose').props.value).toBe('12');
     fireEvent.changeText(screen.getByLabelText('Dose'), '15');
