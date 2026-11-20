@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-486",
+    "date": "2026-11-20",
+    "title": "Add JSDoc for remaining hooks",
+    "status": "published",
+    "prs": [
+      486
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc for remaining hooks"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-485",
     "date": "2026-11-20",
     "title": "Add unit tests for scanner processing state",
