@@ -12,10 +12,9 @@ import IntroScreen from '../../components/IntroScreen';
 import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
-import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
 import InjectionSiteSelector from '../../components/InjectionSiteSelector';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
-import PMFSurveyModal from '../../components/PMFSurveyModal';
+import OnboardingSurvey from '../../components/OnboardingSurvey';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
@@ -32,7 +31,7 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 
-type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
 export default function NewDoseScreen() {
   const offline = useWebOffline();
@@ -271,9 +270,6 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
-    // WhyAreYouHere handlers
-    handleWhyAreYouHereSubmit,
-    handleWhyAreYouHereSkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -284,16 +280,18 @@ export default function NewDoseScreen() {
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
-    // PMF Survey
-    pmfSurveyTriggerData,
-    handlePMFSurveyComplete,
-    handlePMFSurveySkip,
+    onboardingSurvey,
+    onDoseSaved,
     // Injection site selection
     selectedInjectionSite,
     setSelectedInjectionSite,
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
   } = doseCalculator;
+
+  const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
+    ? null
+    : onboardingSurvey.prompt;
 
   useEffect(() => {
     if (offline && (screenStep === 'scan' || screenStep === 'beforeFirstScan')) {
@@ -448,7 +446,7 @@ export default function NewDoseScreen() {
       isWeb 
     });
     
-    if (isWeb && screenStep === 'scan') {
+    if (isWeb && screenStep === 'scan' && !surveyPrompt) {
       // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
       console.log("[WebCamera] Scan screen active, checking camera state", { 
         permissionStatus, 
@@ -470,7 +468,7 @@ export default function NewDoseScreen() {
       webCameraStreamRef.current.getTracks().forEach(track => track.stop());
       webCameraStreamRef.current = null;
     }
-  }, [screenStep, permissionStatus, isWeb, requestWebCameraPermission]);
+  }, [screenStep, permissionStatus, isWeb, requestWebCameraPermission, surveyPrompt]);
 
   // Add enhanced logging for isProcessing state changes
   useEffect(() => {
@@ -994,10 +992,8 @@ export default function NewDoseScreen() {
           <Text style={styles.subtitle}>
             {screenStep === 'beforeFirstScan' && 'Before You Scan'}
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
-            {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
-            {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
               `${
                 manualStep === 'dose' ? 'Enter Dose' :
@@ -1047,7 +1043,7 @@ export default function NewDoseScreen() {
           showDontShowAgain={doseCalculator.beforeFirstScanPrompt.showCount > 0}
         />
       )}
-      {screenStep === 'scan' && (
+      {screenStep === 'scan' && !surveyPrompt && (
         <ScanScreen
           permission={permission}
           permissionStatus={permissionStatus}
@@ -1132,27 +1128,12 @@ export default function NewDoseScreen() {
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          onDoseSaved={onDoseSaved}
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
-        />
-      )}
-      {screenStep === 'whyAreYouHere' && (
-        <WhyAreYouHereScreen
-          onSubmit={handleWhyAreYouHereSubmit}
-          onSkip={handleWhyAreYouHereSkip}
-          isMobileWeb={isMobileWeb}
-        />
-      )}
-      {screenStep === 'pmfSurvey' && (
-        <PMFSurveyModal
-          isVisible={true}
-          onComplete={handlePMFSurveyComplete}
-          onSkip={handlePMFSurveySkip}
-          sessionCount={pmfSurveyTriggerData.sessionCount}
-          isMobileWeb={isMobileWeb}
         />
       )}
       {screenStep === 'injectionSiteSelection' && (
@@ -1205,6 +1186,14 @@ export default function NewDoseScreen() {
         <View style={styles.loadingOverlay}>
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
+      )}
+      {surveyPrompt && (
+        <OnboardingSurvey
+          includeWhyHere={surveyPrompt.includeWhyHere}
+          sessionCount={surveyPrompt.sessionCount}
+          onComplete={onboardingSurvey.finishSurvey}
+          isMobileWeb={isMobileWeb}
+        />
       )}
       <SignUpPrompt
         visible={signUpPrompt.shouldShowPrompt}
