@@ -55,6 +55,10 @@ jobs:
       - run: npm run test:vision
       - name: Offline vision eval (accuracy informational pending verification)
         run: npm run eval:vision -- --offline
+      - name: Gate wrong numbers in development replays
+        env:
+          SAFEDOSE_EVAL_RECORDINGS: evals/vision/fixtures/development-recordings.json
+        run: npm run eval:vision -- --offline --gate-wrong-number
       - name: Write eval summary
         if: always()
         run: |
