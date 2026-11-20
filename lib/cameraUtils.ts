@@ -7,6 +7,7 @@ import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/ut
 import { CameraView } from 'expo-camera';
 
 const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
+const NATIVE_CAPTURE_ERROR = 'We could not take a photo. Try again or enter the details manually.';
 const UNREADABLE_PHOTO_MESSAGE = 'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.';
 
 // Only exact, authored messages may cross the capture/upload boundary into the UI.
@@ -14,10 +15,10 @@ const PHOTO_ERROR_MESSAGES = new Map<string, string>([
   ['No file selected or user cancelled', 'No image selected'],
   ['File selection cancelled after timeout', 'Image selection cancelled'],
   ['Selected image exceeds the 5 MB limit. Please choose a smaller image.', 'Selected image exceeds the 5 MB limit. Please choose a smaller image.'],
-  ['Camera not ready', 'Camera not ready'],
-  ['Camera permission required', 'Camera permission required'],
-  ['Camera returned no picture', 'Camera returned no picture'],
-  ['Failed to capture image data', 'Failed to capture image data'],
+  ['Camera not ready', 'The camera is not ready. Try again or enter the details manually.'],
+  ['Camera permission required', 'Allow camera access in Settings, or enter the details manually.'],
+  ['Camera returned no picture', NATIVE_CAPTURE_ERROR],
+  ['Failed to capture image data', NATIVE_CAPTURE_ERROR],
   ['Unrecognized image format', 'Image format could not be processed'],
   ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
   ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
