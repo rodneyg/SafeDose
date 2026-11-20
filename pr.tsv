@@ -1,0 +1,2 @@
+issue	pr_url	status	checks	evidence
+240		already-done	"native export; lint; TypeScript; 110 Jest suites/1247 tests; web build"	"0a0d585f2ab6fbffce863a2f99b2f5c1588a0557; evidence/native-export.log; evidence/lint.log; evidence/typecheck.log; evidence/tests.log; evidence/web-build.log"

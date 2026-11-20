@@ -1,0 +1,35 @@
+// Determine if we're in a server-side environment (Node.js) or client-side environment (Expo)
+const isServerEnvironment = typeof process !== 'undefined' && process.env && typeof window === 'undefined';
+
+// Ensure environment variables are loaded only in server environments
+if (isServerEnvironment) {
+  require('dotenv').config();
+}
+
+// Get environment variables from the appropriate source based on environment
+const getEnvVar = (key, defaultValue = undefined) => {
+  // For server-side (Vercel serverless functions), use process.env
+  if (isServerEnvironment) {
+    return process.env[key] || defaultValue;
+  }
+  // For client-side (Expo app), use expo-constants
+  try {
+    const Constants = require('expo-constants').default;
+    return Constants.expoConfig?.extra?.[key] || defaultValue;
+  } catch (error) {
+    console.warn('expo-constants not available, falling back to default', key);
+    return defaultValue;
+  }
+};
+
+let stripeMode = getEnvVar('STRIPE_MODE', 'test');
+
+// Validate mode
+if (stripeMode !== 'test' && stripeMode !== 'live') {
+  console.error(`Invalid STRIPE_MODE: ${stripeMode}. Must be 'test' or 'live'. Defaulting to 'test'.`);
+  stripeMode = 'test';
+}
+
+const effectiveMode = stripeMode === 'live' ? 'live' : 'test';
+
+const stripeConfig = {
