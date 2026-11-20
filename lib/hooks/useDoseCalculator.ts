@@ -31,6 +31,7 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
+/** Manages the complete manual-entry and photo-scan dose calculation workflow. */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());

@@ -11,6 +11,7 @@ interface BeforeFirstScanState {
   dontShowAgain: boolean;
 }
 
+/** Tracks whether the signed-in user should see the pre-scan safety prompt. */
 export function useBeforeFirstScanPrompt() {
   const { user } = useAuth();
   const [state, setState] = useState<BeforeFirstScanState>({

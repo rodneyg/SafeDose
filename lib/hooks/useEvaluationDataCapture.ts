@@ -52,6 +52,7 @@ interface EvaluationDataPoint {
   };
 }
 
+/** Captures anonymized calculation inputs and results for evaluation. */
 export function useEvaluationDataCapture() {
   const { user } = useAuth();
   const db = getFirestore();
