@@ -1,2 +1,0 @@
-issue	pr_url	status	checks	evidence
-T-1139	make_pr	open	focused tests, full tests, lint, typecheck, web build passed	evidence/focused-tests.log; evidence/tests.log; evidence/lint.log; evidence/typecheck.log; evidence/build-web.log
