@@ -39,7 +39,8 @@
     "prestart": "npm run changelog:build",
     "predev": "npm run changelog:build",
     "e2e:prod-scan": "playwright test --config playwright.prod.config.ts",
-    "smoke:prod": "node scripts/prod-smoke.mjs"
+    "smoke:prod": "node scripts/prod-smoke.mjs",
+    "test:dependabot-config": "node --test scripts/dependabot-config.test.mjs"
   },
   "vercel": {
     "projectRoot": "."
