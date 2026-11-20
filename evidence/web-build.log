@@ -1,0 +1,136 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 prebuild:web
+> npm run changelog:build
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 changelog:build
+> node scripts/changelog.js build
+
+
+> safedose@1.0.0 build:web
+> rimraf dist && CI=1 EXPO_NO_TELEMETRY=1 expo export --platform web --output-dir dist && node scripts/generate-service-worker.js
+
+Starting Metro Bundler
+Static rendering is enabled. Learn more: https://docs.expo.dev/router/reference/static-rendering/
+Web Bundled 194018ms node_modules/expo-router/entry.js (2572 modules)
+λ Bundled 200485ms node_modules/expo-router/node/render.js (2926 modules)
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [Firebase] Initializing Firebase Auth...
+λ  LOG  [Firebase] Initializing Firebase app...
+λ  LOG  [Firebase] Firebase app initialized successfully
+λ  LOG  [Firebase] Firebase Auth initialized successfully
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+λ  LOG  [RootLayout] ========== ROOT LAYOUT RENDER ==========
+λ  LOG  [RootLayout] Rendering providers and slot
+
+› web bundles (2):
+_expo/static/css/web-36b131466d2c73905dbaa30aac851e6a.css (25.8 kB)
+_expo/static/js/web/entry-c22112620c9be31c45e084391cdb48bc.js (4.56 MB)
+
+› Static routes (35):
+/logs (17 kB)
+/ (index) (17 kB)
+/login (17 kB)
+/terms (17 kB)
+/pricing (17 kB)
+/privacy (17 kB)
+/success (17 kB)
+/support (17 kB)
+/_sitemap (17 kB)
+/new-dose (17 kB)
+/settings (17 kB)
+/changelog (17 kB)
+/reference (17 kB)
+/+not-found (17 kB)
+/(tabs)/logs (17 kB)
+/reconstitution (17 kB)
+/reset-password (17 kB)
+/onboarding/age (17 kB)
+/(tabs)/new-dose (17 kB)
+/(tabs)/settings (17 kB)
+/onboarding/demo (17 kB)
+/(tabs)/reference (17 kB)
+/onboarding (17 kB)
+/_tabs_disabled/chat (17 kB)
+/_tabs_disabled/logs (17 kB)
+/onboarding/features (17 kB)
+/onboarding/userType (17 kB)
+/_tabs_disabled (17 kB)
+/_tabs_disabled/learn (17 kB)
+/onboarding/child-safety (17 kB)
+/onboarding/navigation-flow.test (17 kB)
+/onboarding/welcome.sign-in.test (17 kB)
+/onboarding/userType.recovery.test (17 kB)
+/onboarding/userType.integration.test (17 kB)
+/onboarding/userType.performance.test (17 kB)
+
+Exported: dist
+Offline build: 62 static files, 5.17 MiB

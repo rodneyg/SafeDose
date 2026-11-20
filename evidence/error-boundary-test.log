@@ -1,0 +1,17 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand components/AppErrorBoundary.test.tsx
+
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+PASS components/AppErrorBoundary.test.tsx (13.145 s)
+  AppErrorBoundary
+    ✓ renders the fallback when a child throws (8200 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        13.845 s
+Ran all test suites matching /components\/AppErrorBoundary.test.tsx/i.
