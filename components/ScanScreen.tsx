@@ -356,7 +356,7 @@ export default function ScanScreen({
           />
         )}
         <View style={styles.overlayBottom}>
-          {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          {scanError && <Text accessibilityRole="alert" style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           
           {/* Autocapture status */}
           {autoCaptureEnabled && (
@@ -486,7 +486,7 @@ export default function ScanScreen({
           mode="picture"
         />
         <View style={styles.overlayBottom}>
-          {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          {scanError && <Text accessibilityRole="alert" style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           
           {/* Autocapture status */}
           {autoCaptureEnabled && (
