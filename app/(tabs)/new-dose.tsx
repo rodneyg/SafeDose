@@ -533,10 +533,9 @@ export default function NewDoseScreen() {
       setManualSyringe(scanned.manualSyringe);
       setSyringeHint('Detected from image scan');
     }
-    if (scanned.substance) {
-      setSubstanceName(scanned.substance);
-      setSubstanceNameHint('Detected from vial scan');
-    }
+    // A scan without a readable name must not inherit a different medication's name.
+    setSubstanceName(scanned.substance ?? '');
+    setSubstanceNameHint(scanned.substance ? 'Detected from vial scan' : null);
     // Clear previous medication values so an absent field cannot reuse a stale number.
     setConcentrationAmount('');
     setConcentration(null);
