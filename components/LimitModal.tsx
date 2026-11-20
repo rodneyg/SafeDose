@@ -1,6 +1,7 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import UpgradeEmailForm from './UpgradeEmailForm';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 
 interface LimitModalProps {
@@ -8,9 +9,10 @@ interface LimitModalProps {
   isAnonymous: boolean;
   isPremium?: boolean;
   onClose: () => void;
+  getEmailCaptureToken?: () => Promise<string>;
 }
 
-export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose }: LimitModalProps) {
+export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose, getEmailCaptureToken }: LimitModalProps) {
   const router = useRouter();
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
@@ -49,13 +51,13 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>
             {isAnonymous ? 'Free Scan Limit Reached' : 'Plan Limit Reached'}
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You’ve used all 3 free scans. Sign in to get 10 scans per month or upgrade for more.'
+              ? 'You’ve used all 3 free scans. You can keep using manual entry or view upgrade options.'
               : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
           </Text>
           <View style={styles.buttonContainer}>
@@ -73,7 +75,10 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </View>
+          {visible && !isPremium && getEmailCaptureToken && (
+            <UpgradeEmailForm getIdToken={getEmailCaptureToken} onClose={onClose} />
+          )}
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -89,9 +94,13 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 24,
+    flexGrow: 0,
+    maxHeight: '90%',
     width: '85%',
     maxWidth: 400,
+  },
+  modalContent: {
+    padding: 24,
     alignItems: 'center',
   },
   title: {
