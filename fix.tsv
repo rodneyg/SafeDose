@@ -1,0 +1,2 @@
+issue	files	pr_url	checks	status
+#386	lib/hooks/usePowerUserPromotion.ts; lib/hooks/__tests__/usePowerUserPromotion.test.ts		npx jest lib/hooks/__tests__/usePowerUserPromotion.test.ts --runInBand; npx tsc --noEmit --pretty false; git diff --check	SUCCESS
