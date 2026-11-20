@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-475",
+    "date": "2026-11-20",
+    "title": "Combine the SafeDose onboarding surveys",
+    "status": "published",
+    "prs": [
+      475
+    ],
+    "sections": {
+      "Improved": [
+        "Combine the SafeDose onboarding surveys"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-472",
     "date": "2026-11-20",
     "title": "Test last dose prefill and empty history",
