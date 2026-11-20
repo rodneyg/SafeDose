@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-476",
+    "date": "2026-11-20",
+    "title": "Add GET /api/ping endpoint",
+    "status": "published",
+    "prs": [
+      476
+    ],
+    "sections": {
+      "Improved": [
+        "Add GET /api/ping endpoint"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-475",
     "date": "2026-11-20",
     "title": "Combine the SafeDose onboarding surveys",
