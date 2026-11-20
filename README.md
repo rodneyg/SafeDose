@@ -122,7 +122,7 @@ rodneyg-safedose/
 │   └── FINE_TUNING_QUICK_START.md  # Quick start guide
 ├── evals/               # Evaluation framework
 │   ├── test-sets/       # Evaluation test cases
-│   ├── exported-data/   # Captured user interaction data
+│   ├── exported-data/   # Output from the sample evaluation exporter
 │   └── README.md        # Evaluation documentation
 ├── types/               # Global type definitions
 ├── Evals.md             # Evaluation framework overview
