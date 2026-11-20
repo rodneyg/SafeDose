@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-489",
+    "date": "2026-11-20",
+    "title": "Add unit tests for usePowerUserPromotion",
+    "status": "published",
+    "prs": [
+      489
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for usePowerUserPromotion"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-488",
     "date": "2026-11-20",
     "title": "Expose dose calculator input types",
