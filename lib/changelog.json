@@ -112,6 +112,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-477",
+    "date": "2026-11-20",
+    "title": "Add optional SafeDose protocol scheduler",
+    "status": "published",
+    "prs": [
+      477
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional SafeDose protocol scheduler"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-476",
     "date": "2026-11-20",
     "title": "Add GET /api/ping endpoint",
