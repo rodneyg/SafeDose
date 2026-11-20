@@ -2,12 +2,16 @@ import { act, renderHook } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../analytics';
-import { addDocWithEnv } from '../firestoreWithEnv';
+import { setDocWithEnv } from '../firestoreWithEnv';
 
 let mockUser: { uid: string; isAnonymous: boolean } | null;
 jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
-jest.mock('firebase/firestore', () => ({ getFirestore: () => ({}), collection: (_db: unknown, name: string) => name }));
-jest.mock('../firestoreWithEnv', () => ({ addDocWithEnv: jest.fn() }));
+jest.mock('firebase/firestore', () => ({
+  getFirestore: () => ({}),
+  collection: (_db: unknown, name: string) => name,
+  doc: (collectionName: string) => ({ id: 'auto-id', collectionName }),
+}));
+jest.mock('../firestoreWithEnv', () => ({ setDocWithEnv: jest.fn() }));
 jest.mock('../analytics', () => ({
   logAnalyticsEvent: jest.fn(),
   ANALYTICS_EVENTS: {
@@ -51,7 +55,8 @@ it('claims the prompt once on the second saved dose and preserves both data form
   expect(JSON.parse((await AsyncStorage.getItem('whyAreYouHereResponse_test-user'))!)).toMatchObject({
     response: 'other', customText: 'A forum', userId: 'test-user', isAnonymous: false,
   });
-  expect(addDocWithEnv).toHaveBeenCalledWith('pmf_survey_responses', expect.objectContaining({
+  expect(setDocWithEnv).toHaveBeenCalledWith({ id: 'auto-id', collectionName: 'pmf_survey_responses' }, expect.objectContaining({
+    id: 'pmf_auto-id', sessionId: 'pmf_auto-id',
     userId: 'test-user', responses: pmf, metadata: expect.objectContaining({ sessionCount: 2, scanFlow: true }),
   }));
   expect(logAnalyticsEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.PMF_SURVEY_COMPLETED, expect.objectContaining({
@@ -70,7 +75,7 @@ it('skips without a remote write and leaves the account ineligible for a repeat'
   await act(async () => result.current.offerSurvey(2, 'manual'));
   await act(async () => result.current.finishSurvey({ questionIndex: 0 }));
   expect(result.current.prompt).toBeNull();
-  expect(addDocWithEnv).not.toHaveBeenCalled();
+  expect(setDocWithEnv).not.toHaveBeenCalled();
   expect(await AsyncStorage.getItem('whyAreYouHerePromptShown_anonymous')).toBe('true');
   expect(logAnalyticsEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.PMF_SURVEY_SKIPPED, expect.objectContaining({ isAnonymous: true }));
   await act(async () => result.current.offerSurvey(2, 'manual'));
@@ -107,7 +112,7 @@ it('drops an old account’s prompt on sign-in and uses only the current account
   await act(async () => staleOffer(2, 'scan'));
   await act(async () => result.current.offerSurvey(1, 'scan'));
   expect(result.current.prompt).toBeNull();
-  expect(addDocWithEnv).not.toHaveBeenCalled();
+  expect(setDocWithEnv).not.toHaveBeenCalled();
   await act(async () => result.current.offerSurvey(2, 'scan'));
   expect(result.current.prompt).toMatchObject({ userId: 'returning', lastSessionType: 'scan' });
 });

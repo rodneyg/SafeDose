@@ -1,10 +1,10 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, getFirestore } from 'firebase/firestore';
+import { collection, doc, getFirestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import type { OnboardingSurveyResult, PMFSurveyResponse } from '../../types/pmf-survey';
 import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../analytics';
-import { addDocWithEnv } from '../firestoreWithEnv';
+import { setDocWithEnv } from '../firestoreWithEnv';
 
 type SurveyPrompt = {
   storageId: string;
@@ -95,16 +95,6 @@ export function useOnboardingSurvey() {
       return;
     }
 
-    const sessionId = `pmf_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-    const surveyResponse: PMFSurveyResponse = {
-      id: sessionId,
-      ...(userId ? { userId } : {}),
-      sessionId,
-      deviceType: 'web',
-      timestamp,
-      responses: pmf,
-      metadata: { sessionCount, scanFlow: lastSessionType === 'scan', completedAt: timestamp },
-    };
     logAnalyticsEvent(ANALYTICS_EVENTS.PMF_SURVEY_COMPLETED, {
       ...analytics,
       hasDisappointmentResponse: !!pmf.disappointment,
@@ -113,7 +103,18 @@ export function useOnboardingSurvey() {
       hasImprovementsResponse: !!pmf.improvements,
     });
     try {
-      await addDocWithEnv(collection(getFirestore(), 'pmf_survey_responses'), surveyResponse);
+      const responseDoc = doc(collection(getFirestore(), 'pmf_survey_responses'));
+      const sessionId = `pmf_${responseDoc.id}`;
+      const surveyResponse: PMFSurveyResponse = {
+        id: sessionId,
+        ...(userId ? { userId } : {}),
+        sessionId,
+        deviceType: 'web',
+        timestamp,
+        responses: pmf,
+        metadata: { sessionCount, scanFlow: lastSessionType === 'scan', completedAt: timestamp },
+      };
+      await setDocWithEnv(responseDoc, surveyResponse);
     } catch (error) {
       console.error('Error saving PMF survey:', error);
     }
