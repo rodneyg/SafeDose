@@ -1,0 +1,2 @@
+pr_url	status	evidence
+https://github.com/rodneyg/SafeDose/pull/482	already-done	commit 25bc623 already documents useAuth with summary, @returns, and @throws on current main
