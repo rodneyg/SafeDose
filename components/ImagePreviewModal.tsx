@@ -161,6 +161,8 @@ export default function ImagePreviewModal({
             <TouchableOpacity 
               style={[styles.button, styles.retakeButton]} 
               onPress={handleRetake}
+              accessibilityLabel="Retake photo"
+              accessibilityRole="button"
             >
               <Text style={styles.buttonText}>Retake</Text>
             </TouchableOpacity>

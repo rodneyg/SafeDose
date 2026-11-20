@@ -1,17 +1,18 @@
 STATUS: SUCCESS
-User-defined dosing presets are implemented with local persistence and save, apply, and empty-state tests.
+
+Added focused tests for issue #376 that prove processing is enabled before capture and disabled by the final cleanup on both success and error.
 
 ## ATTEMPTS
-- Confirmed the preset gap in the checked-out main snapshot by searching app, components, and lib.
-- GitHub CLI was unavailable because this isolated checkout has no remote and gh is not authenticated.
-- Retried through the required make_pr integration after commit.
-- The board Sheet could not be edited because no signed-in Sheets route is available in this isolated environment. The exact update is in pending-board-update.tsv.
 
-## Evidence paths
-- fix.tsv
-- components/DosingPresets.test.tsx
-- lib/dosingPresets.test.ts
+- Inspected the current scanner implementation and existing upload tests.
+- Added a focused parameterized test for the success and error paths.
+
+Evidence paths:
+- `lib/cameraUtils.upload.test.ts`
+- `fix.tsv`
+- `pending-board-update.tsv`
 
 ## How we verified
-- Focused Jest tests cover preset save, apply, missing storage, malformed storage, and the empty UI state.
-- TypeScript compilation and repository lint completed successfully.
+
+- `npx jest lib/cameraUtils.upload.test.ts --runInBand` passed with 14 tests.
+- `npx tsc --noEmit --pretty false` passed.

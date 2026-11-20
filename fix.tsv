@@ -1,2 +1,2 @@
-issue	pr_url	checks	merged_at_et	status
-331	pending make_pr metadata	local tests passed		not merged
+issue	files	pr_url	checks	status
+376	lib/cameraUtils.upload.test.ts	not-created (make_pr metadata prepared)	npx jest lib/cameraUtils.upload.test.ts --runInBand; npx tsc --noEmit --pretty false	SUCCESS

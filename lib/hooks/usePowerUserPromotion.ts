@@ -14,6 +14,7 @@ const POWER_USER_STORAGE_KEY = 'powerUserPromotion_v2'; // Added v2 to force fre
 const MIN_DOSES_FOR_PROMOTION = 4;
 const DAYS_BETWEEN_PROMOTIONS = 14; // 2 weeks
 
+/** Tracks dose milestones and subscription state for upgrade prompts. */
 export function usePowerUserPromotion() {
   const { user } = useAuth();
   const db = getFirestore();
