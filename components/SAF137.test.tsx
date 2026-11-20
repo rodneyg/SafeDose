@@ -272,3 +272,55 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
     expectStep(index);
   }
 });
+
+it.each([
+  ['0', /invalid dose/i, false],
+  ['0.000001', /outside safe thresholds/i, true],
+  ['1000000000000000', /2 mL per-injection safety limit/i, true],
+  ['1 mg', /invalid dose/i, false],
+] as const)('keeps dose %s from reaching the draw result', (dose, error, showVolumeErrorModal) => {
+  const h = hook();
+  act(() => {
+    h().setDose(dose);
+    h().setMedicationInputType('concentration');
+    h().setConcentrationAmount('10');
+  });
+  act(() => h().handleCalculateFinal());
+
+  expect(h().calculationError).toMatch(error);
+  expect(h().calculatedVolume).toBeNull();
+  expect(h().recommendedMarking).toBeNull();
+  expect(h().showVolumeErrorModal).toBe(showVolumeErrorModal);
+  if (showVolumeErrorModal) act(() => h().handleCloseVolumeErrorModal());
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
+
+it.each([
+  ['0', '1', 'mg', /invalid dose/i],
+  ['1', '0', 'mg', /valid total amount/i],
+  ['1', '10', 'units', /vial and concentration units are incompatible/i],
+] as const)('clears a prior derived concentration before reviewing dose %s and vial %s %s', (dose, total, totalUnit, error) => {
+  const h = hook();
+  act(() => {
+    h().setDose('1');
+    h().setMedicationInputType('totalAmount');
+    h().setTotalAmount('10');
+    h().setSolutionVolume('2');
+  });
+  act(() => h().handleCalculateFinal());
+  expect(h().calculatedConcentration).toBe(5);
+
+  act(() => {
+    h().setDose(dose);
+    h().setTotalAmount(total);
+    h().setTotalAmountUnit(totalUnit);
+  });
+
+  expect(h().calculationError).toMatch(error);
+  expect(h().calculatedConcentration).toBeNull();
+  expect(h().calculatedVolume).toBeNull();
+  expect(h().recommendedMarking).toBeNull();
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
