@@ -28,6 +28,7 @@ jest.mock('expo-router', () => ({
 }));
 const mockNoop = jest.fn();
 const mockCalculator = new Proxy({
+  onboardingSurvey: { prompt: null },
   resetFullForm: jest.fn(),
   screenStep: 'manualEntry', manualStep: 'finalResult', stateHealth: 'healthy',
   manualSyringe: { type: 'Standard', volume: '3 ml' }, logUsageData: { plan: 'free' },
@@ -44,10 +45,8 @@ jest.mock('./IntroScreen', () => 'IntroScreen');
 jest.mock('./BeforeFirstScanScreen', () => 'BeforeFirstScanScreen');
 jest.mock('./ScanScreen', () => 'ScanScreen');
 jest.mock('./ManualEntryScreen', () => 'ManualEntryScreen');
-jest.mock('./WhyAreYouHereScreen', () => 'WhyAreYouHereScreen');
 jest.mock('./InjectionSiteSelector', () => 'InjectionSiteSelector');
 jest.mock('./PostDoseFeedbackScreen', () => 'PostDoseFeedbackScreen');
-jest.mock('./PMFSurveyModal', () => 'PMFSurveyModal');
 jest.mock('./LimitModal', () => 'LimitModal');
 jest.mock('./LogLimitModal', () => 'LogLimitModal');
 jest.mock('./VolumeErrorModal', () => 'VolumeErrorModal');

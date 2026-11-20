@@ -3,8 +3,15 @@
 **Labels pending Rodney verification. Scores are not an official accuracy gate.**
 
 The app and harness use `lib/scan`: `readScan`, `parseScanModelOutput`,
-`mapScanToDoseInputs`, and the same `SCAN_PROMPT` and request builder. This PR
-changes evaluation tooling only. It does not change the app prompt or dosing math.
+`mapScanToDoseInputs`, and the same `SCAN_PROMPT` and request builder. The app
+withholds the model's fill estimate and requires the user to verify the syringe
+and vial label before opening dose entry.
+
+The scorer reports accepted scans with withheld fills as `unconfirmed-fill`
+when there is no visible mismatch. It preserves raw fill errors in field
+accuracy, and continues to count wrong visible scan metadata or calculated
+numbers. Authored dose scenarios simulate manual entry after verification.
+The recorded holdout replays exercise the pre-verification gate.
 
 ## Dataset and provenance
 

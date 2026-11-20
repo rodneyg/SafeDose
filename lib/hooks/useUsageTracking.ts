@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getFirestore, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import { setDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,16 +10,16 @@ import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
 import { FREE_SCAN_LIMIT, getLimitForPlan, hasScanCapacity, isPaidPlan } from '../plans';
 import { getSubscriptionStatus } from '../subscriptionStatus';
 
-type ScanUsage = { scansUsed: number; lastReset: string | null };
-type UsageData = ScanUsage & { plan: string; limit: number };
-const EMPTY_USAGE: UsageData = { scansUsed: 0, lastReset: null, plan: 'free', limit: FREE_SCAN_LIMIT };
+type ScanCounts = { scansUsed: number; lastReset: string | null };
+export type ScanUsage = ScanCounts & { plan: string; limit: number };
+const EMPTY_USAGE: ScanUsage = { scansUsed: 0, lastReset: null, plan: 'free', limit: FREE_SCAN_LIMIT };
 
 function monthStart() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 }
 
-async function cachedScans(uid: string): Promise<ScanUsage> {
+async function cachedScans(uid: string): Promise<ScanCounts> {
   try {
     const cached = JSON.parse((await AsyncStorage.getItem(`usage_${uid}`)) || 'null');
     if (cached?.lastReset >= monthStart()) {
@@ -29,7 +31,7 @@ async function cachedScans(uid: string): Promise<ScanUsage> {
   return EMPTY_USAGE;
 }
 
-async function saveCachedScans(uid: string, { scansUsed, lastReset }: ScanUsage) {
+async function saveCachedScans(uid: string, { scansUsed, lastReset }: ScanCounts) {
   try {
     await AsyncStorage.setItem(`usage_${uid}`, JSON.stringify({ scansUsed, lastReset }));
   } catch {
@@ -37,38 +39,42 @@ async function saveCachedScans(uid: string, { scansUsed, lastReset }: ScanUsage)
   }
 }
 
+async function readScans(db: Firestore, uid: string): Promise<ScanCounts | null> {
+  const ref = doc(db, 'users', uid);
+  const snapshot = await getDoc(ref);
+  if (snapshot.metadata.fromCache) return null;
+  const data = snapshot.data();
+  const start = monthStart();
+  if (!data?.lastReset || data.lastReset < start) {
+    const reset = { scansUsed: 0, lastReset: start };
+    await setDocWithEnv(ref, reset, { merge: true });
+    return reset;
+  }
+  return { scansUsed: data.scansUsed || 0, lastReset: data.lastReset };
+}
+
+/** Tracks photo-scan usage, connectivity, and plan capacity for the current user. */
 export function useUsageTracking() {
   const { user, auth } = useAuth();
   const db = getFirestore();
-  const [state, setState] = useState<{ uid: string; usage: UsageData }>();
+  const [state, setState] = useState<{ uid: string; usage: ScanUsage; verified: boolean }>();
   const [isOnline, setIsOnline] = useState(true);
-  const usageData = state && state.uid === user?.uid ? state.usage : EMPTY_USAGE;
+  const currentUsage = state?.uid === user?.uid ? state : undefined;
+  const usageData = currentUsage?.usage ?? EMPTY_USAGE;
 
-  async function readScans(uid: string): Promise<ScanUsage> {
-    if (!isOnline) return cachedScans(uid);
-    try {
-      const ref = doc(db, 'users', uid);
-      const data = (await getDoc(ref)).data();
-      const start = monthStart();
-      if (!data?.lastReset || data.lastReset < start) {
-        const reset = { scansUsed: 0, lastReset: start };
-        await setDocWithEnv(ref, reset, { merge: true });
-        return reset;
-      }
-      return { scansUsed: data.scansUsed || 0, lastReset: data.lastReset };
-    } catch {
-      return cachedScans(uid);
-    }
-  }
-
-  async function readUsage(account: NonNullable<typeof user>, signal?: AbortSignal): Promise<UsageData> {
+  const readUsage = useCallback(async (account: User, signal?: AbortSignal) => {
     const [scans, subscription] = await Promise.all([
-      readScans(account.uid),
+      isOnline ? readScans(db, account.uid).catch(() => null) : null,
       account.isAnonymous || !isOnline ? null : getSubscriptionStatus(account, signal).catch(() => null),
     ]);
+    const counts = scans ?? await cachedScans(account.uid);
     const plan = subscription?.hasActiveSubscription && isPaidPlan(subscription.plan) ? subscription.plan : 'free';
-    return { ...scans, plan, limit: getLimitForPlan(plan, account.isAnonymous) };
-  }
+    return {
+      uid: account.uid,
+      usage: { ...counts, plan, limit: getLimitForPlan(plan, account.isAnonymous) },
+      verified: scans !== null && (account.isAnonymous || subscription !== null),
+    };
+  }, [db, isOnline]);
 
   useEffect(() => {
     let canceled = false;
@@ -84,26 +90,28 @@ export function useUsageTracking() {
     if (!user?.uid) return;
 
     const controller = new AbortController();
-    readUsage(user, controller.signal).then(usage => {
+    readUsage(user, controller.signal).then(result => {
       if (controller.signal.aborted) return;
-      setState({ uid: user.uid, usage });
-      void saveCachedScans(user.uid, usage);
+      setState(result);
+      void saveCachedScans(user.uid, result.usage);
       setAnalyticsUserProperties({
-        [USER_PROPERTIES.PLAN_TYPE]: usage.plan,
+        [USER_PROPERTIES.PLAN_TYPE]: result.usage.plan,
         [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
       });
     });
     return () => controller.abort();
-  }, [user, db, isOnline]);
+  }, [user, readUsage]);
 
-  const checkUsageLimit = async () => {
+  const checkUsageLimit = async (onVerifiedUsage?: (usage: ScanUsage) => void) => {
     if (!user?.uid) return false;
 
-    const usage = await readUsage(user);
+    const result = await readUsage(user);
     if (auth && auth.currentUser?.uid !== user.uid) return false;
-    setState({ uid: user.uid, usage });
-    await saveCachedScans(user.uid, usage);
-    return hasScanCapacity(usage.scansUsed, usage.limit);
+    setState(result);
+    await saveCachedScans(user.uid, result.usage);
+    if (auth && auth.currentUser?.uid !== user.uid) return false;
+    if (result.verified) onVerifiedUsage?.(result.usage);
+    return hasScanCapacity(result.usage.scansUsed, result.usage.limit);
   };
 
   const incrementScansUsed = async () => {
@@ -112,12 +120,12 @@ export function useUsageTracking() {
     try {
       await updateDoc(doc(db, 'users', user.uid), { scansUsed: increment(1) });
       const usage = { ...usageData, scansUsed: usageData.scansUsed + 1 };
-      setState({ uid: user.uid, usage });
+      setState({ uid: user.uid, usage, verified: currentUsage?.verified ?? false });
       await saveCachedScans(user.uid, usage);
     } catch {
       console.warn('Could not update scan usage.');
     }
   };
 
-  return { usageData, checkUsageLimit, incrementScansUsed };
+  return { usageData, hasVerifiedUsage: currentUsage?.verified ?? false, checkUsageLimit, incrementScansUsed };
 }

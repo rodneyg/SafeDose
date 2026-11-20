@@ -12,17 +12,18 @@ import IntroScreen from '../../components/IntroScreen';
 import BeforeFirstScanScreen from '../../components/BeforeFirstScanScreen';
 import ScanScreen from '../../components/ScanScreen';
 import ManualEntryScreen from '../../components/ManualEntryScreen';
-import WhyAreYouHereScreen from '../../components/WhyAreYouHereScreen';
 import InjectionSiteSelector from '../../components/InjectionSiteSelector';
 import PostDoseFeedbackScreen from '../../components/PostDoseFeedbackScreen';
-import PMFSurveyModal from '../../components/PMFSurveyModal';
+import OnboardingSurvey from '../../components/OnboardingSurvey';
 import LimitModal from '../../components/LimitModal';
 import LogLimitModal from '../../components/LogLimitModal';
 import VolumeErrorModal from '../../components/VolumeErrorModal'; // Import the new modal
 import ImagePreviewModal from '../../components/ImagePreviewModal'; // Import image preview modal
 import SignUpPrompt from '../../components/SignUpPrompt'; // Import sign-up prompt
 import useDoseCalculator from '../../lib/hooks/useDoseCalculator';
-import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { useUsageTracking, type ScanUsage } from '../../lib/hooks/useUsageTracking';
+import UpgradeNudge from '../../components/UpgradeNudge';
+import { isFreeScanPlan, photoUpgradeNudge, recordSuccessfulScan, type UpgradeNudgeKind } from '../../lib/upgradeNudges';
 import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
@@ -31,14 +32,20 @@ import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { DosingPreset } from '../../lib/dosingPresets';
 
-type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'whyAreYouHere' | 'injectionSiteSelection' | 'postDoseFeedback' | 'pmfSurvey';
+type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
 export default function NewDoseScreen() {
   const offline = useWebOffline();
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { usageData, checkUsageLimit, incrementScansUsed } = useUsageTracking();
+  const { usageData, hasVerifiedUsage, checkUsageLimit, incrementScansUsed } = useUsageTracking();
+  const [scanNudge, setScanNudge] = useState<{
+    userId: string;
+    kind: ReturnType<typeof photoUpgradeNudge>;
+  } | null>(null);
+  const scanAttemptInProgress = useRef(false);
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -271,9 +278,6 @@ export default function NewDoseScreen() {
     feedbackContext,
     handleGoToFeedback,
     handleFeedbackComplete,
-    // WhyAreYouHere handlers
-    handleWhyAreYouHereSubmit,
-    handleWhyAreYouHereSkip,
     validateDoseInput,
     validateConcentrationInput,
     // Last action tracking
@@ -284,16 +288,18 @@ export default function NewDoseScreen() {
     handleCloseLogLimitModal,
     handleContinueWithoutSaving,
     logUsageData,
-    // PMF Survey
-    pmfSurveyTriggerData,
-    handlePMFSurveyComplete,
-    handlePMFSurveySkip,
+    onboardingSurvey,
+    onDoseSaved,
     // Injection site selection
     selectedInjectionSite,
     setSelectedInjectionSite,
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
   } = doseCalculator;
+
+  const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
+    ? null
+    : onboardingSurvey.prompt;
 
   useEffect(() => {
     if (offline && (screenStep === 'scan' || screenStep === 'beforeFirstScan')) {
@@ -316,9 +322,21 @@ export default function NewDoseScreen() {
   const webCameraRequestInFlight = useRef(false);
 
   // Image preview modal state
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const [capturedImageUri, setCapturedImageUri] = useState<string>('');
-  const [pendingScanResult, setPendingScanResult] = useState<any>(null);
+  const [pendingScanResult, setPendingScanResult] = useState<ScanResult | null>(null);
+
+  const applyDosingPreset = useCallback((preset: DosingPreset) => {
+    setDose(preset.dose);
+    setUnit(preset.unit);
+    setSubstanceName(preset.substanceName);
+    setMedicationInputType(preset.medicationInputType);
+    setConcentrationAmount(preset.concentrationAmount);
+    setConcentrationUnit(preset.concentrationUnit);
+    setTotalAmount(preset.totalAmount);
+    doseCalculator.setTotalAmountUnit(preset.totalAmountUnit);
+    setSolutionVolume(preset.solutionVolume);
+    setManualSyringe(preset.manualSyringe);
+    setManualStep('dose');
+  }, [doseCalculator, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
 
   console.log('Usage Data:', usageData);
 
@@ -448,7 +466,7 @@ export default function NewDoseScreen() {
       isWeb 
     });
     
-    if (isWeb && screenStep === 'scan') {
+    if (isWeb && screenStep === 'scan' && !surveyPrompt) {
       // Request camera permission if undetermined, or re-establish stream if permission granted but no active stream
       console.log("[WebCamera] Scan screen active, checking camera state", { 
         permissionStatus, 
@@ -470,7 +488,7 @@ export default function NewDoseScreen() {
       webCameraStreamRef.current.getTracks().forEach(track => track.stop());
       webCameraStreamRef.current = null;
     }
-  }, [screenStep, permissionStatus, isWeb, requestWebCameraPermission]);
+  }, [screenStep, permissionStatus, isWeb, requestWebCameraPermission, surveyPrompt]);
 
   // Add enhanced logging for isProcessing state changes
   useEffect(() => {
@@ -503,10 +521,10 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
-  // Function to apply scan results to form state
-  const applyScanResults = (result: ScanResult) => {
-    const mapped = mapScanToDoseInputs(result);
-    if (mapped.status === 'needs-input') {
+  // Only called by the user's verification action in ImagePreviewModal.
+  const applyVerifiedScanResults = (result: ScanResult) => {
+    const mapped = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
+    if (mapped.status !== 'ready') {
       setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
       return;
     }
@@ -561,7 +579,9 @@ export default function NewDoseScreen() {
       } : {}),
     });
     console.log('[Process] Scan successful, transitioning to manual entry');
-    // Clear calculation-related state without resetting the scan results
+    // Start with an empty dose so the user supplies it for this scan.
+    setDose('');
+    setDoseValue(null);
     doseCalculator.setGuidance(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
@@ -756,7 +776,7 @@ export default function NewDoseScreen() {
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
     
     // Don't proceed if already processing
-    if (isProcessing) {
+    if (scanAttemptInProgress.current || isProcessing) {
       console.log('handleScanAttempt: Already processing, ignoring request');
       return;
     }
@@ -770,13 +790,15 @@ export default function NewDoseScreen() {
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
+    scanAttemptInProgress.current = true;
+    setScanNudge(null);
     try {
-      const canProceed = await handleCapture();
+      const checked: { usage?: ScanUsage } = {};
+      const canProceed = await handleCapture(usage => { checked.usage = usage; });
       console.log('handleScanAttempt: canProceed=', canProceed);
       if (!canProceed) {
         console.log('handleScanAttempt: Showing LimitModal');
-        logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
-        setShowLimitModal(true);
+        openScanLimit();
         return;
       }
 
@@ -799,6 +821,10 @@ export default function NewDoseScreen() {
       if (result) {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
+        const firstLocalScan = await recordSuccessfulScan(user.uid);
+        if (checked.usage) {
+          setScanNudge({ userId: user.uid, kind: photoUpgradeNudge(checked.usage, firstLocalScan) });
+        }
         
         // Track interaction for sign-up prompt
         signUpPrompt.trackInteraction();
@@ -829,17 +855,7 @@ export default function NewDoseScreen() {
           });
         }
         
-        // If we have a captured image, show the preview modal first
-        if (result.capturedImage?.uri) {
-          console.log('[Process] Showing image preview modal');
-          setCapturedImageUri(result.capturedImage.uri);
-          setPendingScanResult(result);
-          setShowImagePreview(true);
-          return; // Don't proceed to manual entry yet
-        }
-
-        // If no captured image, proceed directly (fallback for older flow)
-        applyScanResults(result);
+        setPendingScanResult(result);
       } else {
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
         // The capture utility supplies a specific error. Keep it visible on Scan;
@@ -864,8 +880,15 @@ export default function NewDoseScreen() {
       setIsProcessing(false);
       
       setScanError('We could not process this photo. Please try again or enter the details manually.');
+    } finally {
+      scanAttemptInProgress.current = false;
     }
   };
+
+  const openScanLimit = useCallback(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
+    setShowLimitModal(true);
+  }, []);
 
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
@@ -874,8 +897,7 @@ export default function NewDoseScreen() {
     const canProceed = hasScanCapacity(usageData.scansUsed, usageData.limit);
     if (!canProceed) {
       console.log('handleTryAIScan: Showing LimitModal');
-      logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
-      setShowLimitModal(true);
+      openScanLimit();
       return;
     }
 
@@ -884,7 +906,7 @@ export default function NewDoseScreen() {
     
     // Transition to scan screen
     setScreenStep('scan');
-  }, [usageData.scansUsed, usageData.limit, setScreenStep]);
+  }, [usageData.scansUsed, usageData.limit, setScreenStep, openScanLimit]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
@@ -921,23 +943,16 @@ export default function NewDoseScreen() {
   // Image preview modal handlers
   const handleImagePreviewRetake = useCallback(() => {
     console.log('[ImagePreview] User chose to retake image');
-    setShowImagePreview(false);
-    setCapturedImageUri('');
     setPendingScanResult(null);
+    setScanNudge(null);
     // Stay on scan screen for retake
   }, []);
 
-  const handleImagePreviewContinue = useCallback(() => {
-    console.log('[ImagePreview] User chose to continue with image');
-    setShowImagePreview(false);
-    setCapturedImageUri('');
-    
-    // Apply the pending scan results and proceed to manual entry
-    if (pendingScanResult) {
-      applyScanResults(pendingScanResult);
-      setPendingScanResult(null);
-    }
-  }, [pendingScanResult]);
+  const handleImagePreviewVerified = () => {
+    if (!pendingScanResult) return;
+    applyVerifiedScanResults(pendingScanResult);
+    setPendingScanResult(null);
+  };
 
   // Feedback handlers
   const handleFeedbackSubmit = useCallback(async (feedbackType: any, notes?: string) => {
@@ -977,6 +992,16 @@ export default function NewDoseScreen() {
 
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
+  const canOfferUpgrade = user?.uid && hasVerifiedUsage && !offline && isFreeScanPlan(usageData);
+  const showScanNudge = manualStep === 'dose' && pendingScanResult === null && scanNudge?.userId === user?.uid;
+  const showManualNudge = manualStep === 'finalResult' && !calculationError && recommendedMarking &&
+    lastActionType !== 'scan' && usageData.scansUsed === 0;
+  let nudgeKind: UpgradeNudgeKind | null = null;
+  if (screenStep === 'manualEntry' && canOfferUpgrade) {
+    if (showScanNudge) nudgeKind = scanNudge?.kind ?? null;
+    if (showManualNudge) nudgeKind = 'manualEntry';
+  }
+
   // Tabs retain mounted screens. Hide the entire dose flow and its modals on blur.
   if (!isScreenActive) return null;
 
@@ -994,10 +1019,8 @@ export default function NewDoseScreen() {
           <Text style={styles.subtitle}>
             {screenStep === 'beforeFirstScan' && 'Before You Scan'}
             {screenStep === 'scan' && 'Scan Syringe & Vial'}
-            {screenStep === 'whyAreYouHere' && 'Quick Question'}
             {screenStep === 'injectionSiteSelection' && 'Select Injection Site'}
             {screenStep === 'postDoseFeedback' && 'Share Your Experience'}
-            {screenStep === 'pmfSurvey' && 'Quick Survey'}
             {screenStep === 'manualEntry' && (
               `${
                 manualStep === 'dose' ? 'Enter Dose' :
@@ -1032,6 +1055,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
+          onScanLimit={openScanLimit}
           onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
         />
       )}
@@ -1047,7 +1071,7 @@ export default function NewDoseScreen() {
           showDontShowAgain={doseCalculator.beforeFirstScanPrompt.showCount > 0}
         />
       )}
-      {screenStep === 'scan' && (
+      {screenStep === 'scan' && !surveyPrompt && (
         <ScanScreen
           permission={permission}
           permissionStatus={permissionStatus}
@@ -1082,6 +1106,9 @@ export default function NewDoseScreen() {
       )}
       {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
         <Text accessibilityRole="alert">{scanError}</Text>
+      )}
+      {nudgeKind && user?.uid && (
+        <UpgradeNudge key={`${user.uid}:${nudgeKind}`} userId={user.uid} kind={nudgeKind} />
       )}
       {screenStep === 'manualEntry' && (
         <ManualEntryScreen
@@ -1132,27 +1159,13 @@ export default function NewDoseScreen() {
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          onDoseSaved={onDoseSaved}
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
-        />
-      )}
-      {screenStep === 'whyAreYouHere' && (
-        <WhyAreYouHereScreen
-          onSubmit={handleWhyAreYouHereSubmit}
-          onSkip={handleWhyAreYouHereSkip}
-          isMobileWeb={isMobileWeb}
-        />
-      )}
-      {screenStep === 'pmfSurvey' && (
-        <PMFSurveyModal
-          isVisible={true}
-          onComplete={handlePMFSurveyComplete}
-          onSkip={handlePMFSurveySkip}
-          sessionCount={pmfSurveyTriggerData.sessionCount}
-          isMobileWeb={isMobileWeb}
+          onApplyPreset={applyDosingPreset}
         />
       )}
       {screenStep === 'injectionSiteSelection' && (
@@ -1176,6 +1189,9 @@ export default function NewDoseScreen() {
         visible={showLimitModal}
         isAnonymous={user?.isAnonymous ?? true}
         isPremium={usageData.plan !== 'free'}
+        getEmailCaptureToken={user && !hasScanCapacity(usageData.scansUsed, usageData.limit)
+          ? () => user.getIdToken()
+          : undefined}
         onClose={() => setShowLimitModal(false)}
       />
       <LogLimitModal
@@ -1194,17 +1210,24 @@ export default function NewDoseScreen() {
         // volumeErrorValue={volumeErrorValue} // Pass if needed by the modal for display
       />
       <ImagePreviewModal
-        visible={showImagePreview}
-        imageUri={capturedImageUri}
+        visible={pendingScanResult !== null}
+        imageUri={pendingScanResult?.capturedImage?.uri ?? ''}
         scanResult={pendingScanResult}
         onRetake={handleImagePreviewRetake}
-        onContinue={handleImagePreviewContinue}
-        autoAdvanceDelay={15000} // 15 seconds auto-advance for concentration
+        onVerify={handleImagePreviewVerified}
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>
           <Text style={styles.loadingText}>{processingMessage}</Text>
         </View>
+      )}
+      {surveyPrompt && (
+        <OnboardingSurvey
+          includeWhyHere={surveyPrompt.includeWhyHere}
+          sessionCount={surveyPrompt.sessionCount}
+          onComplete={onboardingSurvey.finishSurvey}
+          isMobileWeb={isMobileWeb}
+        />
       )}
       <SignUpPrompt
         visible={signUpPrompt.shouldShowPrompt}

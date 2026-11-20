@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,10 +6,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog, InjectionSite } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
+/** Logs completed doses and exposes the current log-limit state. */
 export function useDoseLogging() {
   const { user } = useAuth();
   const db = getFirestore();
   const [isLogging, setIsLogging] = useState(false);
+  const isLoggingRef = useRef(false);
   const { logUsageData, checkLogUsageLimit, incrementLogsUsed } = useLogUsageTracking();
 
   // Save dose log to local storage
@@ -41,6 +43,7 @@ export function useDoseLogging() {
       } else {
         console.warn('[useDoseLogging] Warning: Verification failed - no data found after save');
       }
+      return logsList.length;
     } catch (error) {
       console.error('[useDoseLogging] Error saving dose log locally:', error);
     }
@@ -143,9 +146,10 @@ export function useDoseLogging() {
       solutionVolume?: string;
     },
     notes?: string
-  ): Promise<{ success: boolean; limitReached?: boolean }> => {
-    if (isLogging) return { success: false };
+  ): Promise<{ success: boolean; limitReached?: boolean; localDoseCount?: number }> => {
+    if (isLoggingRef.current) return { success: false };
     
+    isLoggingRef.current = true;
     setIsLogging(true);
     
     try {
@@ -212,21 +216,22 @@ export function useDoseLogging() {
       }
       
       // Save locally (always works, now includes Firestore ID if available)
-      await saveDoseLogLocally(doseLog);
+      const localDoseCount = await saveDoseLogLocally(doseLog);
       
       // Increment log usage count
       await incrementLogsUsed();
       
       console.log('Dose logged successfully:', doseLog.id);
-      return { success: true };
+      return { success: true, localDoseCount };
     } catch (error) {
       console.error('Error logging dose:', error);
       // Don't throw - we want logging to be non-blocking
       return { success: false };
     } finally {
+      isLoggingRef.current = false;
       setIsLogging(false);
     }
-  }, [isLogging, user, saveDoseLogLocally, saveDoseLogToFirestore, checkLogUsageLimit, incrementLogsUsed]);
+  }, [user, saveDoseLogLocally, saveDoseLogToFirestore, checkLogUsageLimit, incrementLogsUsed]);
 
   // Get dose log history from local storage and Firestore (merged)
   const getDoseLogHistory = useCallback(async (): Promise<DoseLog[]> => {

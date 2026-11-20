@@ -24,7 +24,8 @@ jest.mock('./ui/DatePickerSelect', () => 'DatePickerSelect');
 jest.mock('./SyringeIllustration', () => 'SyringeIllustration');
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: 'Verify prescription' }) }));
 let mockUser: any = null;
-const mockLogDose = jest.fn(async () => ({ success: true }));
+const mockLogDose = jest.fn(async () => ({ success: true, localDoseCount: 2 }));
+const mockOnDoseSaved = jest.fn();
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser, auth: {} }) }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: mockLogDose, isLogging: false }) }));
 jest.mock('firebase/auth', () => ({ signInWithPopup: jest.fn(), signInWithRedirect: jest.fn().mockResolvedValue(undefined), GoogleAuthProvider: class { setCustomParameters() {} } }));
@@ -32,7 +33,7 @@ let renderer: ReactTestRenderer;
 const resultProps: React.ComponentProps<typeof FinalResultDisplay> = {
   calculationError: null, recommendedMarking: '10', doseValue: 1, unit: 'mg', substanceName: 'Test',
   manualSyringe: { type: 'Insulin', volume: '1 ml', insulinScale: 'U-100' }, calculatedVolume: 0.1,
-  handleStartOver: jest.fn(), setScreenStep: jest.fn(), handleGoToFeedback: jest.fn(), lastActionType: 'manual', isMobileWeb: false,
+  handleStartOver: jest.fn(), setScreenStep: jest.fn(), handleGoToFeedback: jest.fn(), onDoseSaved: mockOnDoseSaved, lastActionType: 'manual', isMobileWeb: false,
 };
 function saveButton() { return renderer.root.findByType('Save' as any).parent!; }
 beforeEach(() => { jest.clearAllMocks(); mockUser = null; jest.spyOn(console, 'error').mockImplementation(() => {}); jest.spyOn(console, 'log').mockImplementation(() => {}); });
@@ -45,6 +46,7 @@ it.each(['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/popu
   expect(saveButton().props.disabled).toBe(false);
   expect(JSON.stringify(renderer.toJSON())).not.toContain('Signing in...');
   expect(mockLogDose).not.toHaveBeenCalled();
+  expect(mockOnDoseSaved).not.toHaveBeenCalled();
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') expect(Alert.alert).not.toHaveBeenCalled();
   await act(async () => { await saveButton().props.onPress(); });
   expect(signInWithPopup).toHaveBeenCalledTimes(2);
@@ -62,7 +64,18 @@ it('waits for popup success and auth state, saves once, then resets', async () =
   expect(mockLogDose).not.toHaveBeenCalled();
   await act(async () => { resolvePopup({ user: mockUser }); await pending; });
   expect(mockLogDose).toHaveBeenCalledTimes(1);
+  expect(mockOnDoseSaved).toHaveBeenCalledTimes(1);
+  expect(mockOnDoseSaved).toHaveBeenCalledWith(2);
   expect(saveButton().props.disabled).toBe(false);
+});
+
+it('reports the saved dose count for a user who is already signed in', async () => {
+  mockUser = { uid: 'returning-user', isAnonymous: false };
+  act(() => { renderer = create(<FinalResultDisplay {...resultProps} />); });
+  await act(async () => { await saveButton().props.onPress(); });
+  expect(signInWithPopup).not.toHaveBeenCalled();
+  expect(mockLogDose).toHaveBeenCalledTimes(1);
+  expect(mockOnDoseSaved).toHaveBeenCalledWith(2);
 });
 
 it.each([['1990', '/onboarding/demo'], [String(new Date().getFullYear() - 15), '/onboarding/child-safety']])('keeps birth date and age out of the %s onboarding route', (year, route) => {

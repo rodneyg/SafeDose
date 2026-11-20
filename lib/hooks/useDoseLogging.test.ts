@@ -1,141 +1,120 @@
+import { act, renderHook } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDoseLogging } from './useDoseLogging';
-import { DoseLog } from '../../types/doseLog';
+import { addDocWithEnv } from '../firestoreWithEnv';
+import { useLogUsageTracking } from './useLogUsageTracking';
 
-// Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
 }));
 
-// Mock Firebase
 jest.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(),
-  collection: jest.fn(),
-  addDoc: jest.fn(),
+  getFirestore: jest.fn(() => ({})),
+  collection: jest.fn(() => ({})),
+  doc: jest.fn(),
+  deleteDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  getDocs: jest.fn(),
 }));
 
-// Mock Auth Context
+jest.mock('../firestoreWithEnv', () => ({ addDocWithEnv: jest.fn() }));
+
 jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { uid: 'test-user-123', isAnonymous: false },
-  }),
+  useAuth: () => ({ user: { uid: 'test-user-123', isAnonymous: false } }),
 }));
+
+jest.mock('./useLogUsageTracking', () => ({ useLogUsageTracking: jest.fn() }));
+
+const storage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const mockAddDocWithEnv = addDocWithEnv as jest.MockedFunction<typeof addDocWithEnv>;
+const mockUseLogUsageTracking = useLogUsageTracking as jest.MockedFunction<typeof useLogUsageTracking>;
+const doseInfo = {
+  substanceName: 'Test Medication',
+  doseValue: 10,
+  unit: 'mg',
+  calculatedVolume: 0.5,
+};
 
 describe('useDoseLogging', () => {
-  it('should create a valid dose log structure', () => {
-    const doseInfo = {
-      substanceName: 'Test Medication',
-      doseValue: 10,
-      unit: 'mg',
-      calculatedVolume: 0.5,
-    };
+  const checkLogUsageLimit = jest.fn();
+  const incrementLogsUsed = jest.fn();
 
-    // The hook should generate logs with this structure
-    const expectedLogStructure = {
-      id: expect.any(String),
-      userId: 'test-user-123',
-      substanceName: 'Test Medication',
-      doseValue: 10,
-      unit: 'mg',
-      calculatedVolume: 0.5,
-      timestamp: expect.any(String),
-      notes: undefined,
-    };
-
-    // Since we can't directly test the hook without a React component,
-    // we'll just verify the types are correct
-    expect(doseInfo.substanceName).toBe('Test Medication');
-    expect(doseInfo.doseValue).toBe(10);
-    expect(expectedLogStructure.id).toEqual(expect.any(String));
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    storage.getItem.mockResolvedValue(null);
+    storage.setItem.mockResolvedValue();
+    mockAddDocWithEnv.mockResolvedValue({ id: 'firestore-id' } as never);
+    checkLogUsageLimit.mockResolvedValue(true);
+    incrementLogsUsed.mockResolvedValue(undefined);
+    mockUseLogUsageTracking.mockReturnValue({
+      logUsageData: null,
+      checkLogUsageLimit,
+      incrementLogsUsed,
+    } as unknown as ReturnType<typeof useLogUsageTracking>);
   });
 
-  it('should validate dose log type structure', () => {
-    const validDoseLog: DoseLog = {
-      id: 'test-id',
-      userId: 'test-user',
-      substanceName: 'Test Drug',
-      doseValue: 5,
-      unit: 'mg',
-      calculatedVolume: 0.25,
-      timestamp: new Date().toISOString(),
-      notes: 'Test notes',
-    };
+  afterEach(() => jest.restoreAllMocks());
 
-    expect(validDoseLog.id).toBe('test-id');
-    expect(validDoseLog.substanceName).toBe('Test Drug');
-    expect(validDoseLog.doseValue).toBe(5);
-    expect(validDoseLog.unit).toBe('mg');
-    expect(validDoseLog.calculatedVolume).toBe(0.25);
-    expect(typeof validDoseLog.timestamp).toBe('string');
-    expect(validDoseLog.notes).toBe('Test notes');
-  });
+  it('logs a dose to storage and records its usage', async () => {
+    const { result } = renderHook(() => useDoseLogging());
 
-  it('should support optional syringe information for "draw to" feature', () => {
-    const logWithSyringeInfo: DoseLog = {
-      id: 'test-with-syringe',
-      userId: 'test-user',
-      substanceName: 'Test Drug',
-      doseValue: 5,
-      unit: 'mg',
-      calculatedVolume: 0.5,
-      syringeType: 'Standard',
-      recommendedMarking: '0.5',
-      timestamp: new Date().toISOString(),
-    };
-
-    expect(logWithSyringeInfo.syringeType).toBe('Standard');
-    expect(logWithSyringeInfo.recommendedMarking).toBe('0.5');
-
-    // Test insulin syringe as well
-    const insulinLog: DoseLog = {
-      id: 'test-insulin',
-      userId: 'test-user',
-      substanceName: 'Insulin',
-      doseValue: 10,
-      unit: 'units',
-      calculatedVolume: 0.1,
-      syringeType: 'Insulin',
-      recommendedMarking: '10',
-      timestamp: new Date().toISOString(),
-    };
-
-    expect(insulinLog.syringeType).toBe('Insulin');
-    expect(insulinLog.recommendedMarking).toBe('10');
-  });
-
-  it('should support injection site tracking', () => {
-    const logWithInjectionSite: DoseLog = {
-      id: 'test-with-injection-site',
-      userId: 'test-user',
-      substanceName: 'Peptide',
-      doseValue: 5,
-      unit: 'mg',
-      calculatedVolume: 0.25,
-      injectionSite: 'abdomen_L',
-      timestamp: new Date().toISOString(),
-    };
-
-    expect(logWithInjectionSite.injectionSite).toBe('abdomen_L');
-
-    // Test all injection site options
-    const validSites = [
-      'abdomen_L', 'abdomen_R', 'thigh_L', 'thigh_R',
-      'glute_L', 'glute_R', 'arm_L', 'arm_R'
-    ];
-
-    validSites.forEach(site => {
-      const log: DoseLog = {
-        id: `test-${site}`,
-        userId: 'test-user',
-        substanceName: 'Test Drug',
-        doseValue: 1,
-        unit: 'mg',
-        calculatedVolume: 0.1,
-        injectionSite: site as any,
-        timestamp: new Date().toISOString(),
-      };
-
-      expect(log.injectionSite).toBe(site);
+    let response: Awaited<ReturnType<typeof result.current.logDose>>;
+    await act(async () => {
+      response = await result.current.logDose(doseInfo, 'after breakfast');
     });
+
+    expect(response!).toEqual({ success: true, localDoseCount: 1 });
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'dose_logs_test-user-123',
+      expect.stringContaining('"substanceName":"Test Medication"')
+    );
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(1);
+    expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
+  });
+
+  it('continues without throwing when local storage fails', async () => {
+    storage.setItem.mockRejectedValueOnce(new Error('storage unavailable'));
+    const { result } = renderHook(() => useDoseLogging());
+
+    let response: Awaited<ReturnType<typeof result.current.logDose>>;
+    await act(async () => {
+      response = await result.current.logDose(doseInfo);
+    });
+
+    expect(response!).toEqual({ success: true, localDoseCount: undefined });
+    expect(console.error).toHaveBeenCalledWith(
+      '[useDoseLogging] Error saving dose log locally:',
+      expect.any(Error)
+    );
+    expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not double log while a dose is already being logged', async () => {
+    let allowFirstLog!: (allowed: boolean) => void;
+    checkLogUsageLimit.mockReturnValueOnce(
+      new Promise<boolean>(resolve => { allowFirstLog = resolve; })
+    );
+    const { result } = renderHook(() => useDoseLogging());
+
+    let firstLog!: ReturnType<typeof result.current.logDose>;
+    let secondResponse!: Awaited<ReturnType<typeof result.current.logDose>>;
+    await act(async () => {
+      firstLog = result.current.logDose(doseInfo);
+      secondResponse = await result.current.logDose(doseInfo);
+    });
+    expect(secondResponse).toEqual({ success: false });
+
+    await act(async () => {
+      allowFirstLog(true);
+      await firstLog;
+    });
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
   });
 });
