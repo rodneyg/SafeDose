@@ -145,6 +145,32 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
   expect(screen.queryByRole('alert')).toBeNull();
   expect(screen.queryByText('Processing...')).toBeNull();
   expect(incrementScansUsed).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('Unconfirmed vial substance')).toBeTruthy();
+  expect(onVerify).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByRole('button', { name: 'Confirm substance and all details' }));
+  expect(onVerify).toHaveBeenCalledWith('Example compound');
+  screen.unmount();
+});
+
+it('requires a nonblank name after Edit and passes the corrected substance on confirmation', async () => {
+  const content = JSON.stringify(MODEL_OUTPUT);
+  mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
+  const screen = render(<PhotoFlow />);
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await waitFor(() => expect(screen.getByText('Unconfirmed vial substance')).toBeTruthy());
+
+  fireEvent.press(screen.getByRole('button', { name: 'Edit vial substance' }));
+  const input = screen.getByLabelText('Vial substance');
+  expect(input.props.value).toBe('Example compound');
+  const confirm = () => screen.getByRole('button', { name: 'Confirm substance and all details' });
+  fireEvent.changeText(input, '   ');
+  expect(confirm().props.accessibilityState.disabled).toBe(true);
+  fireEvent.press(confirm());
+  expect(onVerify).not.toHaveBeenCalled();
+
+  fireEvent.changeText(input, ' Corrected compound ');
+  fireEvent.press(confirm());
+  expect(onVerify).toHaveBeenCalledWith('Corrected compound');
   screen.unmount();
 });
 
@@ -170,7 +196,7 @@ it.each([
   try {
     act(() => { jest.advanceTimersByTime(60_000); });
     expect(onVerify).not.toHaveBeenCalled();
-    fireEvent.press(screen.getByRole('button', { name: 'I checked both' }));
+    fireEvent.press(screen.getByRole('button', { name: /Confirm substance and all details|I checked both/ }));
     expect(onVerify).toHaveBeenCalledTimes(1);
     screen.unmount();
   } finally {

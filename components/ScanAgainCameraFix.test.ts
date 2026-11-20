@@ -2,6 +2,7 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import NewDoseScreen from '../app/(tabs)/new-dose';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
+import fixtures from '../evals/vision/fixtures/model-outputs.json';
 import { parseScanModelOutput } from '../lib/scan';
 
 // Render the real dose screen. Child screens and unrelated services are boundaries;
@@ -212,11 +213,12 @@ it.each(wrongFills)('requires explicit review before applying accepted capture %
   expect(preview.props.visible).toBe(true);
   expect(preview.props.imageUri).toBe('');
   expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
   expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
   expect(mockCalculator.setDose).not.toHaveBeenCalled();
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
 
-  act(() => { preview.props.onVerify(); });
+  act(() => { preview.props.onVerify(parseScanModelOutput(raw).vial.substance); });
   expect(preview.props.visible).toBe(false);
   expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
   expect(mockCalculator.setConcentrationAmount).toHaveBeenCalledWith(
@@ -225,4 +227,22 @@ it.each(wrongFills)('requires explicit review before applying accepted capture %
   expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
   expect(mockCalculator.setDoseValue.mock.calls).toEqual([[null]]);
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+});
+
+it('blocks preset application during scan review and applies the corrected name with an empty dose', async () => {
+  const fixture = fixtures.find(entry => entry.label.id === 'fixture-exact-read')!;
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(JSON.stringify(fixture.model_output)));
+  await act(async () => { await camera().props.onCapture(); });
+  // Manual entry can appear behind the review during an offline transition.
+  navigate('manualEntry');
+  const manual = renderer.root.findByType('ManualEntryScreen' as never);
+  act(() => { manual.props.onApplyPreset({ dose: '2', substanceName: 'Preset compound' }); });
+  expect(mockCalculator.setDose).not.toHaveBeenCalled();
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  act(() => { preview.props.onVerify('Corrected compound'); });
+  expect(mockCalculator.setSubstanceName.mock.calls).toEqual([['Corrected compound']]);
+  expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
 });
