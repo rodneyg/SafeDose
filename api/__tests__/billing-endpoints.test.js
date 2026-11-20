@@ -1,304 +1,147 @@
 /* eslint-env jest */
+const { Buffer } = require('node:buffer');
 const { Readable } = require('node:stream');
 
-jest.mock('stripe', () => jest.fn());
-jest.mock('../../lib/stripeConfig.server.js', () => ({ secretKey: null, mode: 'test' }));
-jest.mock('firebase-admin', () => ({
-  apps: [{}],
-  auth: jest.fn(),
-  firestore: jest.fn(),
+jest.mock('stripe', () => Object.assign(jest.fn(), {
+  webhooks: jest.requireActual('stripe').webhooks,
 }));
+jest.mock('../../lib/stripeConfig.server', () => ({ secretKey: null, mode: 'test' }));
+jest.mock('../../lib/firebaseAdmin.server', () => ({ getBillingFirebase: jest.fn() }));
 
 const Stripe = require('stripe');
-const stripeConfig = require('../../lib/stripeConfig.server.js');
-const firebaseAdmin = require('firebase-admin');
-const { webhooks } = jest.requireActual('stripe');
-const portalHandler = require('../create-portal-session');
+const stripeConfig = require('../../lib/stripeConfig.server');
+const { getBillingFirebase } = require('../../lib/firebaseAdmin.server');
+const portal = require('../create-portal-session');
+const status = require('../get-subscription-status');
+const validate = require('../validate-session');
+const webhook = require('../stripe-webhook');
 
-const createSession = jest.fn();
-const retrieveCustomer = jest.fn();
-const verifyIdToken = jest.fn();
-const getUser = jest.fn();
-const fixtureSigningSecret = 'fixture-signing-value';
+const signingSecret = 'whsec_billing_fixture';
+const payload = JSON.stringify({
+  id: 'evt_fixture',
+  livemode: false,
+  type: 'customer.subscription.updated',
+  data: { object: { id: 'sub_fixture' } },
+});
+const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret: signingSecret });
+const endpoints = [
+  ['portal', portal],
+  ['subscription status', status],
+  ['validation', validate],
+];
 
 let res;
-
-function loadSubscriptionHandler() {
-  // Firebase initialization runs when the module is first loaded.
-  let handler;
-  jest.isolateModules(() => {
-    handler = require('../get-subscription-status');
-  });
-  return handler;
-}
-
-function loadWebhookHandler() {
-  // The webhook validates config and constructs Stripe at import time.
-  let handler;
-  jest.isolateModules(() => {
-    handler = require('../stripe-webhook');
-  });
-  return handler;
-}
-
-function webhookRequest(payload, signature) {
-  return Object.assign(Readable.from([Buffer.from(payload)]), {
-    method: 'POST',
-    headers: signature === undefined ? {} : { 'stripe-signature': signature },
-  });
-}
-
-function sign(payload) {
-  return webhooks.generateTestHeaderString({ payload, secret: fixtureSigningSecret });
-}
-
 beforeEach(() => {
-  jest.resetAllMocks();
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  Stripe.mockReset();
+  getBillingFirebase.mockReset();
+  stripeConfig.secretKey = null;
   jest.spyOn(console, 'error').mockImplementation(() => {});
-
-  jest.replaceProperty(process, 'env', {
-    ...process.env,
-    FIREBASE_PROJECT_ID: 'fixture-project',
-    FIREBASE_CLIENT_EMAIL: 'fixture@example.invalid',
-    FIREBASE_PRIVATE_KEY: 'fixture-private-value',
-    STRIPE_WEBHOOK_SECRET: fixtureSigningSecret,
-  });
-  stripeConfig.secretKey = 'sk_fixture_not_a_credential';
-
-  firebaseAdmin.auth.mockReturnValue({ verifyIdToken });
-  firebaseAdmin.firestore.mockReturnValue({
-    collection: () => ({ doc: () => ({ get: getUser }) }),
-  });
-
-  Stripe.mockImplementation(() => ({
-    billingPortal: { sessions: { create: createSession } },
-    customers: { retrieve: retrieveCustomer },
-    // Use the SDK's local signature verifier without creating a Stripe HTTP client.
-    webhooks,
-  }));
-
-  res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-    send: jest.fn(),
-    setHeader: jest.fn(),
-  };
+  jest.replaceProperty(process, 'env', { ...process.env, STRIPE_WEBHOOK_SECRET: signingSecret });
+  res = { status: jest.fn().mockReturnThis(), json: jest.fn(), setHeader: jest.fn() };
 });
-
 afterEach(() => jest.restoreAllMocks());
 
-const portalBody = { idToken: 'fixture-id-token' };
-
-describe.each([
-  {
-    endpoint: 'create-portal-session',
-    loadHandler: () => portalHandler,
-    body: portalBody,
-    missingKey: /Stripe is not configured properly/,
-    invalidKey: /Stripe is not configured properly/,
-    constructorError: 'Failed to create portal session',
-  },
-  {
-    endpoint: 'get-subscription-status',
-    loadHandler: loadSubscriptionHandler,
-    body: { idToken: 'fixture-id-token' },
-    missingKey: /Stripe secret key is not configured for test mode/,
-    invalidKey: /Invalid secret key format/,
-    constructorError: 'Failed to initialize Stripe configuration',
-  },
-])('$endpoint request and config failures', ({ loadHandler, body, missingKey, invalidKey, constructorError }) => {
-  it('rejects GET and advertises POST before constructing Stripe', async () => {
-    stripeConfig.secretKey = null;
-
-    await loadHandler()({ method: 'GET' }, res);
-
-    expect(res.status).toHaveBeenCalledWith(405);
+describe.each([...endpoints, ['webhook', webhook]])('%s method handling', (_name, handler) => {
+  it('rejects GET before initializing Stripe or Firebase', async () => {
+    await handler({ method: 'GET' }, res);
     expect(res.setHeader).toHaveBeenCalledWith('Allow', 'POST');
-    expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' });
+    expect(res.status).toHaveBeenCalledWith(405);
     expect(Stripe).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['missing', null, 'missing'],
-    ['invalid', 'bad_fixture', 'invalid'],
-  ])('rejects %s Stripe config before constructing Stripe', async (_description, secretKey, kind) => {
-    const error = kind === 'missing' ? missingKey : invalidKey;
-    stripeConfig.secretKey = secretKey;
-
-    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
-    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
-    await loadHandler()({ method: 'POST', body }, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: expect.stringMatching(error) });
-    expect(Stripe).not.toHaveBeenCalled();
-  });
-
-  it('handles a Stripe constructor failure', async () => {
-    Stripe.mockImplementationOnce(() => {
-      throw new Error('Fixture initialization failure');
-    });
-
-    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
-    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
-    await loadHandler()({ method: 'POST', body }, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: constructorError });
+    expect(getBillingFirebase).not.toHaveBeenCalled();
   });
 });
 
-describe('create-portal-session', () => {
-  it('rejects a missing ID token before creating a session', async () => {
-    await portalHandler({ method: 'POST', body: {} }, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid request' });
-    expect(createSession).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['StripeInvalidRequestError', 400, 'Invalid request to Stripe'],
-    ['StripeConnectionError', 500, 'Failed to create portal session'],
-  ])('maps %s to HTTP %i', async (type, status, error) => {
-    const failure = new Error('Fixture portal failure');
-    failure.type = type;
-    createSession.mockRejectedValueOnce(failure);
-    const returnUrl = 'https://safe-dose.vercel.app/settings';
-    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
-    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
-
-    await portalHandler({ method: 'POST', body: { ...portalBody, returnUrl } }, res);
-
-    expect(createSession).toHaveBeenCalledWith({ customer: 'cus_fixture', return_url: returnUrl });
-    expect(res.status).toHaveBeenCalledWith(status);
-    expect(res.json).toHaveBeenCalledWith({ error });
+describe.each(endpoints)('%s rate limit', (_name, handler) => {
+  it('returns a non-cacheable 429 after 30 requests from one client', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(100_000);
+    const req = { method: 'POST', socket: { remoteAddress: '192.0.2.20' } };
+    for (let i = 0; i < 30; i++) {
+      await handler(req, res);
+    }
+    expect(res.status).toHaveBeenLastCalledWith(401);
+    await handler(req, res);
+    expect(res.status).toHaveBeenLastCalledWith(429);
+    expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '60');
+    expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    expect(Stripe).not.toHaveBeenCalled();
+    expect(getBillingFirebase).not.toHaveBeenCalled();
   });
 });
 
-describe('get-subscription-status', () => {
-  const request = { method: 'POST', body: { idToken: 'fixture-id-token' } };
+describe.each([['portal', portal], ['subscription status', status]])('%s failures', (_name, handler) => {
+  const req = { method: 'POST', body: { idToken: 'fixture-token' } };
+  const verifyIdToken = jest.fn();
+  const get = jest.fn();
 
-  it('rejects a missing ID token before authentication', async () => {
-    await loadSubscriptionHandler()({ method: 'POST', body: {} }, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'ID token is required' });
-    expect(verifyIdToken).not.toHaveBeenCalled();
-    expect(retrieveCustomer).not.toHaveBeenCalled();
+  beforeEach(() => {
+    verifyIdToken.mockReset().mockResolvedValue({ uid: 'buyer', firebase: { sign_in_provider: 'google.com' } });
+    get.mockReset().mockResolvedValue({ data: () => ({ customerId: 'cus_fixture' }) });
+    const doc = () => ({ collection: () => ({ doc }), get });
+    getBillingFirebase.mockReturnValue({ auth: { verifyIdToken }, db: { collection: () => ({ doc }) } });
   });
 
-  it('reports missing Firebase configuration', async () => {
-    delete process.env.FIREBASE_PROJECT_ID;
-
-    await loadSubscriptionHandler()(request, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Firebase Admin not configured properly' });
-    expect(verifyIdToken).not.toHaveBeenCalled();
-    expect(retrieveCustomer).not.toHaveBeenCalled();
+  it('returns a sanitized service error when billing storage is unavailable', async () => {
+    get.mockRejectedValueOnce(new Error('Internal diagnostic'));
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Payments are temporarily unavailable.' });
+    expect(Stripe).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid token before reading Firestore or Stripe', async () => {
-    verifyIdToken.mockRejectedValueOnce(new Error('Fixture invalid token'));
-
-    await loadSubscriptionHandler()(request, res);
-
-    expect(verifyIdToken).toHaveBeenCalledWith(request.body.idToken);
+  it('rejects invalid tokens before querying billing storage', async () => {
+    verifyIdToken.mockRejectedValueOnce(Object.assign(new Error('Invalid token'), { code: 'auth/invalid-id-token' }));
+    await handler(req, res);
+    expect(verifyIdToken).toHaveBeenCalledWith(req.body.idToken, true);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid authentication token' });
-    expect(getUser).not.toHaveBeenCalled();
-    expect(retrieveCustomer).not.toHaveBeenCalled();
-  });
-
-  it('returns a failure when the user lookup fails', async () => {
-    const details = 'Fixture Firestore failure';
-    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
-    getUser.mockRejectedValueOnce(new Error(details));
-
-    await loadSubscriptionHandler()(request, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to get subscription status', details });
-    expect(retrieveCustomer).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['StripeInvalidRequestError', 400, 'Invalid request to Stripe'],
-    ['StripeConnectionError', 500, 'Failed to get subscription status'],
-  ])('maps %s to HTTP %i after authentication', async (type, status, error) => {
-    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
-    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
-    const failure = new Error('Fixture customer lookup failure');
-    failure.type = type;
-    retrieveCustomer.mockRejectedValueOnce(failure);
-
-    await loadSubscriptionHandler()(request, res);
-
-    expect(retrieveCustomer).toHaveBeenCalledWith('cus_fixture', { expand: ['subscriptions'] });
-    expect(res.status).toHaveBeenCalledWith(status);
-    expect(res.json).toHaveBeenCalledWith({ error, details: failure.message });
+    expect(get).not.toHaveBeenCalled();
+    expect(Stripe).not.toHaveBeenCalled();
   });
 });
+
+it.each([null, 'bad_fixture'])('rejects unusable portal Stripe configuration before construction (%s)', async key => {
+  stripeConfig.secretKey = key;
+  const verifyIdToken = async () => ({ uid: 'buyer', firebase: { sign_in_provider: 'google.com' } });
+  const get = async () => ({ data: () => ({ customerId: 'cus_fixture' }) });
+  const doc = () => ({ collection: () => ({ doc }), get });
+  getBillingFirebase.mockReturnValue({ auth: { verifyIdToken }, db: { collection: () => ({ doc }) } });
+
+  await portal({ method: 'POST', body: { idToken: 'fixture-token' } }, res);
+
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(Stripe).not.toHaveBeenCalled();
+});
+
+function webhookRequest(body, stripeSignature) {
+  return Object.assign(Readable.from([Buffer.from(body)]), {
+    method: 'POST',
+    headers: stripeSignature ? { 'stripe-signature': stripeSignature } : {},
+  });
+}
 
 describe('stripe-webhook', () => {
-  const payload = JSON.stringify({
-    type: 'customer.subscription.updated',
-    data: { object: { id: 'sub_fixture', status: 'active' } },
-  });
-
-  it('fails at import time when the Stripe secret key is missing', () => {
-    stripeConfig.secretKey = null;
-
-    expect(loadWebhookHandler).toThrow(/Stripe secret key is not configured for test mode/);
-    expect(Stripe).not.toHaveBeenCalled();
-  });
-
-  it('rejects a missing signature before handling the event', async () => {
-    await loadWebhookHandler()(webhookRequest(payload), res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith(expect.stringMatching(/^Webhook Error:/));
-    expect(res.json).not.toHaveBeenCalled();
-    expect(console.log).not.toHaveBeenCalled();
-  });
-
-  it('rejects a body changed after signing before handling the event', async () => {
-    await loadWebhookHandler()(webhookRequest(payload + '\n', sign(payload)), res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith(expect.stringMatching(/^Webhook Error:/));
-    expect(res.json).not.toHaveBeenCalled();
-    expect(console.log).not.toHaveBeenCalled();
-  });
-
-  it('rejects a signed event when the signing secret is missing', async () => {
-    delete process.env.STRIPE_WEBHOOK_SECRET;
-
-    await loadWebhookHandler()(webhookRequest(payload, sign(payload)), res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith(expect.stringMatching(/^Webhook Error:/));
-    expect(res.json).not.toHaveBeenCalled();
-    expect(console.log).not.toHaveBeenCalled();
-  });
-
   it.each([
-    ['checkout.session.completed', ['Received event:', 'checkout.session.completed', 'object_fixture']],
-    ['customer.subscription.trial_will_end', ['Trial ending soon for subscription:', 'object_fixture']],
-    ['customer.subscription.created', ['New subscription created:', 'object_fixture']],
-    ['customer.subscription.updated', ['Subscription updated:', 'object_fixture']],
-    ['customer.subscription.deleted', ['Subscription cancelled:', 'object_fixture']],
-    ['fixture.unknown', ['Unhandled event type: fixture.unknown']],
-  ])('logs and acknowledges a verified %s event', async (type, logArgs) => {
-    const event = JSON.stringify({ type, data: { object: { id: 'object_fixture' } } });
+    ['missing signature', payload, undefined],
+    ['body changed after signing', payload + '\n', signature],
+  ])('rejects a %s before initializing Stripe or Firebase', async (_name, body, stripeSignature) => {
+    await webhook(webhookRequest(body, stripeSignature), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid Stripe signature.' });
+    expect(Stripe).not.toHaveBeenCalled();
+    expect(getBillingFirebase).not.toHaveBeenCalled();
+  });
 
-    await loadWebhookHandler()(webhookRequest(event, sign(event)), res);
+  it('returns a retryable response when the webhook signing secret is missing', async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    await webhook(webhookRequest(payload, signature), res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(Stripe).not.toHaveBeenCalled();
+    expect(getBillingFirebase).not.toHaveBeenCalled();
+  });
 
-    expect(console.log).toHaveBeenCalledWith(...logArgs);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ received: true });
+  it('returns a retryable response when the Stripe key is missing', async () => {
+    await webhook(webhookRequest(payload, signature), res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(Stripe).not.toHaveBeenCalled();
+    expect(getBillingFirebase).not.toHaveBeenCalled();
   });
 });

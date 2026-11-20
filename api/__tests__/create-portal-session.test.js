@@ -5,12 +5,11 @@ const mockGet = jest.fn();
 jest.mock('stripe', () => jest.fn(() => ({
   billingPortal: { sessions: { create: mockCreate } },
 })));
-jest.mock('firebase-admin', () => ({
-  apps: [{}],
-  auth: () => ({ verifyIdToken: mockVerifyIdToken }),
-  firestore: () => ({ collection: () => ({ doc: () => ({ get: mockGet }) }) }),
-  credential: { cert: jest.fn() },
-  initializeApp: jest.fn(),
+jest.mock('../../lib/firebaseAdmin.server', () => ({
+  getBillingFirebase: () => ({
+    auth: { verifyIdToken: mockVerifyIdToken },
+    db: { collection: () => ({ doc: () => ({ get: mockGet, collection: () => ({ doc: () => ({ get: mockGet }) }) }) }) },
+  }),
 }));
 jest.mock('../../lib/stripeConfig.server.js', () => ({ secretKey: 'sk_test_portal', mode: 'test' }));
 
@@ -24,23 +23,20 @@ const request = body => ({ method: 'POST', headers: { 'content-type': 'applicati
 
 beforeEach(() => {
   jest.clearAllMocks();
-  process.env.FIREBASE_PROJECT_ID = 'test-project';
-  process.env.FIREBASE_CLIENT_EMAIL = 'firebase@example.com';
-  process.env.FIREBASE_PRIVATE_KEY = 'test-key';
-  mockVerifyIdToken.mockResolvedValue({ uid: 'user-1' });
-  mockGet.mockResolvedValue({ exists: true, data: () => ({ stripeCustomerId: 'cus_owned' }) });
+  mockVerifyIdToken.mockResolvedValue({ uid: 'user-1', firebase: { sign_in_provider: 'google.com' } });
+  mockGet.mockResolvedValue({ exists: true, data: () => ({ customerId: 'cus_owned' }) });
   mockCreate.mockResolvedValue({ id: 'bps_1', url: 'https://billing.stripe.com/session/1' });
 });
 
 it('rejects a missing ID token', async () => {
   const res = response();
   await handler(request({}), res);
-  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.status).toHaveBeenCalledWith(401);
   expect(mockCreate).not.toHaveBeenCalled();
 });
 
 it('rejects an invalid token', async () => {
-  mockVerifyIdToken.mockRejectedValue(new Error('wrong user'));
+  mockVerifyIdToken.mockRejectedValueOnce(Object.assign(new Error('Invalid token'), { code: 'auth/invalid-id-token' }));
   const res = response();
   await handler(request({ idToken: 'wrong-user-token' }), res);
   expect(res.status).toHaveBeenCalledWith(401);
@@ -48,10 +44,10 @@ it('rejects an invalid token', async () => {
 });
 
 it('rejects a caller without their own Stripe customer', async () => {
-  mockGet.mockResolvedValue({ exists: true, data: () => ({ stripeCustomerId: null }) });
+  mockGet.mockResolvedValue({ exists: true, data: () => ({ customerId: null }) });
   const res = response();
   await handler(request({ idToken: 'valid-token' }), res);
-  expect(res.status).toHaveBeenCalledWith(403);
+  expect(res.status).toHaveBeenCalledWith(404);
   expect(mockCreate).not.toHaveBeenCalled();
 });
 
@@ -67,6 +63,8 @@ it.each([
   'https://evil.example/settings',
   'https://safe-dose.vercel.app.evil.example/settings',
   'javascript:alert(1)',
+  'http://localhost:4321/settings',
+  'https://safe-dose.vercel.app/pricing',
 ])('rejects hostile return URL %s', async returnUrl => {
   const res = response();
   await handler(request({ idToken: 'valid-token', returnUrl }), res);
@@ -99,7 +97,7 @@ it('applies the shared rate limit before authenticating a portal request', async
 
 it.each([
   [{ type: 'StripeInvalidRequestError' }, 400, 'Invalid request to Stripe'],
-  [new Error('unavailable'), 500, 'Failed to create portal session'],
+  [new Error('unavailable'), 503, 'Payments are temporarily unavailable.'],
 ])('handles Stripe errors', async (error, status, message) => {
   mockCreate.mockRejectedValue(error);
   const res = response();

@@ -1,273 +1,133 @@
-import { useState, useEffect } from 'react';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { useCallback, useEffect, useState } from 'react';
+import { getFirestore, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import { setDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNetworkStateAsync } from 'expo-network';
 import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
-import { getLimitForPlan, hasScanCapacity } from '../plans';
+import { FREE_SCAN_LIMIT, getLimitForPlan, hasScanCapacity, isPaidPlan } from '../plans';
+import { getSubscriptionStatus } from '../subscriptionStatus';
 
-export type ScanUsage = { scansUsed: number; plan: string; limit: number; lastReset: string | null };
+type ScanCounts = { scansUsed: number; lastReset: string | null };
+export type ScanUsage = ScanCounts & { plan: string; limit: number };
+const EMPTY_USAGE: ScanUsage = { scansUsed: 0, lastReset: null, plan: 'free', limit: FREE_SCAN_LIMIT };
 
-const MAX_RETRIES = 3;
-const INITIAL_BACKOFF = 1000; // 1 second
+function monthStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+}
+
+async function cachedScans(uid: string): Promise<ScanCounts> {
+  try {
+    const cached = JSON.parse((await AsyncStorage.getItem(`usage_${uid}`)) || 'null');
+    if (cached?.lastReset >= monthStart()) {
+      return { scansUsed: Number(cached.scansUsed) || 0, lastReset: cached.lastReset };
+    }
+  } catch {
+    console.warn('Could not read cached scan usage.');
+  }
+  return EMPTY_USAGE;
+}
+
+async function saveCachedScans(uid: string, { scansUsed, lastReset }: ScanCounts) {
+  try {
+    await AsyncStorage.setItem(`usage_${uid}`, JSON.stringify({ scansUsed, lastReset }));
+  } catch {
+    console.warn('Could not cache scan usage.');
+  }
+}
+
+async function readScans(db: Firestore, uid: string): Promise<ScanCounts | null> {
+  const ref = doc(db, 'users', uid);
+  const snapshot = await getDoc(ref);
+  if (snapshot.metadata.fromCache) return null;
+  const data = snapshot.data();
+  const start = monthStart();
+  if (!data?.lastReset || data.lastReset < start) {
+    const reset = { scansUsed: 0, lastReset: start };
+    await setDocWithEnv(ref, reset, { merge: true });
+    return reset;
+  }
+  return { scansUsed: data.scansUsed || 0, lastReset: data.lastReset };
+}
 
 // Unpaid users (anonymous or signed-in) share a monthly gpt-4o photo-scan cap.
 // Paid photo-scan and legacy paid plans are not limited by that cap. Limits live in lib/plans.js.
 /** Tracks photo-scan usage, connectivity, and plan capacity for the current user. */
 export function useUsageTracking() {
-  const { user } = useAuth();
+  const { user, auth } = useAuth();
   const db = getFirestore();
-  const [usageData, setUsageData] = useState<ScanUsage & { verifiedOwner?: string }>({
-    scansUsed: 0, plan: 'free', limit: 3, lastReset: null,
-  });
+  const [state, setState] = useState<{ uid: string; usage: ScanUsage; verified: boolean }>();
   const [isOnline, setIsOnline] = useState(true);
+  const currentUsage = state?.uid === user?.uid ? state : undefined;
+  const usageData = currentUsage?.usage ?? EMPTY_USAGE;
 
-  // Load cached usage data from AsyncStorage
-  const loadCachedUsage = async () => {
-    try {
-      const cached = await AsyncStorage.getItem(`usage_${user?.uid || 'anonymous'}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        setUsageData(previous =>
-          previous.verifiedOwner === user?.uid ? previous : { ...parsed, verifiedOwner: undefined }
-        );
-        console.log('Loaded cached usage:', parsed);
-      }
-    } catch (error) {
-      console.error('Error loading cached usage:', error);
-    }
-  };
-
-  // Save usage data to AsyncStorage
-  const saveCachedUsage = async (data: ScanUsage) => {
-    try {
-      await AsyncStorage.setItem(`usage_${user?.uid || 'anonymous'}`, JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving cached usage:', error);
-    }
-  };
-
-  // Retry logic with exponential backoff
-  // This pattern helps handle transient network issues and Firestore rate limiting
-  // by progressively increasing delay between retry attempts
-  const retryOperation = async <T>(operation: () => Promise<T>, retries: number, backoff: number): Promise<T> => {
-    try {
-      return await operation();
-    } catch (error) {
-      if (retries <= 0) throw error;
-      console.warn(`Retrying operation, ${retries} attempts left. Error:`, error);
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-      return retryOperation(operation, retries - 1, backoff * 2);
-    }
-  };
-
-  // Check network status
-  const checkNetworkStatus = async () => {
-    try {
-      const networkState = await getNetworkStateAsync();
-      setIsOnline(networkState.isConnected ?? true);
-    } catch (error) {
-      console.error('Error checking network status:', error);
-      setIsOnline(false);
-    }
-  };
+  const readUsage = useCallback(async (account: User, signal?: AbortSignal) => {
+    const [scans, subscription] = await Promise.all([
+      isOnline ? readScans(db, account.uid).catch(() => null) : null,
+      account.isAnonymous || !isOnline ? null : getSubscriptionStatus(account, signal).catch(() => null),
+    ]);
+    const counts = scans ?? await cachedScans(account.uid);
+    const plan = subscription?.hasActiveSubscription && isPaidPlan(subscription.plan) ? subscription.plan : 'free';
+    return {
+      uid: account.uid,
+      usage: { ...counts, plan, limit: getLimitForPlan(plan, account.isAnonymous) },
+      verified: scans !== null && (account.isAnonymous || subscription !== null),
+    };
+  }, [db, isOnline]);
 
   useEffect(() => {
-    checkNetworkStatus();
-    if (user?.uid) {
-      loadCachedUsage();
-    }
+    let canceled = false;
+    getNetworkStateAsync().then(network => {
+      if (!canceled) setIsOnline(network.isConnected ?? true);
+    }).catch(() => {
+      if (!canceled) setIsOnline(false);
+    });
+    return () => { canceled = true; };
   }, [user]);
 
   useEffect(() => {
-    const fetchUsageData = async () => {
-      if (!user?.uid || !isOnline) {
-        console.log('Skipping Firestore fetch: no user UID or offline');
-        return;
-      }
+    if (!user?.uid) return;
 
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const operation = async () => {
-          const userDoc = await getDoc(userDocRef);
-          let data;
-          if (!userDoc.exists()) {
-            // Create new user document if it doesn't exist
-            const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-            data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
-            await setDocWithEnv(userDocRef, data);
-            console.log('Created new user document:', data);
-          } else {
-            data = userDoc.data();
-            
-            // Ensure lastReset exists - add it if missing
-            if (!data.lastReset) {
-              const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-              data.lastReset = currentMonthStart;
-              data.scansUsed = 0; // Reset scansUsed when adding lastReset
-              await setDocWithEnv(userDocRef, data, { merge: true });
-              console.log('Added lastReset to user document:', data);
-            } else {
-              // Monthly reset logic
-              const now = new Date();
-              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-              const lastReset = new Date(data.lastReset).toISOString();
-
-              if (new Date(lastReset) < new Date(currentMonthStart)) {
-                data.scansUsed = 0;
-                data.lastReset = currentMonthStart;
-                await setDocWithEnv(userDocRef, data, { merge: true });
-                console.log('Reset scansUsed to 0 for new month:', data);
-              }
-            }
-          }
-          const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
-          const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
-          setUsageData({ ...newUsageData, verifiedOwner: user.uid });
-          await saveCachedUsage(newUsageData);
-          
-          // Set user properties for analytics when plan data is available
-          setAnalyticsUserProperties({
-            [USER_PROPERTIES.PLAN_TYPE]: data.plan || 'free',
-            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
-          });
-          
-          console.log('Fetched usage data:', newUsageData);
-          return newUsageData;
-        };
-        await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
-      } catch (error) {
-        console.error('Error fetching usage data:', error);
-        await loadCachedUsage(); // Fallback to cached data
-      }
-    };
-
-    fetchUsageData();
-  }, [user, isOnline]);
+    const controller = new AbortController();
+    readUsage(user, controller.signal).then(result => {
+      if (controller.signal.aborted) return;
+      setState(result);
+      void saveCachedScans(user.uid, result.usage);
+      setAnalyticsUserProperties({
+        [USER_PROPERTIES.PLAN_TYPE]: result.usage.plan,
+        [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
+      });
+    });
+    return () => controller.abort();
+  }, [user, readUsage]);
 
   const checkUsageLimit = async (onVerifiedUsage?: (usage: ScanUsage) => void) => {
-    console.log('[useUsageTracking] ========== CHECKING USAGE LIMIT ==========');
-    console.log('[useUsageTracking] Checking usage limit:', {
-      user: user ? user.uid : 'No user',
-      isOnline,
-      currentUsage: usageData.scansUsed,
-      limit: usageData.limit,
-      plan: usageData.plan
-    });
-    
-    if (!user?.uid) {
-      console.log('[useUsageTracking] No user UID found, denying access');
-      return false;
-    }
+    if (!user?.uid) return false;
 
-    if (!isOnline) {
-      console.log('[useUsageTracking] Checking cached usage limit due to offline status');
-      const hasScansRemaining = hasScanCapacity(usageData.scansUsed, usageData.limit);
-      console.log('[useUsageTracking] Offline limit check result:', hasScansRemaining);
-      return hasScansRemaining;
-    }
-
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const operation = async () => {
-        const userDoc = await getDoc(userDocRef);
-        let data;
-        if (!userDoc.exists()) {
-          // Create new user document if it doesn't exist
-          const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-          data = { scansUsed: 0, plan: 'free', lastReset: currentMonthStart };
-          await setDocWithEnv(userDocRef, data);
-          console.log('Created new user document:', data);
-        } else {
-          data = userDoc.data();
-          
-          // Ensure lastReset exists - add it if missing
-          if (!data.lastReset) {
-            const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-            data.lastReset = currentMonthStart;
-            data.scansUsed = 0; // Reset scansUsed when adding lastReset
-            await setDocWithEnv(userDocRef, data, { merge: true });
-            console.log('Added lastReset to user document:', data);
-          } else {
-            // Monthly reset logic
-            // Automatically reset usage counters at the beginning of each calendar month
-            // This ensures users get their full monthly allowance regardless of when they signed up
-            const now = new Date();
-            const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-            const lastReset = new Date(data.lastReset).toISOString();
-
-            if (new Date(lastReset) < new Date(currentMonthStart)) {
-              data.scansUsed = 0;
-              data.lastReset = currentMonthStart;
-              await setDocWithEnv(userDocRef, data, { merge: true });
-              console.log('Reset scansUsed to 0 for new month:', data);
-            }
-          }
-        }
-        const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
-        const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
-        setUsageData({ ...newUsageData, verifiedOwner: user.uid });
-        await saveCachedUsage(newUsageData);
-        onVerifiedUsage?.(newUsageData);
-        return hasScanCapacity(newUsageData.scansUsed, newUsageData.limit);
-      };
-      return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
-    } catch (error) {
-      console.error('Error checking usage limit:', error);
-      return hasScanCapacity(usageData.scansUsed, usageData.limit); // Fallback to cached data
-    }
+    const result = await readUsage(user);
+    if (auth && auth.currentUser?.uid !== user.uid) return false;
+    setState(result);
+    await saveCachedScans(user.uid, result.usage);
+    if (auth && auth.currentUser?.uid !== user.uid) return false;
+    if (result.verified) onVerifiedUsage?.(result.usage);
+    return hasScanCapacity(result.usage.scansUsed, result.usage.limit);
   };
 
   const incrementScansUsed = async () => {
-    console.log('[useUsageTracking] ========== INCREMENTING SCAN USAGE ==========');
-    console.log('[useUsageTracking] Attempting to increment scans used:', {
-      user: user ? user.uid : 'No user',
-      isOnline,
-      currentScansUsed: usageData.scansUsed,
-      limit: usageData.limit,
-      plan: usageData.plan
-    });
-    
-    if (!user?.uid || !isOnline) {
-      console.log('[useUsageTracking] Skipping scan increment: no user UID or offline');
-      return;
-    }
+    if (!user?.uid || !isOnline) return;
 
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const operation = async () => {
-        // Ensure document exists before incrementing
-        const userDoc = await getDoc(userDocRef);
-        if (!userDoc.exists()) {
-          console.log('[useUsageTracking] User document does not exist, creating new one');
-          const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-          await setDocWithEnv(userDocRef, { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
-          console.log('[useUsageTracking] Created new user document for increment:', { scansUsed: 0, plan: 'free', lastReset: currentMonthStart });
-        }
-        
-        console.log('[useUsageTracking] Updating Firestore document with increment');
-        await updateDoc(userDocRef, { scansUsed: increment(1) });
-        
-        setUsageData((prev) => {
-          const { verifiedOwner, ...previousUsage } = prev;
-          const newData = { ...previousUsage, scansUsed: previousUsage.scansUsed + 1 };
-          console.log('[useUsageTracking] Updated local usage data:', newData);
-          saveCachedUsage(newData);
-          return { ...newData, verifiedOwner };
-        });
-        console.log('[useUsageTracking] ✅ Successfully incremented scans used');
-      };
-      await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
-    } catch (error) {
-      console.error('[useUsageTracking] ❌ Error incrementing scans:', error);
+      await updateDoc(doc(db, 'users', user.uid), { scansUsed: increment(1) });
+      const usage = { ...usageData, scansUsed: usageData.scansUsed + 1 };
+      setState({ uid: user.uid, usage, verified: currentUsage?.verified ?? false });
+      await saveCachedScans(user.uid, usage);
+    } catch {
+      console.warn('Could not update scan usage.');
     }
   };
 
-  return {
-    usageData,
-    hasVerifiedUsage: !!user?.uid && user.uid === usageData.verifiedOwner,
-    checkUsageLimit,
-    incrementScansUsed,
-  };
+  return { usageData, hasVerifiedUsage: currentUsage?.verified ?? false, checkUsageLimit, incrementScansUsed };
 }
