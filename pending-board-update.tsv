@@ -1,0 +1,3 @@
+board_id	tab	row_id	status	done_at_et	result
+1JTpsqMj6pWvJNHn9kRnVDMmrFU4bqCLoKsAYMCiBV90	Tasks	T-759	In progress		Started T-800 optional protocol scheduler work
+1JTpsqMj6pWvJNHn9kRnVDMmrFU4bqCLoKsAYMCiBV90	Tasks	T-759	Blocked	2026-11-19 19:06:43 EST	Implementation and local checks complete; GitHub and Sheets access unavailable
