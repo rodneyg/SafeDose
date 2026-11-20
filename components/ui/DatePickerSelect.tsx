@@ -24,8 +24,14 @@ export default function DatePickerSelect({
   error = false
 }: DatePickerSelectProps) {
   const [open, setOpen] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const closePicker = () => {
+    setShowOptions(false);
+    setOpen(false);
+  };
   // A modal keeps the option list outside sibling controls' stacking contexts.
   if (Platform.OS === 'web') {
+    const dialogLabel = `Select ${label.toLowerCase()}`;
     return (
       <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
         <Text style={styles.label}>{label}</Text>
@@ -39,24 +45,34 @@ export default function DatePickerSelect({
         >
           <Text style={styles.pickerInput}>{items.find(item => item.value === value)?.label || placeholder}</Text>
         </TouchableOpacity>
-        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-          <View style={styles.overlay}>
-            <View style={styles.options} accessibilityViewIsModal>
-              <Text style={styles.label}>Select {label.toLowerCase()}</Text>
-              <ScrollView style={{ maxHeight: 320 }}>
-                {items.map(item => (
-                  <TouchableOpacity key={item.value} accessibilityRole="button"
-                    accessibilityLabel={item.label} accessibilityState={{ selected: item.value === value }}
-                    onPress={() => { onValueChange(item.value); setOpen(false); }}>
-                    <Text style={styles.pickerInput}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity accessibilityRole="button" onPress={() => setOpen(false)}>
-                <Text style={styles.pickerInput}>Cancel</Text>
-              </TouchableOpacity>
+        {/* Wait for the web modal to install its focus trap before showing the options. */}
+        <Modal
+          visible={open}
+          transparent
+          animationType="none"
+          accessibilityLabel={dialogLabel}
+          onShow={() => setShowOptions(true)}
+          onRequestClose={closePicker}
+        >
+          {showOptions && (
+            <View style={styles.overlay}>
+              <View style={styles.options} accessibilityViewIsModal>
+                <Text style={styles.label}>{dialogLabel}</Text>
+                <ScrollView style={{ maxHeight: 320 }}>
+                  {items.map(item => (
+                    <TouchableOpacity key={item.value} accessibilityRole="button"
+                      accessibilityLabel={item.label} accessibilityState={{ selected: item.value === value }}
+                      onPress={() => { onValueChange(item.value); closePicker(); }}>
+                      <Text style={styles.pickerInput}>{item.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <TouchableOpacity accessibilityRole="button" onPress={closePicker}>
+                  <Text style={styles.pickerInput}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          )}
         </Modal>
       </View>
     );
