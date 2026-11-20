@@ -1,0 +1,5 @@
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-920	board	Tasks	T-920	Status	In progress	2026-11-19 20:55:11 ET
+T-920	board	Tasks	T-920	Status	Done	2026-11-19 20:57:00 ET
+T-920	board	Tasks	T-920	Done at (ET)	2026-11-19 20:57:00 ET	2026-11-19 20:57:00 ET
+T-920	board	Tasks	T-920	Result	Issue #378 was already completed on main; the superseded hook was later replaced by useOnboardingSurvey.	2026-11-19 20:57:00 ET
