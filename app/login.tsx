@@ -51,6 +51,8 @@ export default function LoginScreen() {
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       <TouchableOpacity
         accessibilityRole="button"
+        accessibilityLabel="Sign In with Google"
+        aria-busy={isSigningIn}
         style={styles.button}
         onPress={handleGoogleSignIn}
         disabled={isSigningIn}
@@ -60,6 +62,7 @@ export default function LoginScreen() {
       <Link href="/reset-password" style={styles.helpLink}>Forgot your password?</Link>
       <TouchableOpacity
         accessibilityRole="button"
+        accessibilityLabel="Cancel"
         style={[styles.button, styles.cancelButton]}
         onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
       >

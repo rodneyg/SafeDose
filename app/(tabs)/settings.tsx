@@ -249,6 +249,9 @@ export default function SettingsScreen() {
                 
                 <TouchableOpacity 
                   style={[styles.subscriptionButton, isManagingSubscription && styles.disabledButton]} 
+                  accessibilityRole="button"
+                  accessibilityLabel={subscriptionStatus.hasActiveSubscription ? 'Manage Subscription' : 'View Billing'}
+                  aria-busy={isManagingSubscription}
                   onPress={handleManageSubscription}
                   disabled={isManagingSubscription}
                 >
@@ -266,6 +269,8 @@ export default function SettingsScreen() {
                 <Text style={styles.value}>No subscription information available</Text>
                 <TouchableOpacity 
                   style={styles.subscriptionButton} 
+                  accessibilityRole="button"
+                  accessibilityLabel="Refresh subscription status"
                   onPress={fetchSubscriptionStatus}
                 >
                   <Text style={styles.subscriptionButtonText}>Refresh</Text>
@@ -281,6 +286,9 @@ export default function SettingsScreen() {
             // Show sign out button for signed in users
             <TouchableOpacity 
               style={[styles.signOutButton, isSigningOut && styles.disabledButton]} 
+              accessibilityRole="button"
+              accessibilityLabel="Sign Out"
+              aria-busy={isSigningOut}
               onPress={handleSignOut}
               disabled={isSigningOut}
             >
@@ -299,6 +307,9 @@ export default function SettingsScreen() {
             // Show sign in button for guest users or not logged in
             <TouchableOpacity 
               style={[styles.signInButton, isSigningIn && styles.disabledButton]} 
+              accessibilityRole="button"
+              accessibilityLabel="Sign In with Google"
+              aria-busy={isSigningIn}
               onPress={handleSignIn}
               disabled={isSigningIn}
             >

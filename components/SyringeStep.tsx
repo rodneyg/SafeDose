@@ -68,6 +68,10 @@ export default function SyringeStep({
             !hasValidInsulinOptions && styles.disabledOption,
             isMobileWeb && styles.optionButtonMobile,
           ]}
+          accessibilityRole="button"
+          accessibilityLabel="Insulin Syringes"
+          accessibilityState={{ selected: !manualSyringe.needsConfirmation && manualSyringe.type === 'Insulin' }}
+          aria-pressed={!manualSyringe.needsConfirmation && manualSyringe.type === 'Insulin'}
           onPress={() => {
             if (!hasValidInsulinOptions) {
               setSyringeHint("No compatible insulin syringes for this dose.");
@@ -94,6 +98,10 @@ export default function SyringeStep({
             !hasValidStandardOptions && styles.disabledOption,
             isMobileWeb && styles.optionButtonMobile,
           ]}
+          accessibilityRole="button"
+          accessibilityLabel="Standard Syringes"
+          accessibilityState={{ selected: !manualSyringe.needsConfirmation && manualSyringe.type === 'Standard' }}
+          aria-pressed={!manualSyringe.needsConfirmation && manualSyringe.type === 'Standard'}
           onPress={() => {
             if (!hasValidStandardOptions) {
               setSyringeHint("No compatible standard syringes for this dose.");
@@ -121,6 +129,10 @@ export default function SyringeStep({
           <View style={styles.presetContainer}>
             {['U-100', 'U-40'].map(scale => (
               <TouchableOpacity key={scale} style={[styles.optionButton, !manualSyringe.needsScaleConfirmation && (manualSyringe.insulinScale || 'U-100') === scale && styles.selectedOption]}
+                accessibilityRole="button"
+                accessibilityLabel={scale}
+                accessibilityState={{ selected: !manualSyringe.needsScaleConfirmation && (manualSyringe.insulinScale || 'U-100') === scale }}
+                aria-pressed={!manualSyringe.needsScaleConfirmation && (manualSyringe.insulinScale || 'U-100') === scale}
                 onPress={() => { setManualSyringe({ ...manualSyringe, insulinScale: scale, needsScaleConfirmation: false }); setSyringeHint(null); }}>
                 <Text style={styles.buttonText}>{scale}</Text>
               </TouchableOpacity>
@@ -134,6 +146,10 @@ export default function SyringeStep({
           <TouchableOpacity
             key={volume}
             style={[styles.optionButton, manualSyringe.volume === volume && styles.selectedOption]}
+            accessibilityRole="button"
+            accessibilityLabel={volume}
+            accessibilityState={{ selected: manualSyringe.volume === volume }}
+            aria-pressed={manualSyringe.volume === volume}
             onPress={() => setManualSyringe({ ...manualSyringe, volume })}
           >
             <Text style={[styles.buttonText, manualSyringe.volume === volume && styles.selectedButtonText]}>{volume}</Text>
