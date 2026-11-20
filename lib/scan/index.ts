@@ -1,4 +1,4 @@
-import { syringeOptions, type CalculateDoseParams } from '../dosing';
+import { parseInputNumber, syringeOptions, type CalculateDoseParams } from '../dosing';
 import { SCAN_MODEL, SCAN_PROMPT, buildScanRequest } from './request';
 
 // Snapshot rather than the moving gpt-4o alias. No client or credentials live here.
@@ -34,9 +34,11 @@ export function parseScanQuantity(value: string | null, concentration = false):
   { value: number; unit: 'mg' | 'mcg' | 'units' } | null {
   if (!value) return null;
   const match = value.match(new RegExp(`^(${DECIMAL})\\s*(mg|mcg|µg|μg|units|u|iu|usp units)${concentration ? '\\s*/\\s*ml' : ''}$`, 'i'));
-  if (!match || !Number.isFinite(Number(match[1])) || Number(match[1]) <= 0) return null;
+  if (!match) return null;
+  const amount = parseInputNumber(match[1]);
+  if (!(amount > 0)) return null;
   const unit = match[2].toLowerCase();
-  return { value: Number(match[1]), unit: unit === 'mg' ? 'mg' : ['mcg', 'µg', 'μg'].includes(unit) ? 'mcg' : 'units' };
+  return { value: amount, unit: unit === 'mg' ? 'mg' : ['mcg', 'µg', 'μg'].includes(unit) ? 'mcg' : 'units' };
 }
 
 /** No I/O. Fail closed, retaining raw output for audit. Expected labels never enter this function. */
