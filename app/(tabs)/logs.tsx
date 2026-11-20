@@ -2,12 +2,22 @@ import { formatDrawToText, formatConcentration } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Trash2, Calendar, Pill } from 'lucide-react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { DoseLog } from '../../types/doseLog';
 import { formatInjectionSiteForDisplay } from '../../lib/injectionSites';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
+import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { isFreeScanPlan } from '../../lib/upgradeNudges';
+import UpgradeNudge from '../../components/UpgradeNudge';
 
 export default function LogsScreen() {
+  const { user } = useAuth();
+  const isFocused = useIsFocused();
+  const offline = useWebOffline();
+  const { usageData, hasVerifiedUsage } = useUsageTracking();
   const { getDoseLogHistory, deleteDoseLog } = useDoseLogging();
   const [logs, setLogs] = useState<DoseLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,6 +137,9 @@ export default function LogsScreen() {
       </View>
 
       <ScrollView style={styles.logsList}>
+        {isFocused && !offline && user?.uid && hasVerifiedUsage && isFreeScanPlan(usageData) && (
+          <UpgradeNudge key={user.uid} userId={user.uid} kind="firstLogs" />
+        )}
         {logs.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Pill color="#8E8E93" size={48} style={styles.emptyIcon} />

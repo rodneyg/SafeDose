@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { FeedbackContextType } from '../../types/feedback';
 import { InjectionSite } from '../../types/doseLog';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
+import type { ScanUsage } from './useUsageTracking';
 import { useDoseLogging } from './useDoseLogging';
 import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
@@ -20,7 +21,7 @@ type Syringe = SyringeSelection;
 type ResetFullFormFunc = (startStep?: ManualStep) => void;
 
 interface UseDoseCalculatorProps {
-  checkUsageLimit: () => Promise<boolean>;
+  checkUsageLimit: (onVerifiedUsage?: (usage: ScanUsage) => void) => Promise<boolean>;
   trackInteraction?: () => void;
 }
 
@@ -832,9 +833,9 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     setScreenStep('intro');
   }, []);
 
-  const handleCapture = useCallback(async () => {
+  const handleCapture = useCallback(async (onVerifiedUsage?: (usage: ScanUsage) => void) => {
     try {
-      const canProceed = await checkUsageLimit();
+      const canProceed = await checkUsageLimit(onVerifiedUsage);
       if (!canProceed) return false;
       setManualStep('dose');
       lastActionTimestamp.current = Date.now();
