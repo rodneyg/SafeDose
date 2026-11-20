@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-472",
+    "date": "2026-11-20",
+    "title": "Test last dose prefill and empty history",
+    "status": "published",
+    "prs": [
+      472
+    ],
+    "sections": {
+      "Improved": [
+        "Test last dose prefill and empty history"
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-470",
     "date": "2026-11-19",
     "title": "Fix web photo picker cancellation",
