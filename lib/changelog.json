@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-504",
+    "date": "2026-11-20",
+    "title": "Add secondary dosing problem page",
+    "status": "published",
+    "prs": [
+      504
+    ],
+    "sections": {
+      "Improved": [
+        "Add secondary dosing problem page"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-503",
     "date": "2026-11-20",
     "title": "Require manual verification of SafeDose scan fills",
