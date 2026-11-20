@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,9 +9,15 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 export default function LoginScreen() {
   const { user, auth } = useAuth();
   const router = useRouter();
-  const { from } = useLocalSearchParams<{ from?: string }>();
+  const { from, offer } = useLocalSearchParams<{ from?: string; offer?: string }>();
   const [error, setError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
+
+  useEffect(() => {
+    if (from === 'pricing' && user && !user.isAnonymous) {
+      router.replace({ pathname: '/pricing', params: offer ? { offer } : {} });
+    }
+  }, [from, offer, router, user]);
 
   const handleGoogleSignIn = async () => {
     if (isSigningIn) return;
@@ -26,6 +32,7 @@ export default function LoginScreen() {
       } else {
         logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
       }
+      if (from === 'pricing') return;
       const route = await routeAfterGoogleSignIn({
         user: result.user,
         loadRemoteProfile: loadRemoteUserProfile,

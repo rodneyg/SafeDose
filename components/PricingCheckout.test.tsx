@@ -9,7 +9,12 @@ jest.mock('../lib/stripeConfig', () => ({ publishableKey: 'test-placeholder' }))
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('../lib/apiBase', () => ({ getApiBaseUrl: () => 'https://example.invalid' }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: null }) }));
-jest.mock('expo-router', () => ({ Link: 'Link', router: { back: jest.fn() } }));
+let mockUser: { isAnonymous: boolean; getIdToken: () => Promise<string> };
+const mockNavigate = jest.fn();
+jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
+jest.mock('expo-router', () => ({
+  Link: 'Link', router: { back: jest.fn(), push: mockNavigate }, useLocalSearchParams: () => ({}),
+}));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 jest.mock('react-native', () => ({
   ...jest.requireActual('../__mocks__/react-native'),
@@ -30,6 +35,7 @@ const text = () => renderer.root.findAllByType('Text' as any)
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUser = { isAnonymous: false, getIdToken: async () => 'checkout-test-token' };
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Unexpected checkout request'));
@@ -69,12 +75,23 @@ it.each(['reject', 'null', 'throw'])('handles a %s loader failure and allows ret
 
   const redirectToCheckout = jest.fn().mockResolvedValue({});
   loader.mockResolvedValueOnce({ redirectToCheckout });
-  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, text: async () => JSON.stringify({ sessionId: 'test-session' }) });
+  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session' }) });
   await act(async () => { await button().props.onPress(); });
   expect(text()).not.toContain(message);
   expect(fetch).toHaveBeenCalledWith('https://example.invalid/api/create-checkout-session', expect.objectContaining({
     method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer checkout-test-token' },
     body: JSON.stringify({ offerKey: 'photo_check_monthly', successUrl: 'https://example.invalid/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://example.invalid/pricing', hasTrial: false }),
   }));
   expect(redirectToCheckout).toHaveBeenCalledWith({ sessionId: 'test-session' });
+});
+
+it('takes a guest to sign in before loading Stripe', async () => {
+  mockUser.isAnonymous = true;
+  await act(async () => { await button().props.onPress(); });
+  expect(mockNavigate).toHaveBeenCalledWith({
+    pathname: '/login', params: { from: 'pricing', offer: 'photo_check_monthly' },
+  });
+  expect(loader).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
 });

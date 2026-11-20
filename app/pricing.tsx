@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { getCheckoutStripe } from "../lib/checkoutStripe";
-import stripeConfig from "../lib/stripeConfig";
+import { useAuth } from "../contexts/AuthContext";
+import { billingRequest } from "../lib/subscriptionStatus";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
-import { Link, router } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import PublicLinks from "../components/PublicLinks";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
@@ -22,6 +23,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function PricingPage() {
   const { profile } = useUserProfile();
+  const { user } = useAuth();
+  const { offer } = useLocalSearchParams<{ offer?: string }>();
   
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -36,7 +39,6 @@ export default function PricingPage() {
       subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
       offerKey: 'photo_check_monthly',
       badgeText: "Web",
-      isDefault: true,
       planType: 'photo_check',
       isMonthly: true,
       hasTrial: false,
@@ -50,7 +52,6 @@ export default function PricingPage() {
       subtext: `Save ${PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT}%`,
       offerKey: 'photo_check_annual',
       badgeText: "Best Value",
-      isDefault: false,
       savings: PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
       planType: 'photo_check',
       isMonthly: false,
@@ -86,7 +87,7 @@ export default function PricingPage() {
     }
   };
 
-  const defaultPlan = pricingPlansData.find(plan => plan.isDefault) || pricingPlansData[0];
+  const defaultPlan = pricingPlansData.find(plan => plan.offerKey === offer) || pricingPlansData[0];
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
   const [selectedPlanType, setSelectedPlanType] = useState(defaultPlan.planType);
   const [isLoading, setIsLoading] = useState(false);
@@ -134,120 +135,30 @@ export default function PricingPage() {
   }, [fadeAnim, scaleAnim, pulseAnim]);
 
   const initiateStripeCheckout = async () => {
-    console.log(`initiateStripeCheckout called for ${selectedPlan.name}`);
+    if (!user || user.isAnonymous) {
+      router.push({ pathname: '/login', params: { from: 'pricing', offer: selectedPlan.offerKey } });
+      return;
+    }
+
     logAnalyticsEvent(ANALYTICS_EVENTS.INITIATE_UPGRADE, { plan: selectedPlan.id });
-    
     setIsLoading(true);
     setErrorMessage("");
-    
     try {
-      // Check if publishable key is missing before proceeding
-      if (!stripeConfig.publishableKey) {
-        console.error("Stripe publishable key is missing");
-        setErrorMessage("Payment system configuration error. Please contact support - Stripe publishable key is missing.");
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
-          plan: selectedPlan.id,
-          error: 'Stripe publishable key is missing'
-        });
-        return;
-      }
-
       const stripe = await getCheckoutStripe();
-      console.log("Stripe instance:", stripe);
-      if (!stripe) {
-        console.error("Stripe is not initialized");
-        setErrorMessage("Stripe is not initialized. Please try again later.");
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
-          plan: selectedPlan.id,
-          error: 'Stripe not initialized'
-        });
-        return;
-      }
-
-      const apiBaseUrl = getApiBaseUrl();
-      const offerKey = selectedPlan.offerKey;
-      console.log("Using offerKey:", offerKey);
-
-      if (!offerKey) {
-        setErrorMessage("This offer is not available for checkout yet.");
-        return;
-      }
-
-      console.log(`Calling ${apiBaseUrl}/api/create-checkout-session with:`, {
-        offerKey,
-        successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${apiBaseUrl}/pricing`,
+      const origin = getApiBaseUrl();
+      const { sessionId } = await billingRequest<{ sessionId: string }>(user, 'create-checkout-session', {
+        offerKey: selectedPlan.offerKey,
+        successUrl: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${origin}/pricing`,
         hasTrial: selectedPlan.hasTrial,
       });
 
-      const res = await fetch(
-        `${apiBaseUrl}/api/create-checkout-session`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            offerKey,
-            successUrl: `${apiBaseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${apiBaseUrl}/pricing`,
-            hasTrial: selectedPlan.hasTrial,
-          }),
-        }
-      );
-      console.log("create-checkout-session status:", res.status);
-
-      const text = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("Failed to parse JSON:", e);
-        throw new Error("Invalid JSON from checkout session");
-      }
-
-      if (!res.ok) {
-        console.error("Error response from API:", data);
-        
-        // Provide specific error messages for common configuration issues
-        let userFriendlyMessage = data.error || "Failed to create checkout session";
-        
-        if (data.error && data.error.includes("publishable API key")) {
-          userFriendlyMessage = "Payment system configuration error. Please contact support - this issue has been logged for immediate attention.";
-          console.error("CRITICAL: Stripe configuration error detected - publishable key used as secret key");
-        } else if (data.error && data.error.includes("secret key")) {
-          userFriendlyMessage = "Payment system temporarily unavailable. Please try again later or contact support.";
-          console.error("CRITICAL: Stripe secret key configuration error");
-        } else if (res.status === 500) {
-          userFriendlyMessage = "Payment system temporarily unavailable. Please try again in a few moments.";
-        }
-        
-        setErrorMessage(userFriendlyMessage);
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
-          plan: selectedPlan.id,
-          error: data.error || 'Failed to create checkout session',
-          userMessage: userFriendlyMessage
-        });
-        return;
-      }
-
-      const { sessionId } = data;
-      console.log("Redirecting to Stripe Checkout...");
       const result = await stripe.redirectToCheckout({ sessionId });
-      console.log("redirectToCheckout result:", result);
-      if (result?.error) {
-        console.error("Stripe redirectToCheckout error:", result.error);
-        setErrorMessage(result.error.message || "Unable to open checkout. Please try again.");
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
-          plan: selectedPlan.id,
-          error: result.error.message
-        });
-      }
-    } catch (error: any) {
-      console.error("Checkout error caught:", error);
-      setErrorMessage(error.message || "Unable to initiate checkout. Please try again.");
-      logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, {
-        plan: selectedPlan.id,
-        error: error.message || 'Unable to initiate checkout'
-      });
+      if (result.error) throw new Error(result.error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to initiate checkout. Please try again.";
+      setErrorMessage(message);
+      logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { plan: selectedPlan.id, error: message });
     } finally {
       setIsLoading(false);
     }
@@ -363,7 +274,7 @@ export default function PricingPage() {
 
       {/* Trial Info */}
       <Text style={styles.trialInfo}>
-        {`Web checkout • Cancel anytime • Calculator stays free`}
+        {user && !user.isAnonymous ? "Web checkout · Cancel anytime" : "Sign in to link Photo Check to your account."}
       </Text>
 
       {/* Error Message */}

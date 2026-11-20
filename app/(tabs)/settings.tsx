@@ -1,7 +1,7 @@
 import { Link } from 'expo-router';
 import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Linking } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
@@ -9,64 +9,37 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { signInWithGoogle } from '../../lib/googleAuth';
 import { formatPlanDisplayName } from '../../lib/plans';
 
-interface SubscriptionStatus {
-  hasActiveSubscription: boolean;
-  subscriptionStatus: string;
-  plan: string;
-  customerId: string | null;
-  subscription?: {
-    id: string;
-    status: string;
-    currentPeriodEnd: number;
-    cancelAtPeriodEnd: boolean;
-    priceId: string;
-  } | null;
-}
+import { billingRequest, getSubscriptionStatus, SubscriptionStatus } from '../../lib/subscriptionStatus';
+import { getApiBaseUrl } from '../../lib/apiBase';
 
 export default function SettingsScreen() {
   const { user, logout, isSigningOut, auth } = useAuth();
   const { usageData } = useUsageTracking();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [subscriptionAttempt, setSubscriptionAttempt] = useState(0);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
-    if (user && !user.isAnonymous) {
-      fetchSubscriptionStatus();
-    }
-  }, [user]);
-
-  const fetchSubscriptionStatus = async () => {
+    setSubscriptionStatus(null);
+    setIsLoadingSubscription(false);
     if (!user || user.isAnonymous) return;
-    
-    setIsLoadingSubscription(true);
-    try {
-      const idToken = await user.getIdToken();
-      const response = await fetch('/api/get-subscription-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        setSubscriptionStatus(data);
-        console.log('Subscription status loaded:', data);
-      } else {
-        console.error('Failed to fetch subscription status:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching subscription status:', error);
-    } finally {
-      setIsLoadingSubscription(false);
-    }
-  };
+    const controller = new AbortController();
+    setIsLoadingSubscription(true);
+    getSubscriptionStatus(user, controller.signal).then(data => {
+      if (!controller.signal.aborted) setSubscriptionStatus(data);
+    }).catch(() => {
+      if (!controller.signal.aborted) console.warn('Could not load subscription status.');
+    }).finally(() => {
+      if (!controller.signal.aborted) setIsLoadingSubscription(false);
+    });
+    return () => controller.abort();
+  }, [user, subscriptionAttempt]);
 
   const handleManageSubscription = async () => {
-    if (!subscriptionStatus?.customerId) {
+    if (!user || user.isAnonymous || !subscriptionStatus?.customerId) {
       Alert.alert(
         'No Subscription Found',
         'You don\'t have an active subscription to manage. You can upgrade from the pricing page.',
@@ -79,32 +52,12 @@ export default function SettingsScreen() {
     logAnalyticsEvent(ANALYTICS_EVENTS.CANCEL_SUBSCRIPTION);
 
     try {
-      const response = await fetch('/api/create-portal-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: subscriptionStatus.customerId,
-          returnUrl: typeof window !== 'undefined' ? window.location.href : 'https://safedose.app/settings',
-        }),
+      const { url } = await billingRequest<{ url: string }>(user, 'create-portal-session', {
+        returnUrl: `${getApiBaseUrl()}/settings`,
       });
+      if (typeof window !== 'undefined') window.location.assign(url);
+      else await Linking.openURL(url);
 
-      if (response.ok) {
-        const { url } = await response.json();
-        
-        // Handle opening portal based on platform
-        if (typeof window !== 'undefined') {
-          window.open(url, '_blank');
-        } else {
-          // For React Native, you could use Linking.openURL(url)
-          console.log('Portal URL:', url);
-          Alert.alert('Subscription Management', 'Portal URL generated. Check console for details.');
-        }
-      } else {
-        const errorData = await response.json();
-        Alert.alert('Error', errorData.error || 'Failed to open subscription management');
-      }
     } catch (error) {
       console.error('Error creating portal session:', error);
       Alert.alert('Error', 'Failed to open subscription management. Please try again.');
@@ -208,7 +161,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Subscription Management */}
-        {!user?.isAnonymous && (
+        {user && !user.isAnonymous && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <CreditCard size={20} color="#007AFF" />
@@ -231,10 +184,12 @@ export default function SettingsScreen() {
                 
                 {subscriptionStatus.subscription && (
                   <>
-                    <Text style={styles.label}>Next Billing Date</Text>
-                    <Text style={styles.value}>
-                      {formatDate(subscriptionStatus.subscription.currentPeriodEnd)}
-                    </Text>
+                    {subscriptionStatus.hasActiveSubscription && subscriptionStatus.subscription.currentPeriodEnd != null && (
+                      <>
+                        <Text style={styles.label}>Next Billing Date</Text>
+                        <Text style={styles.value}>{formatDate(subscriptionStatus.subscription.currentPeriodEnd)}</Text>
+                      </>
+                    )}
                     
                     {subscriptionStatus.subscription.cancelAtPeriodEnd && (
                       <View style={styles.warningContainer}>
@@ -266,7 +221,7 @@ export default function SettingsScreen() {
                 <Text style={styles.value}>No subscription information available</Text>
                 <TouchableOpacity 
                   style={styles.subscriptionButton} 
-                  onPress={fetchSubscriptionStatus}
+                  onPress={() => setSubscriptionAttempt(attempt => attempt + 1)}
                 >
                   <Text style={styles.subscriptionButtonText}>Refresh</Text>
                 </TouchableOpacity>

@@ -1,114 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { doc, setDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from '../lib/firebase';
-import Constants from 'expo-constants';
-import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '../lib/analytics';
-import { getApiBaseUrl } from "../lib/apiBase";
+import { useAuth } from '../contexts/AuthContext';
+import { billingRequest } from '../lib/subscriptionStatus';
+
+type CheckoutStatus = 'pending' | 'active' | 'failed' | 'inactive';
+const messages = {
+  loading: ['Checking your subscription', 'We are checking your account for Photo Check access.'],
+  pending: ['Waiting for payment confirmation', 'Photo Check will activate when Stripe confirms payment.'],
+  active: ['Photo Check is active', 'Your SafeDose account now has unlimited photo checks.'],
+  failed: ['Payment was not completed', 'You can return to pricing to try again.'],
+  inactive: ['Photo Check is inactive', 'Check your subscription in Settings.'],
+  unavailable: ['Photo Check status unavailable', 'Use the SafeDose account you checked out with to check your subscription.'],
+};
 
 export default function SuccessScreen() {
-  const { session_id } = useLocalSearchParams();
-  const [error, setError] = useState<string | null>(null);
-  const [isValid, setIsValid] = useState<boolean>(false);
-  const [shouldRedirect, setShouldRedirect] = useState<boolean>(false);
+  const { session_id } = useLocalSearchParams<{ session_id?: string }>();
+  const { user } = useAuth();
+  const [status, setStatus] = useState<keyof typeof messages>('loading');
+  const [attempt, setAttempt] = useState(0);
 
-  // Handle redirection separately from validation logic
   useEffect(() => {
-    if (shouldRedirect) {
-      // Use setTimeout to ensure navigation happens after component is fully mounted
-      setTimeout(() => {
-        router.replace('/(tabs)/new-dose');
-      }, 100);
+    if (!user || user.isAnonymous || typeof session_id !== 'string') {
+      setStatus('unavailable');
+      return;
     }
-  }, [shouldRedirect]);
 
-  useEffect(() => {
-    const validatePaymentAndUpdatePlan = async () => {
-      // Set redirect flag if no session_id is provided
-      if (!session_id) {
-        console.log('[SuccessScreen] No session_id provided, setting redirect flag');
-        setShouldRedirect(true);
-        return;
-      }
+    const controller = new AbortController();
+    setStatus('loading');
+    billingRequest<{ status: CheckoutStatus }>(user, 'validate-session', { session_id }, controller.signal)
+      .then(result => {
+        if (!controller.signal.aborted) setStatus(result.status);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setStatus('unavailable');
+      });
+    return () => controller.abort();
+  }, [user, session_id, attempt]);
 
-      try {
-        // Call our API to validate the payment session
-        const response = await fetch(`${getApiBaseUrl()}/api/validate-session`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ session_id }),
-        });
-
-        const data = await response.json();
-        console.log('[SuccessScreen] Session validation response:', data);
-        
-        // Check if the response indicates a valid payment
-        if (!response.ok || !data.isValid) {
-          console.log('[SuccessScreen] Invalid session or payment not completed, setting redirect flag');
-          logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
-            plan: 'plus', 
-            error: 'Invalid session or payment not completed' 
-          });
-          setShouldRedirect(true);
-          return;
-        }
-        
-        // Payment is valid, mark as valid
-        setIsValid(true);
-        
-        // Log successful upgrade
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_SUCCESS, { plan: 'plus' });
-        
-        // Update user plan in Firestore since payment is confirmed
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, { plan: 'plus', limit: 150, scansUsed: 0 }, { merge: true });
-          
-          // Set user properties for analytics
-          setAnalyticsUserProperties({
-            [USER_PROPERTIES.PLAN_TYPE]: 'plus',
-            [USER_PROPERTIES.IS_ANONYMOUS]: user.isAnonymous,
-          });
-          
-          console.log('[SuccessScreen] User plan updated to premium');
-        } else {
-          throw new Error('No authenticated user found');
-        }
-      } catch (err) {
-        console.error('[SuccessScreen] Error validating payment or updating user:', err);
-        logAnalyticsEvent(ANALYTICS_EVENTS.UPGRADE_FAILURE, { 
-          plan: 'plus', 
-          error: err instanceof Error ? err.message : 'Unknown error' 
-        });
-        setError('Failed to process your upgrade. Please try again.');
-        setShouldRedirect(true);
-      }
-    };
-    
-    validatePaymentAndUpdatePlan();
-  }, [session_id]);
-
-  const handleContinue = () => {
-    router.push('/(tabs)/new-dose');
-  };
-  
-  // Show nothing while validating or redirecting
-  if (!isValid) {
-    return null;
-  }
-
+  const [title, message] = messages[status];
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Upgrade Successful!</Text>
-      <Text style={styles.message}>You're now a Premium user with 150 scans per month.</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
-      <TouchableOpacity style={styles.button} onPress={handleContinue}>
+      <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+      <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
+      {(status === 'pending' || status === 'unavailable') && user && !user.isAnonymous && session_id && (
+        <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => setAttempt(count => count + 1)}>
+          <Text style={styles.buttonText}>Check again</Text>
+        </TouchableOpacity>
+      )}
+      {status === 'failed' && (
+        <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/pricing')}>
+          <Text style={styles.buttonText}>Return to pricing</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}>
         <Text style={styles.buttonText}>Continue to SafeDose</Text>
       </TouchableOpacity>
     </View>
@@ -116,40 +61,36 @@ export default function SuccessScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#F2F2F7' 
+  container: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F2F2F7',
   },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    color: '#34C759', 
-    marginBottom: 20 
-  },
-  message: { 
-    fontSize: 16, 
-    textAlign: 'center', 
-    marginBottom: 30,
-    color: '#333333'
-  },
-  error: {
-    fontSize: 14,
-    color: '#f87171',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
     marginBottom: 20,
-    textAlign: 'center'
+    textAlign: 'center',
+  },
+  message: {
+    fontSize: 16,
+    marginBottom: 24,
+    color: '#333333',
+    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#005BC4',
     paddingVertical: 14,
     paddingHorizontal: 30,
-    borderRadius: 12
+    marginBottom: 12,
+    borderRadius: 12,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
   },
 });

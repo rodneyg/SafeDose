@@ -1,55 +1,98 @@
 /* eslint-env jest */
 const mockCreate = jest.fn();
+const mockStoreCheckout = jest.fn();
+const mockGetCustomer = jest.fn();
+const mockBillingUser = jest.fn();
 jest.mock('stripe', () => jest.fn(() => ({ checkout: { sessions: { create: mockCreate } } })));
-jest.mock('../../lib/stripeConfig.server.js', () => ({ secretKey: 'sk_mock_not_a_key', mode: 'test' }));
+jest.mock('../../lib/stripeConfig.server', () => ({ secretKey: 'sk_test_placeholder', mode: 'test' }));
+jest.mock('../../lib/firebaseAdmin.server', () => ({ getBillingFirebase: jest.fn() }));
+jest.mock('../../lib/billing.server', () => ({
+  ...jest.requireActual('../../lib/billing.server'),
+  billingUser: (...args) => mockBillingUser(...args),
+  getOrCreateCustomer: (...args) => mockGetCustomer(...args),
+  billingRefs: () => ({ checkout: () => ({ create: mockStoreCheckout }) }),
+}));
 jest.mock('../../lib/photoCheckStripe', () => ({ resolveCheckoutPriceId: jest.fn() }));
 const { resolveCheckoutPriceId } = require('../../lib/photoCheckStripe');
 const handler = require('../create-checkout-session');
+
+const origin = 'https://safedose.rodneygainous.com';
+const urls = { successUrl: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`, cancelUrl: `${origin}/pricing` };
 let res;
-const urls = { successUrl: 'https://safedose.example/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://safedose.example/pricing' };
+const originalSecret = process.env.STRIPE_WEBHOOK_SECRET;
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_checkout_fixture';
   res = { status: jest.fn().mockReturnThis(), json: jest.fn(), setHeader: jest.fn() };
-  mockCreate.mockResolvedValue({ id: 'cs_mock' });
+  mockCreate.mockResolvedValue({ id: 'cs_checkout' });
+  mockBillingUser.mockResolvedValue({ uid: 'buyer', db: {} });
+  mockGetCustomer.mockResolvedValue('cus_buyer');
 });
-afterEach(() => jest.restoreAllMocks());
-it.each(['photo_check_monthly', 'photo_check_annual'])('builds a subscription for %s without a trial', async offerKey => {
-  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_mock', offerKey });
-  await handler({ method: 'POST', body: { offerKey, priceId: null, hasTrial: true, ...urls } }, res);
-  expect(resolveCheckoutPriceId).toHaveBeenCalledWith(expect.any(Object), { offerKey, priceId: null }, expect.objectContaining({ mode: 'test' }));
-  expect(mockCreate).toHaveBeenCalledWith({ mode: 'subscription',
-    line_items: [{ price: 'price_mock', quantity: 1 }], success_url: urls.successUrl,
-    cancel_url: urls.cancelUrl, metadata: { source: offerKey, offerKey } });
+afterEach(() => {
+  if (originalSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
+  else process.env.STRIPE_WEBHOOK_SECRET = originalSecret;
+  jest.restoreAllMocks();
+});
+
+it.each(['photo_check_monthly', 'photo_check_annual'])('binds %s to the authenticated account without a trial', async offerKey => {
+  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_photo', offerKey });
+  await handler({ method: 'POST', body: { offerKey, hasTrial: true, uid: 'another-user', ...urls } }, res);
+  expect(mockCreate).toHaveBeenCalledWith({
+    mode: 'subscription',
+    customer: 'cus_buyer',
+    client_reference_id: 'buyer',
+    line_items: [{ price: 'price_photo', quantity: 1 }],
+    success_url: urls.successUrl,
+    cancel_url: urls.cancelUrl,
+    metadata: { source: offerKey, offerKey },
+  });
+  expect(mockStoreCheckout).toHaveBeenCalledWith({ uid: 'buyer', customerId: 'cus_buyer', status: 'pending', trial: false });
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.json).toHaveBeenCalledWith({ sessionId: 'cs_mock' });
+  expect(res.json).toHaveBeenCalledWith({ sessionId: 'cs_checkout' });
 });
-it('preserves legacy price and seven-day trial requests', async () => {
-  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_legacy' });
-  await handler({ method: 'POST', body: { priceId: 'price_legacy', hasTrial: true, ...urls } }, res);
+
+it('preserves the legacy Full Pro seven-day trial', async () => {
+  const priceId = 'price_1RUHgxAY2p4W374Yb5EWEtZ0';
+  resolveCheckoutPriceId.mockResolvedValue({ priceId });
+  await handler({ method: 'POST', body: { priceId, hasTrial: true, ...urls } }, res);
   expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-    line_items: [{ price: 'price_legacy', quantity: 1 }], subscription_data: { trial_period_days: 7 },
-    metadata: { source: 'full_pro_trial', offerKey: '' },
+    line_items: [{ price: priceId, quantity: 1 }],
+    subscription_data: { trial_period_days: 7 },
   }));
+  expect(mockStoreCheckout).toHaveBeenCalledWith(expect.objectContaining({ trial: true }));
 });
-it.each(['offer', 'success', 'cancel'])('rejects missing %s before creating a session', async missing => {
+
+it.each(['offerKey', 'successUrl', 'cancelUrl'])('rejects missing %s', async missing => {
   const body = { offerKey: 'photo_check_monthly', ...urls };
-  if (missing === 'offer') body.offerKey = undefined;
-  if (missing === 'success') body.successUrl = undefined;
-  if (missing === 'cancel') body.cancelUrl = undefined;
+  delete body[missing];
   await handler({ method: 'POST', body }, res);
   expect(res.status).toHaveBeenCalledWith(400);
   expect(mockCreate).not.toHaveBeenCalled();
-  expect(resolveCheckoutPriceId).not.toHaveBeenCalled();
 });
-it('returns checkout failure to the caller', async () => {
-  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_mock', offerKey: 'photo_check_monthly' });
-  mockCreate.mockRejectedValue(new Error('Checkout temporarily unavailable'));
+
+it('rejects return URLs outside SafeDose', async () => {
+  await handler({ method: 'POST', body: { ...urls, offerKey: 'photo_check_monthly', cancelUrl: 'https://example.org/pricing' } }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+});
+
+it('does not open checkout when webhook verification is unconfigured', async () => {
+  delete process.env.STRIPE_WEBHOOK_SECRET;
   await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', ...urls } }, res);
-  expect(res.status).toHaveBeenCalledWith(500);
-  expect(res.json).toHaveBeenCalledWith({ error: 'Checkout temporarily unavailable' });
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(mockGetCustomer).not.toHaveBeenCalled();
+  expect(mockCreate).not.toHaveBeenCalled();
 });
+
+it('returns a service error if Stripe fails', async () => {
+  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_photo', offerKey: 'photo_check_monthly' });
+  mockCreate.mockRejectedValueOnce(new Error('Upstream diagnostic'));
+  await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', ...urls } }, res);
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Payments are temporarily unavailable.' });
+});
+
 it('rejects non-POST methods', async () => {
   await handler({ method: 'GET' }, res);
   expect(res.status).toHaveBeenCalledWith(405);
