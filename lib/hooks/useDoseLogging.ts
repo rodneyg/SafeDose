@@ -41,6 +41,7 @@ export function useDoseLogging() {
       } else {
         console.warn('[useDoseLogging] Warning: Verification failed - no data found after save');
       }
+      return logsList.length;
     } catch (error) {
       console.error('[useDoseLogging] Error saving dose log locally:', error);
     }
@@ -143,7 +144,7 @@ export function useDoseLogging() {
       solutionVolume?: string;
     },
     notes?: string
-  ): Promise<{ success: boolean; limitReached?: boolean }> => {
+  ): Promise<{ success: boolean; limitReached?: boolean; localDoseCount?: number }> => {
     if (isLogging) return { success: false };
     
     setIsLogging(true);
@@ -212,13 +213,13 @@ export function useDoseLogging() {
       }
       
       // Save locally (always works, now includes Firestore ID if available)
-      await saveDoseLogLocally(doseLog);
+      const localDoseCount = await saveDoseLogLocally(doseLog);
       
       // Increment log usage count
       await incrementLogsUsed();
       
       console.log('Dose logged successfully:', doseLog.id);
-      return { success: true };
+      return { success: true, localDoseCount };
     } catch (error) {
       console.error('Error logging dose:', error);
       // Don't throw - we want logging to be non-blocking

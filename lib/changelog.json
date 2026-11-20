@@ -1,5 +1,89 @@
 [
   {
+    "id": "2026-11-20-pr-488",
+    "date": "2026-11-20",
+    "title": "Expose dose calculator input types",
+    "status": "published",
+    "prs": [
+      488
+    ],
+    "sections": {
+      "Improved": [
+        "Expose dose calculator input types"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-482",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to useAuth",
+    "status": "published",
+    "prs": [
+      482
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-476",
+    "date": "2026-11-20",
+    "title": "Add GET /api/ping endpoint",
+    "status": "published",
+    "prs": [
+      476
+    ],
+    "sections": {
+      "Improved": [
+        "Add GET /api/ping endpoint"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-475",
+    "date": "2026-11-20",
+    "title": "Combine the SafeDose onboarding surveys",
+    "status": "published",
+    "prs": [
+      475
+    ],
+    "sections": {
+      "Improved": [
+        "Combine the SafeDose onboarding surveys"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-473",
+    "date": "2026-11-20",
+    "title": "Add dismissible Photo Check upgrade nudges",
+    "status": "published",
+    "prs": [
+      473
+    ],
+    "sections": {
+      "Improved": [
+        "Add dismissible Photo Check upgrade nudges"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-472",
+    "date": "2026-11-20",
+    "title": "Test last dose prefill and empty history",
+    "status": "published",
+    "prs": [
+      472
+    ],
+    "sections": {
+      "Improved": [
+        "Test last dose prefill and empty history"
+      ]
+    }
+  },
+  {
     "id": "2026-11-19-pr-470",
     "date": "2026-11-19",
     "title": "Fix web photo picker cancellation",
@@ -38,6 +122,20 @@
     "sections": {
       "Improved": [
         "Publish changelog updates automatically"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-19-pr-467",
+    "date": "2026-11-19",
+    "title": "Privacy Policy and Terms of Service",
+    "status": "published",
+    "prs": [
+      467
+    ],
+    "sections": {
+      "Improved": [
+        "You can now open the Privacy Policy and Terms of Service from the pricing page."
       ]
     }
   },
