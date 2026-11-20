@@ -6,8 +6,11 @@ describe('scheduleProtocol', () => {
     { day: 8, dose: '4 mg' },
   ];
 
-  it('is a no-op when a start date is not supplied', () => {
-    expect(scheduleProtocol(protocol)).toEqual(protocol);
+  it('returns fresh entries without adding dates when a start date is not supplied', () => {
+    const scheduled = scheduleProtocol(protocol);
+
+    expect(scheduled).toEqual(protocol);
+    expect(scheduled[0]).not.toBe(protocol[0]);
     expect(scheduleProtocol(protocol, null)).toEqual(protocol);
   });
 
@@ -18,9 +21,12 @@ describe('scheduleProtocol', () => {
     ]);
   });
 
-  it('handles month and year boundaries as calendar dates', () => {
+  it('handles month, year, and leap-day boundaries as calendar dates', () => {
     expect(scheduleProtocol([{ day: 2, dose: 1 }], '2026-12-31')).toEqual([
       { day: 2, dose: 1, date: '2027-01-01' },
+    ]);
+    expect(scheduleProtocol([{ day: 2, dose: 1 }], '2028-02-28')).toEqual([
+      { day: 2, dose: 1, date: '2028-02-29' },
     ]);
   });
 
