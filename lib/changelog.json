@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-488",
+    "date": "2026-11-20",
+    "title": "Expose dose calculator input types",
+    "status": "published",
+    "prs": [
+      488
+    ],
+    "sections": {
+      "Improved": [
+        "Expose dose calculator input types"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-482",
     "date": "2026-11-20",
     "title": "Add JSDoc to useAuth",
