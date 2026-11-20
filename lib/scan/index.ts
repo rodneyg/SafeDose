@@ -77,6 +77,7 @@ export function parseScanModelOutput(raw: string): ScanResult {
   }
   if (vial.totalAmount && !parseScanQuantity(vial.totalAmount)) reasons.push('Vial total amount needs an explicit readable unit.');
   if (vial.concentration && !parseScanQuantity(vial.concentration, true)) reasons.push('Vial concentration needs an explicit readable unit per mL.');
+  // Preserve raw fill for evaluation. Validation can reject it, but confidence cannot verify it.
   const fill = { units: number(f.units), ml: number(f.ml), plunger_visible: typeof f.plunger_visible === 'boolean' ? f.plunger_visible : null };
   for (const key of ['units', 'ml'] as const) {
     if (f[key] !== null && f[key] !== undefined && fill[key] === null) reasons.push(`Invalid fill.${key}.`);
@@ -115,8 +116,11 @@ export interface ScanDoseInputs {
   totalAmountUnit: 'mg' | 'mcg' | 'units' | null;
 }
 
-/** Used by both form prefill and the harness. Missing facts stay null. */
-export function mapScanToDoseInputs(scan: ScanResult): { status: 'ready' | 'needs-input'; reasons: string[]; inputs: ScanDoseInputs } {
+/** Map syringe metadata and vial label fields. Model fill and its confidence are never dose inputs. */
+export function mapScanToDoseInputs(
+  scan: ScanResult,
+  { syringeAndVialVerified = false }: { syringeAndVialVerified?: boolean } = {},
+): { status: 'ready' | 'needs-input' | 'needs-verification'; reasons: string[]; inputs: ScanDoseInputs } {
   const reasons = [...scan.reasons];
   const { type, volume } = scan.syringe;
   const supported = type && volume && Object.prototype.hasOwnProperty.call(syringeOptions[type], volume);
@@ -135,5 +139,6 @@ export function mapScanToDoseInputs(scan: ScanResult): { status: 'ready' | 'need
   };
   // calculateDose expects totalAmount in concentration numerator units. Do not pass mismatched amounts.
   if (concentration && total && concentration.unit !== total.unit) reasons.push('Vial amount and concentration units differ; confirm manually.');
-  return { status: scan.refuse || reasons.length > 0 ? 'needs-input' : 'ready', reasons, inputs };
+  if (scan.refuse || reasons.length > 0) return { status: 'needs-input', reasons, inputs };
+  return { status: syringeAndVialVerified ? 'ready' : 'needs-verification', reasons, inputs };
 }

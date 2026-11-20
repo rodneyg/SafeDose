@@ -25,6 +25,7 @@ import { signInWithGoogle } from '../lib/googleAuth';
 import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
+import { FREE_SCAN_LIMIT, hasScanCapacity } from '../lib/plans';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -41,6 +42,7 @@ interface IntroScreenProps {
   setNavigatingFromIntro?: (value: boolean) => void;
   applyLastDose?: () => Promise<boolean>;
   onScanPress?: () => void;
+  onScanLimit?: () => void;
 }
 
 export default function IntroScreen({
@@ -49,12 +51,16 @@ export default function IntroScreen({
   setNavigatingFromIntro,
   applyLastDose,
   onScanPress,
+  onScanLimit,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut, hasSignedOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
   const { usageData } = useUsageTracking();
   const { getDoseLogHistory } = useDoseLogging();
   const router = useRouter();
+  const scanLimit = usageData?.limit ?? FREE_SCAN_LIMIT;
+  const scansUsed = usageData?.scansUsed ?? 0;
+  const isOutOfScans = !hasScanCapacity(scansUsed, scanLimit);
 
   const [signInFailed, setSignInFailed] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -200,8 +206,12 @@ export default function IntroScreen({
   }, [auth, router, user, isSigningIn]);
 
   const handleUpgradePress = useCallback(() => {
+    if (isOutOfScans && onScanLimit) {
+      onScanLimit();
+      return;
+    }
     router.push('/pricing');
-  }, [router]);
+  }, [isOutOfScans, onScanLimit, router]);
 
   const handleLogoutPress = useCallback(async () => {
     if (isLoggingOut) return;
@@ -305,12 +315,8 @@ export default function IntroScreen({
      NAV HANDLERS
   ========================================================================= */
   const handleScanPress = useCallback(async () => {
-    // Check if user has remaining scans
-    const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
-    
-    if (scansRemaining <= 0) {
-      // If no scans remaining, redirect to pricing page
-      router.push('/pricing');
+    if (isOutOfScans) {
+      handleUpgradePress();
       return;
     }
     
@@ -322,7 +328,7 @@ export default function IntroScreen({
     } else {
       setScreenStep('scan');
     }
-  }, [setScreenStep, setNavigatingFromIntro, usageData, router, onScanPress]);
+  }, [setScreenStep, setNavigatingFromIntro, isOutOfScans, handleUpgradePress, onScanPress]);
 
   const handleManualEntryPress = useCallback(() => {
     setNavigatingFromIntro?.(true);
@@ -417,26 +423,19 @@ export default function IntroScreen({
               </View>
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
-                {(() => {
-                  const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
-                  const isOutOfScans = scansRemaining <= 0;
-                  
-                  return (
-                    <TouchableOpacity
-                      style={[
-                        styles.button, 
-                        isOutOfScans ? styles.outOfScansButton : styles.primaryButton, 
-                        isMobileWeb && styles.buttonMobile
-                      ]}
-                      onPress={handleScanPress}
-                    >
-                      <CameraIcon color="#fff" size={20} />
-                      <Text style={styles.buttonText}>
-                        {isOutOfScans ? 'Upgrade' : 'Scan'}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })()}
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    isOutOfScans ? styles.outOfScansButton : styles.primaryButton,
+                    isMobileWeb && styles.buttonMobile
+                  ]}
+                  onPress={handleScanPress}
+                >
+                  <CameraIcon color="#fff" size={20} />
+                  <Text style={styles.buttonText}>
+                    {isOutOfScans ? 'Upgrade' : 'Scan'}
+                  </Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
@@ -495,11 +494,11 @@ export default function IntroScreen({
               <View style={styles.scanStatusContainer}>
                 <Text style={styles.scanStatusText} onPress={handleUpgradePress} accessibilityRole="link" accessibilityHint="View plans and get more scans">
                   {(() => {
-                    const scansRemaining = usageData ? usageData.limit - usageData.scansUsed : 3;
-                    if (scansRemaining <= 0) {
+                    if (scanLimit < 0 || scanLimit === Infinity) return 'You have unlimited scans.';
+                    if (isOutOfScans) {
                       return "You've used all your scans";
                     }
-                    return `You have ${scansRemaining} scans remaining.`;
+                    return `You have ${scanLimit - scansUsed} scans remaining.`;
                   })()}{' '}
                   {(!usageData || usageData.plan === 'free') && (
                     <Text style={styles.upgradeLink} onPress={handleUpgradePress}>
