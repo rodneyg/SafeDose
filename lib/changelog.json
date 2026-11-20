@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-484",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to scan hook",
+    "status": "published",
+    "prs": [
+      484
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to scan hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-482",
     "date": "2026-11-20",
     "title": "Add JSDoc to useAuth",
