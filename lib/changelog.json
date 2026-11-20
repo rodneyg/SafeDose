@@ -70,6 +70,20 @@
     }
   },
   {
+    "id": "2026-11-20-pr-481",
+    "date": "2026-11-20",
+    "title": "Fix SafeDose native Metro bundling on iOS and Android",
+    "status": "published",
+    "prs": [
+      481
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose native Metro bundling on iOS and Android"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-476",
     "date": "2026-11-20",
     "title": "Add GET /api/ping endpoint",
