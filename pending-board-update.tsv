@@ -1,0 +1,5 @@
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-916	board	Tasks	T-916	Status	In progress	2026-11-19 20:55:00 ET
+T-916	board	Tasks	T-916	Status	Done	2026-11-19 20:58:24 ET
+T-916	board	Tasks	T-916	Done at (ET)	2026-11-19 20:58:24 ET	2026-11-19 20:58:24 ET
+T-916	board	Tasks	T-916	Result	Added focused useDoseLogging tests for success, storage failure, and duplicate prevention; checks passed.	2026-11-19 20:58:24 ET

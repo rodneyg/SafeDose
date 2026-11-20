@@ -1,0 +1,2 @@
+issue	files	pr_url	checks	status
+#378	lib/hooks/useDoseLogging.ts, lib/hooks/useDoseLogging.test.ts	N/A (PR metadata prepared; no remote configured)	npx jest lib/hooks/useDoseLogging.test.ts --runInBand; npx tsc --noEmit --pretty false; git diff --check	SUCCESS

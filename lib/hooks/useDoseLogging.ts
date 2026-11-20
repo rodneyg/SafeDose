@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ export function useDoseLogging() {
   const { user } = useAuth();
   const db = getFirestore();
   const [isLogging, setIsLogging] = useState(false);
+  const isLoggingRef = useRef(false);
   const { logUsageData, checkLogUsageLimit, incrementLogsUsed } = useLogUsageTracking();
 
   // Save dose log to local storage
@@ -145,8 +146,9 @@ export function useDoseLogging() {
     },
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean; localDoseCount?: number }> => {
-    if (isLogging) return { success: false };
+    if (isLoggingRef.current) return { success: false };
     
+    isLoggingRef.current = true;
     setIsLogging(true);
     
     try {
@@ -225,9 +227,10 @@ export function useDoseLogging() {
       // Don't throw - we want logging to be non-blocking
       return { success: false };
     } finally {
+      isLoggingRef.current = false;
       setIsLogging(false);
     }
-  }, [isLogging, user, saveDoseLogLocally, saveDoseLogToFirestore, checkLogUsageLimit, incrementLogsUsed]);
+  }, [user, saveDoseLogLocally, saveDoseLogToFirestore, checkLogUsageLimit, incrementLogsUsed]);
 
   // Get dose log history from local storage and Firestore (merged)
   const getDoseLogHistory = useCallback(async (): Promise<DoseLog[]> => {
