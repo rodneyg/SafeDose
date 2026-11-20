@@ -418,6 +418,8 @@ export default function ScanScreen({
               style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={handleButtonPress}
               disabled={isProcessing}
+              accessibilityLabel="Capture photo"
+              accessibilityRole="button"
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
@@ -435,6 +437,8 @@ export default function ScanScreen({
               style={styles.backButtonScan}
               onPress={handleGoHome}
               disabled={isProcessing}
+              accessibilityLabel="Cancel scan"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -544,6 +548,8 @@ export default function ScanScreen({
               style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={handleButtonPress}
               disabled={isProcessing}
+              accessibilityLabel="Capture photo"
+              accessibilityRole="button"
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
@@ -561,6 +567,8 @@ export default function ScanScreen({
               style={styles.backButtonScan}
               onPress={handleGoHome}
               disabled={isProcessing}
+              accessibilityLabel="Cancel scan"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Cancel</Text>
             </TouchableOpacity>
