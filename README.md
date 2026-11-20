@@ -212,3 +212,18 @@ Checks print PASS/FAIL, with a nonzero exit code for any failure. Response bodie
 page contents and exception messages are never printed. This limited smoke does
 not establish that photo inference or checkout works. Test the smoke runner
 against local HTTP fixtures with `node --test scripts/prod-smoke.test.mjs`.
+
+### Web preview smoke in GitHub Actions
+
+After this workflow is on the default branch, Vercel's successful Preview
+deployment event starts one headless Chromium check. It checks `/api/health`
+against the deployed commit, opens the app, and clicks **Try Now** to reach
+the age step. The browser allows only same-origin reads and stops before
+entering any data. The job uses no model calls or application credentials.
+
+To run it on protected previews, create a Protection Bypass for Automation
+secret in the SafeDose Vercel project and add it to GitHub Actions as
+`VERCEL_AUTOMATION_BYPASS_SECRET`. The workflow skips before installing
+dependencies if the secret is missing or the optional repository variable
+`PREVIEW_SMOKE_ENABLED` is set to `false`. The reason appears in the run
+summary. Production and skipped Vercel builds do not trigger this check.
