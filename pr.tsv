@@ -1,0 +1,2 @@
+pr_url	status	evidence
+	ready	Frozen-clock scheduler tests added on t-safedose-tests-reminder-scheduler; targeted tests, lint, typecheck, and web build passed. No remote is configured, so no PR was opened.
