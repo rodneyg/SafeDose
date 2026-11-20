@@ -890,6 +890,28 @@ export default function NewDoseScreen() {
     setShowLimitModal(true);
   }, []);
 
+  const startScanAppliedRef = useRef(false);
+  const { handleScanNavigation, beforeFirstScanPrompt } = doseCalculator;
+  useEffect(() => {
+    if (searchParams.startScan !== 'true') {
+      startScanAppliedRef.current = false;
+      return;
+    }
+    if (!isScreenActive || screenStep !== 'intro' || beforeFirstScanPrompt.isLoading ||
+        startScanAppliedRef.current) return;
+
+    startScanAppliedRef.current = true;
+    if (offline) {
+      handleSetScreenStep('manualEntry');
+    } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
+      openScanLimit();
+    } else {
+      setNavigatingFromIntro(true);
+      void handleScanNavigation();
+    }
+  }, [searchParams.startScan, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading, offline,
+    handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation]);
+
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
     
