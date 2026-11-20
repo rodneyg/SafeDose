@@ -72,6 +72,19 @@ it.each([
   expect(jest.getTimerCount()).toBe(0);
 });
 
+it('returns incomplete scan details for guided entry without counting the scan', async () => {
+  const model = { ...fixtures[0].model_output, syringe: null };
+  (fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ content: JSON.stringify(model) }) });
+
+  const result = await captureAndProcessImage({ ...options, returnIncompleteScan: true });
+
+  expect(result).toMatchObject({ refuse: true, vial: model.vial });
+  expect(result?.capturedImage).toBeUndefined();
+  expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  expect(options.setScanError).toHaveBeenLastCalledWith(null);
+  expect(options.incrementScansUsed).not.toHaveBeenCalled();
+});
+
 it('clears processing immediately when the browser cancels the photo picker', async () => {
   mockCancel = true;
   const result = captureAndProcessImage(options);

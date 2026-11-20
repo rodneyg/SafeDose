@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import NewDoseScreen from '../app/(tabs)/new-dose';
+import fixtures from '../evals/vision/fixtures/model-outputs.json';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
 import { parseScanModelOutput } from '../lib/scan';
 
@@ -32,6 +33,7 @@ jest.mock('expo-router', () => ({
   },
 }));
 const mockNoop = jest.fn();
+const authoredRead = fixtures.find(f => f.label.id === 'fixture-exact-read')!.model_output;
 const mockCalculator = new Proxy({
   onboardingSurvey: { prompt: null },
   resetFullForm: jest.fn(), setManualSyringe: jest.fn(), setTotalAmount: jest.fn(), setConcentrationAmount: jest.fn(), setSubstanceName: jest.fn(), setScreenStep: jest.fn(), handleCapture: jest.fn(async () => true),
@@ -39,6 +41,8 @@ const mockCalculator = new Proxy({
   manualSyringe: { type: 'Standard', volume: '3 ml' }, logUsageData: { plan: 'free' },
   recommendedMarking: '1 mL', calculatedVolume: 1, dose: '1', unit: 'mL',
   setDose: jest.fn(), setDoseValue: jest.fn(), handleCalculateFinal: jest.fn(),
+  setConcentrationUnit: jest.fn(), setTotalAmountUnit: jest.fn(), setConcentrationHint: jest.fn(),
+  setSubstanceNameHint: jest.fn(), setManualStep: jest.fn(), registerScannedFields: jest.fn(),
 }, { get: (target, key) => key in target ? target[key as keyof typeof target] : mockNoop });
 jest.mock('../lib/hooks/useDoseCalculator', () => ({ __esModule: true, default: () => mockCalculator }));
 jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' } }) }));
@@ -195,7 +199,7 @@ it('keeps unexpected capture failures visible without navigating to Manual', asy
 
 it('shows a successful scan in the image preview', async () => {
   navigate('scan');
-  const result = { syringe: {}, vial: {}, capturedImage: { uri: 'data:image/jpeg;base64,test', mimeType: 'image/jpeg' } };
+  const result = { ...parseScanModelOutput(JSON.stringify(authoredRead)), capturedImage: { uri: 'data:image/jpeg;base64,test', mimeType: 'image/jpeg' } };
   mockCapture.mockResolvedValueOnce(result);
   await act(async () => { await camera().props.onCapture(); });
   const preview = renderer.root.findByType('ImagePreviewModal' as never);
@@ -203,6 +207,43 @@ it('shows a successful scan in the image preview', async () => {
   expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
 });
 
+
+it.each([
+  ['refused', { refuse: true, vial: { substance: 'unreadable', concentration: '10', totalAmount: '5' }, confidence: authoredRead.confidence }, {}],
+  ['partial', { ...authoredRead, syringe: null, vial: { ...authoredRead.vial, totalAmount: '50 mg' } }, {
+    substanceName: 'Example compound', concentrationAmount: '10', concentrationUnit: 'mg/ml',
+    totalAmount: '50', totalAmountUnit: 'mg',
+  }],
+] as const)('opens guided manual entry for a %s photo', async (_, raw, expectedFields) => {
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(JSON.stringify(raw)));
+  await act(async () => { await camera().props.onCapture(); });
+
+  expect(mockCapture).toHaveBeenCalledWith(expect.objectContaining({ returnIncompleteScan: true }));
+  expect(mockCalculator.resetFullForm).toHaveBeenCalledTimes(1);
+  expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
+  expect(mockCalculator.setManualStep).toHaveBeenCalledWith('dose');
+  expect(mockCalculator.setDose).toHaveBeenCalledWith('');
+  expect(mockCalculator.setManualSyringe).not.toHaveBeenCalled();
+  expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+  expect(mockCalculator.registerScannedFields).toHaveBeenCalledWith(expectedFields);
+  expect(mockCalculator.setConcentrationAmount).toHaveBeenLastCalledWith(
+    'concentrationAmount' in expectedFields ? expectedFields.concentrationAmount : '',
+  );
+  if ('substanceName' in expectedFields) {
+    expect(mockCalculator.setSubstanceName).toHaveBeenCalledWith(expectedFields.substanceName);
+    expect(mockCalculator.setTotalAmount).toHaveBeenLastCalledWith(expectedFields.totalAmount);
+    expect(mockCalculator.setTotalAmountUnit).toHaveBeenLastCalledWith(expectedFields.totalAmountUnit);
+    expect(mockCalculator.setConcentrationHint).toHaveBeenCalledWith('From photo scan. Check the vial label.');
+  } else {
+    expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+  }
+  navigate('manualEntry');
+  expect(renderer.root.findByType('ManualEntryScreen' as never)).toBeTruthy();
+  expect(renderer.root.findByProps({ accessibilityRole: 'alert' }).props.children)
+    .toBe('For a clearer photo, use even light, face the label straight on, and avoid glare.');
+  expect(renderer.root.findByType('ImagePreviewModal' as never).props.visible).toBe(false);
+});
 
 it.each(wrongFills)('requires explicit review before applying accepted capture %#, even without an image', async raw => {
   navigate('scan');

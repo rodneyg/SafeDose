@@ -49,13 +49,6 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   useEffect(() => { medicationInputTypeRef.current = medicationInputType; }, [medicationInputType]);
   const [concentrationAmount, setConcentrationAmount] = useState<string>('');
   const [concentrationUnit, setConcentrationUnit] = useState<'mg/ml' | 'mcg/ml' | 'units/ml'>('mg/ml');
-  // A dose choice must never inherit an incompatible concentration default.
-  // Preserve compatible mass conversions, including mcg doses in mg/ml.
-  useEffect(() => {
-    setConcentrationUnit(current => validateUnitCompatibility(unit, current).isValid
-      ? current
-      : unit === 'units' ? 'units/ml' : unit === 'mcg' ? 'mcg/ml' : 'mg/ml');
-  }, [unit]);
   const [totalAmountUnit, setTotalAmountUnit] = useState<AmountUnit | null>('mg');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [solutionVolume, setSolutionVolume] = useState<string>('');
@@ -90,6 +83,13 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     totalAmount, totalAmountUnit, solutionVolume, manualSyringe, concentrationExact]);
   const pendingInputs = useRef<string | null>(null);
   const scannedFields = useRef<Record<string, string> | null>(null);
+  // Keep a scanned concentration paired with its label unit until the user edits it.
+  useEffect(() => {
+    if (scannedFields.current?.concentrationUnit) return;
+    setConcentrationUnit(current => validateUnitCompatibility(unit, current).isValid
+      ? current
+      : unit === 'units' ? 'units/ml' : unit === 'mcg' ? 'mcg/ml' : 'mg/ml');
+  }, [unit]);
   useEffect(() => {
     if (!scannedFields.current) return;
     const scanFields = { substanceName, concentrationAmount, concentrationUnit, totalAmount, totalAmountUnit: totalAmountUnit || '',

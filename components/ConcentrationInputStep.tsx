@@ -27,14 +27,14 @@ export default function ConcentrationInputStep({
   // Get compatible concentration units based on dose unit
   const compatibleUnits = getCompatibleConcentrationUnits(doseUnit);
 
-  // Auto-select a compatible concentration unit if current one is not compatible
+  // Choose a compatible default for an empty field. Keep entered values paired with their units.
   useEffect(() => {
-    if (!compatibleUnits.includes(concentrationUnit) && compatibleUnits.length > 0) {
+    if (!concentrationAmount && !compatibleUnits.includes(concentrationUnit) && compatibleUnits.length > 0) {
       // Select the first compatible unit
       setConcentrationUnit(compatibleUnits[0]);
       setConcentrationHint(`Unit automatically changed to match dose unit (${doseUnit})`);
     }
-  }, [doseUnit, concentrationUnit, compatibleUnits, setConcentrationUnit, setConcentrationHint]);
+  }, [doseUnit, concentrationAmount, concentrationUnit, compatibleUnits, setConcentrationUnit, setConcentrationHint]);
 
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>

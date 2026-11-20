@@ -131,7 +131,7 @@ export function mapScanToDoseInputs(
   if (!concentration && !total) reasons.push('Vial strength is missing or unreadable.');
   const inputs: ScanDoseInputs = {
     manualSyringe: supported && ['type', 'capacity_ml', 'scale', 'markings'].every(key => trusted(`syringe.${key}`)) && type && volume ? { type, volume } : null,
-    substance: trusted('vial.substance') ? scan.vial.substance : null,
+    substance: trusted('vial.substance') && scan.vial.substance?.toLowerCase() !== 'unreadable' ? scan.vial.substance : null,
     concentration: concentration?.value ?? null,
     concentrationUnit: concentration ? `${concentration.unit}/ml` : null,
     totalAmount: total?.value ?? null,

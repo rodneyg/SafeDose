@@ -39,6 +39,7 @@ interface CaptureAndProcessImageProps {
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
   onScanUnavailable?: () => void;
+  returnIncompleteScan?: boolean;
   webCameraStream?: MediaStream | null;
 }
 
@@ -51,6 +52,7 @@ export async function captureAndProcessImage({
   setScanError,
   incrementScansUsed,
   onScanUnavailable,
+  returnIncompleteScan,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   console.log('[Capture] Button pressed - Start');
@@ -237,6 +239,7 @@ export async function captureAndProcessImage({
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      if (returnIncompleteScan) return result;
       throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
 
