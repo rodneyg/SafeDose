@@ -11,6 +11,7 @@
     { "src": "api/*.js",       "use": "@vercel/node" }
   ],
   "routes": [
+    { "src": "/ping", "dest": "/api/deploy-ping.js" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
 
     { "handle": "filesystem" },
