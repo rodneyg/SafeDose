@@ -1,0 +1,2 @@
+pr_url	status	evidence
+PENDING	ready	components/DosingPresets.test.tsx; focused and full Jest runs; lint; typecheck; web build

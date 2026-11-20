@@ -12,6 +12,14 @@ const preset = {
   totalAmount: '', totalAmountUnit: null, solutionVolume: '', manualSyringe: { type: 'Standard' as const, volume: '1 ml' as const },
 };
 
+const eveningPreset = {
+  ...preset,
+  id: '2',
+  name: 'Evening',
+  dose: '3',
+  substanceName: 'Sample',
+};
+
 let renderer: ReturnType<typeof create> | undefined;
 
 beforeEach(() => jest.clearAllMocks());
@@ -27,12 +35,26 @@ it('shows a safe empty state without offering an apply action', async () => {
   expect(renderer!.root.findAllByProps({ accessibilityLabel: expect.stringContaining('Apply') })).toHaveLength(0);
 });
 
-it('applies the selected saved preset', async () => {
-  (getDosingPresets as jest.Mock).mockResolvedValue([preset]);
+it('renders each entry in a short protocol list', async () => {
+  (getDosingPresets as jest.Mock).mockResolvedValue([preset, eveningPreset]);
+
+  await act(async () => { renderer = create(<DosingPresets mode="apply" />); });
+
+  expect(renderer!.root.findByProps({ accessibilityLabel: 'Apply Morning preset' })).toBeTruthy();
+  expect(renderer!.root.findByProps({ accessibilityLabel: 'Apply Evening preset' })).toBeTruthy();
+  const renderedText = renderer!.root
+    .findAll(node => Array.isArray(node.props.children))
+    .map(node => node.props.children.join(''));
+  expect(renderedText).toEqual(expect.arrayContaining(['2 mg Example', '3 mg Sample']));
+});
+
+it('reports the selected protocol item', async () => {
+  (getDosingPresets as jest.Mock).mockResolvedValue([preset, eveningPreset]);
   const onApply = jest.fn();
   await act(async () => { renderer = create(<DosingPresets mode="apply" onApply={onApply} />); });
-  act(() => renderer!.root.findByProps({ accessibilityLabel: 'Apply Morning preset' }).props.onPress());
-  expect(onApply).toHaveBeenCalledWith(preset);
+  act(() => renderer!.root.findByProps({ accessibilityLabel: 'Apply Evening preset' }).props.onPress());
+  expect(onApply).toHaveBeenCalledTimes(1);
+  expect(onApply).toHaveBeenCalledWith(eveningPreset);
 });
 
 it('saves a named preset', async () => {
