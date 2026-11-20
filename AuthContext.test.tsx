@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { signOut, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { logAnalyticsEvent } from '@/lib/analytics';
 
@@ -38,6 +38,19 @@ const mockSignOut = signOut as jest.MockedFunction<typeof signOut>;
 const mockSignInAnonymously = signInAnonymously as jest.MockedFunction<typeof signInAnonymously>;
 const mockOnAuthStateChanged = onAuthStateChanged as jest.MockedFunction<typeof onAuthStateChanged>;
 const mockLogAnalyticsEvent = logAnalyticsEvent as jest.MockedFunction<typeof logAnalyticsEvent>;
+
+describe('useAuth', () => {
+  it('throws when used outside an AuthProvider', () => {
+    function Consumer() {
+      useAuth();
+      return null;
+    }
+
+    expect(() => create(<Consumer />)).toThrow(
+      'useAuth must be used within an AuthProvider'
+    );
+  });
+});
 
 describe('AuthContext Sign Out Functionality', () => {
   let authStateCallback: (user: any) => void;
