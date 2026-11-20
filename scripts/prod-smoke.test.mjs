@@ -26,7 +26,7 @@ test('checks rendered pages, rejects page errors and 5xx, and blocks writes', as
     }
     const text = {
       '/onboarding': 'Verify Materials Calculate Doses',
-      '/pricing': 'Photo Check /month /year Calculator stays free',
+      '/pricing': 'Photo Scan /month /year Calculator stays free',
       '/login': 'Sign In with Google Cancel',
       '/changelog': 'Changelog New features, improvements, and fixes',
     }[req.url] || '';

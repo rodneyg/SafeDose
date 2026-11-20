@@ -1,0 +1,281 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 lint
+> expo lint
+
+> npx eslint .
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/SafeDose/AuthContext.test.tsx
+  154:11  warning  'isSigningOut' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  268:9   warning  'isSigningOut' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/app/(tabs)/logs.tsx
+  113:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/app/(tabs)/new-dose.tsx
+    4:54  warning  'insulinVolumes' is defined but never used                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    4:70  warning  'standardVolumes' is defined but never used                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   72:6   warning  React Hook useEffect has a missing dependency: 'doseCalculator'. Either include it or remove the dependency array                                                                                                                 react-hooks/exhaustive-deps
+  171:6   warning  React Hook useEffect has a missing dependency: 'doseCalculator'. Either include it or remove the dependency array                                                                                                                 react-hooks/exhaustive-deps
+  238:5   warning  'concentration' is assigned a value but never used                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  273:5   warning  'volumeErrorValue' is assigned a value but never used                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  310:22  warning  'requestPermission' is assigned a value but never used                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  354:6   warning  React Hook useEffect has a missing dependency: 'setFormError'. Either include it or remove the dependency array                                                                                                                   react-hooks/exhaustive-deps
+  362:6   warning  React Hook useEffect has a missing dependency: 'manualStep'. Either include it or remove the dependency array                                                                                                                     react-hooks/exhaustive-deps
+  434:6   warning  React Hook useCallback has an unnecessary dependency: 'isWeb'. Either exclude it or remove the dependency array. Outer scope values like 'isWeb' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  459:6   warning  React Hook useEffect has an unnecessary dependency: 'isWeb'. Either exclude it or remove the dependency array. Outer scope values like 'isWeb' aren't valid dependencies because mutating them doesn't re-render the component    react-hooks/exhaustive-deps
+  491:6   warning  React Hook useEffect has an unnecessary dependency: 'isWeb'. Either exclude it or remove the dependency array. Outer scope values like 'isWeb' aren't valid dependencies because mutating them doesn't re-render the component    react-hooks/exhaustive-deps
+  980:6   warning  React Hook useCallback has a missing dependency: 'feedbackContext'. Either include it or remove the dependency array                                                                                                              react-hooks/exhaustive-deps
+
+/workspace/SafeDose/app/(tabs)/settings.tsx
+  38:6  warning  React Hook useEffect has a missing dependency: 'fetchSubscriptionStatus'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/app/_tabs_disabled/index.tsx
+  5:18  warning  'History' is defined but never used        @typescript-eslint/no-unused-vars
+  5:27  warning  'MessageCircle' is defined but never used  @typescript-eslint/no-unused-vars
+  5:42  warning  'Book' is defined but never used           @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/app/index.tsx
+  35:6  warning  React Hook useEffect has a missing dependency: 'user'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/app/onboarding/age.tsx
+   3:52  warning  'Alert' is defined but never used                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  31:9   warning  The 'validation' conditional could make the dependencies of useCallback Hook (at line 72) change on every render. To fix this, wrap the initialization of 'validation' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/app/onboarding/child-safety.tsx
+  3:52  warning  'Linking' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/app/onboarding/userType.tsx
+  130:6  warning  React Hook useCallback has a missing dependency: 'handleComplete'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  138:6  warning  React Hook useCallback has a missing dependency: 'handleComplete'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/app/pricing.tsx
+  21:16  warning  'screenWidth' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  91:28  warning  'setSelectedPlanType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/app/success.tsx
+  7:8  warning  'Constants' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/AcceptanceCriteriaValidation.test.ts
+  105:11  warning  'errorShown' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  183:7   warning  'screenStep' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/AnimatedSplashScreen.tsx
+  72:6  warning  React Hook useEffect has missing dependencies: 'containerOpacity', 'logoOpacity', 'logoScale', and 'taglineOpacity'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/BeforeFirstScanManualValidation.test.ts
+  6:8  warning  'React' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/FinalResultDisplay.tsx
+  7:49  warning  'RotateCcw' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/HideScanVialLabel.test.ts
+   9:13  warning  'mockOnSelectMethod' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  24:13  warning  'mockOnSelectMethod' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/IntroScreen.tsx
+    3:52  warning  'Modal' is defined but never used                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   26:8   warning  'Constants' is defined but never used                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  281:6   warning  React Hook useCallback has an unnecessary dependency: 'isMobileWeb'. Either exclude it or remove the dependency array. Outer scope values like 'isMobileWeb' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/Issue208Fix.test.ts
+  12:13  warning  'buggyUseEffect' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/LogLimitModal.tsx
+  47:9  warning  'handleCancel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/LoginLogoutFixes.test.tsx
+  1:8  warning  'React' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/LoginLogoutIssues.test.tsx
+    5:1   warning  Import in body of module; reorder to top           import/first
+    6:1   warning  Import in body of module; reorder to top           import/first
+    7:1   warning  Import in body of module; reorder to top           import/first
+    8:1   warning  Import in body of module; reorder to top           import/first
+   67:15  warning  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   77:24  warning  'rerender' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  121:15  warning  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  121:21  warning  'isSigningOut' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  181:15  warning  'isSigningOut' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ManualEntryScreen.tsx
+  274:6  warning  React Hook useCallback has missing dependencies: 'concentrationAmount', 'concentrationUnit', 'dose', 'manualSyringe?.type', 'manualSyringe?.volume', 'medicationInputType', 'substanceName', 'totalAmount', and 'unit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/MobileLayoutOptimization.test.ts
+  1:10  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ReconstitutionPlanner.tsx
+  1:47  warning  'formatDoseNumber' is defined but never used  @typescript-eslint/no-unused-vars
+  3:64  warning  'Alert' is defined but never used             @typescript-eslint/no-unused-vars
+  4:21  warning  'Camera' is defined but never used            @typescript-eslint/no-unused-vars
+  4:29  warning  'Edit3' is defined but never used             @typescript-eslint/no-unused-vars
+  4:36  warning  'Calculator' is defined but never used        @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ReconstitutionScanStep.tsx
+  26:9  warning  'isPermissionGranted' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/SAF192.navigation.test.tsx
+  26:8  warning  React Hook React.useEffect has an unnecessary dependency: 'mockFocused'. Either exclude it or remove the dependency array. Outer scope values like 'mockFocused' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/ScanAgainCameraFix.test.ts
+  31:8  warning  React Hook React.useEffect has an unnecessary dependency: 'mockFocused'. Either exclude it or remove the dependency array. Outer scope values like 'mockFocused' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/ScanAgainFlow.test.ts
+  27:11  warning  'screenStep' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ScanLimitHandling.test.ts
+  84:13  warning  'isMobileWeb' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  95:13  warning  'isMobileWeb' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ScanResultsPreservation.test.ts
+  209:11  warning  'totalAmount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ScanScreen.autocapture.test.tsx
+  9:34  warning  Component definition is missing display name  react/display-name
+
+/workspace/SafeDose/components/ScanScreen.tsx
+   86:10  warning  'qualityScore' is assigned a value but never used                                                                                                        @typescript-eslint/no-unused-vars
+  101:6   warning  React Hook useEffect has missing dependencies: 'cameraFacing', 'permission', and 'permissionStatus'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  114:9   warning  'handleNavigateToIntro' is assigned a value but never used                                                                                               @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ScanTeaserIntegration.test.ts
+  7:45  warning  'mockLastActionType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/SmallScreenValidation.test.ts
+  1:8   warning  'React' is defined but never used       @typescript-eslint/no-unused-vars
+  2:10  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/SyringeIllustration.test.tsx
+  110:11  warning  'markingPositions' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/UseLastDose.integration.test.tsx
+  26:8  warning  React Hook React.useEffect has an unnecessary dependency: 'mockFocused'. Either exclude it or remove the dependency array. Outer scope values like 'mockFocused' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/components/pricing/PaymentProviders.tsx
+  2:10  warning  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/pricing/PriceToggle.tsx
+  2:10  warning  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/components/ui/DatePickerSelect.tsx
+  11:10  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+
+/workspace/SafeDose/contexts/AuthContext.tsx
+  301:6  warning  React Hook useEffect has missing dependencies: 'auth', 'isSigningOut', and 'user'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/contexts/UserProfileContext.tsx
+  56:6  warning  React Hook useEffect has a missing dependency: 'loadProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/evals/vision/harness.ts
+  215:23  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+
+/workspace/SafeDose/hooks/use-toast.ts
+   18:7   warning  'actionTypes' is assigned a value but only used as a type    @typescript-eslint/no-unused-vars
+  129:18  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+
+/workspace/SafeDose/lib/__tests__/checkoutStripe.test.ts
+  4:1  warning  Import in body of module; reorder to top  import/first
+  5:1  warning  Import in body of module; reorder to top  import/first
+
+/workspace/SafeDose/lib/birthDateUtils.ts
+   59:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  141:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/cameraUtils.ts
+  4:10  warning  'Alert' is defined but never used            @typescript-eslint/no-unused-vars
+  6:10  warning  'insulinVolumes' is defined but never used   @typescript-eslint/no-unused-vars
+  6:26  warning  'standardVolumes' is defined but never used  @typescript-eslint/no-unused-vars
+  7:10  warning  'CameraView' is defined but never used       @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/cameraUtils.upload.test.ts
+  42:23  warning  Expected an assignment or function call and instead saw an expression  no-unused-expressions
+
+/workspace/SafeDose/lib/dose-logging-integration.test.ts
+  119:18  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+
+/workspace/SafeDose/lib/doseUtils.test.ts
+  1:48  warning  'InsulinSyringeVolume' is defined but never used  @typescript-eslint/no-unused-vars
+  1:70  warning  'SyringeVolume' is defined but never used         @typescript-eslint/no-unused-vars
+  2:10  warning  'syringeOptions' is defined but never used        @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/firestoreWithEnv.ts
+  1:26  warning  'collection' is defined but never used  @typescript-eslint/no-unused-vars
+  1:38  warning  'doc' is defined but never used         @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/hooks/pmf-survey-integration.test.ts
+  30:11  warning  'hasShownBefore' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/hooks/useDoseCalculator.ts
+    2:80  warning  'getCompatibleConcentrationUnits' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   20:6   warning  'Syringe' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+   21:6   warning  'ResetFullFormFunc' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   31:7   warning  'isValidValue' is assigned a value but never used                                                                              @typescript-eslint/no-unused-vars
+  198:6   warning  React Hook useCallback has a missing dependency: 'setCalculationError'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  275:6   warning  React Hook useCallback has an unnecessary dependency: 'medicationInputType'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  517:6   warning  React Hook useCallback has a missing dependency: 'setCalculationError'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  567:6   warning  React Hook useCallback has a missing dependency: 'setCalculationError'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/hooks/useEvaluationDataCapture.ts
+    7:13  warning  'FileSystem' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+  201:6   warning  React Hook useCallback has a missing dependency: 'calculateQualityScore'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/hooks/useLogUsageTracking.ts
+   81:6  warning  React Hook useEffect has a missing dependency: 'loadCachedLogUsage'. Either include it or remove the dependency array                                                      react-hooks/exhaustive-deps
+  146:6  warning  React Hook useEffect has missing dependencies: 'db', 'loadCachedLogUsage', 'retryOperation', and 'saveCachedLogUsage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/hooks/usePowerUserPromotion.ts
+  4:37  warning  'setDoc' is defined but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/hooks/useReconstitutionPlanner.ts
+   3:1   warning  Import in body of module; reorder to top                                                                    import/first
+  82:64  warning  React Hook useMemo has a missing dependency: 'state'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  91:6   warning  React Hook useCallback has a missing dependency: 'state'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/hooks/useSignUpPrompt.integration.test.ts
+  53:13  warning  'useSignUpPrompt' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/SafeDose/lib/hooks/useSignUpPrompt.ts
+  22:9  warning  The 'getStorageKey' function makes the dependencies of useCallback Hook (at line 42) change on every render. To fix this, wrap the definition of 'getStorageKey' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  22:9  warning  The 'getStorageKey' function makes the dependencies of useCallback Hook (at line 52) change on every render. To fix this, wrap the definition of 'getStorageKey' in its own useCallback() Hook  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/hooks/useUsageTracking.ts
+    2:37  warning  'setDoc' is defined but never used                                                                                                                                   @typescript-eslint/no-unused-vars
+   81:6   warning  React Hook useEffect has a missing dependency: 'loadCachedUsage'. Either include it or remove the dependency array                                                   react-hooks/exhaustive-deps
+  147:6   warning  React Hook useEffect has missing dependencies: 'db', 'loadCachedUsage', 'retryOperation', and 'saveCachedUsage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/SafeDose/lib/onboardingState.test.ts
+  11:1  warning  Import in body of module; reorder to top  import/first
+
+/workspace/SafeDose/lib/scan/request.d.ts
+  7:13  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+  9:14  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead  @typescript-eslint/array-type
+
+/workspace/SafeDose/scripts/__tests__/changelog.test.js
+  1:11  warning  'test' is already defined as a built-in global variable       no-redeclare
+  1:17  warning  'expect' is already defined as a built-in global variable     no-redeclare
+  1:25  warning  'jest' is already defined as a built-in global variable       no-redeclare
+  1:31  warning  '__dirname' is already defined as a built-in global variable  no-redeclare
+
+/workspace/SafeDose/scripts/changelog.js
+  1:11  warning  '__dirname' is already defined as a built-in global variable  no-redeclare
+
+/workspace/SafeDose/scripts/verify/index.js
+  46:125  warning  Expected an assignment or function call and instead saw an expression  no-unused-expressions
+
+/workspace/SafeDose/tests/fixtures/tsconfig-paths/match-path-data.ts
+   9:36  warning  Array type using 'Array<string>' is forbidden. Use 'string[]' instead                                                                                                                                                                                                                                                                                                                      @typescript-eslint/array-type
+  12:27  warning  Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead                                                                                                                                                                                                                                                                                                     @typescript-eslint/array-type
+  14:24  warning  Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead                                                                                                                                                                                                                                                                                                     @typescript-eslint/array-type
+  15:26  warning  The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
+  27:21  warning  Array type using 'ReadonlyArray<OneTest>' is forbidden. Use 'readonly OneTest[]' instead                                                                                                                                                                                                                                                                                                   @typescript-eslint/array-type
+
+/workspace/SafeDose/userType.test.ts
+  1:8  warning  'UserTypeSegmentation' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 135 problems (0 errors, 135 warnings)
+  0 errors and 15 warnings potentially fixable with the `--fix` option.
+

@@ -30,10 +30,10 @@ export default function PricingPage() {
   const pricingPlansData = [
     {
       id: 'photo_check_monthly',
-      name: "Photo Check",
+      name: "Photo Scan",
       price: PHOTO_CHECK_MONTHLY_AMOUNT,
       priceSuffix: "/month",
-      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
+      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo scans`,
       offerKey: 'photo_check_monthly',
       badgeText: "Web",
       isDefault: true,
@@ -43,7 +43,7 @@ export default function PricingPage() {
     },
     {
       id: 'photo_check_yearly',
-      name: "Photo Check",
+      name: "Photo Scan",
       price: PHOTO_CHECK_ANNUAL_AMOUNT,
       originalPrice: 35.88,
       priceSuffix: "/year",
@@ -61,7 +61,7 @@ export default function PricingPage() {
   const getKeyFeatures = (planType: string): { icon: LucideIcon; text: string; color: string; disabled?: boolean }[] => {
     if (planType === 'photo_check') {
       return [
-        { icon: Zap, text: "Unlimited photo checks", color: "#FF6B6B" },
+        { icon: Zap, text: "Unlimited photo scans", color: "#FF6B6B" },
         { icon: CheckCircle, text: "Calculator stays free", color: "#4ECDC4" },
         { icon: Clock, text: `${FREE_SCAN_LIMIT} free scans/month included`, color: "#45B7D1" },
         { icon: Shield, text: "Web checkout, cancel anytime", color: "#96CEB4" },
@@ -281,7 +281,7 @@ export default function PricingPage() {
 
       {/* Personalized Headline */}
       <Text style={styles.headline}>{getPersonalizedHeadline()}</Text>
-      <Text style={styles.subheadline}>The calculator stays free. Optional photo checks are $2.99/month after 3 free scans.</Text>
+      <Text style={styles.subheadline}>The calculator stays free. Optional photo scans are $2.99/month after 3 free scans.</Text>
 
       {/* Key Features Grid */}
       <View style={styles.featuresContainer}>
@@ -302,10 +302,10 @@ export default function PricingPage() {
         ))}
       </View>
 
-      {/* Single Photo Check offer (monthly / yearly chosen below) */}
+      {/* Single Photo Scan offer (monthly / yearly chosen below) */}
       <View style={styles.planTypesContainer}>
         <View style={[styles.planTypeBox, styles.selectedPlanTypeBox, { flex: 1 }]}>
-          <Text style={[styles.planTypeName, styles.selectedPlanTypeName]}>Photo Check</Text>
+          <Text style={[styles.planTypeName, styles.selectedPlanTypeName]}>Photo Scan</Text>
           <Text style={styles.planTypePrice}>${PHOTO_CHECK_MONTHLY_AMOUNT}/mo or ${PHOTO_CHECK_ANNUAL_AMOUNT}/yr</Text>
         </View>
       </View>
@@ -357,7 +357,7 @@ export default function PricingPage() {
         activeOpacity={0.9}
       >
         <Text style={styles.ctaButtonText}>
-          {isLoading ? "Processing..." : selectedPlan.isMonthly ? `Get Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/mo` : `Get Photo Check for $${PHOTO_CHECK_ANNUAL_AMOUNT}/yr`}
+          {isLoading ? "Processing..." : selectedPlan.isMonthly ? `Get Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/mo` : `Get Photo Scan for $${PHOTO_CHECK_ANNUAL_AMOUNT}/yr`}
         </Text>
       </TouchableOpacity>
 

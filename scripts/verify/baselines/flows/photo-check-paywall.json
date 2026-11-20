@@ -1,5 +1,5 @@
 {
-  "flow": "photo-check-paywall",
+  "flow": "photo-scan-paywall",
   "ok": true,
   "result": {
     "calculator": "free",

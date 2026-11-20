@@ -9,12 +9,12 @@ This checklist is to manually verify the functionality and appearance of the upd
 
 ## B. Initial State Verification
 *   [ ] **Page Title:** Is the title "Choose Your Plan"?
-*   [ ] **Default Selected Plan:** Is the Photo Check monthly plan ($2.99/month) selected by default? The six-plan paywall should be gone.
+*   [ ] **Default Selected Plan:** Is the Photo Scan monthly plan ($2.99/month) selected by default? The six-plan paywall should be gone.
     *   [ ] Does it appear elevated (e.g., stronger shadow, border) compared to other cards?
     *   [ ] Does it show the "✓ Selected" indicator?
 *   [ ] **Monthly Plan Badge:** Does the Monthly plan correctly display the "Most Popular" badge (purple background, white text) in the top-right corner?
 *   [ ] **CTA Button Text:** Is the main call-to-action button text "Try Free Now"?
-*   [ ] **CTA Subtext (Monthly Plan Trial):** Does the subtext mention web checkout, cancel anytime, and that the calculator stays free? Photo Check has no free trial.
+*   [ ] **CTA Subtext (Monthly Plan Trial):** Does the subtext mention web checkout, cancel anytime, and that the calculator stays free? Photo Scan has no free trial.
 
 ## C. Yearly Plan Card Verification
 *   [ ] **Display:** Is the Yearly plan card visible with the correct name ("Yearly Plan"), price ("$149.99/year"), and subtext ("SAVE 38%")?

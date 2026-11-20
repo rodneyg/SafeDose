@@ -11,7 +11,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 it('dismisses a scan nudge without navigation and remembers dismissal across mounts', async () => {
   const first = render(<UpgradeNudge userId="dismiss" kind="firstScan" />);
   fireEvent.press(await first.findByRole('button', { name: 'Not now' }));
-  expect(first.queryByText(/Want unlimited photo checks/)).toBeNull();
+  expect(first.queryByText(/Want unlimited photo scans/)).toBeNull();
   expect(mockPush).not.toHaveBeenCalled();
   first.unmount();
 

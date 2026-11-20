@@ -4,10 +4,10 @@ import { useRouter } from 'expo-router';
 import { claimUpgradeNudge, type UpgradeNudgeKind } from '../lib/upgradeNudges';
 
 const messages: Record<UpgradeNudgeKind, string> = {
-  firstScan: 'Want unlimited photo checks? Upgrade to SafeDose Photo Check.',
-  oneScanLeft: 'You have one free scan left this month. Get unlimited scans with SafeDose Photo Check.',
-  firstLogs: 'Dose logs are free. Want unlimited vial and syringe scans? Explore SafeDose Photo Check.',
-  manualEntry: 'Add a photo check to your next calculation. SafeDose Photo Check includes unlimited scans.',
+  firstScan: 'Want unlimited photo scans? Upgrade to SafeDose Photo Scan.',
+  oneScanLeft: 'You have one free scan left this month. Get unlimited scans with SafeDose Photo Scan.',
+  firstLogs: 'Dose logs are free. Want unlimited vial and syringe scans? Explore SafeDose Photo Scan.',
+  manualEntry: 'Add a photo scan to your next calculation. SafeDose Photo Scan includes unlimited scans.',
 };
 
 export default function UpgradeNudge({ userId, kind }: { userId: string; kind: UpgradeNudgeKind }) {

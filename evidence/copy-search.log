@@ -1,0 +1,114 @@
+# T-1311 copy search
+
+## Before changes: over-promising phrases
+HEAD:MANUAL_TESTING_CHECKLIST.md:12:*   [ ] **Default Selected Plan:** Is the Photo Check monthly plan ($2.99/month) selected by default? The six-plan paywall should be gone.
+HEAD:MANUAL_TESTING_CHECKLIST.md:17:*   [ ] **CTA Subtext (Monthly Plan Trial):** Does the subtext mention web checkout, cancel anytime, and that the calculator stays free? Photo Check has no free trial.
+HEAD:README.md:198:Photo Check plans), login and changelog for visible text and uncaught page errors.
+HEAD:SCAN_TEASER_TESTING.md:23:   - [ ] Teaser text appears: "Want to double-check with a vial/syringe photo?"
+HEAD:api/create-checkout-session.js:67:    // Photo Check has no trial. Legacy Full Pro price IDs may still pass hasTrial.
+HEAD:app/(tabs)/new-dose.tsx:773:      setScanError('Photo checks need internet. Use manual entry while offline.');
+HEAD:app/(tabs)/new-dose.tsx:1012:          Offline. Manual entry is available. Photo checks and account sync need internet.
+HEAD:app/pricing.tsx:33:      name: "Photo Check",
+HEAD:app/pricing.tsx:36:      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
+HEAD:app/pricing.tsx:46:      name: "Photo Check",
+HEAD:app/pricing.tsx:64:        { icon: Zap, text: "Unlimited photo checks", color: "#FF6B6B" },
+HEAD:app/pricing.tsx:284:      <Text style={styles.subheadline}>The calculator stays free. Optional photo checks are $2.99/month after 3 free scans.</Text>
+HEAD:app/pricing.tsx:305:      {/* Single Photo Check offer (monthly / yearly chosen below) */}
+HEAD:app/pricing.tsx:308:          <Text style={[styles.planTypeName, styles.selectedPlanTypeName]}>Photo Check</Text>
+HEAD:app/pricing.tsx:360:          {isLoading ? "Processing..." : selectedPlan.isMonthly ? `Get Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/mo` : `Get Photo Check for $${PHOTO_CHECK_ANNUAL_AMOUNT}/yr`}
+HEAD:changelog/2026-11-15.md:3:title: Free calculator and optional Photo Check
+HEAD:changelog/2026-11-15.md:8:- Pricing now separates the free calculator from the optional Photo Check subscription.
+HEAD:changelog/2026-11-20-pr-473.md:3:title: Add dismissible Photo Check upgrade nudges
+HEAD:changelog/2026-11-20-pr-473.md:8:- Add dismissible Photo Check upgrade nudges
+HEAD:components/FinalResultDisplay.tsx:388:            Want to double-check with a vial/syringe photo?
+HEAD:components/FinalResultDisplay.tsx:394:            accessibilityLabel="Try AI Scan to double-check your calculation"
+HEAD:components/PricingCheckout.test.tsx:48:  expect(text()).toContain('Get Photo Check');
+HEAD:components/ScanTeaserFeature.test.ts:20:  expect(screen.getByText('Want to double-check with a vial/syringe photo?')).toBeTruthy();
+HEAD:components/ScanTeaserFeature.test.ts:21:  fireEvent.press(screen.getByLabelText('Try AI Scan to double-check your calculation'));
+HEAD:components/ScanTeaserFeature.test.ts:37:  expect(screen.queryByText('Want to double-check with a vial/syringe photo?')).toBeNull();
+HEAD:components/ScanTeaserIntegration.test.ts:144:      const expectedText = "Want to double-check with a vial/syringe photo?";
+HEAD:components/ScanTeaserIntegration.test.ts:146:      expect(expectedText).toBe("Want to double-check with a vial/syringe photo?");
+HEAD:components/UpgradeNudge.test.tsx:14:  expect(first.queryByText(/Want unlimited photo checks/)).toBeNull();
+HEAD:components/UpgradeNudge.tsx:7:  firstScan: 'Want unlimited photo checks? Upgrade to SafeDose Photo Check.',
+HEAD:components/UpgradeNudge.tsx:8:  oneScanLeft: 'You have one free scan left this month. Get unlimited scans with SafeDose Photo Check.',
+HEAD:components/UpgradeNudge.tsx:9:  firstLogs: 'Dose logs are free. Want unlimited vial and syringe scans? Explore SafeDose Photo Check.',
+HEAD:components/UpgradeNudge.tsx:10:  manualEntry: 'Add a photo check to your next calculation. SafeDose Photo Check includes unlimited scans.',
+HEAD:components/pricing/PricingPage.test.tsx:29:async function select(name = 'Photo Check') {
+HEAD:components/pricing/PricingPage.test.tsx:50:it.each([false, true])('builds the Photo Check request for annual=%s and redirects', async annual => {
+HEAD:components/pricing/PricingPage.tsx:24:      { name: "Unlimited photo checks", available: false },
+HEAD:components/pricing/PricingPage.tsx:30:    name: "Photo Check",
+HEAD:components/pricing/PricingPage.tsx:32:    description: "Unlimited web photo checks after the free monthly cap",
+HEAD:components/pricing/PricingPage.tsx:39:    cta: "Get Photo Check",
+HEAD:components/pricing/PricingPage.tsx:146:        The calculator stays free. Optional photo checks are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
+HEAD:docs/PHOTO_CHECK_STRIPE.md:1:# SafeDose Photo Check Stripe setup
+HEAD:docs/PHOTO_CHECK_STRIPE.md:3:The web offer is a free calculator plus an optional **$2.99/month** or **$26.99/year** (25% off) Photo Check subscription. Checkout reuses the existing `/api/create-checkout-session` route and `STRIPE_MODE` / `STRIPE_TEST_*` / `STRIPE_LIVE_*` keys.
+HEAD:docs/PHOTO_CHECK_STRIPE.md:14:The product name is `SafeDose Photo Check`. Existing test prices with those lookup keys are reused.
+HEAD:docs/PHOTO_CHECK_STRIPE.md:20:1. Product: `SafeDose Photo Check`
+HEAD:docs/PHOTO_CHECK_STRIPE.md:33:Legacy Starter / Basic Pro / Full Pro live price IDs remain valid so existing subscribers are still treated as paid (unlimited photo scans). New checkouts only sell Photo Check.
+HEAD:docs/review-evidence/photo-check/README.md:1:# Photo Check readiness review — 2026-11-15
+HEAD:lib/changelog.json:257:    "title": "Add dismissible Photo Check upgrade nudges",
+HEAD:lib/changelog.json:264:        "Add dismissible Photo Check upgrade nudges"
+HEAD:lib/changelog.json:397:    "title": "Free calculator and optional Photo Check",
+HEAD:lib/changelog.json:404:        "Pricing now separates the free calculator from the optional Photo Check subscription.",
+HEAD:lib/photoCheckStripe.js:21:      description: 'Optional SafeDose web photo checks. The calculator stays free.',
+HEAD:lib/photoCheckStripe.js:65:        'Photo-check Stripe prices are not configured for live mode. In the SafeDose Stripe account, create a product "SafeDose Photo Check" with a $2.99/month recurring price (lookup key safedose_photo_check_monthly) and a $26.99/year recurring price (lookup key safedose_photo_check_annual), or set STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID and STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID.'
+HEAD:lib/plans.js:18:const PHOTO_CHECK_PRODUCT_NAME = 'SafeDose Photo Check';
+HEAD:lib/plans.js:50:    nickname: 'Photo Check Monthly',
+HEAD:lib/plans.js:58:    nickname: 'Photo Check Annual',
+HEAD:lib/plans.js:115:      return 'Photo Check';
+HEAD:lib/plans.test.js:58:    expect(formatPlanDisplayName('photo_check')).toBe('Photo Check');
+HEAD:public/manifest.webmanifest:5:  "description": "Medication dose calculator with manual entry and online photo checks.",
+HEAD:scripts/prod-smoke.mjs:11:  ['/pricing', ['Photo Check', '/month', '/year', 'Calculator stays free']],
+HEAD:scripts/prod-smoke.test.mjs:29:      '/pricing': 'Photo Check /month /year Calculator stays free',
+HEAD:scripts/verify/index.js:43: if(page==='welcome'){rect(0,86,w,758,C.navy);text('VERIFY MATERIALS',34,260,5,C.white);text('CALCULATE DOSES',42,310,5,C.white);text('REDUCE MATH ERRORS',75,385,3,C.white);rect(55,650,280,60,C.blue);text('TRY NOW',125,670,4,C.white);text('NO ACCOUNT NEEDED',107,735,2,C.white);}if(page==='home'){text('NEW DOSE',28,125,6,C.ink);text('VERIFY YOUR MATERIALS',28,190,3,C.gray);rect(24,250,342,115,C.white);text('PHOTO CHECK',48,280,4,C.ink);text('SCAN SYRINGE AND VIAL',48,325,2,C.gray);rect(24,390,342,115,C.white);text('MANUAL ENTRY',48,420,4,C.ink);text('CALCULATOR STAYS FREE',48,465,2,C.gray);rect(24,555,342,58,C.blue);text('START NEW DOSE',72,575,4,C.white);}if(page==='paywall'){text('PHOTO CHECK',35,125,6,C.ink);text('CALCULATOR STAYS FREE',55,190,3,C.green);text('3 FREE SCANS EACH MONTH',45,230,3,C.gray);rect(24,300,342,120,C.white);text('MONTHLY',48,325,4,C.ink);text('$2.99 / MONTH',48,375,4,C.blue);rect(24,445,342,120,C.white);text('YEARLY',48,470,4,C.ink);text('$26.99 / YEAR',48,520,4,C.blue);rect(24,625,342,58,C.blue);text('CONTINUE',105,645,4,C.white);}if(page==='dose-result'){text('DOSE RESULT',35,125,6,C.ink);text('FIXTURE MEDICATION',35,195,3,C.gray);rect(24,255,342,220,C.white);text('DRAW',155,285,3,C.gray);text('0.2 ML',75,340,8,C.blue);text('20 UNITS ON U-100',55,420,3,C.ink);rect(24,535,342,58,C.green);text('CALCULATION COMPLETE',45,555,3,C.white);text('CONFIRM WITH PRESCRIPTION',35,650,3,C.gray);}const raw=Buffer.alloc((w*4+1)*h);for(let y=0;y<h;y++){raw[y*(w*4+1)]=0;p.copy(raw,y*(w*4+1)+1,y*w*4,(y+1)*w*4);}const ih=Buffer.alloc(13);ih.writeUInt32BE(w);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=6;return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ih),chunk('IDAT',zlib.deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);}
+
+## After changes: old phrases (expected no matches)
+
+## After changes: replacement phrases
+components/PricingCheckout.test.tsx:48:  expect(text()).toContain('Get Photo Scan');
+components/UpgradeNudge.test.tsx:14:  expect(first.queryByText(/Want unlimited photo scans/)).toBeNull();
+app/pricing.tsx:33:      name: "Photo Scan",
+app/pricing.tsx:36:      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo scans`,
+app/pricing.tsx:46:      name: "Photo Scan",
+app/pricing.tsx:64:        { icon: Zap, text: "Unlimited photo scans", color: "#FF6B6B" },
+app/pricing.tsx:284:      <Text style={styles.subheadline}>The calculator stays free. Optional photo scans are $2.99/month after 3 free scans.</Text>
+app/pricing.tsx:305:      {/* Single Photo Scan offer (monthly / yearly chosen below) */}
+app/pricing.tsx:308:          <Text style={[styles.planTypeName, styles.selectedPlanTypeName]}>Photo Scan</Text>
+app/pricing.tsx:360:          {isLoading ? "Processing..." : selectedPlan.isMonthly ? `Get Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/mo` : `Get Photo Scan for $${PHOTO_CHECK_ANNUAL_AMOUNT}/yr`}
+components/UpgradeNudge.tsx:7:  firstScan: 'Want unlimited photo scans? Upgrade to SafeDose Photo Scan.',
+components/UpgradeNudge.tsx:8:  oneScanLeft: 'You have one free scan left this month. Get unlimited scans with SafeDose Photo Scan.',
+components/UpgradeNudge.tsx:9:  firstLogs: 'Dose logs are free. Want unlimited vial and syringe scans? Explore SafeDose Photo Scan.',
+components/UpgradeNudge.tsx:10:  manualEntry: 'Add a photo scan to your next calculation. SafeDose Photo Scan includes unlimited scans.',
+components/pricing/PricingPage.tsx:21:      { name: `${FREE_SCAN_LIMIT} AI photo scans/month`, available: true },
+components/pricing/PricingPage.tsx:24:      { name: "Unlimited photo scans", available: false },
+components/pricing/PricingPage.tsx:30:    name: "Photo Scan",
+components/pricing/PricingPage.tsx:32:    description: "Unlimited web photo scans after the free monthly cap",
+components/pricing/PricingPage.tsx:34:      { name: "Unlimited AI photo scans", available: true },
+components/pricing/PricingPage.tsx:39:    cta: "Get Photo Scan",
+components/pricing/PricingPage.tsx:146:        The calculator stays free. Optional photo scans are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
+components/pricing/PricingPage.test.tsx:29:async function select(name = 'Photo Scan') {
+components/pricing/PricingPage.test.tsx:50:it.each([false, true])('builds the Photo Scan request for annual=%s and redirects', async annual => {
+components/ScanTeaserIntegration.test.ts:144:      const expectedText = "Scan a vial or syringe to fill in details faster.";
+components/ScanTeaserIntegration.test.ts:146:      expect(expectedText).toBe("Scan a vial or syringe to fill in details faster.");
+components/ScanTeaserFeature.test.ts:20:  expect(screen.getByText('Scan a vial or syringe to fill in details faster.')).toBeTruthy();
+components/ScanTeaserFeature.test.ts:37:  expect(screen.queryByText('Scan a vial or syringe to fill in details faster.')).toBeNull();
+components/FinalResultDisplay.tsx:388:            Scan a vial or syringe to fill in details faster.
+public/manifest.webmanifest:5:  "description": "Medication dose calculator with manual entry and online photo scans.",
+lib/changelog.json:257:    "title": "Add dismissible Photo Scan upgrade nudges",
+lib/changelog.json:264:        "Add dismissible Photo Scan upgrade nudges"
+lib/changelog.json:369:    "title": "Easier sign-in and clearer photo scans",
+lib/changelog.json:386:        "Failed photo scans show an error and preserve your entered values.",
+lib/changelog.json:397:    "title": "Free calculator and optional Photo Scan",
+lib/changelog.json:404:        "Pricing now separates the free calculator from the optional Photo Scan subscription.",
+lib/changelog.json:405:        "Free accounts have the same allowance of three photo scans per month as guests."
+lib/photoCheckStripe.js:21:      description: 'Optional SafeDose web photo scans. The calculator stays free.',
+lib/photoCheckStripe.js:65:        'Photo-scan Stripe prices are not configured for live mode. In the SafeDose Stripe account, create a product "SafeDose Photo Scan" with a $2.99/month recurring price (lookup key safedose_photo_check_monthly) and a $26.99/year recurring price (lookup key safedose_photo_check_annual), or set STRIPE_PHOTO_CHECK_MONTHLY_PRICE_ID and STRIPE_PHOTO_CHECK_ANNUAL_PRICE_ID.'
+lib/plans.test.js:58:    expect(formatPlanDisplayName('photo_check')).toBe('Photo Scan');
+lib/plans.js:4: * Unpaid gpt-4o photo scans are capped at FREE_SCAN_LIMIT per calendar month.
+lib/plans.js:18:const PHOTO_CHECK_PRODUCT_NAME = 'SafeDose Photo Scan';
+lib/plans.js:50:    nickname: 'Photo Scan Monthly',
+lib/plans.js:58:    nickname: 'Photo Scan Annual',
+lib/plans.js:115:      return 'Photo Scan';
+scripts/prod-smoke.test.mjs:29:      '/pricing': 'Photo Scan /month /year Calculator stays free',
+scripts/prod-smoke.mjs:11:  ['/pricing', ['Photo Scan', '/month', '/year', 'Calculator stays free']],
+README.md:198:Photo Scan plans), login and changelog for visible text and uncaught page errors.

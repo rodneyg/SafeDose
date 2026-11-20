@@ -195,7 +195,7 @@ fixture or another public deployment, pass a bare HTTP(S) origin:
 `npm run smoke:prod -- http://127.0.0.1:3000`.
 
 The script checks the welcome route, onboarding, pricing (monthly and yearly
-Photo Check plans), login and changelog for visible text and uncaught page errors.
+Photo Scan plans), login and changelog for visible text and uncaught page errors.
 Each page uses fresh headless Chromium state. Browser traffic is restricted to
 anonymous same-origin GETs, with service workers and third-party requests blocked.
 This restriction can expose page errors from optional third-party integrations;

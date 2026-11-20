@@ -45,7 +45,7 @@ afterEach(() => { act(() => renderer.unmount()); jest.restoreAllMocks(); });
 it('does not load Stripe while browsing pricing', () => {
   expect(eagerLoader).not.toHaveBeenCalled();
   expect(loader).not.toHaveBeenCalled();
-  expect(text()).toContain('Get Photo Check');
+  expect(text()).toContain('Get Photo Scan');
 });
 
 it('links the pricing footer to subscription settings, legal pages, and support', () => {
