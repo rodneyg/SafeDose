@@ -85,7 +85,7 @@ describe('native scan result guardrails', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  function replyWith(concentration: string, totalAmount: string | null = null) {
+  function replyWith(concentration: string | number, totalAmount: string | null = null) {
     const output = fixtures[0].model_output;
     complete.mockResolvedValue(JSON.stringify({
       ...output, vial: { ...output.vial, concentration, totalAmount },
@@ -114,6 +114,8 @@ describe('native scan result guardrails', () => {
     ['zero strength', '0 mg/ml', null],
     ['mismatched vial units', '10 mg/ml', '100 units'],
     ['unreadable units', '10 apples/ml', null],
+    ['unitless numeric strength', 10, null],
+    ['vial amount without units', '10 mg/ml', '100'],
     ['overflowing strength', `${'9'.repeat(309)} mg/ml`, null],
     ['strength that loses digits', '9007199254740993 mg/ml', null],
   ] as const)('refuses %s before showing scan results or counting usage', async (_, strength, totalAmount) => {

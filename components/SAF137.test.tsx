@@ -324,3 +324,54 @@ it.each([
   act(() => h().handleNextPreDoseConfirmation());
   expect(h().manualStep).toBe('preDoseConfirmation');
 });
+
+it.each([
+  ['', /enter concentration amount/i],
+  ['0', /valid concentration amount greater than 0/i],
+  ['10mg', /valid concentration amount greater than 0/i],
+] as const)('keeps concentration input %j on the strength step', (amount, error) => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('concentrationInput');
+    h().setConcentrationAmount(amount);
+  });
+  act(() => h().handleNextConcentrationInput());
+  expect(h().formError).toMatch(error);
+  expect(h().manualStep).toBe('concentrationInput');
+  expect(h().concentration).toBeNull();
+});
+
+it('requires the concentration unit at entry and confirmation', () => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('concentrationInput');
+    h().setMedicationInputType('concentration');
+    h().setDose('1');
+    h().setConcentrationAmount('10');
+    h().setNeedsConcentrationUnit(true);
+  });
+  act(() => h().handleNextConcentrationInput());
+  expect(h().formError).toMatch(/select a concentration unit/i);
+  expect(h().manualStep).toBe('concentrationInput');
+
+  act(() => h().handleCalculateFinal());
+  expect(h().calculationError).toMatch(/select the concentration unit/i);
+  expect(h().recommendedMarking).toBeNull();
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
+
+it.each([
+  ['', /enter solution volume/i],
+  ['0', /valid solution volume greater than 0/i],
+  ['1 ml', /valid solution volume greater than 0/i],
+] as const)('keeps solution volume %j on the reconstitution step', (volume, error) => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('reconstitution');
+    h().setSolutionVolume(volume);
+  });
+  act(() => h().handleNextReconstitution());
+  expect(h().formError).toMatch(error);
+  expect(h().manualStep).toBe('reconstitution');
+});
