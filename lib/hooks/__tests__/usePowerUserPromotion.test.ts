@@ -27,9 +27,9 @@ describe('usePowerUserPromotion', () => {
     jest.clearAllMocks();
   });
 
-  it('should not show promotion initially when dose count is below minimum', async () => {
+  it('should not show promotion one dose below the minimum', async () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
-      doseCount: 2,
+      doseCount: 3,
       lastShownDate: null,
       hasActiveSubscription: false,
       plan: 'free'
@@ -55,6 +55,30 @@ describe('usePowerUserPromotion', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.shouldShowPromotion()).toBe(true);
+  });
+
+  it('should stop showing the promotion after it is dismissed', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
+      doseCount: 4,
+      lastShownDate: null,
+      hasActiveSubscription: false,
+      plan: 'free'
+    }));
+
+    const { result } = renderHook(() => usePowerUserPromotion());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.shouldShowPromotion()).toBe(true);
+
+    await act(async () => {
+      await result.current.markPromotionShown();
+    });
+
+    expect(result.current.shouldShowPromotion()).toBe(false);
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'powerUserPromotion_v2_test-user',
+      expect.stringContaining('"lastShownDate"')
+    );
   });
 
   it('should not show promotion when user has active subscription', async () => {
