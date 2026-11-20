@@ -775,8 +775,7 @@ export default function NewDoseScreen() {
       console.log('handleScanAttempt: canProceed=', canProceed);
       if (!canProceed) {
         console.log('handleScanAttempt: Showing LimitModal');
-        logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
-        setShowLimitModal(true);
+        openScanLimit();
         return;
       }
 
@@ -867,6 +866,11 @@ export default function NewDoseScreen() {
     }
   };
 
+  const openScanLimit = useCallback(() => {
+    logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
+    setShowLimitModal(true);
+  }, []);
+
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
     
@@ -874,8 +878,7 @@ export default function NewDoseScreen() {
     const canProceed = hasScanCapacity(usageData.scansUsed, usageData.limit);
     if (!canProceed) {
       console.log('handleTryAIScan: Showing LimitModal');
-      logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
-      setShowLimitModal(true);
+      openScanLimit();
       return;
     }
 
@@ -884,7 +887,7 @@ export default function NewDoseScreen() {
     
     // Transition to scan screen
     setScreenStep('scan');
-  }, [usageData.scansUsed, usageData.limit, setScreenStep]);
+  }, [usageData.scansUsed, usageData.limit, setScreenStep, openScanLimit]);
 
   const toggleWebFlashlight = async () => {
     if (!isWeb || !webCameraStreamRef.current) return;
@@ -1032,6 +1035,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
+          onScanLimit={openScanLimit}
           onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
         />
       )}
@@ -1176,6 +1180,9 @@ export default function NewDoseScreen() {
         visible={showLimitModal}
         isAnonymous={user?.isAnonymous ?? true}
         isPremium={usageData.plan !== 'free'}
+        getEmailCaptureToken={user && !hasScanCapacity(usageData.scansUsed, usageData.limit)
+          ? () => user.getIdToken()
+          : undefined}
         onClose={() => setShowLimitModal(false)}
       />
       <LogLimitModal
