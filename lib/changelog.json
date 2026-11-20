@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-503",
+    "date": "2026-11-20",
+    "title": "Require manual verification of SafeDose scan fills",
+    "status": "published",
+    "prs": [
+      503
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual verification of SafeDose scan fills"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-499",
     "date": "2026-11-20",
     "title": "Add automatic version tags, GitHub releases, and a one-command rollback",
