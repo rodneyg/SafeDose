@@ -15,9 +15,8 @@ jest.mock('../lib/analytics', () => ({
     BEFORE_FIRST_SCAN_CONTINUE: 'before_first_scan_continue',
   },
 }));
+jest.mock('../lib/hooks/useOnboardingSurvey', () => ({ useOnboardingSurvey: () => ({}) }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({}) }));
-jest.mock('../lib/hooks/useWhyAreYouHereTracking', () => ({ useWhyAreYouHereTracking: () => ({}) }));
-jest.mock('../lib/hooks/usePMFSurvey', () => ({ usePMFSurvey: () => ({}) }));
 jest.mock('../lib/hooks/usePowerUserPromotion', () => ({ usePowerUserPromotion: () => ({}) }));
 jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({}) }));
 

@@ -26,6 +26,7 @@ type Props = {
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
+  onDoseSaved?: (localDoseCount?: number) => void;
   lastActionType: 'manual' | 'scan' | null;
   isMobileWeb: boolean;
   usageData?: { scansUsed: number; limit: number; plan: string };
@@ -47,6 +48,7 @@ export default function FinalResultDisplay({
   handleStartOver,
   setScreenStep,
   handleGoToFeedback,
+  onDoseSaved,
   lastActionType,
   isMobileWeb,
   usageData,
@@ -84,6 +86,7 @@ export default function FinalResultDisplay({
           
           if (result.success) {
             Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+            onDoseSaved?.(result.localDoseCount);
           } else if (result.limitReached) {
             Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
           } else {
@@ -100,7 +103,7 @@ export default function FinalResultDisplay({
 
     handleAuthenticatedSave();
   }, [
-    pendingSave, user, isSaving, isLogging, logDose,
+    pendingSave, user, isSaving, isLogging, logDose, onDoseSaved,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);
@@ -162,6 +165,7 @@ export default function FinalResultDisplay({
       
       if (result.success) {
         Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
+        onDoseSaved?.(result.localDoseCount);
       } else if (result.limitReached) {
         Alert.alert('Log Limit Reached', 'You have reached your dose logging limit.');
       } else {
@@ -176,7 +180,7 @@ export default function FinalResultDisplay({
       setIsSaving(false);
     }
   }, [
-    pendingSave, isSaving, isLogging, user, handleSignIn, logDose,
+    pendingSave, isSaving, isLogging, user, handleSignIn, logDose, onDoseSaved,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);

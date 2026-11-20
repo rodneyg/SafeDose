@@ -14,10 +14,17 @@ jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: 'Verify prescription' }) }));
-jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: jest.fn() }) }));
-jest.mock('../lib/hooks/useWhyAreYouHereTracking', () => ({ useWhyAreYouHereTracking: () => ({}) }));
-jest.mock('../lib/hooks/usePMFSurvey', () => ({ usePMFSurvey: () => ({}) }));
-jest.mock('../lib/hooks/usePowerUserPromotion', () => ({ usePowerUserPromotion: () => ({}) }));
+const mockOfferSurvey = jest.fn();
+const mockLogDose = jest.fn();
+jest.mock('../lib/hooks/useOnboardingSurvey', () => ({ useOnboardingSurvey: () => ({ offerSurvey: mockOfferSurvey }) }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: mockLogDose }) }));
+jest.mock('../lib/hooks/usePowerUserPromotion', () => ({
+  usePowerUserPromotion: () => ({
+    incrementDoseCount: async () => {},
+    shouldShowPromotion: () => false,
+    promotionData: { doseCount: 0 },
+  }),
+}));
 jest.mock('../lib/hooks/useBeforeFirstScanPrompt', () => ({ useBeforeFirstScanPrompt: () => ({}) }));
 jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({ isCapturing: true }) }));
 jest.mock('./DoseInputStep', () => 'DoseInputStep');
@@ -37,6 +44,27 @@ function hook() {
   act(() => { renderer = create(<Probe />); });
   return () => result!;
 }
+
+it('keeps the feedback flow in place and offers the survey only after a successful save', async () => {
+  const h = hook();
+  mockLogDose.mockReset().mockResolvedValueOnce({ success: false })
+    .mockResolvedValueOnce({ success: true, localDoseCount: 2 });
+  mockOfferSurvey.mockClear();
+
+  for (let i = 0; i < 2; i++) {
+    act(() => h().handleGoToFeedback('start_over'));
+    expect(h().screenStep).toBe('injectionSiteSelection');
+    act(() => h().handleInjectionSiteSelected());
+    expect(h().screenStep).toBe('postDoseFeedback');
+    expect(mockOfferSurvey).not.toHaveBeenCalled();
+    await act(async () => h().handleFeedbackComplete());
+    expect(h().screenStep).toBe('intro');
+  }
+
+  expect(mockLogDose).toHaveBeenCalledTimes(2);
+  expect(mockOfferSurvey).toHaveBeenCalledTimes(1);
+  expect(mockOfferSurvey).toHaveBeenCalledWith(2, 'manual');
+});
 
 it.each([
   ['units', 'units/ml', '10', '100'],
