@@ -12,11 +12,16 @@ const preset = {
   totalAmount: '', totalAmountUnit: null, solutionVolume: '', manualSyringe: { type: 'Standard' as const, volume: '1 ml' as const },
 };
 
+let renderer: ReturnType<typeof create> | undefined;
+
 beforeEach(() => jest.clearAllMocks());
+afterEach(() => {
+  act(() => renderer?.unmount());
+  renderer = undefined;
+});
 
 it('shows a safe empty state without offering an apply action', async () => {
   (getDosingPresets as jest.Mock).mockResolvedValue([]);
-  let renderer: ReturnType<typeof create>;
   await act(async () => { renderer = create(<DosingPresets mode="apply" onApply={jest.fn()} />); });
   expect(renderer!.root.findByProps({ children: 'No saved presets yet.' })).toBeTruthy();
   expect(renderer!.root.findAllByProps({ accessibilityLabel: expect.stringContaining('Apply') })).toHaveLength(0);
@@ -25,7 +30,6 @@ it('shows a safe empty state without offering an apply action', async () => {
 it('applies the selected saved preset', async () => {
   (getDosingPresets as jest.Mock).mockResolvedValue([preset]);
   const onApply = jest.fn();
-  let renderer: ReturnType<typeof create>;
   await act(async () => { renderer = create(<DosingPresets mode="apply" onApply={onApply} />); });
   act(() => renderer!.root.findByProps({ accessibilityLabel: 'Apply Morning preset' }).props.onPress());
   expect(onApply).toHaveBeenCalledWith(preset);
@@ -35,7 +39,6 @@ it('saves a named preset', async () => {
   (getDosingPresets as jest.Mock).mockResolvedValue([]);
   (saveDosingPreset as jest.Mock).mockResolvedValue([preset]);
   const { id: _id, name: _name, ...values } = preset;
-  let renderer: ReturnType<typeof create>;
   await act(async () => { renderer = create(<DosingPresets mode="save" preset={values} />); });
   act(() => renderer!.root.findByProps({ accessibilityLabel: 'Preset name' }).props.onChangeText('Morning'));
   await act(async () => { await renderer!.root.findByProps({ accessibilityLabel: 'Save dosing preset' }).props.onPress(); });
