@@ -4,19 +4,22 @@ import { join } from 'node:path';
 import { parseScanModelOutput } from '../../../lib/scan';
 import rawFixtures from '../fixtures/model-outputs.json';
 import thresholds from '../thresholds.json';
+import wrongFills from '../fixtures/holdout-wrong-fills.json';
 import { classifyResult, evaluateThresholds, loadImage, renderMarkdown, REPORT_HEADER, runDosePipeline, scoreScan, sha256, summarize, verifySha256, type Fixture } from '../harness';
 
 const fixtures = rawFixtures as Fixture[];
+const verified = { syringeAndVialVerified: true };
 function score(fixture: Fixture, source: 'synthetic' | 'not-evaluated' = 'synthetic') {
   return scoreScan(fixture.label, parseScanModelOutput(JSON.stringify(fixture.model_output)), {
     source, image_status: 'text-only-fixture', latency_ms: 1, cost_usd: 0,
+    syringeAndVialVerified: source === 'synthetic' && Boolean(fixture.label.dose),
   });
 }
 
 describe('vision eval full pipeline and gate', () => {
   it.each(['fixture-exact-read', 'fixture-standard-read', 'fixture-between-marks', 'fixture-total-amount'])('%s uses the production dose calculator with independently authored expected output', id => {
     const row = score(fixtures.find(f => f.label.id === id)!);
-    expect(row.classification).toBe('exact-correct');
+    expect(row.classification).toBe('unconfirmed-fill');
     expect(row.pipeline.got).toMatchObject(row.pipeline.expected!);
     expect(row.pipeline.status).toBe('number-shown');
   });
@@ -28,6 +31,28 @@ describe('vision eval full pipeline and gate', () => {
     const summary = summarize([row]);
     expect(evaluateThresholds(summary, thresholds).would_pass).toBe(false);
     expect(summary.wrong_number_cases).toEqual([{ id: row.id, sha256: row.sha256, sha256_kind: 'text-fixture', mismatches: row.mismatches }]);
+  });
+  it.each([
+    [wrongFills[0], 50, 0.5],
+    [wrongFills[1], 29.5, 0.295],
+  ])('scores a withheld fill with confidence 1.0 as unconfirmed (case %#)', (raw, units, ml) => {
+    const scan = parseScanModelOutput(raw);
+    const dose = { doseValue: 0.1, unit: 'mL' as const, expected: { calculatedVolume: 0.1, recommendedMarking: '10 units' } };
+    const label: Fixture['label'] = {
+      ...fixtures[0].label,
+      syringe: { type: scan.syringe.type, scale: scan.syringe.scale, capacity_ml: scan.syringe.capacity_ml },
+      vial: null,
+      fill: { units, ml, plunger_visible: true },
+      dose,
+    };
+    const row = scoreScan(label, scan, { source: 'recorded', image_status: 'text-only-fixture', latency_ms: 1, cost_usd: 0 });
+    expect(row.confidence['fill.units']).toBe(1);
+    expect(row.confidence['fill.ml']).toBe(1);
+    expect(row.classification).toBe('unconfirmed-fill');
+    expect(row.mismatches).toEqual(['fill.units', 'fill.ml']);
+    expect(row.pipeline).toMatchObject({ status: 'needs-verification', got: null });
+    expect(summarize([row]).wrong_number_cases).toEqual([]);
+    expect(runDosePipeline(scan, dose, verified).got?.calculatedVolume).toBe(dose.doseValue);
   });
   it('a missing vial unit never reaches calculateDose', () => {
     const row = score(fixtures.find(f => f.label.id === 'fixture-missing-vial-unit')!);
@@ -87,15 +112,17 @@ describe('vision eval full pipeline and gate', () => {
     const markdown = renderMarkdown(summary, evaluateThresholds(summary, thresholds), { mode: 'offline', commit: 'test', enforced: false, manifest_count: 111 });
     expect(markdown).toContain(REPORT_HEADER);
     expect(markdown).toContain('informational');
+    expect(markdown).toContain('| Unconfirmed fill |');
     for (const key of ['group', 'brand', 'lighting', 'angle']) expect(markdown).toContain(`By ${key}`);
   });
   it('asks when a dose context, solution volume, or concentration is incomplete', () => {
     const scan = parseScanModelOutput(JSON.stringify(fixtures.find(f => f.label.id === 'fixture-total-amount')!.model_output));
     const context = fixtures[0].label.dose!;
     expect(runDosePipeline(scan).status).toBe('no-dose-scenario');
-    expect(runDosePipeline(scan, context).status).toBe('needs-solution-volume');
-    expect(runDosePipeline(scan, { ...context, solutionVolume: '2junk' }).status).toBe('needs-solution-volume');
-    expect(runDosePipeline(scan, { ...context, doseValue: Infinity }).status).toBe('invalid-dose-context');
+    expect(runDosePipeline(scan, context)).toMatchObject({ status: 'needs-verification', got: null });
+    expect(runDosePipeline(scan, context, verified).status).toBe('needs-solution-volume');
+    expect(runDosePipeline(scan, { ...context, solutionVolume: '2junk' }, verified).status).toBe('needs-solution-volume');
+    expect(runDosePipeline(scan, { ...context, doseValue: Infinity }, verified).status).toBe('invalid-dose-context');
   });
   it('uses exact equality for between-marks fills, without silently applying photo estimates', () => {
     const row = score(fixtures.find(f => f.label.id === 'fixture-between-marks')!);
@@ -107,7 +134,7 @@ describe('vision eval full pipeline and gate', () => {
     expect(score(fixture).pipeline.got?.calculatedConcentration).toBe(2.5);
     const output = JSON.parse(JSON.stringify(fixture.model_output));
     output.vial.totalAmount = '0.001 mg';
-    const pipeline = runDosePipeline(parseScanModelOutput(JSON.stringify(output)), fixture.label.dose);
+    const pipeline = runDosePipeline(parseScanModelOutput(JSON.stringify(output)), fixture.label.dose, verified);
     expect(pipeline.status).toBe('calculator-asked');
     expect(pipeline.got?.calculationError).toContain('extremely low');
     expect(pipeline.got?.recommendedMarking).toBeNull();

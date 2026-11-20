@@ -22,10 +22,11 @@ describe('shared scan boundary', () => {
   it('preserves legacy fields and maps explicit unit-bearing quantities', () => {
     const scan = parse(output());
     expect(scan.syringe).toMatchObject({ type: 'Insulin', volume: '1 ml', scale: 'U-100', capacity_ml: 1 });
-    expect(mapScanToDoseInputs(scan)).toEqual({ status: 'ready', reasons: [], inputs: {
+    expect(mapScanToDoseInputs(scan)).toEqual({ status: 'needs-verification', reasons: [], inputs: {
       manualSyringe: { type: 'Insulin', volume: '1 ml' }, substance: 'Example compound',
       concentration: 10, concentrationUnit: 'mg/ml', totalAmount: null, totalAmountUnit: null,
     } });
+    expect(mapScanToDoseInputs(scan, { syringeAndVialVerified: true }).status).toBe('ready');
   });
   it.each(['not json', 'null', '[]', '{}', '{"syringe":"Insulin"}'])('refuses malformed/incomplete content %s', raw => {
     expect(parseScanModelOutput(raw).refuse).toBe(true);
@@ -39,7 +40,7 @@ describe('shared scan boundary', () => {
     const fixture = fixtures.find(f => f.label.id === id)!;
     const scan = parse(fixture.model_output);
     expect(scan.refuse).toBe(true);
-    expect(mapScanToDoseInputs(scan).status).toBe('needs-input');
+    expect(mapScanToDoseInputs(scan, { syringeAndVialVerified: true }).status).toBe('needs-input');
   });
   it('does not snap a between-marks fill', () => {
     const scan = parse(fixtures.find(f => f.label.id === 'fixture-between-marks')!.model_output);

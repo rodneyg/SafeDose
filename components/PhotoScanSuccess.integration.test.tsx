@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import ScanScreen from './ScanScreen';
 import ImagePreviewModal from './ImagePreviewModal';
 import { captureAndProcessImage } from '../lib/cameraUtils';
 import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
+import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
 
 jest.mock('../lib/utils', () => ({ isWeb: true, isMobileWeb: false, MAX_FILE_SIZE: 5 * 1024 * 1024 }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
@@ -24,6 +25,7 @@ const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAw
 const MODEL_OUTPUT = fixtures.find(f => f.label.id === 'fixture-exact-read')!.model_output;
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
+const onVerify = jest.fn();
 const originalKey = process.env.OPENAI_API_KEY;
 const originalFetch = globalThis.fetch;
 const browserDescriptors = ['document', 'FileReader'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const);
@@ -50,7 +52,7 @@ function PhotoFlow() {
       },
     } as React.ComponentProps<typeof ScanScreen>)} />
     <ImagePreviewModal visible={!!result} imageUri={result?.capturedImage?.uri ?? ''}
-      scanResult={result} onRetake={() => setResult(null)} onContinue={jest.fn()} />
+      scanResult={result} onRetake={() => setResult(null)} onVerify={onVerify} />
   </>;
 }
 
@@ -133,7 +135,7 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
     capturedImage: { uri: PHOTO, mimeType: 'image/png' },
   });
   // This is the same mapper used by NewDoseScreen to prefill ManualEntryScreen.
-  expect(mapScanToDoseInputs(result)).toEqual({ status: 'ready', reasons: [], inputs: {
+  expect(mapScanToDoseInputs(result)).toEqual({ status: 'needs-verification', reasons: [], inputs: {
     manualSyringe: { type: 'Insulin', volume: '1 ml' }, substance: 'Example compound',
     concentration: 10, concentrationUnit: 'mg/ml', totalAmount: null, totalAmountUnit: null,
   } });
@@ -144,6 +146,36 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
   expect(screen.queryByText('Processing...')).toBeNull();
   expect(incrementScansUsed).toHaveBeenCalledTimes(1);
   screen.unmount();
+});
+
+it.each([
+  [wrongFills[0], '40', '0.4'],
+  [wrongFills[1], '30', '0.3'],
+])('withholds the model fill despite confidence 1.0 (case %#)', async (content, units, ml) => {
+  mockCreate.mockResolvedValue({ choices: [{ message: { content } }] });
+  const screen = render(<PhotoFlow />);
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await waitFor(() => expect(screen.getByText('Review Your Scan')).toBeTruthy());
+
+  expect(screen.getByText(/Read the fill line on your own syringe/)).toBeTruthy();
+  expect(screen.getByText(/vial label/)).toBeTruthy();
+  expect(screen.getByText(/no medical advice/)).toBeTruthy();
+  expect(screen.queryByText(new RegExp('^' + units + '( units)?$', 'i'))).toBeNull();
+  // A syringe capacity can equal the raw fill. It is explicitly labelled Capacity.
+  expect(screen.getByText('Capacity')).toBeTruthy();
+  expect(screen.queryByText(ml)).toBeNull();
+  expect(screen.queryByText(/^Fill(?: level| amount)?$/i)).toBeNull();
+
+  jest.useFakeTimers();
+  try {
+    act(() => { jest.advanceTimersByTime(60_000); });
+    expect(onVerify).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByRole('button', { name: 'I checked both' }));
+    expect(onVerify).toHaveBeenCalledTimes(1);
+    screen.unmount();
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it('refuses malformed provider JSON after an otherwise successful API response', async () => {

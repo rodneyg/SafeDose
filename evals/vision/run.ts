@@ -129,7 +129,11 @@ async function main(): Promise<void> {
   if (!live) for (const fixture of fixtures) {
     const start = performance.now();
     const scan = await readScan('', { modelOutput: JSON.stringify(fixture.model_output) });
-    rows.push(scoreScan(fixture.label, scan, { source: 'synthetic', image_status: 'text-only-fixture', latency_ms: performance.now() - start, cost_usd: 0 }));
+    // Authored dose scenarios simulate entering an independent dose after reviewing the scan.
+    rows.push(scoreScan(fixture.label, scan, {
+      source: 'synthetic', image_status: 'text-only-fixture', latency_ms: performance.now() - start,
+      cost_usd: 0, syringeAndVialVerified: Boolean(fixture.label.dose),
+    }));
   }
   const summary = summarize(rows);
   const realSummary = summarize(rows.filter(row => row.source !== 'synthetic'));
@@ -142,7 +146,10 @@ async function main(): Promise<void> {
   const base = resolve('evals/results', `${runId}-${commit.slice(0, 8)}-${live ? 'live' : 'offline'}`);
   const context = { mode: live ? 'live' : 'offline', commit, enforced, manifest_count: labels.length };
   const markdown = renderMarkdown(summary, gate, context) +
-    `\n## Prediction provenance\n\nImage predictions: ${realSummary.observed}/${labels.length}. Synthetic fixtures: ${syntheticSummary.observed}. Image-only accuracy is not yet established by an offline fixture run. JSON contains separate image and synthetic summaries.\n`;
+    `\n## Prediction provenance\n\nImage predictions: ${realSummary.observed}/${labels.length}. ` +
+    `Image wrong-number-shown: ${realSummary.classes['wrong-number-shown']}. ` +
+    `Image unconfirmed fills: ${realSummary.classes['unconfirmed-fill']}. ` +
+    `Synthetic fixtures: ${syntheticSummary.observed}. The adjacent JSON reports accuracy separately for image predictions and authored fixtures.\n`;
   await mkdir(resolve('evals/results'), { recursive: true });
   await writeFile(`${base}.json`, JSON.stringify({
     notice: 'LABELS PENDING RODNEY VERIFICATION: scores are not an official accuracy gate.',
