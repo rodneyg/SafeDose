@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-pr-482",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to useAuth",
+    "status": "published",
+    "prs": [
+      482
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-475",
     "date": "2026-11-20",
     "title": "Combine the SafeDose onboarding surveys",
