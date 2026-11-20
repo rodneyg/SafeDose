@@ -27,6 +27,23 @@ describe('usePowerUserPromotion', () => {
     jest.clearAllMocks();
   });
 
+  it('exposes the documented subscription promotion result shape', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    const { result } = renderHook(() => usePowerUserPromotion());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(Object.keys(result.current).sort()).toEqual([
+      'clearPromotionData',
+      'incrementDoseCount',
+      'isLoading',
+      'markPromotionShown',
+      'promotionData',
+      'shouldShowPromotion',
+    ]);
+  });
+
   it('should not show promotion one dose below the minimum', async () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
       doseCount: 3,
