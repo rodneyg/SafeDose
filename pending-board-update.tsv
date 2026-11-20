@@ -1,5 +1,5 @@
 task_id	sheet	tab	row_or_key	field	value	recorded_at_et
-T-842	board	Tasks	T-842	Status	In progress	2026-11-19 20:14:24 EST
-T-842	board	Tasks	T-842	Status	Done	2026-11-19 20:15:11 EST
-T-842	board	Tasks	T-842	Done at (ET)	2026-11-19 20:15:11 EST	2026-11-19 20:15:11 EST
-T-842	board	Tasks	T-842	Result	Documented the subscription promotion hook and verified its return shape.	2026-11-19 20:15:11 EST
+T-881	board	Tasks	T-881	Status	In progress	2026-11-19 20:18:28 ET
+T-881	board	Tasks	T-881	Status	Done	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Done at (ET)	2026-11-19 20:19:15 ET	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Result	Added focused success and error tests for scanner processing state ordering and finally cleanup.	2026-11-19 20:19:15 ET
