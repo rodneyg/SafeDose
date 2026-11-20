@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+/** Reports whether a web runtime is currently offline. */
 export function useWebOffline() {
   const [offline, setOffline] = useState(false);
   useEffect(() => {
