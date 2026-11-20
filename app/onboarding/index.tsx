@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Link, useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import PublicLinks from '../../components/PublicLinks';
 import { useAuth } from '../../contexts/AuthContext';
 import { signInWithGoogle } from '../../lib/googleAuth';
 import { loadRemoteUserProfile, routeAfterGoogleSignIn } from '../../lib/onboardingState';
+import { startFirstDoseTimer } from '../../lib/firstDoseExperiment';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -18,6 +19,8 @@ export default function Welcome() {
   const [imageError, setImageError] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [signInError, setSignInError] = useState('');
+
+  useEffect(() => { startFirstDoseTimer(); }, []);
 
   const handleStart = useCallback(() => {
     router.navigate('/onboarding/age');
