@@ -1,0 +1,2 @@
+pr_url	status	evidence
+https://github.com/rodneyg/SafeDose/pull/476	already-done	commit 6e7ca81 on current main adds /api/ping and api/__tests__/ping.test.js
