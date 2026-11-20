@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026-11-20-pr-488",
+    "date": "2026-11-20",
+    "title": "Expose dose calculator input types",
+    "status": "published",
+    "prs": [
+      488
+    ],
+    "sections": {
+      "Improved": [
+        "Expose dose calculator input types"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-482",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to useAuth",
+    "status": "published",
+    "prs": [
+      482
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-476",
+    "date": "2026-11-20",
+    "title": "Add GET /api/ping endpoint",
+    "status": "published",
+    "prs": [
+      476
+    ],
+    "sections": {
+      "Improved": [
+        "Add GET /api/ping endpoint"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-475",
     "date": "2026-11-20",
     "title": "Combine the SafeDose onboarding surveys",
@@ -10,6 +52,20 @@
     "sections": {
       "Improved": [
         "Combine the SafeDose onboarding surveys"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-473",
+    "date": "2026-11-20",
+    "title": "Add dismissible Photo Check upgrade nudges",
+    "status": "published",
+    "prs": [
+      473
+    ],
+    "sections": {
+      "Improved": [
+        "Add dismissible Photo Check upgrade nudges"
       ]
     }
   },

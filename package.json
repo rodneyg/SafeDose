@@ -16,6 +16,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "test:dosing": "jest lib/dosing tests/ --runInBand --coverage --collectCoverageFrom='lib/dosing/**/*.ts' --collectCoverageFrom='!lib/dosing/**/__tests__/**'",
+    "typecheck:dose-calculator-props": "tsc -p tsconfig.dose-calculator-props.json",
     "typecheck:dosing": "tsc --noEmit -p tsconfig.dosing.json",
     "eval:vision": "tsc -p tsconfig.vision.json && node .eval-cache/evals/vision/run.js",
     "test:vision": "jest lib/scan evals/vision --runInBand",
