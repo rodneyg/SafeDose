@@ -1,2 +1,0 @@
-pr_url	status	evidence
-	ready	Local committed branch t-safedose-issue-270-soft-wall; full tests, lint, typecheck, and web build passed
