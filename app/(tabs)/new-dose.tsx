@@ -30,6 +30,7 @@ import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { recordFirstScanExperimentSuccess } from '../../lib/firstScanExperiment';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { DosingPreset } from '../../lib/dosingPresets';
@@ -821,6 +822,7 @@ export default function NewDoseScreen() {
       if (result) {
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
+        recordFirstScanExperimentSuccess();
         const firstLocalScan = await recordSuccessfulScan(user.uid);
         if (checked.usage) {
           setScanNudge({ userId: user.uid, kind: photoUpgradeNudge(checked.usage, firstLocalScan) });
@@ -1056,6 +1058,7 @@ export default function NewDoseScreen() {
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
           onScanLimit={openScanLimit}
+          scanUnavailable={offline}
           onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
         />
       )}

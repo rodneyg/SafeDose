@@ -16,6 +16,8 @@ export const ANALYTICS_EVENTS = {
   CANCEL_SUBSCRIPTION: 'cancel_subscription',
   DOWNGRADE_PLAN: 'downgrade_plan',
   SCAN_ATTEMPT: 'scan_attempt',
+  FIRST_SCAN_SESSION_STARTED: 'first_scan_session_started',
+  FIRST_SCAN_SUCCESS: 'first_scan_success',
   SCAN_SUCCESS: 'scan_success',
   SCAN_FAILURE: 'scan_failure',
   SAFETY_REFUSAL: 'safety_refusal',
