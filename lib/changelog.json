@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-20-pr-493",
+    "date": "2026-11-20",
+    "title": "Add unit tests for useDoseLogging",
+    "status": "published",
+    "prs": [
+      493
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useDoseLogging"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-489",
+    "date": "2026-11-20",
+    "title": "Add unit tests for usePowerUserPromotion",
+    "status": "published",
+    "prs": [
+      489
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for usePowerUserPromotion"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-488",
     "date": "2026-11-20",
     "title": "Expose dose calculator input types",
@@ -14,6 +42,76 @@
     }
   },
   {
+    "id": "2026-11-20-pr-487",
+    "date": "2026-11-20",
+    "title": "Add accessibility labels to scanner controls",
+    "status": "published",
+    "prs": [
+      487
+    ],
+    "sections": {
+      "Improved": [
+        "Add accessibility labels to scanner controls"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-486",
+    "date": "2026-11-20",
+    "title": "Add JSDoc for remaining hooks",
+    "status": "published",
+    "prs": [
+      486
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc for remaining hooks"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-485",
+    "date": "2026-11-20",
+    "title": "Add unit tests for scanner processing state",
+    "status": "published",
+    "prs": [
+      485
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for scanner processing state"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-484",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to scan hook",
+    "status": "published",
+    "prs": [
+      484
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to scan hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-483",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to subscription hook",
+    "status": "published",
+    "prs": [
+      483
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to subscription hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-482",
     "date": "2026-11-20",
     "title": "Add JSDoc to useAuth",
@@ -24,6 +122,48 @@
     "sections": {
       "Improved": [
         "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-481",
+    "date": "2026-11-20",
+    "title": "Fix SafeDose native Metro bundling on iOS and Android",
+    "status": "published",
+    "prs": [
+      481
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose native Metro bundling on iOS and Android"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-478",
+    "date": "2026-11-20",
+    "title": "Add user-defined dosing presets",
+    "status": "published",
+    "prs": [
+      478
+    ],
+    "sections": {
+      "Improved": [
+        "Add user-defined dosing presets"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-477",
+    "date": "2026-11-20",
+    "title": "Add optional SafeDose protocol scheduler",
+    "status": "published",
+    "prs": [
+      477
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional SafeDose protocol scheduler"
       ]
     }
   },

@@ -32,6 +32,7 @@ import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { DosingPreset } from '../../lib/dosingPresets';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
@@ -324,6 +325,20 @@ export default function NewDoseScreen() {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [capturedImageUri, setCapturedImageUri] = useState<string>('');
   const [pendingScanResult, setPendingScanResult] = useState<any>(null);
+
+  const applyDosingPreset = useCallback((preset: DosingPreset) => {
+    setDose(preset.dose);
+    setUnit(preset.unit);
+    setSubstanceName(preset.substanceName);
+    setMedicationInputType(preset.medicationInputType);
+    setConcentrationAmount(preset.concentrationAmount);
+    setConcentrationUnit(preset.concentrationUnit);
+    setTotalAmount(preset.totalAmount);
+    doseCalculator.setTotalAmountUnit(preset.totalAmountUnit);
+    setSolutionVolume(preset.solutionVolume);
+    setManualSyringe(preset.manualSyringe);
+    setManualStep('dose');
+  }, [doseCalculator, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
 
   console.log('Usage Data:', usageData);
 
@@ -1168,6 +1183,7 @@ export default function NewDoseScreen() {
           validateConcentrationInput={validateConcentrationInput}
           usageData={usageData}
           onTryAIScan={handleTryAIScan}
+          onApplyPreset={applyDosingPreset}
         />
       )}
       {screenStep === 'injectionSiteSelection' && (

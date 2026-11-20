@@ -15,6 +15,7 @@ export interface ReconstitutionState {
   error: string | null;
 }
 
+/** Manages reconstitution inputs, validation, navigation, and calculated results. */
 export function useReconstitutionPlanner() {
   const [state, setState] = useState<ReconstitutionState>({
     step: 'inputMethod',
