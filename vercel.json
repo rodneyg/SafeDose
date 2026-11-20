@@ -11,6 +11,17 @@
     { "src": "api/*.js",       "use": "@vercel/node" }
   ],
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Strict-Transport-Security": "max-age=31536000",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+      },
+      "continue": true
+    },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
 
     { "handle": "filesystem" },
