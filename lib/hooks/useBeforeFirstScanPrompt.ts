@@ -11,7 +11,25 @@ interface BeforeFirstScanState {
   dontShowAgain: boolean;
 }
 
-export function useBeforeFirstScanPrompt() {
+export interface BeforeFirstScanPrompt {
+  shouldShowPrompt: () => boolean;
+  markPromptAsShown: () => Promise<void>;
+  markDontShowAgain: () => Promise<void>;
+  isLoading: boolean;
+  showCount: number;
+}
+
+/**
+ * Manages the per-user educational prompt shown before scanning.
+ *
+ * The persisted state is loaded for the signed-in user, or for the shared
+ * anonymous user when signed out. The prompt is eligible to appear at most
+ * twice unless the user opts out sooner.
+ *
+ * @returns The loading state, display count, eligibility check, and async
+ * persistence callbacks for recording a view or opting out.
+ */
+export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const { user } = useAuth();
   const [state, setState] = useState<BeforeFirstScanState>({
     showCount: 0,
