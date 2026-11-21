@@ -770,6 +770,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-528",
+    "date": "2026-11-21",
+    "title": "Document and test the SafeDose /api/ping probe",
+    "status": "published",
+    "prs": [
+      528
+    ],
+    "sections": {
+      "Improved": [
+        "Document and test the SafeDose /api/ping probe"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-527",
     "date": "2026-11-21",
     "title": "Stabilize PhotoScan integration tests",
