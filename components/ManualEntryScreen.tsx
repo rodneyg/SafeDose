@@ -156,30 +156,28 @@ export default function ManualEntryScreen({
 
   // Validation functions for each step
   const isDoseStepValid = (): boolean => {
-    return Boolean(dose && !isNaN(parseDoseInput(dose)));
+    return parseDoseInput(dose) > 0;
   };
 
   const isMedicationSourceStepValid = (): boolean => {
     return Boolean(medicationInputType === 'concentration' || medicationInputType === 'totalAmount');
   };
 
-  const isConcentrationInputStepValid = (): boolean => {
-    // Check for valid concentration input
-    const valid = Boolean(concentrationAmount && !isNaN(parseDoseInput(concentrationAmount)));
-    
-    // Also validate unit compatibility if both units are set
-    if (valid && unit && concentrationUnit) {
+  const getConcentrationInputError = (): string | null => {
+    if (!(parseDoseInput(concentrationAmount) > 0)) {
+      return 'Enter a concentration greater than zero.';
+    }
+    if (unit && concentrationUnit) {
       const compatibility = validateUnitCompatibility(unit, concentrationUnit);
       if (!compatibility.isValid) {
-        return false;
+        return compatibility.errorMessage;
       }
     }
-    
-    return valid;
+    return null;
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
-    const isValid = Boolean(totalAmount && !isNaN(parseDoseInput(totalAmount)));
+    const isValid = parseDoseInput(totalAmount) > 0;
     console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
     return isValid;
   };
@@ -205,7 +203,7 @@ export default function ManualEntryScreen({
     switch (manualStep) {
       case 'dose': result = isDoseStepValid(); break;
       case 'medicationSource': result = isMedicationSourceStepValid(); break;
-      case 'concentrationInput': result = isConcentrationInputStepValid(); break;
+      case 'concentrationInput': result = getConcentrationInputError() === null; break;
       case 'totalAmountInput': result = isTotalAmountInputStepValid(); break;
       case 'reconstitution': result = isReconstitutionStepValid(); break;
       case 'syringe': result = isSyringeStepValid(); break;
@@ -381,9 +379,23 @@ export default function ManualEntryScreen({
       currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
   }
 
+  const getNativeInputError = (): string | null => {
+    switch (manualStep) {
+      case 'dose':
+        return isDoseStepValid() ? null : 'Enter a dose greater than zero.';
+      case 'concentrationInput':
+        return getConcentrationInputError();
+      case 'totalAmountInput':
+        return isTotalAmountInputStepValid() ? null : 'Enter a total amount greater than zero.';
+      default:
+        return null;
+    }
+  };
+
+  const nativeInputError = !isWeb && !formError ? getNativeInputError() : null;
   const visibleError = isWeb && manualStep === 'syringe' && !canSubmit
     ? 'Select a syringe size to calculate.'
-    : formError;
+    : formError ?? nativeInputError;
   const stepButtons = (
     <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
       <TouchableOpacity
@@ -429,7 +441,7 @@ export default function ManualEntryScreen({
         <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile, isReviewStep && styles.reviewContent]}>
           {currentStepComponent}
           {visibleError && (
-            <Text accessibilityRole={isWeb ? 'alert' : undefined} style={[styles.errorText, isWeb && styles.webErrorText]}>
+            <Text accessibilityRole={isWeb || nativeInputError ? 'alert' : undefined} style={[styles.errorText, isWeb && styles.webErrorText]}>
               {visibleError}
             </Text>
           )}
