@@ -33,6 +33,8 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { DosingPreset } from '../../lib/dosingPresets';
+import { loadPrescribedProtocol, protocolOccurrence, upcomingPrescribedDoses } from '../../lib/prescribedProtocol';
+import { localDateTimeFields } from '../../lib/protocolPlan';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
@@ -890,27 +892,49 @@ export default function NewDoseScreen() {
     setShowLimitModal(true);
   }, []);
 
-  const startScanAppliedRef = useRef(false);
-  const { handleScanNavigation, beforeFirstScanPrompt } = doseCalculator;
+  const startScanAppliedRef = useRef<string | null>(null);
+  const { handleScanNavigation, beforeFirstScanPrompt, startScheduledDose } = doseCalculator;
   useEffect(() => {
-    if (searchParams.startScan !== 'true') {
-      startScanAppliedRef.current = false;
+    const scheduled = typeof searchParams.scheduledDose === 'string' ? searchParams.scheduledDose : null;
+    const entry = scheduled ?? (searchParams.startScan === 'true' ? 'scan' : null);
+    if (!entry) {
+      startScanAppliedRef.current = null;
       return;
     }
-    if (!isScreenActive || screenStep !== 'intro' || beforeFirstScanPrompt.isLoading ||
-        startScanAppliedRef.current) return;
+    if (!isScreenActive || beforeFirstScanPrompt.isLoading ||
+        startScanAppliedRef.current === entry) return;
 
-    startScanAppliedRef.current = true;
-    if (offline) {
-      handleSetScreenStep('manualEntry');
-    } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
-      openScanLimit();
-    } else {
-      setNavigatingFromIntro(true);
-      void handleScanNavigation();
+    let active = true;
+    async function start() {
+      if (scheduled) {
+        const [protocol, history] = await Promise.all([
+          loadPrescribedProtocol(user?.uid).catch(() => null),
+          getDoseLogHistory(),
+        ]);
+        if (!active) return;
+        const next = protocol && upcomingPrescribedDoses(protocol, history)[0];
+        resetFullForm();
+        if (protocol && next === localDateTimeFields(new Date()).date && protocolOccurrence(protocol, next) === scheduled) {
+          startScheduledDose(scheduled);
+        }
+      } else {
+        resetFullForm();
+      }
+      startScanAppliedRef.current = entry;
+      if (offline) {
+        handleSetScreenStep('manualEntry');
+      } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
+        openScanLimit();
+      } else {
+        setNavigatingFromIntro(true);
+        void handleScanNavigation();
+      }
     }
-  }, [searchParams.startScan, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading, offline,
-    handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation]);
+    void start();
+    return () => { active = false; };
+  }, [searchParams.startScan, searchParams.scheduledDose, isScreenActive, beforeFirstScanPrompt.isLoading,
+    offline, handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation,
+    startScheduledDose, getDoseLogHistory, resetFullForm, user?.uid]);
 
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
@@ -1181,6 +1205,7 @@ export default function NewDoseScreen() {
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          resolveScheduledDose={doseCalculator.resolveScheduledDose}
           onDoseSaved={onDoseSaved}
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}

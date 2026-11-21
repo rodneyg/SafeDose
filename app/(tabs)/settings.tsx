@@ -209,7 +209,8 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <View style={styles.card}>
-            <Link href="/protocol" style={styles.protocolLink}>Dosing protocol</Link>
+            <Link href="/protocol-schedule" style={styles.protocolLink}>Protocol schedule</Link>
+            <Link href="/protocol" style={styles.protocolLink}>Dose schedule preview</Link>
           </View>
         </View>
 
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
-  protocolLink: { color: '#007AFF', fontSize: 17, fontWeight: '600' },
+  protocolLink: { paddingVertical: 8, color: '#007AFF', fontSize: 17, fontWeight: '600' },
   section: {
     marginBottom: 24,
   },

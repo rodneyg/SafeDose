@@ -1,3 +1,4 @@
+import type { DoseLogContext } from '../types/doseLog';
 import { calculationErrorMessage } from '../lib/calculationErrorMessage';
 import { formatDoseNumber } from '../lib/dosing';
 import { Exact } from '../lib/dosing/exact';
@@ -26,6 +27,7 @@ type Props = {
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
+  resolveScheduledDose?: (dose: DoseLogContext) => Promise<string | undefined>;
   onDoseSaved?: (localDoseCount?: number) => void;
   lastActionType: 'manual' | 'scan' | null;
   isMobileWeb: boolean;
@@ -48,6 +50,7 @@ export default function FinalResultDisplay({
   handleStartOver,
   setScreenStep,
   handleGoToFeedback,
+  resolveScheduledDose,
   onDoseSaved,
   lastActionType,
   isMobileWeb,
@@ -82,7 +85,8 @@ export default function FinalResultDisplay({
             insulinScale: manualSyringe.insulinScale,
           };
 
-          const result = await logDose(doseInfo);
+          const protocolOccurrence = await resolveScheduledDose?.(doseInfo);
+          const result = await logDose(protocolOccurrence ? { ...doseInfo, protocolOccurrence } : doseInfo);
           
           if (result.success) {
             Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
@@ -103,7 +107,7 @@ export default function FinalResultDisplay({
 
     handleAuthenticatedSave();
   }, [
-    pendingSave, user, isSaving, isLogging, logDose, onDoseSaved,
+    pendingSave, user, isSaving, isLogging, logDose, resolveScheduledDose, onDoseSaved,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);
@@ -161,7 +165,8 @@ export default function FinalResultDisplay({
         insulinScale: manualSyringe.insulinScale,
       };
 
-      const result = await logDose(doseInfo);
+      const protocolOccurrence = await resolveScheduledDose?.(doseInfo);
+      const result = await logDose(protocolOccurrence ? { ...doseInfo, protocolOccurrence } : doseInfo);
       
       if (result.success) {
         Alert.alert('Dose Saved', 'Your dose has been saved to your log.');
@@ -180,7 +185,7 @@ export default function FinalResultDisplay({
       setIsSaving(false);
     }
   }, [
-    pendingSave, isSaving, isLogging, user, handleSignIn, logDose, onDoseSaved,
+    pendingSave, isSaving, isLogging, user, handleSignIn, logDose, resolveScheduledDose, onDoseSaved,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import useDoseCalculator from '../lib/hooks/useDoseCalculator';
@@ -64,6 +65,32 @@ it('keeps the feedback flow in place and offers the survey only after a successf
   expect(mockLogDose).toHaveBeenCalledTimes(2);
   expect(mockOfferSurvey).toHaveBeenCalledTimes(1);
   expect(mockOfferSurvey).toHaveBeenCalledWith(2, 'manual');
+});
+
+it('logs the occurrence only for the confirmed scheduled dose and clears it for the next dose', async () => {
+  jest.mocked(AsyncStorage.getItem).mockResolvedValueOnce(JSON.stringify({
+    type: 'custom', medication: 'Example', dose: '1', unit: 'mg', cadenceDays: 7,
+    firstDate: '2026-11-20', savedAt: 12345,
+  }));
+  const h = hook();
+  mockLogDose.mockReset().mockResolvedValue({ success: true });
+  const occurrence = '12345:2026-11-20';
+  act(() => {
+    h().startScheduledDose(occurrence);
+    h().setFeedbackContext({
+      nextAction: 'start_over',
+      doseInfo: { substanceName: 'Example', doseValue: 1, unit: 'mg', calculatedVolume: .1 },
+    });
+  });
+  await act(async () => h().handleFeedbackComplete());
+  expect(mockLogDose).toHaveBeenLastCalledWith(expect.objectContaining({ protocolOccurrence: occurrence }));
+
+  act(() => h().setFeedbackContext({
+    nextAction: 'start_over',
+    doseInfo: { substanceName: 'Example', doseValue: 1, unit: 'mg', calculatedVolume: .1 },
+  }));
+  await act(async () => h().handleFeedbackComplete());
+  expect(mockLogDose.mock.lastCall?.[0]).not.toHaveProperty('protocolOccurrence');
 });
 
 it.each([
