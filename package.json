@@ -124,7 +124,7 @@
     "jest-expo": "~52.0.6",
     "playwright": "^1.65.1",
     "react-test-renderer": "^18.3.1",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.4",
     "safe-buffer": "^5.2.1",
     "ts-jest": "^29.4.1",
     "tsconfig-paths": "^4.2.0",
