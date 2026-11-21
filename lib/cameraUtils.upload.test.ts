@@ -201,8 +201,11 @@ describe('photo quality precheck', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('uses the normal scan path if the decoder cannot read the file', async () => {
-    mockReadPhotoMetrics.mockRejectedValueOnce(new Error('unsupported'));
+  it.each([
+    ['rejects', () => Promise.reject(new Error('unsupported'))],
+    ['throws', () => { throw new Error('unsupported'); }],
+  ] as const)('uses the normal scan path if the decoder %s', async (_, readMetrics) => {
+    mockReadPhotoMetrics.mockImplementationOnce(readMetrics);
     completeScan();
     expect(await captureAndProcessImage(options)).toMatchObject({ refuse: false });
     expect(mockReadPhotoMetrics).toHaveBeenCalledTimes(1);
