@@ -840,6 +840,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-496",
+    "date": "2026-11-21",
+    "title": "Add SAFE_DOSE_REPORT.md documentation",
+    "status": "published",
+    "prs": [
+      496
+    ],
+    "sections": {
+      "Improved": [
+        "Add SAFE_DOSE_REPORT.md documentation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-495",
     "date": "2026-11-21",
     "title": "Add TypeScript noEmit check in CI",
