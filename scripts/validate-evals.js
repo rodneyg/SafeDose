@@ -5,9 +5,20 @@
  * This script validates that evaluation examples align with actual dose calculation behavior
  */
 
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+
+// Load the same TypeScript calculator used by the app from this Node CLI.
+require.extensions['.ts'] = (file, filename) => {
+  const source = fs.readFileSync(filename, 'utf8');
+  const { outputText } = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+    fileName: filename,
+  });
+  file._compile(outputText, filename);
+};
 const { calculateDose } = require('../lib/doseUtils');
-const fs = require('fs');
-const path = require('path');
 
 console.log('🔍 Validating SafeDose Evaluation Framework Examples...\n');
 
@@ -23,6 +34,7 @@ const testSets = fs.readdirSync(testSetsDir).filter(file => file.endsWith('.json
 let totalTests = 0;
 let passedTests = 0;
 let failedTests = 0;
+let skippedTests = 0;
 
 for (const testSetFile of testSets) {
   const testSetPath = path.join(testSetsDir, testSetFile);
@@ -58,7 +70,7 @@ for (const testSetFile of testSets) {
           unit: 'units',
           concentration: 100,
           concentrationUnit: 'units/ml',
-          manualSyringe: createSyringe('Insulin', '100 units'),
+          manualSyringe: createSyringe('Insulin', '0.3 ml'),
           totalAmount: null,
           solutionVolume: null
         };
@@ -119,6 +131,7 @@ for (const testSetFile of testSets) {
         };
       } else {
         console.log(`      ⚠️  Skipping ${evaluation.id} - no parser implementation yet`);
+        skippedTests++;
         continue;
       }
       
@@ -172,17 +185,11 @@ console.log('📊 Validation Summary:');
 console.log(`   Total evaluations: ${totalTests}`);
 console.log(`   Passed: ${passedTests}`);
 console.log(`   Failed: ${failedTests}`);
-console.log(`   Success rate: ${totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0}%`);
+console.log(`   Skipped: ${skippedTests}`);
 
-if (failedTests === 0) {
-  console.log('\n🎉 All evaluation examples are valid and match SafeDose behavior!');
-  console.log('\n📝 Next steps:');
-  console.log('1. Add more evaluation test cases');
-  console.log('2. Implement automated evaluation runner');
-  console.log('3. Add image-based evaluations for AI scanning');
-  process.exit(0);
+if (failedTests === 0 && passedTests > 0) {
+  console.log('\nAll implemented evaluation cases matched SafeDose behavior.');
 } else {
-  console.log('\n⚠️  Some evaluation examples need adjustment.');
-  console.log('Please review the differences and update the expected outputs.');
-  process.exit(1);
+  console.error('\nEvaluation validation failed. Check the case results above.');
+  process.exitCode = 1;
 }
