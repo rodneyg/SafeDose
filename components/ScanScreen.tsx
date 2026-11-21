@@ -459,7 +459,7 @@ export default function ScanScreen({
         )}
         <View style={styles.overlayBottom}>
           {showGuidance ? <RefusalGuidance guidance={guidance} /> : (
-            scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>
+            scanError && <Text accessibilityRole="alert" style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>
           )}
           
           {/* Autocapture status */}
