@@ -1,6 +1,6 @@
 import { AmountUnit } from '../lib/dosing';
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { isMobileWeb } from '../lib/utils';
 
 type Props = {
@@ -25,7 +25,7 @@ export default function TotalAmountInputStep({
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Total Amount</Text>
-      <Text style={styles.label}>Total Amount in Vial ({unit || 'select unit'}):</Text>
+      <Text style={styles.label}>Total Amount in Vial ({Platform.OS === 'web' ? 'required, ' : ''}{unit || 'select unit'}):</Text>
       <View style={{ flexDirection: 'row', gap: 16 }}>
         {(['mg', 'mcg', 'units'] as const).map(option => (
           <TouchableOpacity key={option} onPress={() => setUnit(option)} accessibilityRole="radio" accessibilityState={{ checked: unit === option }}>
@@ -40,7 +40,7 @@ export default function TotalAmountInputStep({
           setTotalAmount(text);
           // Don't clear the hint here so that validation can run
         }}
-        keyboardType="numeric"
+        keyboardType={Platform.OS === 'web' ? 'decimal-pad' : 'numeric'}
         placeholder="e.g., 50"
         placeholderTextColor="#9ca3af"
       />

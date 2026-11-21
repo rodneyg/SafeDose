@@ -81,6 +81,13 @@ describe('SAF-305 independent known answers', () => {
       concentration: null, totalAmount: 360, totalAmountUnit: 'units', solutionVolume: '3' }), 1n, 8n);
   });
 
+  it.each(['0.3 ml', '0.5 ml', '1 ml'])('refuses U-50 on a %s syringe', volume => {
+    assertBlocked({
+      unit: 'units', doseValue: 5, concentration: 50, concentrationUnit: 'units/ml',
+      manualSyringe: { type: 'Insulin', volume, insulinScale: 'U-50' },
+    }, 'Unsupported insulin scale: U-50');
+  });
+
   it('exact handoff overrides a rounded numeric concentration without rounding the marking', () => {
     // Dose 1 mg at 10/3 mg/mL needs exactly 3/10 mL.
     assertAnswer(calculateDose({ ...base, concentration: 3.333, concentrationExact: '10/3',

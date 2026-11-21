@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, Modal, Platform } from 'react-native';
 import { Star, MessageSquare, X } from 'lucide-react-native';
 import { collection } from 'firebase/firestore';
 import { addDocWithEnv } from '../../lib/firestoreWithEnv';
@@ -165,12 +165,32 @@ const COMMON_DOSES: CommonDose[] = [
   },
 ];
 
+function showSuggestionAlert(title: string, message: string, onDismiss?: () => void) {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n\n${message}`);
+    onDismiss?.();
+    return;
+  }
+
+  Alert.alert(title, message, [{ text: 'OK', onPress: onDismiss }]);
+}
+
 export default function ReferenceScreen() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [compoundName, setCompoundName] = useState('');
   const [dosageRange, setDosageRange] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const cancelButton = useRef<View>(null);
+  const submitButton = useRef<View>(null);
+
+  const wrapReverseTab = (event: React.KeyboardEvent) => {
+    if (event.key === 'Tab' && event.shiftKey) {
+      // The web modal's default reverse wrap can land on the scroll container.
+      event.preventDefault();
+      (isSubmitting ? cancelButton : submitButton).current?.focus();
+    }
+  };
 
   const handleSuggestCompound = () => {
     setShowFeedbackModal(true);
@@ -178,7 +198,7 @@ export default function ReferenceScreen() {
 
   const handleSubmitSuggestion = async () => {
     if (!compoundName.trim()) {
-      Alert.alert('Error', 'Please enter a compound name.');
+      showSuggestionAlert('Error', 'Please enter a compound name.');
       return;
     }
 
@@ -205,10 +225,10 @@ export default function ReferenceScreen() {
       
       console.log('[SuggestCompound] Successfully submitted to Firebase', { docId: docRef.id });
 
-      Alert.alert(
+      showSuggestionAlert(
         'Thank you!',
         'Your compound suggestion has been submitted successfully.',
-        [{ text: 'OK', onPress: () => setShowFeedbackModal(false) }]
+        () => setShowFeedbackModal(false)
       );
 
       // Reset form
@@ -223,11 +243,7 @@ export default function ReferenceScreen() {
         name: (error as Error)?.name || 'Error'
       });
       
-      Alert.alert(
-        'Error',
-        'Failed to submit suggestion. Please try again later.',
-        [{ text: 'OK' }]
-      );
+      showSuggestionAlert('Error', 'Failed to submit suggestion. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
@@ -302,12 +318,13 @@ export default function ReferenceScreen() {
         </View>
 
         {/* Feedback Section */}
-        <View style={styles.feedbackSection}>
-          <TouchableOpacity 
+        <View nativeID="suggest-compound-section" style={styles.feedbackSection}>
+          <TouchableOpacity
+            accessibilityRole="button"
             style={styles.feedbackButton}
             onPress={handleSuggestCompound}
           >
-            <MessageSquare size={16} color="#007AFF" />
+            <MessageSquare size={16} color="#005DBF" />
             <Text style={styles.feedbackButtonText}>
               Suggest a compound to add
             </Text>
@@ -340,16 +357,22 @@ export default function ReferenceScreen() {
 
       {/* Feedback Modal */}
       <Modal
+        accessibilityLabel="Suggest a Compound"
         visible={showFeedbackModal}
         animationType="fade"
         transparent
         onRequestClose={handleCloseFeedbackModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, isMobileWeb && styles.modalContainerMobile]}>
-            <View style={styles.modalHeader}>
+          <View nativeID="suggest-compound-dialog" style={[styles.modalContainer, isMobileWeb && styles.modalContainerMobile]}>
+            <View
+              style={styles.modalHeader}
+              {...(Platform.OS === 'web' && { onKeyDown: wrapReverseTab })}
+            >
               <Text style={styles.modalTitle}>Suggest a Compound</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Close suggestion form"
                 style={styles.closeButton}
                 onPress={handleCloseFeedbackModal}
               >
@@ -366,10 +389,12 @@ export default function ReferenceScreen() {
                 <Text style={styles.inputLabel}>Compound Name *</Text>
                 <TextInput
                   style={styles.textInput}
+                  accessibilityLabel="Compound Name"
+                  {...(Platform.OS === 'web' && { 'aria-required': true })}
                   value={compoundName}
                   onChangeText={setCompoundName}
                   placeholder="e.g., GHRP-6"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="#62626D"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
@@ -379,10 +404,11 @@ export default function ReferenceScreen() {
                 <Text style={styles.inputLabel}>Common Dosage Range</Text>
                 <TextInput
                   style={styles.textInput}
+                  accessibilityLabel="Common Dosage Range"
                   value={dosageRange}
                   onChangeText={setDosageRange}
                   placeholder="e.g., 100-200mcg 2x/day"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="#62626D"
                   autoCapitalize="none"
                 />
               </View>
@@ -391,10 +417,11 @@ export default function ReferenceScreen() {
                 <Text style={styles.inputLabel}>Notes / Use Cases</Text>
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
+                  accessibilityLabel="Notes / Use Cases"
                   value={notes}
                   onChangeText={setNotes}
                   placeholder="e.g., Growth hormone releasing peptide"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="#62626D"
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -403,13 +430,17 @@ export default function ReferenceScreen() {
 
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={[styles.cancelButton]}
+                  ref={cancelButton}
+                  accessibilityRole="button"
+                  style={styles.cancelButton}
                   onPress={handleCloseFeedbackModal}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
+                  ref={submitButton}
+                  accessibilityRole="button"
                   style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
                   onPress={handleSubmitSuggestion}
                   disabled={isSubmitting}
@@ -528,7 +559,7 @@ const styles = StyleSheet.create({
   popularBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#6D3CC3',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
@@ -547,7 +578,7 @@ const styles = StyleSheet.create({
   },
   dosageText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#005DBF',
     fontWeight: '500',
   },
   notesCell: {
@@ -583,7 +614,7 @@ const styles = StyleSheet.create({
   },
   feedbackButtonText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#005DBF',
     fontWeight: '500',
   },
   additionalInfo: {
@@ -676,7 +707,7 @@ const styles = StyleSheet.create({
   textInput: {
     backgroundColor: '#F8F9FA',
     borderWidth: 1.5,
-    borderColor: '#E5E5EA',
+    borderColor: '#858590',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -712,12 +743,12 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1.2,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#005DBF',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#007AFF',
+    shadowColor: '#005DBF',
     shadowOffset: {
       width: 0,
       height: 2,

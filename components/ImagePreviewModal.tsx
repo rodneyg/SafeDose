@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
-import type { ScanResult } from '../lib/scan';
+import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
 
 interface ImagePreviewModalProps {
   visible: boolean;
@@ -34,6 +34,7 @@ export default function ImagePreviewModal({
   if (!visible || !scanResult) return null;
 
   const { syringe, vial } = scanResult;
+  const { manualSyringe } = mapScanToDoseInputs(scanResult).inputs;
   const imageHeight = Math.min(Dimensions.get('window').height * 0.5, 300);
 
   return (
@@ -54,7 +55,7 @@ export default function ImagePreviewModal({
             <View style={styles.scanResultsContainer}>
               <Text style={styles.scanResultsTitle}>Detected Information</Text>
               <ScanSection title="Syringe" fields={[
-                ['Type', syringe.type], ['Capacity', syringe.volume], ['Scale', syringe.scale],
+                ['Type', syringe.type], ['Capacity', manualSyringe?.volume ?? 'Check the label and select manually'], ['Scale', syringe.scale],
               ]} />
               <ScanSection title="Vial" fields={[
                 ['Substance', vial.substance], ['Total amount', vial.totalAmount],
@@ -76,7 +77,7 @@ export default function ImagePreviewModal({
               onPress={onVerify}
               accessibilityRole="button"
             >
-              <Text style={styles.buttonText}>I checked both</Text>
+              <Text style={styles.buttonText}>{manualSyringe ? 'I checked both' : 'Enter details manually'}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -3,7 +3,7 @@ import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import ScanScreen from './ScanScreen';
 import ImagePreviewModal from './ImagePreviewModal';
 import { captureAndProcessImage } from '../lib/cameraUtils';
-import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
+import { mapScanToDoseInputs, parseScanModelOutput, type ScanResult } from '../lib/scan';
 import { SCAN_UNAVAILABLE_MESSAGE } from '../lib/scan/completeOnServer';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
@@ -224,4 +224,18 @@ it('offers manual entry if the real scan route cannot complete a provider reques
   expect(screen.queryByText('Review Your Scan')).toBeNull();
   expect(screen.queryByText('Processing...')).toBeNull();
   screen.unmount();
+});
+
+it('hides a capacity that the development scan markings do not corroborate', () => {
+  // Development case c1-b0-s1 has U-100 marks up to 50, conflicting with 1 mL.
+  const result = parseScanModelOutput(JSON.stringify({
+    ...MODEL_OUTPUT, syringe: { ...MODEL_OUTPUT.syringe, markings: '0,10,20,30,40,50' },
+  }));
+  const screen = render(<ImagePreviewModal visible imageUri="" scanResult={result}
+    onRetake={jest.fn()} onVerify={onVerify} />);
+  expect(screen.queryByText('1 ml')).toBeNull();
+  expect(screen.getByText('Check the label and select manually')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'I checked both' })).toBeNull();
+  fireEvent.press(screen.getByRole('button', { name: 'Enter details manually' }));
+  expect(onVerify).toHaveBeenCalledTimes(1);
 });
