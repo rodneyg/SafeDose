@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-603",
+    "date": "2026-11-21",
+    "title": "Add email capture to upgrade flow",
+    "status": "published",
+    "prs": [
+      603
+    ],
+    "sections": {
+      "Improved": [
+        "Add email capture to upgrade flow"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-599",
     "date": "2026-11-21",
     "title": "Add unit tests for readPhotoMetrics.web.ts",
