@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-631",
+    "date": "2026-11-21",
+    "title": "Document SafeDose release evidence and remaining checks",
+    "status": "published",
+    "prs": [
+      631
+    ],
+    "sections": {
+      "Improved": [
+        "Document SafeDose release evidence and remaining checks"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-630",
     "date": "2026-11-21",
     "title": "Complete the SafeDose pipeline and guardrails report",
