@@ -107,6 +107,21 @@ it('switching units repairs incompatible state but concentration entry and calcu
   expect(h().concentrationUnit).toBe('mcg/ml');
 });
 
+it('requires a compatible dose unit without relabeling a scanned concentration', () => {
+  const h = hook();
+  act(() => {
+    h().setConcentrationAmount('10');
+    h().setConcentrationUnit('mg/ml');
+    h().registerScannedFields({ concentrationAmount: '10', concentrationUnit: 'mg/ml' });
+    h().setUnit('units');
+  });
+
+  expect(h().concentrationUnit).toBe('mg/ml');
+  act(() => h().handleNextConcentrationInput());
+  expect(h().formError).toMatch(/incompatible units/i);
+  expect(h().concentrationAmount).toBe('10');
+});
+
 it.each([
   [3, '3 ml'], [0.001, '1 ml'], [0.6, '0.5 ml'],
 ] as const)('hook rejects %s mL on %s and cannot advance', (dose, volume) => {
