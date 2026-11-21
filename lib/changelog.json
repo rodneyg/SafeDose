@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-506",
+    "date": "2026-11-21",
+    "title": "Require manual selection for uncertain scan capacity",
+    "status": "published",
+    "prs": [
+      506
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual selection for uncertain scan capacity"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-505",
     "date": "2026-11-21",
     "title": "T-1293: Compare retake tips after refused scans",
