@@ -69,12 +69,16 @@ it('waits for popup success and auth state, saves once, then resets', async () =
   expect(saveButton().props.disabled).toBe(false);
 });
 
-it('reports the saved dose count for a user who is already signed in', async () => {
+it('saves the scheduled occurrence and reports the dose count for a signed-in user', async () => {
   mockUser = { uid: 'returning-user', isAnonymous: false };
-  act(() => { renderer = create(<FinalResultDisplay {...resultProps} />); });
+  const occurrence = '12345:2026-11-20';
+  const resolveScheduledDose = jest.fn(async () => occurrence);
+  act(() => { renderer = create(<FinalResultDisplay {...resultProps} resolveScheduledDose={resolveScheduledDose} />); });
   await act(async () => { await saveButton().props.onPress(); });
   expect(signInWithPopup).not.toHaveBeenCalled();
+  expect(resolveScheduledDose).toHaveBeenCalledWith(expect.objectContaining({ substanceName: 'Test', doseValue: 1, unit: 'mg' }));
   expect(mockLogDose).toHaveBeenCalledTimes(1);
+  expect(mockLogDose).toHaveBeenCalledWith(expect.objectContaining({ protocolOccurrence: occurrence }));
   expect(mockOnDoseSaved).toHaveBeenCalledWith(2);
 });
 

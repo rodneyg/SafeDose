@@ -3,10 +3,12 @@ import { AmountUnit, calculateDose, parseDoseInput, validateUnitCompatibility, g
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { FeedbackContextType } from '../../types/feedback';
-import { InjectionSite } from '../../types/doseLog';
+import type { DoseLogContext, InjectionSite } from '../../types/doseLog';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../analytics';
 import type { ScanUsage } from './useUsageTracking';
 import { useDoseLogging } from './useDoseLogging';
+import { loadPrescribedProtocol, matchPrescribedDose } from '../prescribedProtocol';
+import { useAuth } from '../../contexts/AuthContext';
 import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
 import { useBeforeFirstScanPrompt } from './useBeforeFirstScanPrompt';
@@ -51,6 +53,20 @@ const isValidValue = (value: any): boolean => {
  * scan access, confirmation, and feedback.
  */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
+  const { user } = useAuth();
+  const scheduledDose = useRef<{ uid?: string; occurrence: string } | null>(null);
+  const startScheduledDose = useCallback((occurrence: string) => {
+    scheduledDose.current = { uid: user?.uid, occurrence };
+  }, [user?.uid]);
+  const resolveScheduledDose = useCallback(async (doseInfo: DoseLogContext) => {
+    const planned = scheduledDose.current;
+    if (!planned || planned.uid !== user?.uid) return undefined;
+    const protocol = await loadPrescribedProtocol(user?.uid).catch(() => null);
+    if (!protocol || scheduledDose.current !== planned ||
+        !planned.occurrence.startsWith(`${protocol.savedAt}:`) ||
+        !matchPrescribedDose(protocol, doseInfo)) return undefined;
+    return planned.occurrence;
+  }, [user?.uid]);
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
 
@@ -128,6 +144,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   const onboardingSurvey = useOnboardingSurvey();
   const { offerSurvey } = onboardingSurvey;
   const onDoseSaved = useCallback((localDoseCount?: number) => {
+    scheduledDose.current = null;
     void offerSurvey(localDoseCount, lastActionType === 'scan' ? 'scan' : 'manual');
   }, [offerSurvey, lastActionType]);
 
@@ -176,7 +193,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     return true;
   }, [unit]);
 
-  const resetFullForm = useCallback((startStep: ManualStep = 'dose') => {
+  const resetFullForm = useCallback((startStep: ManualStep = 'dose', { keepScheduledDose = false } = {}) => {
+    if (!keepScheduledDose) scheduledDose.current = null;
     scannedFields.current = null;
     pendingInputs.current = null;
     lastActionTimestamp.current = Date.now();
@@ -695,7 +713,10 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     console.log('[useDoseCalculator] Current power user promotion data AFTER increment:', powerUserPromotion.promotionData);
     
     // Automatically log the completed dose
-    const logResult = await logDose(feedbackContext.doseInfo);
+    const protocolOccurrence = await resolveScheduledDose(feedbackContext.doseInfo);
+    const logResult = await logDose(protocolOccurrence
+      ? { ...feedbackContext.doseInfo, protocolOccurrence }
+      : feedbackContext.doseInfo);
     if (logResult.success) onDoseSaved(logResult.localDoseCount);
     
     console.log('[useDoseCalculator] Log result:', logResult);
@@ -809,7 +830,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     }
     
     lastActionTimestamp.current = Date.now();
-  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, onDoseSaved, lastActionType, trackInteraction, powerUserPromotion]);
+  }, [feedbackContext, resetFullForm, checkUsageLimit, logDose, onDoseSaved, lastActionType, trackInteraction, powerUserPromotion, resolveScheduledDose]);
 
   // Handle scan navigation with before first scan prompt check
   const handleScanNavigation = useCallback(async () => {
@@ -853,6 +874,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   // Handle before first scan back
   const handleBeforeFirstScanBack = useCallback(() => {
     console.log('[useDoseCalculator] Before first scan back pressed');
+    scheduledDose.current = null;
     setScreenStep('intro');
   }, []);
 
@@ -1062,6 +1084,8 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     handleFeedbackComplete,
     // Before First Scan handlers
     handleScanNavigation,
+    startScheduledDose,
+    resolveScheduledDose,
     handleBeforeFirstScanContinue,
     handleBeforeFirstScanDontShowAgain,
     handleBeforeFirstScanBack,

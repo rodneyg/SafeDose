@@ -3,7 +3,7 @@ import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDoc
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DoseLog, InjectionSite } from '../../types/doseLog';
+import { DoseLog, DoseLogContext } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 /** Logs completed doses and exposes the current log-limit state. */
@@ -105,6 +105,7 @@ export function useDoseLogging() {
           injectionSite: data.injectionSite,
           timestamp: data.timestamp,
           notes: data.notes,
+          protocolOccurrence: data.protocolOccurrence,
           firestoreId: doc.id, // Store the Firestore document ID
           
           // Original user inputs for "Use Last Dose" feature (may not exist in older logs)
@@ -126,25 +127,7 @@ export function useDoseLogging() {
 
   // Automatically log a completed dose
   const logDose = useCallback(async (
-    doseInfo: {
-      substanceName: string;
-      doseValue: number | null;
-      unit: string;
-      calculatedVolume: number | null;
-      syringeType?: 'Insulin' | 'Standard' | null;
-      insulinScale?: string;
-      totalAmountUnit?: 'mg' | 'mcg' | 'units';
-      concentrationExact?: string;
-      recommendedMarking?: string | null;
-      injectionSite?: InjectionSite | null;
-      
-      // Original user inputs for "Use Last Dose" feature
-      medicationInputType?: 'concentration' | 'totalAmount' | null;
-      concentrationAmount?: string;
-      concentrationUnit?: 'mg/ml' | 'mcg/ml' | 'units/ml';
-      totalAmount?: string;
-      solutionVolume?: string;
-    },
+    doseInfo: DoseLogContext,
     notes?: string
   ): Promise<{ success: boolean; limitReached?: boolean; localDoseCount?: number }> => {
     if (isLoggingRef.current) return { success: false };
@@ -196,6 +179,7 @@ export function useDoseLogging() {
         injectionSite: doseInfo.injectionSite || undefined,
         timestamp: new Date().toISOString(),
         notes,
+        ...(doseInfo.protocolOccurrence && { protocolOccurrence: doseInfo.protocolOccurrence }),
         
         // Original user inputs for "Use Last Dose" feature
         medicationInputType: doseInfo.medicationInputType || undefined,

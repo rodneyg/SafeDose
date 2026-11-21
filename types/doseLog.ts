@@ -25,6 +25,7 @@ export interface DoseLog {
   timestamp: string;
   notes?: string; // Optional notes entered by user at logging time
   firestoreId?: string; // Firestore document ID for sync purposes
+  protocolOccurrence?: string;
   
   // Original user inputs for "Use Last Dose" feature
   medicationInputType?: 'concentration' | 'totalAmount'; // How user entered medication data
@@ -35,6 +36,7 @@ export interface DoseLog {
 }
 
 export interface DoseLogContext {
+  protocolOccurrence?: string;
   substanceName: string;
   doseValue: number | null;
   unit: string;

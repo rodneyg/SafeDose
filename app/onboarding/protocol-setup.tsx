@@ -1,32 +1,60 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  isProtocolDate, isProtocolDose, loadPrescribedDoseDetails, protocolCadences, protocolUnits, savePrescribedProtocol,
+  type ProtocolCadence, type ProtocolDoseUnit,
+} from '@/lib/prescribedProtocol';
 
 const protocolTypes = [
   { value: 'trt', label: 'Testosterone replacement therapy (TRT)' },
   { value: 'peptides', label: 'Peptides' },
   { value: 'custom', label: 'Custom protocol' },
 ] as const;
-const doseUnits = ['mg', 'mL', 'IU'] as const;
+const frequencyLabels = { 1: 'Daily', 7: 'Weekly', 14: 'Every two weeks' };
 
 type ProtocolType = typeof protocolTypes[number]['value'];
-type DoseUnit = typeof doseUnits[number];
 
 export default function ProtocolSetup() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [step, setStep] = useState<'choice' | 'form' | 'saved'>('choice');
+  const uid = user?.uid;
+  return <ProtocolSetupForm key={uid ?? 'guest'} uid={uid} />;
+}
+
+function ProtocolSetupForm({ uid }: { uid?: string }) {
+  const router = useRouter();
+  const { settings } = useLocalSearchParams<{ settings?: string }>();
+  const fromSettings = settings === '1';
+  const [step, setStep] = useState<'choice' | 'form' | 'saved'>(fromSettings ? 'form' : 'choice');
   const [type, setType] = useState<ProtocolType | null>(null);
   const [medication, setMedication] = useState('');
   const [dose, setDose] = useState('');
-  const [unit, setUnit] = useState<DoseUnit | null>(null);
-  const [frequency, setFrequency] = useState('');
+  const [unit, setUnit] = useState<ProtocolDoseUnit | null>(null);
+  const [cadenceDays, setCadenceDays] = useState<ProtocolCadence | null>(null);
+  const [firstDate, setFirstDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const submitting = useRef(false);
+  const [loadingDetails, setLoadingDetails] = useState(fromSettings);
+
+  useEffect(() => {
+    if (!fromSettings) return;
+    let active = true;
+    loadPrescribedDoseDetails(uid).then(details => {
+      if (!active || !details) return;
+      setType(details.type);
+      setMedication(details.medication);
+      setDose(details.dose);
+      setUnit(details.unit);
+    }).catch(() => {
+      // A user can enter their prescription again if the old details are unreadable.
+    }).finally(() => {
+      if (active) setLoadingDetails(false);
+    });
+    return () => { active = false; };
+  }, [fromSettings, uid]);
 
   const openFirstScan = () => {
     router.replace('/(tabs)/new-dose?startScan=true');
@@ -35,27 +63,30 @@ export default function ProtocolSetup() {
   const openSchedule = () => {
     if (submitting.current) return;
     submitting.current = true;
-    router.replace({ pathname: '/protocol', params: { onboarding: '1' } });
+    router.replace({ pathname: '/protocol-schedule', params: fromSettings ? {} : { onboarding: '1' } });
   };
 
   const skipProtocol = () => {
     if (submitting.current) return;
     submitting.current = true;
-    openFirstScan();
+    if (fromSettings && step !== 'saved') router.replace('/protocol-schedule');
+    else openFirstScan();
   };
 
   const saveProtocol = async () => {
     if (submitting.current) return;
 
     const doseText = dose.trim();
-    if (!type || !medication.trim() || !unit || !frequency.trim()) {
-      setError('Choose a protocol and dose unit, and enter the medication and frequency.');
+    if (!type || !medication.trim() || !unit || !cadenceDays) {
+      setError('Choose a protocol, dose unit and frequency, and enter the medication.');
       return;
     }
-    const doseAmount = Number(doseText);
-    if (!/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(doseText) ||
-        !Number.isFinite(doseAmount) || doseAmount <= 0) {
+    if (!isProtocolDose(doseText)) {
       setError('Enter a dose greater than zero using digits and a decimal point.');
+      return;
+    }
+    if (!isProtocolDate(firstDate.trim())) {
+      setError('Enter a valid first dose date in YYYY-MM-DD format.');
       return;
     }
 
@@ -63,10 +94,10 @@ export default function ProtocolSetup() {
     setSaving(true);
     setError('');
     try {
-      await AsyncStorage.setItem(
-        `@safedose/onboarding-protocol:${user?.uid ?? 'anonymous'}`,
-        JSON.stringify({ type, medication: medication.trim(), dose: doseText, unit, frequency: frequency.trim() }),
-      );
+      await savePrescribedProtocol(uid, {
+        type, medication: medication.trim(), dose: doseText, unit, cadenceDays,
+        firstDate: firstDate.trim(), savedAt: Date.now(),
+      });
       setStep('saved');
     } catch {
       setError('Your protocol could not be saved. Try again or continue without it.');
@@ -82,10 +113,10 @@ export default function ProtocolSetup() {
         <ScrollView contentContainerStyle={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>Protocol saved</Text>
           <Text style={styles.description}>
-            You can set up a dose schedule and preview each dose, or go straight to your first scan.
+            Your schedule uses the frequency and first date you entered.
           </Text>
           <TouchableOpacity accessibilityRole="button" onPress={openSchedule} style={styles.primary}>
-            <Text style={styles.primaryText}>Set up schedule and preview</Text>
+            <Text style={styles.primaryText}>View my schedule</Text>
           </TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" onPress={skipProtocol} style={styles.choice}>
             <Text style={styles.choiceText}>Continue to first scan</Text>
@@ -99,13 +130,13 @@ export default function ProtocolSetup() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text accessibilityRole="header" style={styles.title}>Are you following a protocol?</Text>
+        <Text accessibilityRole="header" style={styles.title}>{fromSettings ? 'Set up your protocol' : 'Are you following a protocol?'}</Text>
         <Text style={styles.description}>
           {showForm
             ? 'Enter the details from your prescription. They’ll be saved on this device.'
             : 'You can save your prescribed protocol or go straight to your first scan.'}
         </Text>
-        {showForm ? (
+        {loadingDetails ? <Text style={styles.description}>Loading protocol details…</Text> : showForm ? (
           <>
             <Text style={styles.label}>Protocol type</Text>
             {protocolTypes.map(({ value, label }) => (
@@ -128,7 +159,7 @@ export default function ProtocolSetup() {
               editable={!saving} keyboardType="decimal-pad" style={styles.input} />
             <Text style={styles.label}>Dose unit</Text>
             <View style={styles.units}>
-              {doseUnits.map(value => (
+              {protocolUnits.map(value => (
                 <TouchableOpacity
                   key={value}
                   accessibilityRole="radio"
@@ -142,8 +173,18 @@ export default function ProtocolSetup() {
               ))}
             </View>
             <Text style={styles.label}>Frequency</Text>
-            <TextInput accessibilityLabel="Frequency" value={frequency} onChangeText={setFrequency}
-              editable={!saving} placeholder="e.g. every two weeks" placeholderTextColor="#667085" style={styles.input} />
+            <View style={styles.units}>
+              {protocolCadences.map(days => (
+                <TouchableOpacity key={days} accessibilityRole="radio" disabled={saving}
+                  accessibilityState={{ checked: cadenceDays === days, disabled: saving }}
+                  onPress={() => setCadenceDays(days)} style={[styles.choice, cadenceDays === days && styles.selected]}>
+                  <Text style={styles.choiceText}>{frequencyLabels[days]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.label}>First dose date</Text>
+            <TextInput accessibilityLabel="First dose date" value={firstDate} onChangeText={setFirstDate}
+              editable={!saving} placeholder="YYYY-MM-DD" placeholderTextColor="#667085" style={styles.input} />
             {error !== '' && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
             <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: saving, busy: saving }}
               disabled={saving} onPress={saveProtocol} style={[styles.primary, saving && styles.saving]}>
@@ -157,7 +198,7 @@ export default function ProtocolSetup() {
         )}
         <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: saving }}
           disabled={saving} onPress={skipProtocol} style={styles.choice}>
-          <Text style={styles.choiceText}>{showForm ? 'Continue without saving' : 'No, continue to scan'}</Text>
+          <Text style={styles.choiceText}>{fromSettings ? 'Cancel' : showForm ? 'Continue without saving' : 'No, continue to scan'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
