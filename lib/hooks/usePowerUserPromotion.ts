@@ -15,11 +15,17 @@ const MIN_DOSES_FOR_PROMOTION = 4;
 const DAYS_BETWEEN_PROMOTIONS = 14; // 2 weeks
 
 export interface UsePowerUserPromotionResult {
+  /** The current dose count, promotion history, and subscription state. */
   promotionData: PowerUserPromotionData;
+  /** Whether the hook is still loading persisted promotion data. */
   isLoading: boolean;
+  /** Returns whether the promotion is currently eligible to be shown. */
   shouldShowPromotion: () => boolean;
+  /** Increments and persists the current user's dose count. */
   incrementDoseCount: () => Promise<void>;
+  /** Records and persists the time when the promotion was shown. */
   markPromotionShown: () => Promise<void>;
+  /** Removes persisted promotion data and restores the default state. */
   clearPromotionData: () => Promise<void>;
 }
 
