@@ -34,4 +34,10 @@ jest.mock('expo-router', () => {
   };
 });
 
+// Route metadata has no native UI. Keep it from loading the real router in Jest.
+jest.mock('expo-router/head', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('expo-network', () => ({ getNetworkStateAsync: jest.fn().mockResolvedValue({ isConnected: true, isInternetReachable: true }) }));
