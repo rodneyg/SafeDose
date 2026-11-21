@@ -294,6 +294,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-539",
+    "date": "2026-11-21",
+    "title": "Add an internal SafeDose protocol review suggestion",
+    "status": "published",
+    "prs": [
+      539
+    ],
+    "sections": {
+      "Improved": [
+        "Add an internal SafeDose protocol review suggestion"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
