@@ -77,31 +77,22 @@ export default function LogsScreen() {
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return null;
+
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
+    const localCalendarDay = (value: Date) =>
+      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate());
+    const daysAgo = (localCalendarDay(now) - localCalendarDay(date)) / 86_400_000;
+    if (daysAgo === 1) return 'Yesterday';
+    if (daysAgo > 1) return daysAgo < 7 ? `${daysAgo} days ago` : date.toLocaleDateString();
 
-    if (diffHours < 1) {
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      return diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours}h ago`;
-    } else if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
+    const minutesAgo = Math.floor((now.getTime() - date.getTime()) / 60_000);
+    if (minutesAgo < 1) return 'Just now';
+    return minutesAgo < 60 ? `${minutesAgo}m ago` : `${Math.floor(minutesAgo / 60)}h ago`;
   };
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
+  const formatTime = (timestamp: string) =>
+    new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const getDisplaySubstanceName = (substanceName: string) => {
     if (!substanceName || substanceName.trim() === '' || substanceName.toLowerCase() === 'unknown') {
@@ -156,6 +147,7 @@ export default function LogsScreen() {
             {logs.map((log, index) => {
               const concentration = formatConcentration(log.doseValue, log.unit, log.calculatedVolume);
               const drawToText = formatDrawToText(log);
+              const dateLabel = formatDate(log.timestamp);
               return (
                 <View key={log.id} style={[styles.logCard, index === 0 && styles.mostRecentCard]}>
                   <View style={styles.logHeader}>
@@ -203,7 +195,7 @@ export default function LogsScreen() {
                     <View style={styles.timeInfo}>
                       <Calendar color="#62626D" size={14} />
                       <Text style={styles.timeText}>
-                        {formatDate(log.timestamp)} at {formatTime(log.timestamp)}
+                        {dateLabel ? `${dateLabel} at ${formatTime(log.timestamp)}` : 'Date unavailable'}
                       </Text>
                     </View>
                     {index === 0 && (

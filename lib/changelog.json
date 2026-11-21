@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-598",
+    "date": "2026-11-21",
+    "title": "Add unit tests for imageQualityMetrics",
+    "status": "published",
+    "prs": [
+      598
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for imageQualityMetrics"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-597",
     "date": "2026-11-21",
     "title": "Add unit tests for lib/pricingDefault.ts",
@@ -336,6 +350,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-550",
+    "date": "2026-11-21",
+    "title": "Add tests for scheduling helpers",
+    "status": "published",
+    "prs": [
+      550
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for scheduling helpers"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-549",
     "date": "2026-11-21",
     "title": "Add tests for offline queue or sync helpers",
@@ -346,6 +374,20 @@
     "sections": {
       "Improved": [
         "Add tests for offline queue or sync helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-548",
+    "date": "2026-11-21",
+    "title": "Fix and test dose history date display",
+    "status": "published",
+    "prs": [
+      548
+    ],
+    "sections": {
+      "Improved": [
+        "Fix and test dose history date display"
       ]
     }
   },
@@ -490,6 +532,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-532",
+    "date": "2026-11-21",
+    "title": "Test useAuth provider requirement",
+    "status": "published",
+    "prs": [
+      532
+    ],
+    "sections": {
+      "Improved": [
+        "Test useAuth provider requirement"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
@@ -616,6 +672,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-517",
+    "date": "2026-11-21",
+    "title": "Recover from denied or unavailable iOS camera",
+    "status": "published",
+    "prs": [
+      517
+    ],
+    "sections": {
+      "Improved": [
+        "Recover from denied or unavailable iOS camera"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-516",
     "date": "2026-11-21",
     "title": "Add a CI smoke check for SafeDose web previews",
@@ -738,6 +808,20 @@
     "sections": {
       "Improved": [
         "Fix compatible npm audit findings"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-498",
+    "date": "2026-11-21",
+    "title": "Add top-level error boundary with fallback",
+    "status": "published",
+    "prs": [
+      498
+    ],
+    "sections": {
+      "Improved": [
+        "Add top-level error boundary with fallback"
       ]
     }
   },

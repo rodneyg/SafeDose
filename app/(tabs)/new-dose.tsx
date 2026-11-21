@@ -322,7 +322,7 @@ export default function NewDoseScreen() {
     }
   }, [offline, screenStep, setScreenStep]);
 
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1148,6 +1148,8 @@ export default function NewDoseScreen() {
           setProcessingMessage={setProcessingMessage}
           setScanError={setScanError}
           resetFullForm={resetFullForm}
+          requestNativeCameraPermission={requestPermission}
+          getNativeCameraPermission={getPermission}
           requestWebCameraPermission={requestWebCameraPermission}
           handleGoHome={handleGoHome}
           onCapture={handleScanAttempt}
