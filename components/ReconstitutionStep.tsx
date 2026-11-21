@@ -17,6 +17,10 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
           <TouchableOpacity
             key={ml + 'ml'}
             style={[styles.optionButton, solutionVolume === ml && styles.selectedOption]}
+            accessibilityRole="button"
+            accessibilityLabel={`${ml} ml`}
+            accessibilityState={{ selected: solutionVolume === ml }}
+            aria-pressed={solutionVolume === ml}
             onPress={() => setSolutionVolume(ml)}
           >
             <Text style={[styles.buttonText, solutionVolume === ml && styles.selectedButtonText]}>{ml} ml</Text>
@@ -24,6 +28,8 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         ))}
       </View>
       <TextInput
+        accessibilityLabel="Solution volume in mL"
+        aria-required
         style={[styles.input, { marginTop: 10 }]}
         placeholder="Or enter custom volume (ml)"
         placeholderTextColor="#9ca3af"
