@@ -1,3 +1,4 @@
+import { Exact } from '../exact';
 import { calculateDose, CalculateDoseParams, getCompatibleConcentrationUnits, validateUnitCompatibility, getAvailableVolumeError, getMarkingGuidance, syringeOptions, insulinVolumes, standardVolumes } from '..';
 
 const base: CalculateDoseParams = {
@@ -32,6 +33,11 @@ describe('input validation and order', () => {
   it.each([null, NaN, 0, -1])('invalid dose %s', doseValue => {
     expect(dose({ doseValue })).toEqual({ calculatedVolume: null, recommendedMarking: null,
       calculatedConcentration: null, calculationError: 'Dose value is invalid or missing.' });
+  });
+  it('accepts an exact fractional dose without rounding it below the minimum', () => {
+    expect(dose({ doseValue: new Exact('1/60'), concentration: new Exact('10/3').toNumber(),
+      concentrationExact: '10/3' })).toMatchObject({ calculatedVolume: 0.005, recommendedMarking: '0.005' });
+    expect(dose({ doseValue: new Exact(0) }).calculationError).toBe('Dose value is invalid or missing.');
   });
   it('incompatible units', () => {
     expect(dose({ unit: 'units' }).calculationError).toBe('Incompatible units: units dose cannot be calculated with mg/ml concentration.');

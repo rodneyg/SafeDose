@@ -31,6 +31,8 @@ it('SAF-101 #7: unknown scan requires selecting type and volume separately', () 
   screen.buttons.find(button => text(button).includes('Standard Syringes'))!.props.onPress();
   expect(screen.setManualSyringe).toHaveBeenCalledWith({ type: 'Standard', volume: '' });
   const typed = render({ type: 'Standard', volume: '' });
+  typed.buttons.find(button => text(button).includes('Standard Syringes'))!.props.onPress();
+  expect(typed.setManualSyringe).toHaveBeenCalledWith({ type: 'Standard', volume: '' });
   typed.buttons.find(button => text(button) === '3 ml')!.props.onPress();
   expect(typed.setManualSyringe).toHaveBeenCalledWith({ type: 'Standard', volume: '3 ml' });
 });
