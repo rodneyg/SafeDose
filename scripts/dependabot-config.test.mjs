@@ -15,6 +15,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/react"
         update-types: ["version-update:semver-major"]
+      # Firebase 11 expects AsyncStorage 1.x. AsyncStorage 3 also requires Kotlin 2.1.
+      - dependency-name: "@react-native-async-storage/async-storage"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -23,7 +26,7 @@ updates:
     open-pull-requests-limit: 3
 `;
 
-test('Dependabot checks npm and GitHub Actions weekly and skips React and React types major bumps', async () => {
+test('Dependabot checks npm and GitHub Actions weekly and skips incompatible Expo and Firebase dependency major bumps', async () => {
   const config = await readFile(new URL('../.github/dependabot.yml', import.meta.url), 'utf8');
 
   assert.equal(config, expectedConfig);
