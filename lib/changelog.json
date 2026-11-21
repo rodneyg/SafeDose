@@ -602,6 +602,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-544",
+    "date": "2026-11-21",
+    "title": "Add unit tests for protocol start-day translator",
+    "status": "published",
+    "prs": [
+      544
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for protocol start-day translator"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-542",
     "date": "2026-11-21",
     "title": "Add unit tests for useAuth",
