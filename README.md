@@ -216,9 +216,10 @@ to check whether it responds.
 
 After this workflow is on the default branch, Vercel's successful Preview
 deployment event starts one headless Chromium check. It checks `/api/health`
-against the deployed commit, opens the app, and clicks **Try Now** to reach
-the age step. The browser allows only same-origin reads and stops before
-entering any data. The job uses no model calls or application credentials.
+against the deployed commit, opens the app, and clicks the primary welcome
+button to reach the age step. The browser allows only same-origin reads and
+stops before entering any data. The job uses no model calls or application
+credentials.
 
 To run it on protected previews, create a Protection Bypass for Automation
 secret in the SafeDose Vercel project and add it to GitHub Actions as
