@@ -216,6 +216,9 @@ describe('ScanScreen', () => {
       expect(screen.getByRole('alert').props.children).toMatch(/The camera couldn’t start/);
       expect(screen.UNSAFE_queryByType(CameraView)).toBeNull();
       fireEvent.press(screen.getByRole('button', { name: 'Try Camera Again' }));
+      expect(screen.getByLabelText('Capture photo').props.accessibilityState.disabled).toBe(true);
+      fireEvent.press(screen.getByLabelText('Capture photo'));
+      expect(onCapture).not.toHaveBeenCalled();
       fireEvent(screen.UNSAFE_getByType(CameraView), 'cameraReady');
       expect(screen.getByLabelText('Capture photo').props.accessibilityState.disabled).toBe(false);
       fireEvent.press(screen.getByLabelText('Capture photo'));
