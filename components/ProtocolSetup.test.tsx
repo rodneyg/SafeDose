@@ -32,7 +32,10 @@ it('goes directly to the scan path after No without storing a protocol', () => {
   expect(router.replace).toHaveBeenCalledWith(scanRoute);
 });
 
-it('persists the prescribed details before offering schedule setup', async () => {
+it.each([
+  { action: 'Set up schedule and preview', route: { pathname: '/protocol', params: { onboarding: '1' } } },
+  { action: 'Continue to first scan', route: scanRoute },
+])('persists the prescribed details before allowing $action', async ({ action, route }) => {
   render(<ProtocolSetup />);
   fillProtocol();
   let finishWrite: () => void = () => {};
@@ -52,9 +55,13 @@ it('persists the prescribed details before offering schedule setup', async () =>
 
   await act(async () => finishWrite());
   expect(router.replace).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByRole('button', { name: 'Set up schedule and preview' }));
+  const nextButton = screen.getByRole('button', { name: action });
+  fireEvent.press(nextButton);
+  fireEvent.press(nextButton);
+
+  expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
   expect(router.replace).toHaveBeenCalledTimes(1);
-  expect(router.replace).toHaveBeenCalledWith({ pathname: '/protocol', params: { onboarding: '1' } });
+  expect(router.replace).toHaveBeenCalledWith(route);
 });
 
 it.each(['0', '-1', '0x10', '1e2', '1,5'])('rejects invalid dose input %s without saving', dose => {

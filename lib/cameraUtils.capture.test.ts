@@ -31,7 +31,7 @@ it('reports an empty native capture and resets processing without analyzing or c
   });
 
   expect(result).toBeNull();
-  expect(setScanError).toHaveBeenLastCalledWith('Camera returned no picture');
+  expect(setScanError).toHaveBeenLastCalledWith('We could not take a photo. Try again or enter the details manually.');
   expect(setIsProcessing.mock.calls).toEqual([[true], [false]]);
   expect(readScan).not.toHaveBeenCalled();
   expect(incrementScansUsed).not.toHaveBeenCalled();
@@ -54,6 +54,9 @@ it.each(['camera', 'filesystem'] as const)('sanitizes a raw %s rejection at the 
     permission: { status: 'granted' }, isMobileWeb: false,
     setIsProcessing, setProcessingMessage: jest.fn(), setScanError, incrementScansUsed,
   })).toBeNull();
+  if (source === 'filesystem') {
+    expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith('file:///photo.jpg', { encoding: 'base64' });
+  }
   expect(setScanError).toHaveBeenLastCalledWith('We could not process this photo. Please try another photo or enter the details manually.');
   expect(setIsProcessing.mock.calls).toEqual([[true], [false]]);
   expect(readScan).not.toHaveBeenCalled();
@@ -160,7 +163,7 @@ describe('native scan result guardrails', () => {
   });
 
   it.each([
-    ['missing capture data', {}, 'Failed to capture image data'],
+    ['missing capture data', {}, 'We could not take a photo. Try again or enter the details manually.'],
     ['unknown image data', { base64: 'not-an-image' }, 'Image format could not be processed'],
   ] as const)('stops %s before sending a scan request', async (_, photo, message) => {
     takePictureAsync.mockResolvedValue(photo);

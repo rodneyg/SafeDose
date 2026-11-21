@@ -41,12 +41,16 @@ jest.mock('firebase/auth', () => ({ signInWithPopup: (...args: unknown[]) => moc
 
 beforeEach(() => { jest.clearAllMocks(); mockPopup.mockReset(); Platform.OS = 'web'; (globalThis as any).__DEV__ = false; });
 
-it.each([false, true])('year options are in an isolated modal at mobile=%s and selecting closes it', mobile => {
+it.each([false, true])('year options wait for the named modal at mobile=%s and selecting closes it', mobile => {
   require('../lib/utils').isMobileWeb = mobile;
   const onValueChange = jest.fn();
   let tree: ReactTestRenderer;
   act(() => { tree = create(<DatePickerSelect label="Year" value="" onValueChange={onValueChange} items={[{ label: '1990', value: '1990' }]} />); });
   act(() => tree!.root.findByProps({ accessibilityLabel: 'Year' }).props.onPress());
+  const dialog = tree!.root.findByProps({ accessibilityLabel: 'Select year' });
+  expect(dialog.props.animationType).toBe('none');
+  expect(tree!.root.findAllByProps({ accessibilityLabel: '1990' })).toHaveLength(0);
+  act(() => dialog.props.onShow());
   expect(tree!.root.findAllByProps({ accessibilityLabel: '1990' })).toHaveLength(1);
   act(() => tree!.root.findByProps({ accessibilityLabel: '1990' }).props.onPress());
   expect(onValueChange).toHaveBeenCalledWith('1990');
