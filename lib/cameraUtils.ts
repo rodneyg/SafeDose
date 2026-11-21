@@ -47,6 +47,7 @@ interface CaptureAndProcessImageProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  onImageReady?: () => void;
   onScanUnavailable?: () => void;
   onRetakeRequired?: () => void;
   webCameraStream?: MediaStream | null;
@@ -60,6 +61,7 @@ export async function captureAndProcessImage({
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  onImageReady,
   onScanUnavailable,
   onRetakeRequired,
   webCameraStream,
@@ -253,6 +255,7 @@ export async function captureAndProcessImage({
       }
     }
 
+    onImageReady?.();
     setProcessingMessage('Analyzing image with AI...');
     console.log('[Process] Starting image processing');
     console.log('[Process] Sending image to /api/analyze-scan');

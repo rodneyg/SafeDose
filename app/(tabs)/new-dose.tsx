@@ -33,6 +33,7 @@ import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
@@ -47,6 +48,7 @@ export default function NewDoseScreen() {
     kind: ReturnType<typeof photoUpgradeNudge>;
   } | null>(null);
   const scanAttemptInProgress = useRef(false);
+  const mobileScanArm = useRef<MobileScanCtaArm>();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -297,6 +299,18 @@ export default function NewDoseScreen() {
     handleInjectionSiteSelected,
     handleInjectionSiteCancel,
   } = doseCalculator;
+
+  const handleIntroScanPress = (arm?: MobileScanCtaArm) => {
+    mobileScanArm.current = arm;
+    if (offline) handleSetScreenStep('manualEntry');
+    else doseCalculator.handleScanNavigation();
+  };
+
+  useEffect(() => {
+    if (!isScreenActive || (screenStep !== 'scan' && screenStep !== 'beforeFirstScan')) {
+      mobileScanArm.current = undefined;
+    }
+  }, [isScreenActive, screenStep]);
 
   const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
     ? null
@@ -793,6 +807,8 @@ export default function NewDoseScreen() {
       return;
     }
 
+    const startArm = mobileScanArm.current;
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -819,6 +835,12 @@ export default function NewDoseScreen() {
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        onImageReady: startArm ? () => {
+          if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
+            logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
+            mobileScanArm.current = undefined;
+          }
+        } : undefined,
         onScanUnavailable: () => {
           setManualStep('dose');
           setScreenStep('manualEntry');
@@ -1085,7 +1107,8 @@ export default function NewDoseScreen() {
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
           onScanLimit={openScanLimit}
-          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
+          onScanPress={handleIntroScanPress}
+          offline={offline}
         />
       )}
       {screenStep === 'beforeFirstScan' && (

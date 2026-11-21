@@ -176,20 +176,26 @@ describe('photo quality precheck', () => {
     ['glare', { laplacianVariance: 300, highlightRatio: 0.95 }, /glare.*retake/i],
   ] as const)('asks for a %s retake before sending or charging, then accepts a usable photo', async (_, metrics, message) => {
     const onRetakeRequired = jest.fn();
+    const onImageReady = jest.fn();
+    const captureOptions = { ...options, onRetakeRequired, onImageReady };
     mockReadPhotoMetrics.mockResolvedValueOnce(metrics);
-    expect(await captureAndProcessImage({ ...options, onRetakeRequired })).toBeNull();
+    expect(await captureAndProcessImage(captureOptions)).toBeNull();
     expect(options.setScanError).toHaveBeenLastCalledWith(expect.stringMatching(message));
     expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
     expect(onRetakeRequired).toHaveBeenCalledTimes(1);
+    expect(onImageReady).not.toHaveBeenCalled();
     expect(options.onScanUnavailable).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
     expect(options.incrementScansUsed).not.toHaveBeenCalled();
 
     mockReadPhotoMetrics.mockResolvedValueOnce({ laplacianVariance: 200, highlightRatio: 0.1 });
     completeScan();
-    expect(await captureAndProcessImage(options)).toMatchObject({ refuse: false });
+    expect(await captureAndProcessImage(captureOptions)).toMatchObject({ refuse: false });
     expect(options.setScanError).toHaveBeenLastCalledWith(null);
+    expect(onRetakeRequired).toHaveBeenCalledTimes(1);
+    expect(onImageReady).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onImageReady.mock.invocationCallOrder[0]).toBeLessThan((fetch as jest.Mock).mock.invocationCallOrder[0]);
     expect(options.incrementScansUsed).toHaveBeenCalledTimes(1);
   });
 

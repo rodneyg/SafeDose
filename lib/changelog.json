@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026-11-21-pr-597",
+    "date": "2026-11-21",
+    "title": "Add unit tests for lib/pricingDefault.ts",
+    "status": "published",
+    "prs": [
+      597
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/pricingDefault.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-596",
+    "date": "2026-11-21",
+    "title": "Tag the tested SHA, not the checkout HEAD",
+    "status": "published",
+    "prs": [
+      596
+    ],
+    "sections": {
+      "Improved": [
+        "Tag the tested SHA, not the checkout HEAD"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-595",
+    "date": "2026-11-21",
+    "title": "Gate SafeDose release tags on green CI",
+    "status": "published",
+    "prs": [
+      595
+    ],
+    "sections": {
+      "Improved": [
+        "Gate SafeDose release tags on green CI"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-594",
     "date": "2026-11-21",
     "title": "Add unit tests for apiRateLimit.js",
@@ -70,6 +112,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-583",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useFeedbackStorage",
+    "status": "published",
+    "prs": [
+      583
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useFeedbackStorage"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-582",
     "date": "2026-11-21",
     "title": "Test the shared scan request builder",
@@ -80,6 +136,20 @@
     "sections": {
       "Improved": [
         "Test the shared scan request builder"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-581",
+    "date": "2026-11-21",
+    "title": "Add unit tests for hooks/use-toast.ts",
+    "status": "published",
+    "prs": [
+      581
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for hooks/use-toast.ts"
       ]
     }
   },
@@ -112,6 +182,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-565",
+    "date": "2026-11-21",
+    "title": "Clear stale dates when a protocol start is removed",
+    "status": "published",
+    "prs": [
+      565
+    ],
+    "sections": {
+      "Improved": [
+        "Clear stale dates when a protocol start is removed"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-564",
     "date": "2026-11-21",
     "title": "Add Vercel Web Analytics to SafeDose web",
@@ -140,6 +224,258 @@
     }
   },
   {
+    "id": "2026-11-21-pr-562",
+    "date": "2026-11-21",
+    "title": "Cover AuthContext recovery and empty sessions",
+    "status": "published",
+    "prs": [
+      562
+    ],
+    "sections": {
+      "Improved": [
+        "Cover AuthContext recovery and empty sessions"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-561",
+    "date": "2026-11-21",
+    "title": "Keep protocol dates within the four-digit calendar range",
+    "status": "published",
+    "prs": [
+      561
+    ],
+    "sections": {
+      "Improved": [
+        "Keep protocol dates within the four-digit calendar range"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-560",
+    "date": "2026-11-21",
+    "title": "Test web scan and injection-site recovery (T-2120)",
+    "status": "published",
+    "prs": [
+      560
+    ],
+    "sections": {
+      "Improved": [
+        "Test web scan and injection-site recovery (T-2120)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-559",
+    "date": "2026-11-21",
+    "title": "Test SafeDose billing endpoint failures",
+    "status": "published",
+    "prs": [
+      559
+    ],
+    "sections": {
+      "Improved": [
+        "Test SafeDose billing endpoint failures"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-558",
+    "date": "2026-11-21",
+    "title": "Test dose logging recovery from Firestore failures",
+    "status": "published",
+    "prs": [
+      558
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose logging recovery from Firestore failures"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-557",
+    "date": "2026-11-21",
+    "title": "Keep keyboard focus in the web date picker (T-2048)",
+    "status": "published",
+    "prs": [
+      557
+    ],
+    "sections": {
+      "Improved": [
+        "Keep keyboard focus in the web date picker (T-2048)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-555",
+    "date": "2026-11-21",
+    "title": "Restore the standalone evaluation validator (T-1729)",
+    "status": "published",
+    "prs": [
+      555
+    ],
+    "sections": {
+      "Improved": [
+        "Restore the standalone evaluation validator (T-1729)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-549",
+    "date": "2026-11-21",
+    "title": "Add tests for offline queue or sync helpers",
+    "status": "published",
+    "prs": [
+      549
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for offline queue or sync helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-546",
+    "date": "2026-11-21",
+    "title": "Add unit tests for protocol list rendering",
+    "status": "published",
+    "prs": [
+      546
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for protocol list rendering"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-542",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useAuth",
+    "status": "published",
+    "prs": [
+      542
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-541",
+    "date": "2026-11-21",
+    "title": "Add SafeDose dosing page to the sitemap",
+    "status": "published",
+    "prs": [
+      541
+    ],
+    "sections": {
+      "Improved": [
+        "Add SafeDose dosing page to the sitemap"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-540",
+    "date": "2026-11-21",
+    "title": "Add unit tests for subscription hook",
+    "status": "published",
+    "prs": [
+      540
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for subscription hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-539",
+    "date": "2026-11-21",
+    "title": "Add an internal SafeDose protocol review suggestion",
+    "status": "published",
+    "prs": [
+      539
+    ],
+    "sections": {
+      "Improved": [
+        "Add an internal SafeDose protocol review suggestion"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-538",
+    "date": "2026-11-21",
+    "title": "Document the first SafeDose roadmap slice",
+    "status": "published",
+    "prs": [
+      538
+    ],
+    "sections": {
+      "Improved": [
+        "Document the first SafeDose roadmap slice"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-537",
+    "date": "2026-11-21",
+    "title": "Test mobile web Scan button placement (T-1228)",
+    "status": "published",
+    "prs": [
+      537
+    ],
+    "sections": {
+      "Improved": [
+        "Test mobile web Scan button placement (T-1228)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-536",
+    "date": "2026-11-21",
+    "title": "Create initial SAFE_DOSE_REPORT.md documentation",
+    "status": "published",
+    "prs": [
+      536
+    ],
+    "sections": {
+      "Improved": [
+        "Create initial SAFE_DOSE_REPORT.md documentation"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-534",
+    "date": "2026-11-21",
+    "title": "Test monthly and annual pricing defaults",
+    "status": "published",
+    "prs": [
+      534
+    ],
+    "sections": {
+      "Improved": [
+        "Test monthly and annual pricing defaults"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-533",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to hooks in SafeDose",
+    "status": "published",
+    "prs": [
+      533
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to hooks in SafeDose"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
@@ -150,6 +486,20 @@
     "sections": {
       "Improved": [
         "Test SafeDose landing CTA wording (T-1219)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-529",
+    "date": "2026-11-21",
+    "title": "Add optional protocol setup before the first scan",
+    "status": "published",
+    "prs": [
+      529
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional protocol setup before the first scan"
       ]
     }
   },
@@ -406,6 +756,19 @@
     }
   },
   {
+    "id": "2026-11-20-scan-review",
+    "date": "2026-11-20",
+    "title": "See what SafeDose detected before you continue",
+    "status": "published",
+    "prs": [],
+    "sections": {
+      "Improved": [
+        "After a photo scan, the review screen lists the syringe and vial details SafeDose detected alongside your photo.",
+        "Check those details against your syringe and vial label. Read the syringe fill line yourself, then choose I checked both. You can retake the photo from the same screen."
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",
@@ -450,14 +813,14 @@
   {
     "id": "2026-11-20-pr-493",
     "date": "2026-11-20",
-    "title": "Add unit tests for useDoseLogging",
+    "title": "Prevent duplicate dose saves",
     "status": "published",
     "prs": [
       493
     ],
     "sections": {
-      "Improved": [
-        "Add unit tests for useDoseLogging"
+      "Fixed": [
+        "Repeated save taps while a dose is already saving no longer start duplicate saves."
       ]
     }
   },
@@ -604,14 +967,14 @@
   {
     "id": "2026-11-20-pr-477",
     "date": "2026-11-20",
-    "title": "Add optional SafeDose protocol scheduler",
+    "title": "Add a protocol date helper for developers",
     "status": "published",
     "prs": [
       477
     ],
     "sections": {
       "Improved": [
-        "Add optional SafeDose protocol scheduler"
+        "Added a library helper that maps protocol days to calendar dates. The app has no scheduling screen in this release."
       ]
     }
   },
@@ -758,14 +1121,14 @@
   {
     "id": "2026-11-19-pr-352",
     "date": "2026-11-19",
-    "title": "Add repeat last dose shortcut",
+    "title": "Test the existing Use Last Dose shortcut",
     "status": "published",
     "prs": [
       352
     ],
     "sections": {
       "Improved": [
-        "Add repeat last dose shortcut"
+        "Added a regression test for opening manual entry with the last saved dose."
       ]
     }
   },

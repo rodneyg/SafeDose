@@ -2,7 +2,7 @@
 
 ## Overview
 
-The user onboarding experience has been transformed from a single page with all questions to a step-by-step flow that feels less invasive while collecting the same information needed for personalization.
+Personalization is a three-question flow. Users can skip personalization and go straight to manual dose entry. That shortcut records the skip locally without submitting answers or saving a profile.
 
 ## Flow Design
 
@@ -11,6 +11,7 @@ The user onboarding experience has been transformed from a single page with all 
 
 **Options:**
 - Healthcare Professional (Licensed healthcare provider, nurse, doctor, pharmacist, etc.)
+- Professional Athlete
 - General User (Patient, caregiver, or someone learning about medications)
 
 **Analytics:**
@@ -36,6 +37,7 @@ logAnalyticsEvent('onboarding_step_complete', {
 **Options:**
 - Medical/Prescribed (Doctor-prescribed medications or medical treatments)
 - Cosmetic/Aesthetic (Cosmetic injections or aesthetic treatments)
+- Performance and recovery options are available to users who select Professional Athlete.
 
 **Analytics:**
 ```typescript
@@ -145,10 +147,8 @@ const finalProfile = {
 ## Navigation Flow
 
 ```
-Welcome → Demo → Background → Use Type → Personal Use → Main App
-    ↑        ↑         ↑          ↑           ↑
-    |        |         |          |           |
-  Entry    Step-by-step onboarding flow    Complete
+Personalization → Background → Use Type → Personal Use → New Dose
+                → Skip personalization → Manual dose entry
 ```
 
 ## Technical Implementation
