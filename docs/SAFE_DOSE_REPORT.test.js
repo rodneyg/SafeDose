@@ -33,3 +33,10 @@ test('the product overview links to the planner and dose logging', () => {
   expect(fs.existsSync(path.resolve(__dirname, '../app/reconstitution.tsx'))).toBe(true);
   expect(fs.existsSync(path.resolve(__dirname, '../lib/hooks/useDoseLogging.ts'))).toBe(true);
 });
+
+test('ESLint recognizes the Node globals used by the repository report test', async () => {
+  const { ESLint } = require('eslint');
+  const [result] = await new ESLint().lintText('void __dirname;\n', { filePath: __filename });
+
+  expect(result.messages.filter(({ ruleId }) => ruleId === 'no-undef')).toEqual([]);
+});
