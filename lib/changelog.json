@@ -378,6 +378,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-572",
+    "date": "2026-11-21",
+    "title": "Add unit tests for InjectionSiteSelector",
+    "status": "published",
+    "prs": [
+      572
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for InjectionSiteSelector"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-571",
     "date": "2026-11-21",
     "title": "Add unit tests for Stripe webhook handler",
