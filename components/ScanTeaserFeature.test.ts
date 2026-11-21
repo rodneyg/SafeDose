@@ -17,8 +17,8 @@ const base: React.ComponentProps<typeof FinalResultDisplay> = {
 it('offers AI Scan after a successful manual calculation and invokes the scan handler', () => {
   const onTryAIScan = jest.fn();
   const screen = render(React.createElement(FinalResultDisplay, { ...base, onTryAIScan }));
-  expect(screen.getByText('Want to double-check with a vial/syringe photo?')).toBeTruthy();
-  fireEvent.press(screen.getByLabelText('Try AI Scan to double-check your calculation'));
+  expect(screen.getByText('Scan a vial or syringe to fill in details faster.')).toBeTruthy();
+  fireEvent.press(screen.getByLabelText('Try AI Scan to enter vial or syringe details'));
   expect(onTryAIScan).toHaveBeenCalledTimes(1);
 });
 
@@ -34,7 +34,7 @@ it.each<[string, Partial<React.ComponentProps<typeof FinalResultDisplay>>]>([
 ])('hides the teaser for %s', (_name, overrides) => {
   const screen = render(React.createElement(FinalResultDisplay, { ...base, ...overrides }));
   expect(screen.queryByText('Try AI Scan')).toBeNull();
-  expect(screen.queryByText('Want to double-check with a vial/syringe photo?')).toBeNull();
+  expect(screen.queryByText('Scan a vial or syringe to fill in details faster.')).toBeNull();
 });
 
 it('keeps result actions working when the teaser is hidden', () => {

@@ -385,13 +385,13 @@ export default function FinalResultDisplay({
        onTryAIScan && (
         <View style={styles.scanTeaserContainer}>
           <Text style={styles.scanTeaserText}>
-            Want to double-check with a vial/syringe photo?
+            Scan a vial or syringe to fill in details faster.
           </Text>
           <TouchableOpacity 
             style={styles.scanTeaserButton}
             onPress={onTryAIScan}
             accessibilityRole="button"
-            accessibilityLabel="Try AI Scan to double-check your calculation"
+            accessibilityLabel="Try AI Scan to enter vial or syringe details"
           >
             <CameraIcon color="#007AFF" size={14} style={{ marginRight: 4 }} />
             <Text style={styles.scanTeaserButtonText}>Try AI Scan</Text>

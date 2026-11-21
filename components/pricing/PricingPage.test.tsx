@@ -26,7 +26,7 @@ let tree: ReactTestRenderer;
 const originalFetch = globalThis.fetch;
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 const mockFetch = jest.fn();
-async function select(name = 'Photo Check') {
+async function select(name = 'Photo Scan') {
   const card = tree.root.findAllByType('PricingCard' as any).find(node => node.props.plan.name === name)!;
   await act(async () => { await card.props.onSelectPlan(card.props.plan); });
 }
@@ -47,7 +47,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it.each([false, true])('builds the Photo Check request for annual=%s and redirects', async annual => {
+it.each([false, true])('builds the Photo Scan request for annual=%s and redirects', async annual => {
   act(() => tree.root.findByType('PriceToggle' as any).props.onToggle(annual));
   await select();
   expect(mockFetch).toHaveBeenCalledTimes(1);

@@ -183,7 +183,7 @@ The default target is `https://safedose.rodneygainous.com`. To check a local
 fixture or another public deployment, pass a bare HTTP(S) origin:
 `npm run smoke:prod -- http://127.0.0.1:3000`.
 
-The script checks welcome, onboarding, pricing (monthly and yearly Photo Check
+The script checks welcome, onboarding, pricing (monthly and yearly Photo Scan
 plans), login, changelog, privacy, terms and support. Each route must render its
 expected text without console errors, uncaught exceptions or HTTP 4xx/5xx
 responses or HTML returned for scripts or styles. Each route uses fresh headless Chromium state with service workers

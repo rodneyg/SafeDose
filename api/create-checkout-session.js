@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
       { mode: stripeConfig.mode, env: process.env }
     );
     const resolvedPriceId = resolved.priceId;
-    // Photo Check has no trial. Legacy Full Pro price IDs may still pass hasTrial.
+    // Photo Scan has no trial. Legacy Full Pro price IDs may still pass hasTrial.
     const allowTrial = Boolean(hasTrial) && !resolved.offerKey;
 
     // Base session configuration

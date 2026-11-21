@@ -21,22 +21,22 @@ const pricingPlans: PricingPlan[] = [
       { name: `${FREE_SCAN_LIMIT} AI photo scans/month`, available: true },
       { name: "Manual calculator", available: true },
       { name: "On-device dose logs", available: true },
-      { name: "Unlimited photo checks", available: false },
+      { name: "Unlimited photo scans", available: false },
     ],
     cta: "Start Free",
     priceId: { monthly: null, annual: null },
   },
   {
-    name: "Photo Check",
+    name: "Photo Scan",
     price: { monthly: PHOTO_CHECK_MONTHLY_AMOUNT, annual: PHOTO_CHECK_ANNUAL_AMOUNT },
-    description: "Unlimited web photo checks after the free monthly cap",
+    description: "Unlimited web photo scans after the free monthly cap",
     features: [
       { name: "Unlimited AI photo scans", available: true },
       { name: "Manual calculator", available: true },
       { name: "On-device dose logs", available: true },
       { name: "Web checkout, cancel anytime", available: true },
     ],
-    cta: "Get Photo Check",
+    cta: "Get Photo Scan",
     badge: "popular",
     priceId: { monthly: null, annual: null },
     offerKey: { monthly: "photo_check_monthly", annual: "photo_check_annual" },
@@ -143,7 +143,7 @@ export default function PricingPage() {
     <div className="container mx-auto px-4 py-12">
       <h2 className="text-3xl font-bold text-center mb-4">SafeDose Pricing</h2>
       <p className="text-center text-muted-foreground mb-8">
-        The calculator stays free. Optional photo checks are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
+        The calculator stays free. Optional photo scans are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
         after {FREE_SCAN_LIMIT} free scans, or ${PHOTO_CHECK_ANNUAL_AMOUNT}/year.
       </p>
       <div className="mb-8">

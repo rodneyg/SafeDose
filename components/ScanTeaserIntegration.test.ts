@@ -140,12 +140,6 @@ describe('Smart Upgrade Teaser Integration', () => {
   });
 
   describe('UX requirements validation', () => {
-    it('should have correct teaser text as specified', () => {
-      const expectedText = "Want to double-check with a vial/syringe photo?";
-      // This validates the exact text from the requirements
-      expect(expectedText).toBe("Want to double-check with a vial/syringe photo?");
-    });
-
     it('should have correct button text', () => {
       const expectedButtonText = "Try AI Scan";
       expect(expectedButtonText).toBe("Try AI Scan");

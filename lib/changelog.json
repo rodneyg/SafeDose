@@ -1065,14 +1065,14 @@
   {
     "id": "2026-11-20-pr-473",
     "date": "2026-11-20",
-    "title": "Add dismissible Photo Check upgrade nudges",
+    "title": "Add dismissible Photo Scan upgrade nudges",
     "status": "published",
     "prs": [
       473
     ],
     "sections": {
       "Improved": [
-        "Add dismissible Photo Check upgrade nudges"
+        "Add dismissible Photo Scan upgrade nudges"
       ]
     }
   },
@@ -1205,14 +1205,14 @@
   {
     "id": "2026-11-15",
     "date": "2026-11-15",
-    "title": "Free calculator and optional Photo Check",
+    "title": "Free calculator and optional Photo Scan",
     "status": "published",
     "prs": [
       424
     ],
     "sections": {
       "Improved": [
-        "Pricing now separates the free calculator from the optional Photo Check subscription.",
+        "Pricing now separates the free calculator from the optional Photo Scan subscription.",
         "Free accounts have the same allowance of three photo scans per month as guests."
       ]
     }
