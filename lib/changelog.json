@@ -742,6 +742,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-498",
+    "date": "2026-11-21",
+    "title": "Add top-level error boundary with fallback",
+    "status": "published",
+    "prs": [
+      498
+    ],
+    "sections": {
+      "Improved": [
+        "Add top-level error boundary with fallback"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-497",
     "date": "2026-11-21",
     "title": "Add render tests for 4 components",
