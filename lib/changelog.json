@@ -280,6 +280,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-549",
+    "date": "2026-11-21",
+    "title": "Add tests for offline queue or sync helpers",
+    "status": "published",
+    "prs": [
+      549
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for offline queue or sync helpers"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-542",
     "date": "2026-11-21",
     "title": "Add unit tests for useAuth",
