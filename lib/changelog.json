@@ -532,6 +532,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-524",
+    "date": "2026-11-21",
+    "title": "Add the SafeDose /ping deployment check",
+    "status": "published",
+    "prs": [
+      524
+    ],
+    "sections": {
+      "Improved": [
+        "Add the SafeDose /ping deployment check"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-522",
     "date": "2026-11-21",
     "title": "Implement soft monetization wall for AI logs",
