@@ -6,6 +6,7 @@ import {
   recordGuidanceShown,
   recordGuidedRetakeSuccess,
   startRetakeSession,
+  UNREADABLE_PHOTO_MESSAGE,
 } from '../retakeGuidance';
 
 jest.mock('../../analytics', () => ({ logAnalyticsEvent: jest.fn() }));
@@ -69,6 +70,27 @@ describe('retake guidance', () => {
     }
   });
 
+  it('replaces the current session when the same camera ref starts again', () => {
+    cookie = `${cookieName}=a`;
+    const firstSession = getRetakeSession(cameraRef);
+    offerRetakeGuidance(firstSession);
+    expect(firstSession?.guidance).toEqual({ variant: 'a', shown: false });
+
+    stopSession = startRetakeSession(cameraRef);
+
+    const replacementSession = getRetakeSession(cameraRef);
+    expect(replacementSession).toBeDefined();
+    expect(replacementSession).not.toBe(firstSession);
+    expect(replacementSession?.guidance).toBeUndefined();
+  });
+
+  it('exports the unreadable-photo message with the retake and manual-entry options', () => {
+    expect(UNREADABLE_PHOTO_MESSAGE).toBe(
+      'We could not read the syringe size or vial strength safely. ' +
+      'Try a clear photo showing the syringe scale and vial strength, or enter the details manually.',
+    );
+  });
+
   it('does not read or write a cookie without a session', () => {
     offerRetakeGuidance(undefined);
 
@@ -126,6 +148,59 @@ describe('retake guidance', () => {
     expect(() => offerRetakeGuidance(session)).not.toThrow();
     expect(session?.guidance).toBeUndefined();
     expect(writeCookie).not.toHaveBeenCalled();
+  });
+
+  it('falls back when writing the assignment cookie throws', () => {
+    writeCookie.mockImplementation(() => {
+      throw new Error('Cookie write denied');
+    });
+    const session = getRetakeSession(cameraRef);
+
+    expect(() => offerRetakeGuidance(session)).not.toThrow();
+
+    expect(writeCookie).toHaveBeenCalledTimes(1);
+    expect(session?.guidance).toBeUndefined();
+    expect(logAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it('leaves guidance absent in a native runtime without document or window', () => {
+    Reflect.deleteProperty(globalThis, 'document');
+    Reflect.deleteProperty(globalThis, 'window');
+    const session = getRetakeSession(cameraRef);
+
+    expect(typeof document).toBe('undefined');
+    expect(typeof window).toBe('undefined');
+    expect(() => offerRetakeGuidance(session)).not.toThrow();
+
+    expect(session?.guidance).toBeUndefined();
+    expect(logAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it('resets shown on a repeat refusal and preserves shown guidance if cookies fail', () => {
+    cookie = `${cookieName}=b`;
+    const session = getRetakeSession(cameraRef);
+    offerRetakeGuidance(session);
+    recordGuidanceShown(session!.guidance!);
+
+    offerRetakeGuidance(session);
+
+    const repeatedGuidance = session?.guidance;
+    expect(repeatedGuidance).toEqual({ variant: 'b', shown: false });
+    recordGuidanceShown(repeatedGuidance!);
+    cookie = '';
+    writeCookie.mockImplementation(() => {
+      throw new Error('Cookie write denied');
+    });
+
+    offerRetakeGuidance(session);
+
+    expect(writeCookie).toHaveBeenCalledTimes(1);
+    expect(session?.guidance).toBe(repeatedGuidance);
+    expect(session?.guidance).toEqual({ variant: 'b', shown: true });
+    expect(jest.mocked(logAnalyticsEvent).mock.calls).toEqual([
+      ['retake_guidance_shown_b'],
+      ['retake_guidance_shown_b'],
+    ]);
   });
 
   it.each(['a', 'b'] as const)('tracks shown, retry, and success for arm %s', variant => {
