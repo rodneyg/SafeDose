@@ -44,13 +44,13 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Prescribed Dose</Text>
-      <Text style={styles.label}>Dose Amount:</Text>
+      <Text style={styles.label}>Dose Amount{Platform.OS === 'web' ? ' (required)' : ''}:</Text>
       <TextInput
         style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={dose}
         onChangeText={handleDoseChange}
         keyboardType="numeric"
-        inputMode="numeric"
+        inputMode={Platform.OS === 'web' ? 'decimal' : 'numeric'}
         placeholder="e.g., 100"
         placeholderTextColor="#9ca3af"
         returnKeyType="done"
