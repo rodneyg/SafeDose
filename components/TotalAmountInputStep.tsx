@@ -26,14 +26,23 @@ export default function TotalAmountInputStep({
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Total Amount</Text>
       <Text style={styles.label}>Total Amount in Vial ({Platform.OS === 'web' ? 'required, ' : ''}{unit || 'select unit'}):</Text>
-      <View style={{ flexDirection: 'row', gap: 16 }}>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Total amount unit" style={{ flexDirection: 'row', gap: 16 }}>
         {(['mg', 'mcg', 'units'] as const).map(option => (
-          <TouchableOpacity key={option} onPress={() => setUnit(option)} accessibilityRole="radio" accessibilityState={{ checked: unit === option }}>
+          <TouchableOpacity
+            key={option}
+            onPress={() => setUnit(option)}
+            accessibilityLabel={option}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: unit === option }}
+            aria-checked={unit === option}
+          >
             <Text style={{ fontWeight: unit === option ? '700' : '400' }}>{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <TextInput
+        accessibilityLabel="Total amount in vial"
+        aria-required
         style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={totalAmount}
         onChangeText={(text) => {

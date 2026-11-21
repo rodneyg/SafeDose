@@ -45,6 +45,7 @@ export default function MedicationSourceStep({
     <View style={styles.container}>
       <Text style={styles.title}>Medication Details</Text>
       <TextInput
+        accessibilityLabel="Substance name"
         style={styles.input}
         placeholder="Substance Name (Optional)"
         placeholderTextColor="#9ca3af"
@@ -59,8 +60,11 @@ export default function MedicationSourceStep({
       <View style={styles.radioContainer}>
         <TouchableOpacity
           testID="medication-source-concentration"
-          accessibilityLabel="Concentration"
           style={[styles.radioButton, medicationInputType === 'concentration' && styles.radioButtonSelected]}
+          accessibilityRole="button"
+          accessibilityLabel="Concentration"
+          accessibilityState={{ selected: medicationInputType === 'concentration' }}
+          aria-pressed={medicationInputType === 'concentration'}
           onPress={() => setMedicationInputType('concentration')}
         >
           <Text style={[styles.radioText, medicationInputType === 'concentration' && styles.radioTextSelected]}>
@@ -69,8 +73,11 @@ export default function MedicationSourceStep({
         </TouchableOpacity>
         <TouchableOpacity
           testID="medication-source-total-amount"
-          accessibilityLabel="Total Amount"
           style={[styles.radioButton, medicationInputType === 'totalAmount' && styles.radioButtonSelected]}
+          accessibilityRole="button"
+          accessibilityLabel="Total Amount"
+          accessibilityState={{ selected: medicationInputType === 'totalAmount' }}
+          aria-pressed={medicationInputType === 'totalAmount'}
           onPress={() => setMedicationInputType('totalAmount')}
         >
           <Text style={[styles.radioText, medicationInputType === 'totalAmount' && styles.radioTextSelected]}>

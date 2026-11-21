@@ -41,6 +41,8 @@ export default function ConcentrationInputStep({
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Concentration</Text>
       <Text style={styles.label}>Concentration Amount{Platform.OS === 'web' ? ' (required)' : ''}:</Text>
       <TextInput
+        accessibilityLabel="Concentration amount"
+        aria-required
         style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={concentrationAmount}
         onChangeText={(text) => {
@@ -63,6 +65,11 @@ export default function ConcentrationInputStep({
               !compatibleUnits.includes(unit as any) && styles.radioButtonDisabled,
               isMobileWeb && styles.radioButtonMobile,
             ]}
+            accessibilityRole="button"
+            accessibilityLabel={unit}
+            accessibilityState={{ selected: concentrationUnit === unit, disabled: !compatibleUnits.includes(unit as any) }}
+            aria-pressed={concentrationUnit === unit}
+            aria-disabled={!compatibleUnits.includes(unit as any)}
             onPress={() => compatibleUnits.includes(unit as any) && setConcentrationUnit(unit as any)}
             disabled={!compatibleUnits.includes(unit as any)}
           >

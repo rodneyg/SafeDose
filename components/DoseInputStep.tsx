@@ -46,6 +46,8 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Prescribed Dose</Text>
       <Text style={styles.label}>Dose Amount{Platform.OS === 'web' ? ' (required)' : ''}:</Text>
       <TextInput
+        accessibilityLabel="Dose amount"
+        aria-required
         style={[styles.input, isMobileWeb && styles.inputMobile]}
         value={dose}
         onChangeText={handleDoseChange}
@@ -62,30 +64,19 @@ export default function DoseInputStep({ dose, setDose, unit, setUnit, formError,
       />
       <Text style={styles.label}>Unit:</Text>
       <View style={[styles.radioContainer, isMobileWeb && styles.radioContainerMobile]}>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'mg' && styles.radioButtonSelected, isMobileWeb && styles.radioButtonMobile]}
-          onPress={() => handleUnitChange('mg')}
-        >
-          <Text style={[styles.radioText, unit === 'mg' && styles.radioTextSelected]}>mg</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'mcg' && styles.radioButtonSelected, isMobileWeb && styles.radioButtonMobile]}
-          onPress={() => handleUnitChange('mcg')}
-        >
-          <Text style={[styles.radioText, unit === 'mcg' && styles.radioTextSelected]}>mcg</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'units' && styles.radioButtonSelected, isMobileWeb && styles.radioButtonMobile]}
-          onPress={() => handleUnitChange('units')}
-        >
-          <Text style={[styles.radioText, unit === 'units' && styles.radioTextSelected]}>units</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.radioButton, unit === 'mL' && styles.radioButtonSelected, isMobileWeb && styles.radioButtonMobile]}
-          onPress={() => handleUnitChange('mL')}
-        >
-          <Text style={[styles.radioText, unit === 'mL' && styles.radioTextSelected]}>mL</Text>
-        </TouchableOpacity>
+        {(['mg', 'mcg', 'units', 'mL'] as const).map(option => (
+          <TouchableOpacity
+            key={option}
+            style={[styles.radioButton, unit === option && styles.radioButtonSelected, isMobileWeb && styles.radioButtonMobile]}
+            accessibilityRole="button"
+            accessibilityLabel={option}
+            accessibilityState={{ selected: unit === option }}
+            aria-pressed={unit === option}
+            onPress={() => handleUnitChange(option)}
+          >
+            <Text style={[styles.radioText, unit === option && styles.radioTextSelected]}>{option}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
       {formError && <Text style={styles.errorText}>{formError}</Text>}
       <Text style={styles.helperText}>Enter the prescribed dose amount and select the unit.</Text>
