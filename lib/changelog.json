@@ -112,6 +112,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-583",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useFeedbackStorage",
+    "status": "published",
+    "prs": [
+      583
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useFeedbackStorage"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-582",
     "date": "2026-11-21",
     "title": "Test the shared scan request builder",
