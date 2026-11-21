@@ -211,7 +211,7 @@ it('shows a successful scan in the image preview', async () => {
 it.each([
   ['refused', { refuse: true, vial: { substance: 'unreadable', concentration: '10', totalAmount: '5' }, confidence: authoredRead.confidence }, {}],
   ['partial', { ...authoredRead, syringe: null, vial: { ...authoredRead.vial, totalAmount: '50 mg' } }, {
-    substanceName: 'Example compound', concentrationAmount: '10', concentrationUnit: 'mg/ml',
+    concentrationAmount: '10', concentrationUnit: 'mg/ml',
     totalAmount: '50', totalAmountUnit: 'mg',
   }],
 ] as const)('opens guided manual entry for a %s photo', async (_, raw, expectedFields) => {
@@ -230,13 +230,11 @@ it.each([
   expect(mockCalculator.setConcentrationAmount).toHaveBeenLastCalledWith(
     'concentrationAmount' in expectedFields ? expectedFields.concentrationAmount : '',
   );
-  if ('substanceName' in expectedFields) {
-    expect(mockCalculator.setSubstanceName).toHaveBeenCalledWith(expectedFields.substanceName);
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+  if ('totalAmount' in expectedFields) {
     expect(mockCalculator.setTotalAmount).toHaveBeenLastCalledWith(expectedFields.totalAmount);
     expect(mockCalculator.setTotalAmountUnit).toHaveBeenLastCalledWith(expectedFields.totalAmountUnit);
     expect(mockCalculator.setConcentrationHint).toHaveBeenCalledWith('From photo scan. Check the vial label.');
-  } else {
-    expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
   }
   navigate('manualEntry');
   expect(renderer.root.findByType('ManualEntryScreen' as never)).toBeTruthy();
@@ -253,11 +251,12 @@ it.each(wrongFills)('requires explicit review before applying accepted capture %
   expect(preview.props.visible).toBe(true);
   expect(preview.props.imageUri).toBe('');
   expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
   expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
   expect(mockCalculator.setDose).not.toHaveBeenCalled();
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
 
-  act(() => { preview.props.onVerify(); });
+  act(() => { preview.props.onVerify(parseScanModelOutput(raw).vial.substance); });
   expect(preview.props.visible).toBe(false);
   expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
   expect(mockCalculator.setConcentrationAmount).toHaveBeenCalledWith(
@@ -266,6 +265,23 @@ it.each(wrongFills)('requires explicit review before applying accepted capture %
   expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
   expect(mockCalculator.setDoseValue.mock.calls).toEqual([[null]]);
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+});
+
+it('blocks preset application during scan review and applies the corrected name with an empty dose', async () => {
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(JSON.stringify(authoredRead)));
+  await act(async () => { await camera().props.onCapture(); });
+  // Manual entry can appear behind the review during an offline transition.
+  navigate('manualEntry');
+  const manual = renderer.root.findByType('ManualEntryScreen' as never);
+  act(() => { manual.props.onApplyPreset({ dose: '2', substanceName: 'Preset compound' }); });
+  expect(mockCalculator.setDose).not.toHaveBeenCalled();
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  act(() => { preview.props.onVerify('Corrected compound'); });
+  expect(mockCalculator.setSubstanceName.mock.calls).toEqual([['Corrected compound']]);
+  expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
 });
 
 it('requires a fresh syringe selection when the scanned capacity exceeds the visible scale', async () => {
@@ -280,6 +296,7 @@ it('requires a fresh syringe selection when the scanned capacity exceeds the vis
   expect(mockCalculator.setManualSyringe.mock.calls).toEqual([[{ type: 'Standard', volume: '', needsConfirmation: true }]]);
   expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
   expect(mockCalculator.setConcentrationAmount).toHaveBeenLastCalledWith('10');
-  expect(mockCalculator.registerScannedFields).toHaveBeenCalledWith(expect.not.objectContaining({ manualSyringe: expect.anything() }));
+  expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
+  expect(mockCalculator.registerScannedFields).toHaveBeenCalledWith({ concentrationAmount: '10', concentrationUnit: 'mg/ml' });
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
 });

@@ -342,6 +342,7 @@ export default function NewDoseScreen() {
   const [pendingScanResult, setPendingScanResult] = useState<ScanResult | null>(null);
 
   const applyDosingPreset = useCallback((preset: DosingPreset) => {
+    if (pendingScanResult) return;
     setDose(preset.dose);
     setUnit(preset.unit);
     setSubstanceName(preset.substanceName);
@@ -353,7 +354,7 @@ export default function NewDoseScreen() {
     setSolutionVolume(preset.solutionVolume);
     setManualSyringe(preset.manualSyringe);
     setManualStep('dose');
-  }, [doseCalculator, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
+  }, [doseCalculator, pendingScanResult, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
 
   console.log('Usage Data:', usageData);
 
@@ -539,7 +540,10 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
-  const openManualEntryFromScan = (mapped: ReturnType<typeof mapScanToDoseInputs>) => {
+  const openManualEntryFromScan = (
+    mapped: ReturnType<typeof mapScanToDoseInputs>,
+    confirmedSubstance: string | null = null,
+  ) => {
     const needsInput = mapped.status === 'needs-input';
     if (needsInput) {
       resetFullForm('dose');
@@ -554,9 +558,11 @@ export default function NewDoseScreen() {
       setSyringeHint('Detected from image scan');
     }
     const vialHint = needsInput ? 'From photo scan. Check the vial label.' : 'Detected from vial scan';
-    if (scanned.substance) {
-      setSubstanceName(scanned.substance);
-      setSubstanceNameHint(vialHint);
+    if (!needsInput) {
+      setSubstanceName(confirmedSubstance ?? '');
+      setSubstanceNameHint(confirmedSubstance && confirmedSubstance === scanned.substance
+        ? 'Confirmed from vial label'
+        : null);
     }
     // Clear previous medication values so an absent field cannot reuse a stale number.
     setConcentrationAmount('');
@@ -587,7 +593,7 @@ export default function NewDoseScreen() {
     }
 
     doseCalculator.registerScannedFields({
-      ...(scanned.substance ? { substanceName: scanned.substance } : {}),
+      ...(!needsInput && confirmedSubstance && scanned.substance ? { substanceName: scanned.substance } : {}),
       ...(scannedSyringe ? { manualSyringe: JSON.stringify(scannedSyringe) } : {}),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
@@ -1003,9 +1009,12 @@ export default function NewDoseScreen() {
     // Stay on scan screen for retake
   }, []);
 
-  const handleImagePreviewVerified = () => {
+  const handleImagePreviewVerified = (confirmedSubstance: string | null) => {
     if (!pendingScanResult) return;
-    openManualEntryFromScan(mapScanToDoseInputs(pendingScanResult, { syringeAndVialVerified: true }));
+    openManualEntryFromScan(
+      mapScanToDoseInputs(pendingScanResult, { syringeAndVialVerified: true }),
+      confirmedSubstance,
+    );
     setPendingScanResult(null);
   };
 
