@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-599",
+    "date": "2026-11-21",
+    "title": "Add unit tests for readPhotoMetrics.web.ts",
+    "status": "published",
+    "prs": [
+      599
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for readPhotoMetrics.web.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-598",
     "date": "2026-11-21",
     "title": "Add unit tests for imageQualityMetrics",
