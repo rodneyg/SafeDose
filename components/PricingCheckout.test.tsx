@@ -8,6 +8,7 @@ jest.mock('@stripe/stripe-js', () => ({ loadStripe: jest.fn().mockResolvedValue(
 jest.mock('../lib/stripeConfig', () => ({ publishableKey: 'test-placeholder' }));
 const mockLogAnalytics = jest.fn();
 let mockPlatform = 'ios';
+let mockOffer: string | undefined;
 
 jest.mock('../lib/analytics', () => ({
   logAnalyticsEvent: mockLogAnalytics,
@@ -19,7 +20,12 @@ jest.mock('../lib/analytics', () => ({
 }));
 jest.mock('../lib/apiBase', () => ({ getApiBaseUrl: () => 'https://example.invalid' }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: null }) }));
-jest.mock('expo-router', () => ({ Link: 'Link', router: { back: jest.fn() } }));
+let mockUser: { isAnonymous: boolean; getIdToken: () => Promise<string> };
+const mockNavigate = jest.fn();
+jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
+jest.mock('expo-router', () => ({
+  Link: 'Link', router: { back: jest.fn(), push: mockNavigate }, useLocalSearchParams: () => ({ offer: mockOffer }),
+}));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 jest.mock('react-native', () => ({
   ...jest.requireActual('../__mocks__/react-native'),
@@ -45,6 +51,7 @@ const text = () => renderer.root.findAllByType('Text' as any)
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUser = { isAnonymous: false, getIdToken: async () => 'checkout-test-token' };
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Unexpected checkout request'));
@@ -65,6 +72,7 @@ afterEach(() => {
   act(() => renderer.unmount());
   jest.restoreAllMocks();
   mockPlatform = 'ios';
+  mockOffer = undefined;
   if (originalWindow === undefined) delete (global as any).window;
   else global.window = originalWindow;
 });
@@ -97,17 +105,26 @@ it.each(['reject', 'null', 'throw'])('handles a %s loader failure and allows ret
 
   const redirectToCheckout = jest.fn().mockResolvedValue({});
   loader.mockResolvedValueOnce({ redirectToCheckout });
-  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, text: async () => JSON.stringify({ sessionId: 'test-session' }) });
+  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session' }) });
   await act(async () => { await button().props.onPress(); });
   expect(text()).not.toContain(message);
   expect(fetch).toHaveBeenCalledWith('https://example.invalid/api/create-checkout-session', expect.objectContaining({
     method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer checkout-test-token' },
     body: JSON.stringify({ offerKey: 'photo_check_monthly', successUrl: 'https://example.invalid/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://example.invalid/pricing', hasTrial: false }),
   }));
   expect(redirectToCheckout).toHaveBeenCalledWith({ sessionId: 'test-session' });
 });
 
-
+it('takes a guest to sign in before loading Stripe', async () => {
+  mockUser.isAnonymous = true;
+  await act(async () => { await button().props.onPress(); });
+  expect(mockNavigate).toHaveBeenCalledWith({
+    pathname: '/login', params: { from: 'pricing', offer: 'photo_check_monthly' },
+  });
+  expect(loader).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+});
 it('keeps the monthly default and the legacy view event on native', () => {
   expect(selectionState()).toEqual([true, false]);
   expect(mockLogAnalytics.mock.calls).toEqual([['view_pricing_page']]);
@@ -144,6 +161,17 @@ describe('web pricing default experiment', () => {
     expect(selectionState()).toEqual(selection);
   });
 
+  it('restores the selected offer after sign-in even when the experiment defaults to monthly', () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.25);
+    mockOffer = 'photo_check_annual';
+    mountPricing();
+    expect(selectionState()).toEqual([false, true]);
+    expect(mockLogAnalytics).toHaveBeenCalledWith('pricing_v1_monthly_view');
+
+    act(() => options()[0].props.onPress());
+    expect(selectionState()).toEqual([true, false]);
+  });
+
   it('keeps the monthly default outside the experiment if storage is blocked', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.75);
     jest.spyOn(window.localStorage, 'setItem').mockImplementation(() => { throw new Error('Storage blocked'); });
@@ -165,9 +193,9 @@ describe('web pricing default experiment', () => {
     const redirectToCheckout = jest.fn().mockResolvedValue({});
     loader.mockResolvedValueOnce({ redirectToCheckout });
     (fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: false, status: 503, text: async () => '{"error":"Unavailable"}' })
-      .mockResolvedValueOnce({ ok: true, status: 200, text: async () => '{}' })
-      .mockResolvedValueOnce({ ok: true, status: 200, text: async () => '{"sessionId":"test-session"}' });
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ error: 'Unavailable' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session' }) });
 
     await act(async () => { await button().props.onPress(); });
     await act(async () => { await button().props.onPress(); });

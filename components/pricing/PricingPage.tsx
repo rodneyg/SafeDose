@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { router } from "expo-router";
+import { useAuth } from "../../contexts/AuthContext";
+import { billingRequest } from "../../lib/subscriptionStatus";
 import { getCheckoutStripe, STRIPE_LOAD_ERROR } from "../../lib/checkoutStripe";
 import { useToast } from "@/hooks/use-toast";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
@@ -45,6 +48,7 @@ const pricingPlans: PricingPlan[] = [
 
 export default function PricingPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPaymentProvider, setSelectedPaymentProvider] =
     useState<PaymentProvider>("stripe");
@@ -61,42 +65,19 @@ export default function PricingPage() {
         return;
       }
 
-      const stripe = await getCheckoutStripe();
-      if (!stripe) {
-        toast({
-          title: "Error",
-          description: "Stripe is not initialized. Please try again later.",
-          variant: "destructive",
-        });
+      if (!user || user.isAnonymous) {
+        router.push({ pathname: '/login', params: { from: 'pricing', ...(offerKey && { offer: offerKey }) } });
         return;
       }
 
-      const res = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          offerKey,
-          priceId,
-          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/pricing`,
-          hasTrial: plan.trialDays ? true : false,
-        }),
+      const stripe = await getCheckoutStripe();
+      const { sessionId } = await billingRequest<{ sessionId: string }>(user, 'create-checkout-session', {
+        offerKey,
+        priceId,
+        successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/pricing`,
+        hasTrial: Boolean(plan.trialDays),
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
-        
-        // Provide specific error messages for common configuration issues
-        if (errorData.error && errorData.error.includes("publishable API key")) {
-          throw new Error("Payment system configuration error. Please contact support.");
-        } else if (errorData.error && errorData.error.includes("secret key")) {
-          throw new Error("Payment system temporarily unavailable. Please try again later.");
-        } else {
-          throw new Error(errorData.error || "Failed to create checkout session");
-        }
-      }
-
-      const { sessionId } = await res.json();
       const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) throw new Error(error.message);
     } catch (error) {
@@ -123,8 +104,7 @@ export default function PricingPage() {
   const handleCheckout = (plan: PricingPlan) => {
     switch (selectedPaymentProvider) {
       case "stripe":
-        initiateStripeCheckout(plan);
-        break;
+        return initiateStripeCheckout(plan);
       case "lemonsqueezy":
         console.log("LemonSqueezy checkout:", plan.name);
         break;
