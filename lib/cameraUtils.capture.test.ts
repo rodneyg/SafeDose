@@ -129,6 +129,37 @@ describe('native scan result guardrails', () => {
   });
 
   it.each([
+    ['capacity rounded to a supported size', { volume: '1.00000000000000001 ml' }],
+    ['marking rounded down to capacity', { markings: '0,10,100.000000000000001' }],
+  ] as const)('refuses a %s before native review or counting usage', async (_, syringe) => {
+    const output = fixtures[0].model_output;
+    complete.mockResolvedValue(JSON.stringify({
+      ...output, syringe: { ...output.syringe, ...syringe },
+    }));
+
+    expect(await captureAndProcessImage(options)).toBeNull();
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(options.setScanError).toHaveBeenLastCalledWith(expect.stringMatching(/could not read .* safely/i));
+    expect(options.incrementScansUsed).not.toHaveBeenCalled();
+    expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+  });
+
+  it('accepts exact syringe decimals with trailing zeroes for native verification', async () => {
+    const output = fixtures[0].model_output;
+    complete.mockResolvedValue(JSON.stringify({
+      ...output, syringe: { ...output.syringe, volume: '1.000 ml', markings: '0,10.0,100.00' },
+    }));
+
+    const scan = await captureAndProcessImage(options);
+    expect(scan).not.toBeNull();
+    expect(mapScanToDoseInputs(scan!)).toMatchObject({
+      status: 'needs-verification',
+      inputs: { manualSyringe: { type: 'Insulin', volume: '1 ml' } },
+    });
+    expect(options.incrementScansUsed).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
     ['missing capture data', {}, 'Failed to capture image data'],
     ['unknown image data', { base64: 'not-an-image' }, 'Image format could not be processed'],
   ] as const)('stops %s before sending a scan request', async (_, photo, message) => {

@@ -58,13 +58,14 @@ export function parseScanModelOutput(raw: string): ScanResult {
   };
   const volume = text(s.volume);
   const capacityMatch = volume?.match(new RegExp(`^(${DECIMAL})\\s*ml$`, 'i'));
-  const capacity = capacityMatch && Number(capacityMatch[1]) > 0 && Number.isFinite(Number(capacityMatch[1])) ? Number(capacityMatch[1]) : null;
+  const parsedCapacity = capacityMatch ? parseInputNumber(capacityMatch[1]) : NaN;
+  const capacity = parsedCapacity > 0 ? parsedCapacity : null;
   const type = s.type === 'Insulin' || s.type === 'Standard' ? s.type : null;
   const scale = s.scale === 'U-100' || s.scale === 'U-40' || s.scale === 'mL' ? s.scale : null;
   const markings = text(s.markings);
   if (!type || capacity === null || !scale) reasons.push('Syringe type, capacity, or scale is missing or unreadable.');
   if ((type === 'Insulin' && scale !== 'U-100') || (type === 'Standard' && scale !== 'mL')) reasons.push('Unsupported or contradictory syringe scale; confirm manually.');
-  const marks = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? Number(mark.trim()) : NaN) ?? [];
+  const marks = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? parseInputNumber(mark) : NaN) ?? [];
   if (marks.length < 2 || marks.some((mark, i) => !Number.isFinite(mark) || mark < 0 || (i > 0 && mark <= marks[i - 1]))) {
     reasons.push('Missing, garbled, or reversed syringe markings.');
   } else if (capacity !== null && scale && marks[marks.length - 1] > capacity * (scale === 'U-100' ? 100 : scale === 'U-40' ? 40 : 1)) {
