@@ -1,0 +1,25 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand lib/hooks/useReconstitutionPlanner.test.ts
+
+ts-jest[config] (WARN)
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+
+PASS lib/hooks/useReconstitutionPlanner.test.ts
+  useReconstitutionPlanner
+    ✓ starts with planner defaults and selects each input method (21 ms)
+    ✓ calculates from manual values, converts units, and proceeds to output (9 ms)
+    ✓ uses a scanned amount when manual amount is empty (5 ms)
+    ✓ keeps the current step and reports missing peptide amount (4 ms)
+    ✓ keeps the current step and reports missing target dose (5 ms)
+    ✓ keeps the current step and reports missing preferred volume (3 ms)
+    ✓ keeps the current step and reports too little BAC water (4 ms)
+    ✓ keeps the current step and reports too much BAC water (4 ms)
+    ✓ clears errors when editing and restores defaults on reset (6 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        2.434 s, estimated 4 s
+Ran all test suites matching /lib\/hooks\/useReconstitutionPlanner.test.ts/i.
