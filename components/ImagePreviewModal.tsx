@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
-import type { ScanResult } from '../lib/scan';
+import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
 
 interface ImagePreviewModalProps {
   visible: boolean;
@@ -36,10 +36,12 @@ export default function ImagePreviewModal({
 function ScanReview({ imageUri, scanResult, onRetake, onVerify }:
   Omit<ImagePreviewModalProps, 'visible' | 'scanResult'> & { scanResult: ScanResult }) {
   const { syringe, vial } = scanResult;
+  const { manualSyringe } = mapScanToDoseInputs(scanResult).inputs;
   const [editedSubstance, setEditedSubstance] = useState<string | null>(null);
   const substance = editedSubstance?.trim() ?? vial.substance;
-  const needsSubstanceReview = vial.substance !== null;
+  const needsSubstanceReview = Boolean(manualSyringe) && vial.substance !== null;
   const canVerify = !needsSubstanceReview || Boolean(substance);
+  const verificationLabel = needsSubstanceReview ? 'Confirm substance and all details' : 'I checked both';
   const imageHeight = Math.min(Dimensions.get('window').height * 0.5, 300);
 
   return (
@@ -60,26 +62,28 @@ function ScanReview({ imageUri, scanResult, onRetake, onVerify }:
             <View style={styles.scanResultsContainer}>
               <Text style={styles.scanResultsTitle}>Detected Information</Text>
               <ScanSection title="Syringe" fields={[
-                ['Type', syringe.type], ['Capacity', syringe.volume], ['Scale', syringe.scale],
+                ['Type', syringe.type], ['Capacity', manualSyringe?.volume ?? 'Check the label and select manually'], ['Scale', syringe.scale],
               ]} />
               <ScanSection title="Vial" fields={[
                 ['Total amount', vial.totalAmount],
                 ['Concentration', vial.concentration], ['Expiration', vial.expiration],
               ]} />
-              {needsSubstanceReview ? (
+              {vial.substance !== null ? (
                 <View>
                   <Text style={styles.scanLabel}>Unconfirmed vial substance</Text>
                   {editedSubstance === null ? (
                     <View style={styles.scanRow}>
                       <Text style={styles.substanceName}>{vial.substance}</Text>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        accessibilityRole="button"
-                        accessibilityLabel="Edit vial substance"
-                        onPress={() => setEditedSubstance(vial.substance)}
-                      >
-                        <Text style={styles.editText}>Edit</Text>
-                      </TouchableOpacity>
+                      {manualSyringe ? (
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          accessibilityRole="button"
+                          accessibilityLabel="Edit vial substance"
+                          onPress={() => setEditedSubstance(vial.substance)}
+                        >
+                          <Text style={styles.editText}>Edit</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ) : (
                     <TextInput
@@ -112,11 +116,11 @@ function ScanReview({ imageUri, scanResult, onRetake, onVerify }:
               style={[styles.button, styles.continueButton, !canVerify && styles.disabledButton]}
               disabled={!canVerify}
               accessibilityState={{ disabled: !canVerify }}
-              onPress={() => { if (canVerify) onVerify(substance); }}
+              onPress={() => { if (canVerify) onVerify(manualSyringe ? substance : null); }}
               accessibilityRole="button"
             >
               <Text style={styles.buttonText}>
-                {needsSubstanceReview ? 'Confirm substance and all details' : 'I checked both'}
+                {manualSyringe ? verificationLabel : 'Enter details manually'}
               </Text>
             </TouchableOpacity>
           </View>
