@@ -5,6 +5,7 @@ import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
+import { startFirstScanExperiment } from '../lib/firstScanExperiment';
 import { AppErrorBoundary } from '../components/AppErrorBoundary';
 import { WebAnalytics } from '../lib/WebAnalytics';
 import "../global.css";
@@ -27,6 +28,7 @@ export default function RootLayout() {
     } else {
       console.log('[Analytics] Firebase Analytics not available (likely not web platform)');
     }
+    return startFirstScanExperiment();
   }, []);
   
   console.log('[RootLayout] Rendering providers and slot');
