@@ -20,7 +20,7 @@ describe('Vercel response headers', () => {
     expect(ping).toEqual({ src: '/ping', dest: '/api/deploy-ping.js' });
     expect(api.dest).toBe('/api/$1.js');
     expect(filesystem.handle).toBe('filesystem');
-    expect(staticAssets.status).toBe(404);
+    expect(staticAssets).toEqual({ src: '/(?:_expo|assets|icons|workers)/.*', status: 404 });
     expect(spa.dest).toBe('/index.html');
   });
 });
