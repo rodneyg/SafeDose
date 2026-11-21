@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, Image, Platform, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Link, useRouter } from 'expo-router';
+import Head from 'expo-router/head';
 import { ArrowRight } from 'lucide-react-native';
 import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../../lib/analytics';
 import { isMobileWeb } from '../../lib/utils';
@@ -21,6 +22,7 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474
 
 export default function Welcome() {
   const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
   const router = useRouter();
   const { auth } = useAuth();
   const [imageError, setImageError] = useState(false);
@@ -70,14 +72,16 @@ export default function Welcome() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} role={isWeb ? 'main' : undefined}>
+      <Head><title>Welcome | SafeDose</title></Head>
       <Image
         source={{ 
           uri: imageError ? FALLBACK_IMAGE : 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=2532'
         }}
         onError={handleImageError}
         style={[styles.backgroundImage, { width }]}
-        accessibilityLabel="Medical professional preparing medication"
+        accessibilityLabel={isWeb ? undefined : "Medical professional preparing medication"}
+        aria-hidden={isWeb ? true : undefined}
       />
       <View style={styles.overlay} />
       
@@ -94,14 +98,14 @@ export default function Welcome() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(900).duration(800)} style={[styles.footer, isMobileWeb && styles.footerMobile]}>
-          <TouchableOpacity 
-            style={[styles.button, isMobileWeb && styles.buttonMobile]} 
+          <TouchableOpacity
+            style={[styles.button, isWeb && styles.buttonWeb, isMobileWeb && styles.buttonMobile]}
             onPress={() => {
               logAnalyticsEvent(ANALYTICS_EVENTS.WELCOME_PRIMARY_CTA_CLICK);
               handleStart();
             }}
             accessibilityRole="button"
-            accessibilityLabel={Platform.OS === 'web' ? ctaLabel : 'Start demo'}
+            accessibilityLabel={isWeb ? ctaLabel : 'Start demo'}
             accessibilityHint={ctaArm === 'variant' ? 'Opens onboarding before you can scan a vial' : 'Begins the SafeDose app demonstration'}>
             <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>{ctaLabel}</Text>
             <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
@@ -197,6 +201,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     minHeight: 52, // Increased touch target
+  },
+  buttonWeb: {
+    backgroundColor: '#0064D2',
   },
   buttonText: {
     color: '#FFFFFF',
