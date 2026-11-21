@@ -10,8 +10,11 @@ import {
 } from './scan/retakeGuidance';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
-import { CameraView } from 'expo-camera';
+import { CameraView, type CameraCapturedPicture } from 'expo-camera';
+import type { PhotoSource } from './scan/imageQualityMetrics';
+import { photoRetakeMessage } from './scan/photoRetake';
 
 const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
 
@@ -33,7 +36,7 @@ const PHOTO_ERROR_MESSAGES = new Map<string, string>([
 ]);
 
 interface CameraRef {
-  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
+  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<Partial<CameraCapturedPicture> | undefined>;
 }
 
 interface CaptureAndProcessImageProps {
@@ -46,6 +49,7 @@ interface CaptureAndProcessImageProps {
   incrementScansUsed: () => Promise<void>;
   onImageReady?: () => void;
   onScanUnavailable?: () => void;
+  onRetakeRequired?: () => void;
   webCameraStream?: MediaStream | null;
 }
 
@@ -59,6 +63,7 @@ export async function captureAndProcessImage({
   incrementScansUsed,
   onImageReady,
   onScanUnavailable,
+  onRetakeRequired,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   const retakeSession = getRetakeSession(cameraRef);
@@ -74,6 +79,7 @@ export async function captureAndProcessImage({
   try {
     let base64Image: string | undefined;
     let mimeType: string = '';
+    let nativePhoto: Omit<PhotoSource, 'imageUrl'> = {};
 
     if (isWeb) {
       // For any web platform (mobile or desktop), use web camera stream if available, otherwise file input
@@ -189,6 +195,7 @@ export async function captureAndProcessImage({
       if (!photo) throw new Error('Camera returned no picture');
       console.log('[Capture] Picture taken successfully');
 
+      nativePhoto = { uri: photo.uri, width: photo.width, height: photo.height };
       base64Image = photo.base64;
       if (!base64Image && photo.uri) {
         console.log('[Capture] Base64 missing, reading from URI:', photo.uri);
@@ -233,12 +240,24 @@ export async function captureAndProcessImage({
       }
     }
 
+    const imageUrl = `data:${mimeType};base64,${base64Image}`;
+    if (Constants.expoConfig?.extra?.scanQualityPrecheck === true && /^image\/(jpeg|jpg|png|webp)$/i.test(mimeType)) {
+      setProcessingMessage('Checking photo quality...');
+      const metrics = await import('./scan/readPhotoMetrics')
+        .then(({ readPhotoMetrics }) => readPhotoMetrics({ imageUrl, ...nativePhoto }))
+        // A decoder that cannot inspect this photo leaves it to the scan service.
+        .catch(() => undefined);
+      const message = metrics && photoRetakeMessage(metrics);
+      if (message) {
+        setScanError(message);
+        onRetakeRequired?.();
+        return null;
+      }
+    }
+
     onImageReady?.();
     setProcessingMessage('Analyzing image with AI...');
     console.log('[Process] Starting image processing');
-
-    const imageUrl = `data:${mimeType};base64,${base64Image}`;
-    console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
     console.log('[Process] Sending image to /api/analyze-scan');
 
     const retakeVariant = beginGuidedRetake(retakeSession);
