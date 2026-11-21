@@ -688,14 +688,14 @@
   {
     "id": "2026-11-20-pr-477",
     "date": "2026-11-20",
-    "title": "Add optional SafeDose protocol scheduler",
+    "title": "Add a protocol date helper for developers",
     "status": "published",
     "prs": [
       477
     ],
     "sections": {
       "Improved": [
-        "Add optional SafeDose protocol scheduler"
+        "Added a library helper that maps protocol days to calendar dates. The app has no scheduling screen in this release."
       ]
     }
   },
@@ -842,14 +842,14 @@
   {
     "id": "2026-11-19-pr-352",
     "date": "2026-11-19",
-    "title": "Add repeat last dose shortcut",
+    "title": "Test the existing Use Last Dose shortcut",
     "status": "published",
     "prs": [
       352
     ],
     "sections": {
       "Improved": [
-        "Add repeat last dose shortcut"
+        "Added a regression test for opening manual entry with the last saved dose."
       ]
     }
   },
