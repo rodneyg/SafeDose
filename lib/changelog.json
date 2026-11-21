@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-597",
+    "date": "2026-11-21",
+    "title": "Add unit tests for lib/pricingDefault.ts",
+    "status": "published",
+    "prs": [
+      597
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/pricingDefault.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-596",
     "date": "2026-11-21",
     "title": "Tag the tested SHA, not the checkout HEAD",
