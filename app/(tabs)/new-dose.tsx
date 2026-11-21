@@ -2,6 +2,7 @@ import { SCAN_UNAVAILABLE_MESSAGE } from '../../lib/scan/completeOnServer';
 import { hasScanCapacity } from '../../lib/plans';
 import { mapScanToDoseInputs, type ScanResult } from '../../lib/scan';
 import { parsePlannerPrefill, concentrationFromDose, insulinVolumes, standardVolumes } from '../../lib/dosing';
+import Head from 'expo-router/head';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -1071,6 +1072,7 @@ export default function NewDoseScreen() {
 
   return (
     <View style={styles.container}>
+      <Head><title>New Dose | SafeDose</title></Head>
       {offline && (
         <Text accessibilityRole="alert" style={{ padding: 12, color: '#333333', backgroundColor: '#FFF3CD' }}>
           Offline. Manual entry is available. Photo checks and account sync need internet.
