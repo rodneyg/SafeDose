@@ -53,11 +53,11 @@ jobs:
           EXPO_NO_TELEMETRY: '1'
         run: npx expo export --platform ios --platform android --max-workers 2 --output-dir "$RUNNER_TEMP/native-export"
       - run: npm run build:web
-      - name: Bundle iOS with Expo Metro
+      - name: Bundle iOS and Android in development mode
         env:
           EXPO_NO_TELEMETRY: '1'
           EXPO_OFFLINE: '1'
-        run: npx expo export --platform ios --dev --max-workers 2 --output-dir "${{ runner.temp }}/safedose-ios"
+        run: npx expo export --platform ios --platform android --dev --max-workers 2 --output-dir "${{ runner.temp }}/safedose-native-dev"
       - name: Reject secrets in web export and resolved Expo extra
         run: npm run check:bundle-secrets
       - run: npm run test:scan-api
