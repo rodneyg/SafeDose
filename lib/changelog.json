@@ -70,6 +70,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-582",
+    "date": "2026-11-21",
+    "title": "Test the shared scan request builder",
+    "status": "published",
+    "prs": [
+      582
+    ],
+    "sections": {
+      "Improved": [
+        "Test the shared scan request builder"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-574",
     "date": "2026-11-21",
     "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
