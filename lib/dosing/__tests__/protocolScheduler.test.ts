@@ -6,6 +6,13 @@ describe('scheduleProtocol', () => {
     { day: 8, dose: '4 mg' },
   ];
 
+  it('clears dates when an existing schedule loses its start date', () => {
+    const scheduled = scheduleProtocol(protocol, '2026-03-07');
+
+    expect(scheduleProtocol(scheduled, null)).toStrictEqual(protocol);
+    expect(scheduled.map(({ date }) => date)).toEqual(['2026-03-07', '2026-03-14']);
+  });
+
   it('is a no-op when a start date is not supplied', () => {
     expect(scheduleProtocol(protocol)).toEqual(protocol);
     expect(scheduleProtocol(protocol, null)).toEqual(protocol);

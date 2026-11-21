@@ -33,7 +33,13 @@ export function scheduleProtocol<T>(
   protocol: readonly ProtocolDay<T>[],
   startDate?: string | null,
 ): ScheduledProtocolDay<T>[] {
-  if (!startDate) return protocol.map((entry) => ({ ...entry }));
+  if (!startDate) {
+    return protocol.map((entry) => {
+      const unscheduled: ScheduledProtocolDay<T> = { ...entry };
+      delete unscheduled.date;
+      return unscheduled;
+    });
+  }
 
   const start = parseDateOnly(startDate);
   return protocol.map((entry) => {
