@@ -155,8 +155,13 @@ export default function ManualEntryScreen({
   }, [manualStep, dose, unit, substanceName, medicationInputType, concentrationAmount, concentrationUnit, substanceNameHint, concentrationHint, syringeHint, manualSyringe]);
 
   // Validation functions for each step
+  const isPositiveFiniteInput = (value: string): boolean => {
+    const parsed = parseDoseInput(value);
+    return value.trim().length > 0 && Number.isFinite(parsed) && parsed > 0;
+  };
+
   const isDoseStepValid = (): boolean => {
-    return Boolean(dose && !isNaN(parseDoseInput(dose)));
+    return isPositiveFiniteInput(dose);
   };
 
   const isMedicationSourceStepValid = (): boolean => {
@@ -165,7 +170,7 @@ export default function ManualEntryScreen({
 
   const isConcentrationInputStepValid = (): boolean => {
     // Check for valid concentration input
-    const valid = Boolean(concentrationAmount && !isNaN(parseDoseInput(concentrationAmount)));
+    const valid = isPositiveFiniteInput(concentrationAmount);
     
     // Also validate unit compatibility if both units are set
     if (valid && unit && concentrationUnit) {
@@ -179,7 +184,7 @@ export default function ManualEntryScreen({
   };
 
   const isTotalAmountInputStepValid = (): boolean => {
-    const isValid = Boolean(totalAmount && !isNaN(parseDoseInput(totalAmount)));
+    const isValid = isPositiveFiniteInput(totalAmount);
     console.log(`[TotalAmountValidation] totalAmount=${totalAmount}, isValid=${isValid}`);
     return isValid;
   };
@@ -214,6 +219,25 @@ export default function ManualEntryScreen({
     }
     console.log(`[ValidationCheck] step=${manualStep}, isValid=${result}`);
     return result;
+  };
+
+  const getCurrentStepError = (): string | null => {
+    if (manualStep === 'dose' && !isDoseStepValid()) {
+      return 'Enter a dose greater than zero.';
+    }
+    if (manualStep === 'concentrationInput') {
+      if (!isPositiveFiniteInput(concentrationAmount)) {
+        return 'Enter a concentration greater than zero.';
+      }
+      const compatibility = validateUnitCompatibility(unit, concentrationUnit);
+      if (!compatibility.isValid) {
+        return compatibility.errorMessage;
+      }
+    }
+    if (manualStep === 'totalAmountInput' && !isTotalAmountInputStepValid()) {
+      return 'Enter a total amount greater than zero.';
+    }
+    return null;
   };
 
   // Create a handler for next button press
@@ -475,6 +499,9 @@ export default function ManualEntryScreen({
         <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile, isReviewStep && styles.reviewContent]}>
           {currentStepComponent}
           {formError && <Text style={styles.errorText}>{formError}</Text>}
+          {!formError && getCurrentStepError() && (
+            <Text accessibilityRole="alert" style={styles.errorText}>{getCurrentStepError()}</Text>
+          )}
           {!isReviewStep && manualStep !== 'finalResult' && stepButtons}
         </View>
       </ScrollView>
