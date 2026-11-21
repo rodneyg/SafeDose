@@ -168,6 +168,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-585",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useReconstitutionPlanner",
+    "status": "published",
+    "prs": [
+      585
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useReconstitutionPlanner"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-583",
     "date": "2026-11-21",
     "title": "Add unit tests for useFeedbackStorage",
