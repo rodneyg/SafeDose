@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    # Expo SDK 52 requires React 18. Upgrade these together with Expo.
+    ignore:
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

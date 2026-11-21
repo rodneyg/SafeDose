@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-21-pr-603",
+    "date": "2026-11-21",
+    "title": "Add email capture to upgrade flow",
+    "status": "published",
+    "prs": [
+      603
+    ],
+    "sections": {
+      "Improved": [
+        "Add email capture to upgrade flow"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-600",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to subscription hook",
+    "status": "published",
+    "prs": [
+      600
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to subscription hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-599",
     "date": "2026-11-21",
     "title": "Add unit tests for readPhotoMetrics.web.ts",
@@ -98,6 +126,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-592",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useEvaluationDataCapture",
+    "status": "published",
+    "prs": [
+      592
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useEvaluationDataCapture"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-591",
     "date": "2026-11-21",
     "title": "Test Firestore environment write wrappers (T-9127)",
@@ -150,6 +192,34 @@
     "sections": {
       "Improved": [
         "T-9123: Test exact dosing arithmetic"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-586",
+    "date": "2026-11-21",
+    "title": "Add unit tests for inputs.ts",
+    "status": "published",
+    "prs": [
+      586
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for inputs.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-585",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useReconstitutionPlanner",
+    "status": "published",
+    "prs": [
+      585
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useReconstitutionPlanner"
       ]
     }
   },
