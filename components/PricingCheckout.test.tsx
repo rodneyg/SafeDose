@@ -19,6 +19,11 @@ jest.mock('../lib/analytics', () => ({
 }));
 jest.mock('../lib/apiBase', () => ({ getApiBaseUrl: () => 'https://example.invalid' }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: null }) }));
+const mockGetIdToken = jest.fn().mockResolvedValue('pricing-token');
+jest.mock('../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { getIdToken: mockGetIdToken } }),
+}));
+jest.mock('./UpgradeEmailForm', () => 'UpgradeEmailForm');
 jest.mock('expo-router', () => ({ Link: 'Link', router: { back: jest.fn() } }));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 jest.mock('react-native', () => ({
@@ -73,6 +78,12 @@ it('does not load Stripe while browsing pricing', () => {
   expect(eagerLoader).not.toHaveBeenCalled();
   expect(loader).not.toHaveBeenCalled();
   expect(text()).toContain('Get Photo Check');
+});
+
+it('offers the existing email capture on the upgrade screen', async () => {
+  const form = renderer.root.findByType('UpgradeEmailForm' as any);
+  await expect(form.props.getIdToken()).resolves.toBe('pricing-token');
+  expect(mockGetIdToken).toHaveBeenCalledTimes(1);
 });
 
 it('links the pricing footer to subscription settings, legal pages, and support', () => {
