@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-490",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useBeforeFirstScanPrompt",
+    "status": "published",
+    "prs": [
+      490
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useBeforeFirstScanPrompt"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",
