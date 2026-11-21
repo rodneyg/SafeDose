@@ -1,0 +1,88 @@
+name: Web preview smoke
+
+on:
+  repository_dispatch:
+    types: [vercel.deployment.success]
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  preview-smoke:
+    if: github.event.client_payload.environment == 'preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check smoke configuration
+        id: config
+        env:
+          ENABLED: ${{ vars.PREVIEW_SMOKE_ENABLED }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          if [[ "$ENABLED" == false ]]; then
+            echo "Skipped preview smoke: PREVIEW_SMOKE_ENABLED=false." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ -z "$BYPASS" ]]; then
+            echo "Skipped preview smoke: VERCEL_AUTOMATION_BYPASS_SECRET is missing." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify the successful SafeDose preview
+        if: steps.config.outputs.enabled == 'true'
+        id: preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ github.event.client_payload.url }}
+          PREVIEW_SHA: ${{ github.event.client_payload.git.sha }}
+        run: |
+          preview_url=${PREVIEW_URL%/}
+          if [[ ! "$preview_url" =~ ^https://safe-dose-[a-z0-9]+-rodneygs-projects\.vercel\.app$ ||
+                ! "$PREVIEW_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Expected a SafeDose Vercel preview URL and a full commit SHA."
+            exit 1
+          fi
+
+          # The dispatch and GitHub deployment-status updates can arrive in either order.
+          for attempt in 1 2 3 4; do
+            deployments=$(gh api --method GET "repos/$GITHUB_REPOSITORY/deployments" \
+              -f sha="$PREVIEW_SHA" -f environment=Preview --jq '
+                .[] | select(.creator.login == "vercel[bot]" and .production_environment == false) | .id')
+            for id in $deployments; do
+              statuses=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses")
+              if jq -e --arg url "$preview_url" '
+                any(.[]; .creator.login == "vercel[bot]" and .state == "success" and
+                  (.environment_url | rtrimstr("/")) == $url)
+              ' <<< "$statuses" >/dev/null; then
+                echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            done
+            if [[ "$attempt" != 4 ]]; then sleep 5; fi
+          done
+          echo "::error::No successful Vercel preview record matches the deployment URL and commit."
+          exit 1
+
+      # repository_dispatch runs from the default branch. Keep PR code out of the runner.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.config.outputs.enabled == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.config.outputs.enabled == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install headless Chromium
+        if: steps.config.outputs.enabled == 'true'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps --only-shell chromium
+      - name: Smoke test the preview
+        if: steps.config.outputs.enabled == 'true'
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          PREVIEW_SHA: ${{ github.event.client_payload.git.sha }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node scripts/preview-smoke.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+        shell: bash

@@ -7,10 +7,15 @@ import { completeGoogleRedirect } from '@/lib/googleAuth';
 import { logAnalyticsEvent, setAnalyticsUserProperties, ANALYTICS_EVENTS, USER_PROPERTIES } from '@/lib/analytics';
 
 interface AuthContextType {
+  /** The current Firebase user, or `null` when no user is signed in. */
   user: User | null;
+  /** The Firebase Auth instance used for authentication operations. */
   auth: Auth;
+  /** Signs out the current user and clears locally cached user data. */
   logout: () => Promise<void>;
+  /** Whether a sign-out operation is currently in progress. */
   isSigningOut: boolean;
+  /** Whether a sign-out has occurred during the current provider lifecycle. */
   hasSignedOut?: boolean;
 }
 
@@ -312,10 +317,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Returns the current Firebase authentication state and sign-out controls.
+ * Returns the current authentication state and actions from the nearest
+ * {@link AuthProvider}.
  *
- * @returns The authentication context supplied by the nearest `AuthProvider`.
- * @throws {Error} If called outside an `AuthProvider`.
+ * @returns The current user, Firebase Auth instance, logout action, and
+ * sign-out status fields.
+ * @throws {Error} If the hook is used outside an {@link AuthProvider}.
  */
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);

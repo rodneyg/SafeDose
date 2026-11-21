@@ -1,5 +1,8 @@
+const { createRateLimit } = require('../lib/apiRateLimit');
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
+
+const allowRequest = createRateLimit(30);
 
 module.exports = async (req, res) => {
   console.log('Received request to /api/create-portal-session');
@@ -8,6 +11,7 @@ module.exports = async (req, res) => {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   // Validate Stripe configuration before proceeding
   if (!stripeConfig.secretKey) {
