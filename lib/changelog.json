@@ -238,6 +238,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-555",
+    "date": "2026-11-21",
+    "title": "Restore the standalone evaluation validator (T-1729)",
+    "status": "published",
+    "prs": [
+      555
+    ],
+    "sections": {
+      "Improved": [
+        "Restore the standalone evaluation validator (T-1729)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
