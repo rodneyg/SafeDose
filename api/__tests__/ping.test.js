@@ -38,7 +38,7 @@ describe('GET /api/ping', () => {
 
 describe('GET /ping', () => {
   it('routes to the deploy check and returns the SafeDose JSON response', () => {
-    const route = routes.find(({ src }) => src && new RegExp(`^${src}$`).test('/ping'));
+    const route = routes.find(({ src, dest }) => dest && src && new RegExp(`^${src}$`).test('/ping'));
     expect(route).toEqual({ src: '/ping', dest: '/api/deploy-ping.js' });
 
     const res = mockRes();
