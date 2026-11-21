@@ -2,7 +2,10 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseScanModelOutput } from '../../../lib/scan';
+import { adaptCorpusEntry, type CorpusEntry } from '../corpus';
+import developmentRecordings from '../fixtures/development-recordings.json';
 import rawFixtures from '../fixtures/model-outputs.json';
+import syntheticManifest from '../synthetic-manifest.json';
 import thresholds from '../thresholds.json';
 import wrongFills from '../fixtures/holdout-wrong-fills.json';
 import { classifyResult, evaluateThresholds, loadImage, renderMarkdown, REPORT_HEADER, runDosePipeline, scoreScan, sha256, summarize, verifySha256, type Fixture } from '../harness';
@@ -31,6 +34,28 @@ describe('vision eval full pipeline and gate', () => {
     const summary = summarize([row]);
     expect(evaluateThresholds(summary, thresholds).would_pass).toBe(false);
     expect(summary.wrong_number_cases).toEqual([{ id: row.id, sha256: row.sha256, sha256_kind: 'text-fixture', mismatches: row.mismatches }]);
+  });
+  it('fails a development replay for one wrong visible number while labels are pending', () => {
+    const recording = developmentRecordings.outputs[0];
+    const entry = (syntheticManifest as CorpusEntry[]).find(label => label.id === recording.id && label.sha256 === recording.sha256);
+    expect(entry?.split).toBe('development');
+    const label = adaptCorpusEntry(entry!);
+    const replay = (output: unknown) => scoreScan(label, parseScanModelOutput(JSON.stringify(output)), {
+      source: 'recorded', image_status: 'no-image-store', latency_ms: 0, cost_usd: 0,
+    });
+    const baseline = replay(recording.model_output);
+    expect(baseline.classification).toBe('unconfirmed-fill');
+    expect(evaluateThresholds(summarize([baseline]), thresholds)).toMatchObject({
+      would_pass: true, wrong_number_shown_pass: true, status: 'approved-pending-labels',
+    });
+    const wrongNumber = replay({
+      ...recording.model_output,
+      vial: { ...recording.model_output.vial, concentration: '100 mg/mL' },
+    });
+    expect(wrongNumber.classification).toBe('wrong-number-shown');
+    expect(evaluateThresholds(summarize([wrongNumber]), thresholds)).toMatchObject({
+      would_pass: false, wrong_number_shown_pass: false,
+    });
   });
   it.each([
     [wrongFills[0], 50, 0.5],
@@ -103,6 +128,7 @@ describe('vision eval full pipeline and gate', () => {
     expect(summary.uncaught_syringe_misses).toBe(1);
     const gate = evaluateThresholds(summary, { ...thresholds, status: 'approved', approved_by: 'test-only' });
     expect(gate.would_pass).toBe(false);
+    expect(gate.wrong_number_shown_pass).toBe(true);
     expect(gate.violations.some(v => v.includes('capacity_ml'))).toBe(true);
     expect(evaluateThresholds(summarize([]), thresholds)).toMatchObject({ would_pass: false, unassessed: ['syringe.type', 'syringe.capacity_ml'] });
   });
