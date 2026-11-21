@@ -11,8 +11,8 @@ export default function TabLayout() {
       initialRouteName="new-dose"
       screenOptions={{
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: '#005DBF',
+        tabBarInactiveTintColor: '#62626D',
         headerShown: false,
       }}
     >

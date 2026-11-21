@@ -1,1 +1,0 @@
-WARNING: ~/agent-queue/tools/pr_body_check.py is unavailable.

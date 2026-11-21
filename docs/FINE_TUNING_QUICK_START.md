@@ -1,10 +1,10 @@
 # Model Fine-Tuning Quick Start Guide
 
-**TL;DR**: Export captured user data → Prepare for OpenAI → Fine-tune → Deploy improved model
+This walkthrough uses bundled synthetic examples. The sample exporter has no access to app storage or Firestore.
 
 ## 5-Minute Quick Start
 
-### 1. Export Data (30 seconds)
+### 1. Export synthetic examples
 
 ```bash
 cd /path/to/SafeDose
@@ -64,7 +64,6 @@ Done! 🎉
 
 ## What You Need
 
-- **Minimum 50 high-quality examples** (automatically captured from user interactions)
 - **OpenAI account** with API access
 - **API credits** (~$1-5 for typical training job)
 - **15-30 minutes** total time
@@ -127,7 +126,6 @@ print(f"openai api fine_tunes.get -i {job.id}")
 
 | Problem | Solution |
 |---------|----------|
-| "No data to export" | Use SafeDose more to accumulate interactions |
 | "File format error" | Ensure JSONL has one valid JSON per line |
 | "Insufficient credits" | Add payment method in OpenAI dashboard |
 | "Training failed" | Check file uploaded correctly, review logs |
@@ -153,5 +151,3 @@ print(f"openai api fine_tunes.get -i {job.id}")
 ---
 
 **Pro Tip**: Start with 100 examples and 3 epochs. Evaluate results. If accuracy improves, gather 500+ examples for production model.
-
-**Remember**: More user interactions = better training data = more accurate models!
