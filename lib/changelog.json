@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-591",
+    "date": "2026-11-21",
+    "title": "Test Firestore environment write wrappers (T-9127)",
+    "status": "published",
+    "prs": [
+      591
+    ],
+    "sections": {
+      "Improved": [
+        "Test Firestore environment write wrappers (T-9127)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-590",
     "date": "2026-11-21",
     "title": "T-9126: Test syringe marking guidance",
