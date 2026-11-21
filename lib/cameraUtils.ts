@@ -50,6 +50,7 @@ interface CaptureAndProcessImageProps {
   incrementScansUsed: () => Promise<void>;
   onImageReady?: () => void;
   onScanUnavailable?: () => void;
+  returnIncompleteScan?: boolean;
   onRetakeRequired?: () => void;
   webCameraStream?: MediaStream | null;
 }
@@ -64,6 +65,7 @@ export async function captureAndProcessImage({
   incrementScansUsed,
   onImageReady,
   onScanUnavailable,
+  returnIncompleteScan,
   onRetakeRequired,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
@@ -268,6 +270,7 @@ export async function captureAndProcessImage({
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      if (returnIncompleteScan) return result;
       offerRetakeGuidance(retakeSession);
       throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
