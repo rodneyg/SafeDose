@@ -616,6 +616,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-527",
+    "date": "2026-11-21",
+    "title": "Stabilize PhotoScan integration tests",
+    "status": "published",
+    "prs": [
+      527
+    ],
+    "sections": {
+      "Improved": [
+        "Stabilize PhotoScan integration tests"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-526",
     "date": "2026-11-21",
     "title": "Add focused unit tests for five SafeDose modules",
