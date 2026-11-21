@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-638",
+    "date": "2026-11-21",
+    "title": "Ignore agent task artifacts at the repository root (T-10158)",
+    "status": "published",
+    "prs": [
+      638
+    ],
+    "sections": {
+      "Improved": [
+        "Ignore agent task artifacts at the repository root (T-10158)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-637",
     "date": "2026-11-21",
     "title": "Link Settings to billing help (T-10481)",
