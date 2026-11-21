@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-628",
+    "date": "2026-11-21",
+    "title": "Match protocol review to the logged compound",
+    "status": "published",
+    "prs": [
+      628
+    ],
+    "sections": {
+      "Improved": [
+        "Match protocol review to the logged compound"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-627",
     "date": "2026-11-21",
     "title": "Expand dose calculator hook JSDoc",
