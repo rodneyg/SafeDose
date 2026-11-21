@@ -28,6 +28,160 @@
     }
   },
   {
+    "id": "2026-11-21-pr-514",
+    "date": "2026-11-21",
+    "title": "Test dose conversions at syringe ticks and capacity",
+    "status": "published",
+    "prs": [
+      514
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose conversions at syringe ticks and capacity"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-513",
+    "date": "2026-11-21",
+    "title": "T-1210: Show errors in web dose entry",
+    "status": "published",
+    "prs": [
+      513
+    ],
+    "sections": {
+      "Improved": [
+        "T-1210: Show errors in web dose entry"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-508",
+    "date": "2026-11-21",
+    "title": "Gate wrong numbers in offline vision replays",
+    "status": "published",
+    "prs": [
+      508
+    ],
+    "sections": {
+      "Improved": [
+        "Gate wrong numbers in offline vision replays"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-506",
+    "date": "2026-11-21",
+    "title": "Require manual selection for uncertain scan capacity",
+    "status": "published",
+    "prs": [
+      506
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual selection for uncertain scan capacity"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-505",
+    "date": "2026-11-21",
+    "title": "T-1293: Compare retake tips after refused scans",
+    "status": "published",
+    "prs": [
+      505
+    ],
+    "sections": {
+      "Improved": [
+        "T-1293: Compare retake tips after refused scans"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-501",
+    "date": "2026-11-21",
+    "title": "T-1141 Fix SafeDose web startup and extend production smoke",
+    "status": "published",
+    "prs": [
+      501
+    ],
+    "sections": {
+      "Improved": [
+        "T-1141 Fix SafeDose web startup and extend production smoke"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-500",
+    "date": "2026-11-21",
+    "title": "Fix compatible npm audit findings",
+    "status": "published",
+    "prs": [
+      500
+    ],
+    "sections": {
+      "Improved": [
+        "Fix compatible npm audit findings"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-497",
+    "date": "2026-11-21",
+    "title": "Add render tests for 4 components",
+    "status": "published",
+    "prs": [
+      497
+    ],
+    "sections": {
+      "Improved": [
+        "Add render tests for 4 components"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-495",
+    "date": "2026-11-21",
+    "title": "Add TypeScript noEmit check in CI",
+    "status": "published",
+    "prs": [
+      495
+    ],
+    "sections": {
+      "Improved": [
+        "Add TypeScript noEmit check in CI"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-494",
+    "date": "2026-11-21",
+    "title": "Add Dependabot config for npm and actions",
+    "status": "published",
+    "prs": [
+      494
+    ],
+    "sections": {
+      "Improved": [
+        "Add Dependabot config for npm and actions"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-490",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useBeforeFirstScanPrompt",
+    "status": "published",
+    "prs": [
+      490
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useBeforeFirstScanPrompt"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",

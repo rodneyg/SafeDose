@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import ManualEntryScreen from './ManualEntryScreen';
 
@@ -40,7 +41,7 @@ function renderStep(
     setTotalAmount: jest.fn(),
     solutionVolume: '5',
     setSolutionVolume: jest.fn(),
-    manualSyringe: { type: 'Standard', volume: 1 },
+    manualSyringe: { type: 'Standard', volume: '1 ml' },
     setManualSyringe: jest.fn(),
     doseValue: null,
     calculatedVolume: null,
@@ -73,8 +74,11 @@ function renderStep(
   return { screen: render(<ManualEntryScreen {...props} />), props };
 }
 
-describe('manual entry malformed input', () => {
-  beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => {}));
+describe('native manual entry input validation', () => {
+  beforeEach(() => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
   afterEach(() => jest.restoreAllMocks());
 
   it.each(['', '0', '-1', 'not a number', 'NaN', 'Infinity'])(
@@ -112,6 +116,18 @@ describe('manual entry malformed input', () => {
       expect(screen.UNSAFE_queryByType('FinalResultDisplay' as any)).toBeNull();
     },
   );
+
+  it.each([
+    ['dose', 'handleNextDose'],
+    ['concentrationInput', 'handleNextConcentrationInput'],
+    ['totalAmountInput', 'handleNextTotalAmountInput'],
+  ] as const)('allows a positive decimal on the %s step', (step, handler) => {
+    const { screen, props } = renderStep(step, '0.5');
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Next step' }));
+    expect(props[handler]).toHaveBeenCalledTimes(1);
+  });
 
   it('blocks an incompatible concentration unit and shows the compatibility error', () => {
     const { screen, props } = renderStep('concentrationInput', '10', {
