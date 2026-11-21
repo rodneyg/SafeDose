@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-590",
+    "date": "2026-11-21",
+    "title": "T-9126: Test syringe marking guidance",
+    "status": "published",
+    "prs": [
+      590
+    ],
+    "sections": {
+      "Improved": [
+        "T-9126: Test syringe marking guidance"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-574",
     "date": "2026-11-21",
     "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
