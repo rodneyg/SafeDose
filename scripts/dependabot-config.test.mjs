@@ -18,6 +18,9 @@ updates:
       # Firebase 11 expects AsyncStorage 1.x. AsyncStorage 3 also requires Kotlin 2.1.
       - dependency-name: "@react-native-async-storage/async-storage"
         update-types: ["version-update:semver-major"]
+      # The Fabric build on React Native 0.76 supports react-native-screens through 4.4.x.
+      - dependency-name: react-native-screens
+        versions: [">= 4.5.0"]
       # Keep the verified Reanimated 3.17 line until the Expo SDK is upgraded.
       - dependency-name: react-native-reanimated
         versions: [">= 3.18.0"]
