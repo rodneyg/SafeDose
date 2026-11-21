@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-598",
+    "date": "2026-11-21",
+    "title": "Add unit tests for imageQualityMetrics",
+    "status": "published",
+    "prs": [
+      598
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for imageQualityMetrics"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-597",
     "date": "2026-11-21",
     "title": "Add unit tests for lib/pricingDefault.ts",
