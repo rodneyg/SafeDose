@@ -1,4 +1,4 @@
-import { syringeOptions, type CalculateDoseParams } from '../dosing';
+import { parseInputNumber, syringeOptions, type CalculateDoseParams } from '../dosing';
 import { SCAN_MODEL, SCAN_PROMPT, buildScanRequest } from './request';
 
 // Snapshot rather than the moving gpt-4o alias. No client or credentials live here.
@@ -34,13 +34,15 @@ export function parseScanQuantity(value: string | null, concentration = false):
   { value: number; unit: 'mg' | 'mcg' | 'units' } | null {
   if (!value) return null;
   const match = value.match(new RegExp(`^(${DECIMAL})\\s*(mg|mcg|µg|μg|units|u|iu|usp units)${concentration ? '\\s*/\\s*ml' : ''}$`, 'i'));
-  if (!match || !Number.isFinite(Number(match[1])) || Number(match[1]) <= 0) return null;
+  if (!match) return null;
+  const amount = parseInputNumber(match[1]);
+  if (!(amount > 0)) return null;
   const unit = match[2].toLowerCase();
-  return { value: Number(match[1]), unit: unit === 'mg' ? 'mg' : ['mcg', 'µg', 'μg'].includes(unit) ? 'mcg' : 'units' };
+  return { value: amount, unit: unit === 'mg' ? 'mg' : ['mcg', 'µg', 'μg'].includes(unit) ? 'mcg' : 'units' };
 }
 
 function parseSyringeMarkings(markings: string | null): number[] | null {
-  const values = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? Number(mark.trim()) : NaN) ?? [];
+  const values = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? parseInputNumber(mark) : NaN) ?? [];
   if (values.length < 2 || values.some((value, i) => !Number.isFinite(value) || (i > 0 && value <= values[i - 1]))) {
     return null;
   }
@@ -64,7 +66,8 @@ export function parseScanModelOutput(raw: string): ScanResult {
   };
   const volume = text(s.volume);
   const capacityMatch = volume?.match(new RegExp(`^(${DECIMAL})\\s*ml$`, 'i'));
-  const capacity = capacityMatch && Number(capacityMatch[1]) > 0 && Number.isFinite(Number(capacityMatch[1])) ? Number(capacityMatch[1]) : null;
+  const parsedCapacity = capacityMatch ? parseInputNumber(capacityMatch[1]) : NaN;
+  const capacity = parsedCapacity > 0 ? parsedCapacity : null;
   const type = s.type === 'Insulin' || s.type === 'Standard' ? s.type : null;
   const scale = s.scale === 'U-100' || s.scale === 'U-40' || s.scale === 'mL' ? s.scale : null;
   const markings = text(s.markings);
