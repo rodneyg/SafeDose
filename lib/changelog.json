@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-521",
+    "date": "2026-11-21",
+    "title": "Improve Log and Reference keyboard access and contrast",
+    "status": "published",
+    "prs": [
+      521
+    ],
+    "sections": {
+      "Improved": [
+        "Improve Log and Reference keyboard access and contrast"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-520",
     "date": "2026-11-21",
     "title": "Complete local dosing presets",
