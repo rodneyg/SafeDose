@@ -312,6 +312,109 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
   }
 });
 
+it.each([
+  ['0', /invalid dose/i, false],
+  ['0.000001', /outside safe thresholds/i, true],
+  ['1000000000000000', /2 mL per-injection safety limit/i, true],
+  ['1 mg', /invalid dose/i, false],
+] as const)('keeps dose %s from reaching the draw result', (dose, error, showVolumeErrorModal) => {
+  const h = hook();
+  act(() => {
+    h().setDose(dose);
+    h().setMedicationInputType('concentration');
+    h().setConcentrationAmount('10');
+  });
+  act(() => h().handleCalculateFinal());
+
+  expect(h().calculationError).toMatch(error);
+  expect(h().calculatedVolume).toBeNull();
+  expect(h().recommendedMarking).toBeNull();
+  expect(h().showVolumeErrorModal).toBe(showVolumeErrorModal);
+  if (showVolumeErrorModal) act(() => h().handleCloseVolumeErrorModal());
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
+
+it.each([
+  ['0', '1', 'mg', /invalid dose/i],
+  ['1', '0', 'mg', /valid total amount/i],
+  ['1', '10', 'units', /vial and concentration units are incompatible/i],
+] as const)('clears a prior derived concentration before reviewing dose %s and vial %s %s', (dose, total, totalUnit, error) => {
+  const h = hook();
+  act(() => {
+    h().setDose('1');
+    h().setMedicationInputType('totalAmount');
+    h().setTotalAmount('10');
+    h().setSolutionVolume('2');
+  });
+  act(() => h().handleCalculateFinal());
+  expect(h().calculatedConcentration).toBe(5);
+
+  act(() => {
+    h().setDose(dose);
+    h().setTotalAmount(total);
+    h().setTotalAmountUnit(totalUnit);
+  });
+
+  expect(h().calculationError).toMatch(error);
+  expect(h().calculatedConcentration).toBeNull();
+  expect(h().calculatedVolume).toBeNull();
+  expect(h().recommendedMarking).toBeNull();
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
+
+it.each([
+  ['', /enter a concentration amount/i],
+  ['0', /valid concentration amount greater than 0/i],
+  ['10mg', /valid concentration amount greater than 0/i],
+] as const)('keeps concentration input %j on the strength step', (amount, error) => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('concentrationInput');
+    h().setConcentrationAmount(amount);
+  });
+  act(() => h().handleNextConcentrationInput());
+  expect(h().formError).toMatch(error);
+  expect(h().manualStep).toBe('concentrationInput');
+  expect(h().concentration).toBeNull();
+});
+
+it('requires the concentration unit at entry and confirmation', () => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('concentrationInput');
+    h().setMedicationInputType('concentration');
+    h().setDose('1');
+    h().setConcentrationAmount('10');
+    h().setNeedsConcentrationUnit(true);
+  });
+  act(() => h().handleNextConcentrationInput());
+  expect(h().formError).toMatch(/select a concentration unit/i);
+  expect(h().manualStep).toBe('concentrationInput');
+
+  act(() => h().handleCalculateFinal());
+  expect(h().calculationError).toMatch(/select the concentration unit/i);
+  expect(h().recommendedMarking).toBeNull();
+  act(() => h().handleNextPreDoseConfirmation());
+  expect(h().manualStep).toBe('preDoseConfirmation');
+});
+
+it.each([
+  ['', /enter the solution volume in mL/i],
+  ['0', /valid solution volume greater than 0/i],
+  ['1 ml', /valid solution volume greater than 0/i],
+] as const)('keeps solution volume %j on the reconstitution step', (volume, error) => {
+  const h = hook();
+  act(() => {
+    h().setManualStep('reconstitution');
+    h().setSolutionVolume(volume);
+  });
+  act(() => h().handleNextReconstitution());
+  expect(h().formError).toMatch(error);
+  expect(h().manualStep).toBe('reconstitution');
+});
+
 it.each(['concentration', 'totalAmount'] as const)('reports required and invalid web inputs on the %s path', async inputType => {
   jest.replaceProperty(Platform, 'OS', 'web');
   let state!: ReturnType<typeof useDoseCalculator>;

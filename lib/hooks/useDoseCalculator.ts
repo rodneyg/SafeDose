@@ -398,6 +398,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       setDoseValue(parseDoseInput(dose));
       setGuidance(null);
       setCalculatedVolume(null);
+      setCalculatedConcentration(null);
       setRecommendedMarking(null);
       if (needsConcentrationUnit && medicationInputType === 'concentration') {
         setCalculationError('Needs input: select the concentration unit.');
