@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-634",
+    "date": "2026-11-21",
+    "title": "Remove tracked agent queue artifacts",
+    "status": "published",
+    "prs": [
+      634
+    ],
+    "sections": {
+      "Improved": [
+        "Remove tracked agent queue artifacts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-633",
     "date": "2026-11-21",
     "title": "Use saved history for injection-site suggestions (T-10130)",
