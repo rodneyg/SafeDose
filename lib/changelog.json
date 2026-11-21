@@ -280,6 +280,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-542",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useAuth",
+    "status": "published",
+    "prs": [
+      542
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useAuth"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
