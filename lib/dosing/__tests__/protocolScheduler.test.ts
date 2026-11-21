@@ -67,4 +67,30 @@ describe('scheduleProtocol', () => {
       'Protocol days must be positive whole numbers.',
     );
   });
+
+  describe('with a frozen clock', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2035-06-15T23:59:59.000Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('schedules the first date and the next protocol fire from the selected date', () => {
+      expect(scheduleProtocol(protocol, '2026-11-20')).toEqual([
+        { day: 1, dose: '2 mg', date: '2026-11-20' },
+        { day: 8, dose: '4 mg', date: '2026-11-27' },
+      ]);
+    });
+
+    it('cancels optional scheduling when the selected date is cleared', () => {
+      const cancelled = scheduleProtocol(protocol, null);
+
+      expect(cancelled).toEqual(protocol);
+      expect(cancelled).not.toBe(protocol);
+      expect(cancelled[0]).not.toBe(protocol[0]);
+      expect(cancelled.every((entry) => entry.date === undefined)).toBe(true);
+    });
+  });
 });

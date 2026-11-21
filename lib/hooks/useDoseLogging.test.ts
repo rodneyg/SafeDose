@@ -182,6 +182,32 @@ describe('useDoseLogging', () => {
     expect(console.error).toHaveBeenCalledWith('Error deleting from Firestore:', error);
   });
 
+  it('flushes all queued doses and skips a subsequent sync when the queue is empty', async () => {
+    storage.getItem.mockResolvedValueOnce(JSON.stringify([newerLog, olderLog]));
+    mockAddDocWithEnv
+      .mockResolvedValueOnce({ id: 'remote-newer-dose' } as never)
+      .mockResolvedValueOnce({ id: 'remote-older-dose' } as never);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await result.current.syncLogsToFirestore();
+
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(2);
+    expect(mockAddDocWithEnv).toHaveBeenNthCalledWith(1, expect.anything(), newerLog);
+    expect(mockAddDocWithEnv).toHaveBeenNthCalledWith(2, expect.anything(), olderLog);
+    const syncedLogs = JSON.stringify([
+      { ...newerLog, firestoreId: 'remote-newer-dose' },
+      { ...olderLog, firestoreId: 'remote-older-dose' },
+    ]);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(storage.setItem).toHaveBeenCalledWith(storageKey, syncedLogs);
+
+    storage.getItem.mockResolvedValueOnce(syncedLogs);
+    await result.current.syncLogsToFirestore();
+
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(2);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+  });
+
   it('continues after a Firestore sync failure and retries only the failed dose', async () => {
     const error = new Error('Firestore sync upload unavailable');
     storage.getItem.mockResolvedValueOnce(JSON.stringify([newerLog, olderLog]));

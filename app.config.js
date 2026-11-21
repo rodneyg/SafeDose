@@ -38,6 +38,7 @@ module.exports = {
     typedRoutes: true
   },
   extra: {
+    scanQualityPrecheck: process.env.EXPO_PUBLIC_SCAN_QUALITY_PRECHECK === 'true',
     NEXTPUBLIC_ENVIRONMENT: process.env.NEXTPUBLIC_ENVIRONMENT || 'production',
     // Never put OPENAI_API_KEY (or other secrets) in extra — Expo bakes extra into the client bundle.
     // Scan analysis reads process.env.OPENAI_API_KEY only in /api/analyze-scan on the server.

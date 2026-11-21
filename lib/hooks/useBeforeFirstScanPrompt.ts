@@ -12,10 +12,15 @@ interface BeforeFirstScanState {
 }
 
 export interface BeforeFirstScanPrompt {
+  /** Returns whether the prompt is ready and eligible to be displayed. */
   shouldShowPrompt: () => boolean;
+  /** Records another prompt display for the current user. */
   markPromptAsShown: () => Promise<void>;
+  /** Permanently opts the current user out of the prompt. */
   markDontShowAgain: () => Promise<void>;
+  /** Whether the current user's saved prompt state is still loading. */
   isLoading: boolean;
+  /** Number of prompt displays recorded for the current user. */
   showCount: number;
 }
 

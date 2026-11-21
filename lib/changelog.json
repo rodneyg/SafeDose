@@ -1,5 +1,159 @@
 [
   {
+    "id": "2026-11-21-pr-623",
+    "date": "2026-11-21",
+    "title": "Harden checkout session validation",
+    "status": "published",
+    "prs": [
+      623
+    ],
+    "sections": {
+      "Improved": [
+        "Harden checkout session validation"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-616",
+    "date": "2026-11-21",
+    "title": "Guard Expo SDK 52 updates and pin checkout workflow refs",
+    "status": "published",
+    "prs": [
+      616
+    ],
+    "sections": {
+      "Improved": [
+        "Guard Expo SDK 52 updates and pin checkout workflow refs"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-615",
+    "date": "2026-11-21",
+    "title": "Clear stale injection site rotation warning",
+    "status": "published",
+    "prs": [
+      615
+    ],
+    "sections": {
+      "Improved": [
+        "Clear stale injection site rotation warning"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-604",
+    "date": "2026-11-21",
+    "title": "Fix New Dose browser title",
+    "status": "published",
+    "prs": [
+      604
+    ],
+    "sections": {
+      "Improved": [
+        "Fix New Dose browser title"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-603",
+    "date": "2026-11-21",
+    "title": "Add email capture to upgrade flow",
+    "status": "published",
+    "prs": [
+      603
+    ],
+    "sections": {
+      "Improved": [
+        "Add email capture to upgrade flow"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-602",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to useAuth hook",
+    "status": "published",
+    "prs": [
+      602
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-601",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to scan hook",
+    "status": "published",
+    "prs": [
+      601
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to scan hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-600",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to subscription hook",
+    "status": "published",
+    "prs": [
+      600
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to subscription hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-599",
+    "date": "2026-11-21",
+    "title": "Add unit tests for readPhotoMetrics.web.ts",
+    "status": "published",
+    "prs": [
+      599
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for readPhotoMetrics.web.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-598",
+    "date": "2026-11-21",
+    "title": "Add unit tests for imageQualityMetrics",
+    "status": "published",
+    "prs": [
+      598
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for imageQualityMetrics"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-597",
+    "date": "2026-11-21",
+    "title": "Add unit tests for lib/pricingDefault.ts",
+    "status": "published",
+    "prs": [
+      597
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/pricingDefault.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-596",
     "date": "2026-11-21",
     "title": "Tag the tested SHA, not the checkout HEAD",
@@ -38,6 +192,34 @@
     "sections": {
       "Improved": [
         "Add unit tests for apiRateLimit.js"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-593",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useWebOffline.ts",
+    "status": "published",
+    "prs": [
+      593
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useWebOffline.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-592",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useEvaluationDataCapture",
+    "status": "published",
+    "prs": [
+      592
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useEvaluationDataCapture"
       ]
     }
   },
@@ -98,6 +280,48 @@
     }
   },
   {
+    "id": "2026-11-21-pr-586",
+    "date": "2026-11-21",
+    "title": "Add unit tests for inputs.ts",
+    "status": "published",
+    "prs": [
+      586
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for inputs.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-585",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useReconstitutionPlanner",
+    "status": "published",
+    "prs": [
+      585
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useReconstitutionPlanner"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-583",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useFeedbackStorage",
+    "status": "published",
+    "prs": [
+      583
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useFeedbackStorage"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-582",
     "date": "2026-11-21",
     "title": "Test the shared scan request builder",
@@ -108,6 +332,20 @@
     "sections": {
       "Improved": [
         "Test the shared scan request builder"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-581",
+    "date": "2026-11-21",
+    "title": "Add unit tests for hooks/use-toast.ts",
+    "status": "published",
+    "prs": [
+      581
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for hooks/use-toast.ts"
       ]
     }
   },
@@ -136,6 +374,20 @@
     "sections": {
       "Improved": [
         "T-1641: Test reconstitution planner validation and exact handoff"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-570",
+    "date": "2026-11-21",
+    "title": "Add unit tests for ReconstitutionPlanner",
+    "status": "published",
+    "prs": [
+      570
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for ReconstitutionPlanner"
       ]
     }
   },
@@ -280,6 +532,76 @@
     }
   },
   {
+    "id": "2026-11-21-pr-550",
+    "date": "2026-11-21",
+    "title": "Add tests for scheduling helpers",
+    "status": "published",
+    "prs": [
+      550
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for scheduling helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-549",
+    "date": "2026-11-21",
+    "title": "Add tests for offline queue or sync helpers",
+    "status": "published",
+    "prs": [
+      549
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for offline queue or sync helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-548",
+    "date": "2026-11-21",
+    "title": "Fix and test dose history date display",
+    "status": "published",
+    "prs": [
+      548
+    ],
+    "sections": {
+      "Improved": [
+        "Fix and test dose history date display"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-547",
+    "date": "2026-11-21",
+    "title": "Add unit tests for manual dose entry",
+    "status": "published",
+    "prs": [
+      547
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for manual dose entry"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-546",
+    "date": "2026-11-21",
+    "title": "Add unit tests for protocol list rendering",
+    "status": "published",
+    "prs": [
+      546
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for protocol list rendering"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-542",
     "date": "2026-11-21",
     "title": "Add unit tests for useAuth",
@@ -406,6 +728,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-532",
+    "date": "2026-11-21",
+    "title": "Test useAuth provider requirement",
+    "status": "published",
+    "prs": [
+      532
+    ],
+    "sections": {
+      "Improved": [
+        "Test useAuth provider requirement"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
@@ -420,6 +756,34 @@
     }
   },
   {
+    "id": "2026-11-21-pr-529",
+    "date": "2026-11-21",
+    "title": "Add optional protocol setup before the first scan",
+    "status": "published",
+    "prs": [
+      529
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional protocol setup before the first scan"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-527",
+    "date": "2026-11-21",
+    "title": "Stabilize PhotoScan integration tests",
+    "status": "published",
+    "prs": [
+      527
+    ],
+    "sections": {
+      "Improved": [
+        "Stabilize PhotoScan integration tests"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-526",
     "date": "2026-11-21",
     "title": "Add focused unit tests for five SafeDose modules",
@@ -430,6 +794,34 @@
     "sections": {
       "Improved": [
         "Add focused unit tests for five SafeDose modules"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-524",
+    "date": "2026-11-21",
+    "title": "Add the SafeDose /ping deployment check",
+    "status": "published",
+    "prs": [
+      524
+    ],
+    "sections": {
+      "Improved": [
+        "Add the SafeDose /ping deployment check"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-523",
+    "date": "2026-11-21",
+    "title": "Ask for a retake before uploading blurry or overexposed photos",
+    "status": "published",
+    "prs": [
+      523
+    ],
+    "sections": {
+      "Improved": [
+        "Ask for a retake before uploading blurry or overexposed photos"
       ]
     }
   },
@@ -476,6 +868,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-519",
+    "date": "2026-11-21",
+    "title": "Fix native build for iOS and Android",
+    "status": "published",
+    "prs": [
+      519
+    ],
+    "sections": {
+      "Improved": [
+        "Fix native build for iOS and Android"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-518",
     "date": "2026-11-21",
     "title": "Add optional dosing protocol setup and preview",
@@ -486,6 +892,20 @@
     "sections": {
       "Improved": [
         "Add optional dosing protocol setup and preview"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-517",
+    "date": "2026-11-21",
+    "title": "Recover from denied or unavailable iOS camera",
+    "status": "published",
+    "prs": [
+      517
+    ],
+    "sections": {
+      "Improved": [
+        "Recover from denied or unavailable iOS camera"
       ]
     }
   },
@@ -546,6 +966,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-509",
+    "date": "2026-11-21",
+    "title": "Guide refused or unclear scans into manual entry",
+    "status": "published",
+    "prs": [
+      509
+    ],
+    "sections": {
+      "Improved": [
+        "Guide refused or unclear scans into manual entry"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-508",
     "date": "2026-11-21",
     "title": "Gate wrong numbers in offline vision replays",
@@ -556,6 +990,20 @@
     "sections": {
       "Improved": [
         "Gate wrong numbers in offline vision replays"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-507",
+    "date": "2026-11-21",
+    "title": "Require confirmation of scanned vial substance",
+    "status": "published",
+    "prs": [
+      507
+    ],
+    "sections": {
+      "Improved": [
+        "Require confirmation of scanned vial substance"
       ]
     }
   },
@@ -616,6 +1064,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-498",
+    "date": "2026-11-21",
+    "title": "Add top-level error boundary with fallback",
+    "status": "published",
+    "prs": [
+      498
+    ],
+    "sections": {
+      "Improved": [
+        "Add top-level error boundary with fallback"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-497",
     "date": "2026-11-21",
     "title": "Add render tests for 4 components",
@@ -626,6 +1088,20 @@
     "sections": {
       "Improved": [
         "Add render tests for 4 components"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-496",
+    "date": "2026-11-21",
+    "title": "Add SAFE_DOSE_REPORT.md documentation",
+    "status": "published",
+    "prs": [
+      496
+    ],
+    "sections": {
+      "Improved": [
+        "Add SAFE_DOSE_REPORT.md documentation"
       ]
     }
   },
