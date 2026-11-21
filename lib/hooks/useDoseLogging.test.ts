@@ -57,6 +57,13 @@ const newerLog: DoseLog = {
   timestamp: '2026-01-02T08:00:00.000Z',
 };
 
+const doseLogAt = (id: string, timestamp: string): DoseLog => ({
+  ...doseInfo,
+  id,
+  userId: 'test-user-123',
+  timestamp,
+});
+
 describe('useDoseLogging', () => {
   const checkLogUsageLimit = jest.fn();
   const incrementLogsUsed = jest.fn();
@@ -79,7 +86,71 @@ describe('useDoseLogging', () => {
     } as unknown as ReturnType<typeof useLogUsageTracking>);
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('stores the correct instant across an America/Detroit date boundary', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-01-15T23:59:59.000-05:00'));
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.logDose(doseInfo);
+    });
+
+    const storedLogs = JSON.parse(storage.setItem.mock.calls[0][1]);
+    expect(storedLogs[0]).toMatchObject({
+      timestamp: '2026-01-16T04:59:59.000Z',
+    });
+    expect(new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Detroit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(storedLogs[0].timestamp))).toBe('2026-01-15');
+  });
+
+  it.each([
+    ['before the spring transition', '2026-03-08T01:59:59.000-05:00', '2026-03-08T06:59:59.000Z'],
+    ['after the spring transition', '2026-03-08T03:00:00.000-04:00', '2026-03-08T07:00:00.000Z'],
+    ['the first fall 1:30', '2026-11-01T01:30:00.000-04:00', '2026-11-01T05:30:00.000Z'],
+    ['the second fall 1:30', '2026-11-01T01:30:00.000-05:00', '2026-11-01T06:30:00.000Z'],
+  ])('preserves the America/Detroit offset %s', async (_label, localTime, expectedTimestamp) => {
+    jest.useFakeTimers().setSystemTime(new Date(localTime));
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.logDose(doseInfo);
+    });
+
+    const storedLogs = JSON.parse(storage.setItem.mock.calls[0][1]);
+    expect(storedLogs[0].timestamp).toBe(expectedTimestamp);
+  });
+
+  it('sorts existing logs by instant through Detroit DST transitions', async () => {
+    const logs = [
+      doseLogAt('spring-before', '2026-03-08T01:59:59.000-05:00'),
+      doseLogAt('spring-after', '2026-03-08T03:00:00.000-04:00'),
+      doseLogAt('fall-first-130', '2026-11-01T01:30:00.000-04:00'),
+      doseLogAt('fall-second-130', '2026-11-01T01:30:00.000-05:00'),
+    ];
+    storage.getItem.mockResolvedValue(JSON.stringify(logs));
+    mockGetDocs.mockResolvedValueOnce({ forEach: jest.fn() } as Awaited<ReturnType<typeof getDocs>>);
+    const { result } = renderHook(() => useDoseLogging());
+
+    let history: Awaited<ReturnType<typeof result.current.getDoseLogHistory>> = [];
+    await act(async () => {
+      history = await result.current.getDoseLogHistory();
+    });
+
+    expect(history.map(log => log.id)).toEqual([
+      'fall-second-130',
+      'fall-first-130',
+      'spring-after',
+      'spring-before',
+    ]);
+  });
 
   it('logs a dose to storage and records its usage', async () => {
     const { result } = renderHook(() => useDoseLogging());
