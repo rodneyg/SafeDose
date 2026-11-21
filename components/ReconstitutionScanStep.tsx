@@ -52,7 +52,7 @@ export default function ReconstitutionScanStep({
       {error && (
         <View style={styles.errorContainer}>
           <AlertCircle color="#DC2626" size={16} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>
         </View>
       )}
 
