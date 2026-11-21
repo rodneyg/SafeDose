@@ -546,6 +546,19 @@
     }
   },
   {
+    "id": "2026-11-20-scan-review",
+    "date": "2026-11-20",
+    "title": "See what SafeDose detected before you continue",
+    "status": "published",
+    "prs": [],
+    "sections": {
+      "Improved": [
+        "After a photo scan, the review screen lists the syringe and vial details SafeDose detected alongside your photo.",
+        "Check those details against your syringe and vial label. Read the syringe fill line yourself, then choose I checked both. You can retake the photo from the same screen."
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",
