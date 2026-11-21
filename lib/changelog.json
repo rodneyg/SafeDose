@@ -798,6 +798,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-525",
+    "date": "2026-11-21",
+    "title": "T-1143: Label dose entry and account controls for assistive technology",
+    "status": "published",
+    "prs": [
+      525
+    ],
+    "sections": {
+      "Improved": [
+        "T-1143: Label dose entry and account controls for assistive technology"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-524",
     "date": "2026-11-21",
     "title": "Add the SafeDose /ping deployment check",
