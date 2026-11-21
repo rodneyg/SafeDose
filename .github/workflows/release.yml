@@ -2,8 +2,8 @@ name: Tag and release
 
 # Wait for the CI workflow (name is exactly "CI") to finish on main, then tag
 # only the SHA that actually passed. Do not run in parallel with CI on push.
-# Check out the default branch so this privileged workflow runs release scripts
-# from already-merged main, not from workflow_run.head_sha.
+# Check out the default branch (not workflow_run.head_sha) so this privileged
+# workflow runs release scripts from already-merged main.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -23,22 +23,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
-      - name: Fetch the tested SHA
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin "${{ github.event.workflow_run.head_sha }}"
+          persist-credentials: false
       - name: Inspect head commit
         id: head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          sha="${{ github.event.workflow_run.head_sha }}"
-          msg="$(git log -1 --format=%s "$sha")"
-          author="$(git log -1 --format=%an "$sha")"
-          committer="$(git log -1 --format=%cn "$sha")"
+          data="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}")"
+          msg="$(printf '%s' "$data" | jq -r '.commit.message' | head -n 1)"
+          author="$(printf '%s' "$data" | jq -r '.commit.author.name')"
+          committer="$(printf '%s' "$data" | jq -r '.commit.committer.name')"
           {
             echo "message<<EOF"
-            git log -1 --format=%B "$sha"
+            printf '%s' "$data" | jq -r '.commit.message'
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           skip=false
@@ -52,7 +53,7 @@ jobs:
             reason="head commit is a changelog publish"
           fi
           echo "skip=$skip" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$sha skip=$skip reason=$reason author=$author committer=$committer subject=$msg"
+          echo "head_sha=$SHA skip=$skip reason=$reason author=$author committer=$committer subject=$msg"
       - name: Create semver tag and GitHub Release
         if: steps.head.outputs.skip == 'false'
         env:
@@ -60,4 +61,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
           GITHUB_EVENT_HEAD_COMMIT_MESSAGE: ${{ steps.head.outputs.message }}
-        run: python3 scripts/create-release.py
+        run: |
+          set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 scripts/create-release.py
