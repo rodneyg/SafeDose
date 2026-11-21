@@ -1,5 +1,243 @@
 [
   {
+    "id": "2026-11-21-pr-564",
+    "date": "2026-11-21",
+    "title": "Add Vercel Web Analytics to SafeDose web",
+    "status": "published",
+    "prs": [
+      564
+    ],
+    "sections": {
+      "Improved": [
+        "Add Vercel Web Analytics to SafeDose web"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-563",
+    "date": "2026-11-21",
+    "title": "Remove the lapsed SafeDose domain from scan API references",
+    "status": "published",
+    "prs": [
+      563
+    ],
+    "sections": {
+      "Improved": [
+        "Remove the lapsed SafeDose domain from scan API references"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-513",
+    "date": "2026-11-21",
+    "title": "T-1210: Show errors in web dose entry",
+    "status": "published",
+    "prs": [
+      513
+    ],
+    "sections": {
+      "Improved": [
+        "T-1210: Show errors in web dose entry"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-508",
+    "date": "2026-11-21",
+    "title": "Gate wrong numbers in offline vision replays",
+    "status": "published",
+    "prs": [
+      508
+    ],
+    "sections": {
+      "Improved": [
+        "Gate wrong numbers in offline vision replays"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-506",
+    "date": "2026-11-21",
+    "title": "Require manual selection for uncertain scan capacity",
+    "status": "published",
+    "prs": [
+      506
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual selection for uncertain scan capacity"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-505",
+    "date": "2026-11-21",
+    "title": "T-1293: Compare retake tips after refused scans",
+    "status": "published",
+    "prs": [
+      505
+    ],
+    "sections": {
+      "Improved": [
+        "T-1293: Compare retake tips after refused scans"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-501",
+    "date": "2026-11-21",
+    "title": "T-1141 Fix SafeDose web startup and extend production smoke",
+    "status": "published",
+    "prs": [
+      501
+    ],
+    "sections": {
+      "Improved": [
+        "T-1141 Fix SafeDose web startup and extend production smoke"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-500",
+    "date": "2026-11-21",
+    "title": "Fix compatible npm audit findings",
+    "status": "published",
+    "prs": [
+      500
+    ],
+    "sections": {
+      "Improved": [
+        "Fix compatible npm audit findings"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-497",
+    "date": "2026-11-21",
+    "title": "Add render tests for 4 components",
+    "status": "published",
+    "prs": [
+      497
+    ],
+    "sections": {
+      "Improved": [
+        "Add render tests for 4 components"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-495",
+    "date": "2026-11-21",
+    "title": "Add TypeScript noEmit check in CI",
+    "status": "published",
+    "prs": [
+      495
+    ],
+    "sections": {
+      "Improved": [
+        "Add TypeScript noEmit check in CI"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-494",
+    "date": "2026-11-21",
+    "title": "Add Dependabot config for npm and actions",
+    "status": "published",
+    "prs": [
+      494
+    ],
+    "sections": {
+      "Improved": [
+        "Add Dependabot config for npm and actions"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-490",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useBeforeFirstScanPrompt",
+    "status": "published",
+    "prs": [
+      490
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useBeforeFirstScanPrompt"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-504",
+    "date": "2026-11-20",
+    "title": "Add secondary dosing problem page",
+    "status": "published",
+    "prs": [
+      504
+    ],
+    "sections": {
+      "Improved": [
+        "Add secondary dosing problem page"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-503",
+    "date": "2026-11-20",
+    "title": "Require manual verification of SafeDose scan fills",
+    "status": "published",
+    "prs": [
+      503
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual verification of SafeDose scan fills"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-499",
+    "date": "2026-11-20",
+    "title": "Add automatic version tags, GitHub releases, and a one-command rollback",
+    "status": "published",
+    "prs": [
+      499
+    ],
+    "sections": {
+      "Improved": [
+        "Add automatic version tags, GitHub releases, and a one-command rollback"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-493",
+    "date": "2026-11-20",
+    "title": "Add unit tests for useDoseLogging",
+    "status": "published",
+    "prs": [
+      493
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useDoseLogging"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-489",
+    "date": "2026-11-20",
+    "title": "Add unit tests for usePowerUserPromotion",
+    "status": "published",
+    "prs": [
+      489
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for usePowerUserPromotion"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-488",
     "date": "2026-11-20",
     "title": "Expose dose calculator input types",
@@ -14,6 +252,76 @@
     }
   },
   {
+    "id": "2026-11-20-pr-487",
+    "date": "2026-11-20",
+    "title": "Add accessibility labels to scanner controls",
+    "status": "published",
+    "prs": [
+      487
+    ],
+    "sections": {
+      "Improved": [
+        "Add accessibility labels to scanner controls"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-486",
+    "date": "2026-11-20",
+    "title": "Add JSDoc for remaining hooks",
+    "status": "published",
+    "prs": [
+      486
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc for remaining hooks"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-485",
+    "date": "2026-11-20",
+    "title": "Add unit tests for scanner processing state",
+    "status": "published",
+    "prs": [
+      485
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for scanner processing state"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-484",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to scan hook",
+    "status": "published",
+    "prs": [
+      484
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to scan hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-483",
+    "date": "2026-11-20",
+    "title": "Add JSDoc to subscription hook",
+    "status": "published",
+    "prs": [
+      483
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to subscription hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-482",
     "date": "2026-11-20",
     "title": "Add JSDoc to useAuth",
@@ -24,6 +332,48 @@
     "sections": {
       "Improved": [
         "Add JSDoc to useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-481",
+    "date": "2026-11-20",
+    "title": "Fix SafeDose native Metro bundling on iOS and Android",
+    "status": "published",
+    "prs": [
+      481
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose native Metro bundling on iOS and Android"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-478",
+    "date": "2026-11-20",
+    "title": "Add user-defined dosing presets",
+    "status": "published",
+    "prs": [
+      478
+    ],
+    "sections": {
+      "Improved": [
+        "Add user-defined dosing presets"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-477",
+    "date": "2026-11-20",
+    "title": "Add optional SafeDose protocol scheduler",
+    "status": "published",
+    "prs": [
+      477
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional SafeDose protocol scheduler"
       ]
     }
   },
@@ -52,6 +402,20 @@
     "sections": {
       "Improved": [
         "Combine the SafeDose onboarding surveys"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-pr-474",
+    "date": "2026-11-20",
+    "title": "T-775: Add optional email capture to the scan limit prompt",
+    "status": "published",
+    "prs": [
+      474
+    ],
+    "sections": {
+      "Improved": [
+        "T-775: Add optional email capture to the scan limit prompt"
       ]
     }
   },

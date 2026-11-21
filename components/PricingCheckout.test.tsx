@@ -55,6 +55,7 @@ it('links the pricing footer to subscription settings, legal pages, and support'
     ['Terms of Service', '/terms'],
     ['Privacy Policy', '/privacy'],
     ['Support', '/support'],
+    ['Understanding dosing', '/dosing-problem'],
   ]);
 });
 

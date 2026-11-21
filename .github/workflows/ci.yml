@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -36,7 +48,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Export iOS and Android bundles
+        env:
+          EXPO_NO_TELEMETRY: '1'
+        run: npx expo export --platform ios --platform android --max-workers 2 --output-dir "$RUNNER_TEMP/native-export"
       - run: npm run build:web
+      - name: Bundle iOS with Expo Metro
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          EXPO_OFFLINE: '1'
+        run: npx expo export --platform ios --dev --max-workers 2 --output-dir "${{ runner.temp }}/safedose-ios"
       - name: Reject secrets in web export and resolved Expo extra
         run: npm run check:bundle-secrets
       - run: npm run test:scan-api

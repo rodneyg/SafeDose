@@ -133,6 +133,13 @@ describe('ScanScreen Autocapture', () => {
     expect(onCapture).toHaveBeenCalled();
   });
 
+  it('exposes the scanner controls by accessible label', () => {
+    const { getByLabelText } = renderWithAutocaptureOff(defaultProps);
+
+    expect(getByLabelText('Capture photo').props.accessibilityRole).toBe('button');
+    expect(getByLabelText('Cancel scan').props.accessibilityRole).toBe('button');
+  });
+
   it('should show instructions text', () => {
     const { getByText } = renderWithAutocaptureOff(defaultProps);
 

@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "git": {
+    "deploymentEnabled": {
+      "t1190-scan-fill-failsafe": false
+    }
+  },
   "ignoreCommand": "node scripts/vercel-ignore.mjs",
   "builds": [
     { "src": "package.json",      "use": "@vercel/static-build", "config": { "buildCommand":"npm run build:web", "outputDirectory":"dist" } },
@@ -9,6 +14,8 @@
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
 
     { "handle": "filesystem" },
+
+    { "src": "/(?:_expo|assets|icons|workers)/.*", "status": 404 },
 
     { "src": "/(.*)",      "dest": "/index.html" }
   ]
