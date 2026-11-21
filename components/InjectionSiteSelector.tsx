@@ -11,7 +11,7 @@ import {
 } from '../lib/injectionSites';
 
 interface InjectionSiteSelectorProps {
-  doseHistory: DoseLog[];
+  doseHistory: DoseLog[] | null;
   selectedSite: InjectionSite | null;
   onSiteSelect: (site: InjectionSite) => void;
   onConfirm: () => void;
@@ -28,9 +28,9 @@ export default function InjectionSiteSelector({
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
 
-  // Auto-select least recently used site on mount
+  // Wait for history before suggesting a site.
   useEffect(() => {
-    if (!selectedSite) {
+    if (!selectedSite && doseHistory) {
       const suggestedSite = getLeastRecentlyUsedSite(doseHistory);
       onSiteSelect(suggestedSite);
     }
@@ -38,7 +38,7 @@ export default function InjectionSiteSelector({
 
   // Check for rotation warning when site is selected
   useEffect(() => {
-    if (selectedSite) {
+    if (selectedSite && doseHistory) {
       const wasUsedRecently = wasSiteUsedRecently(selectedSite, doseHistory, 7);
       if (wasUsedRecently) {
         const lastUsed = getLastUsedDate(selectedSite, doseHistory);
@@ -57,8 +57,8 @@ export default function InjectionSiteSelector({
 
   const renderSiteButton = (site: InjectionSiteInfo) => {
     const isSelected = selectedSite === site.id;
-    const lastUsed = getLastUsedDate(site.id, doseHistory);
-    const wasUsedRecently = wasSiteUsedRecently(site.id, doseHistory, 7);
+    const lastUsed = doseHistory && getLastUsedDate(site.id, doseHistory);
+    const wasUsedRecently = doseHistory && wasSiteUsedRecently(site.id, doseHistory, 7);
     
     return (
       <TouchableOpacity

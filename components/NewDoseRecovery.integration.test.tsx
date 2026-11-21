@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/react-native/extend-expect';
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import NewDoseScreen from '../app/(tabs)/new-dose';
-import type { InjectionSite } from '../types/doseLog';
+import type { DoseLog, InjectionSite } from '../types/doseLog';
 
 type ScreenStep = 'intro' | 'scan' | 'manualEntry' | 'injectionSiteSelection';
 
@@ -178,3 +178,52 @@ it.each(['empty', 'failed'] as const)(
     expect(mockConfirmSite).toHaveBeenCalledTimes(1);
   },
 );
+
+it('suggests a site using the loaded history', async () => {
+  mockGetDoseLogHistory.mockResolvedValueOnce([{
+    injectionSite: 'abdomen_L',
+    timestamp: new Date().toISOString(),
+  }]);
+
+  mount('injectionSiteSelection');
+  expect(mockSelectSite).not.toHaveBeenCalled();
+
+  await settle();
+  expect(mockSelectSite).toHaveBeenCalledTimes(1);
+  expect(mockSelectSite).toHaveBeenCalledWith('abdomen_R');
+});
+
+it('keeps a manual site picked while history is loading', async () => {
+  mockGetDoseLogHistory.mockResolvedValueOnce([{
+    injectionSite: 'abdomen_L',
+    timestamp: new Date().toISOString(),
+  }]);
+
+  mount('injectionSiteSelection');
+  fireEvent.press(screen.getByText('Thigh Right'));
+
+  await settle();
+  expect(mockSelectSite.mock.calls).toEqual([['thigh_R']]);
+  fireEvent.press(screen.getByText('Continue'));
+  expect(mockConfirmSite).toHaveBeenCalledTimes(1);
+});
+
+
+it('ignores a history response from a picker visit that has ended', async () => {
+  let resolveOldHistory!: (history: Partial<DoseLog>[]) => void;
+  mockGetDoseLogHistory
+    .mockReturnValueOnce(new Promise(resolve => { resolveOldHistory = resolve; }))
+    .mockResolvedValueOnce([]);
+
+  mount('injectionSiteSelection');
+  navigate('manualEntry');
+  navigate('injectionSiteSelection');
+  await settle();
+
+  await act(async () => {
+    resolveOldHistory([{ injectionSite: 'abdomen_L', timestamp: new Date().toISOString() }]);
+  });
+
+  expect(mockSelectSite.mock.calls).toEqual([['abdomen_L']]);
+  expect(screen.queryByText('Today')).toBeNull();
+});
