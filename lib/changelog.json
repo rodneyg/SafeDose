@@ -308,6 +308,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-538",
+    "date": "2026-11-21",
+    "title": "Document the first SafeDose roadmap slice",
+    "status": "published",
+    "prs": [
+      538
+    ],
+    "sections": {
+      "Improved": [
+        "Document the first SafeDose roadmap slice"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
