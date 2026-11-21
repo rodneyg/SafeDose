@@ -1,10 +1,12 @@
 import React from 'react';
+import { Platform, Text } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import LoginScreen from '../app/login';
 import SettingsScreen from '../app/(tabs)/settings';
 import { signInWithGoogle } from '../lib/googleAuth';
 import ConcentrationInputStep from './ConcentrationInputStep';
 import DoseInputStep from './DoseInputStep';
+import TotalAmountInputStep from './TotalAmountInputStep';
 
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 jest.mock('react-native', () => jest.requireActual('../__mocks__/react-native'));
@@ -66,6 +68,33 @@ it('labels concentration and marks incompatible units unavailable', () => {
     accessibilityState: { disabled: true },
     'aria-disabled': true,
   });
+});
+
+it('keeps the vial amount visibly required on web and exposes the selected unit', () => {
+  const platform = jest.replaceProperty(Platform, 'OS', 'web');
+  const setUnit = jest.fn();
+  try {
+    render(<TotalAmountInputStep
+      totalAmount=""
+      setTotalAmount={jest.fn()}
+      totalAmountHint={null}
+      setTotalAmountHint={jest.fn()}
+      unit="mg"
+      setUnit={setUnit}
+    />);
+
+    const visibleLabels = renderer.root.findAllByType(Text)
+      .map(label => React.Children.toArray(label.props.children).join(''));
+    expect(visibleLabels).toContain('Total Amount in Vial (required, mg):');
+    expect(byLabel('Total amount in vial').props['aria-required']).toBe(true);
+    expect(byLabel('Total amount unit').props.accessibilityRole).toBe('radiogroup');
+    expect(byLabel('mg').props).toMatchObject({ accessibilityRole: 'radio', 'aria-checked': true });
+    expect(byLabel('mcg').props['aria-checked']).toBe(false);
+    act(() => byLabel('mcg').props.onPress());
+    expect(setUnit).toHaveBeenCalledWith('mcg');
+  } finally {
+    platform.restore();
+  }
 });
 
 it.each([

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { getCompatibleConcentrationUnits } from '../lib/dosing';
 import { isMobileWeb } from '../lib/utils';
 
@@ -39,7 +39,7 @@ export default function ConcentrationInputStep({
   return (
     <View style={[styles.container, isMobileWeb && styles.containerMobile]}>
       <Text style={[styles.title, isMobileWeb && styles.titleMobile]}>Enter Concentration</Text>
-      <Text style={styles.label}>Concentration Amount:</Text>
+      <Text style={styles.label}>Concentration Amount{Platform.OS === 'web' ? ' (required)' : ''}:</Text>
       <TextInput
         accessibilityLabel="Concentration amount"
         aria-required
@@ -49,7 +49,7 @@ export default function ConcentrationInputStep({
           setConcentrationAmount(text);
           setConcentrationHint(null);
         }}
-        keyboardType="numeric"
+        keyboardType={Platform.OS === 'web' ? 'decimal-pad' : 'numeric'}
         placeholder="e.g., 10"
         placeholderTextColor="#9ca3af"
       />

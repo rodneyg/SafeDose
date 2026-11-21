@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 
 type Props = {
   solutionVolume: string;
@@ -10,7 +10,7 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Solution Volume</Text>
-      <Text style={styles.labelBold}>How much liquid (ml) does the medication contain?</Text>
+      <Text style={styles.labelBold}>How much liquid (ml) does the medication contain?{Platform.OS === 'web' ? ' (required)' : ''}</Text>
       <Text style={styles.label}>(e.g., total solution volume in the vial)</Text>
       <View style={styles.presetContainer}>
         {['1', '2', '3', '5'].map((ml) => (
@@ -35,7 +35,7 @@ export default function ReconstitutionStep({ solutionVolume, setSolutionVolume }
         placeholderTextColor="#9ca3af"
         value={solutionVolume}
         onChangeText={setSolutionVolume}
-        keyboardType="numeric"
+        keyboardType={Platform.OS === 'web' ? 'decimal-pad' : 'numeric'}
       />
       <Text style={styles.helperText}>
         This volume is needed to calculate the concentration of the medication.
