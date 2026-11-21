@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import ScanScreen from './ScanScreen';
 import ImagePreviewModal from './ImagePreviewModal';
 import { captureAndProcessImage } from '../lib/cameraUtils';
@@ -23,6 +23,7 @@ const analyzeScan = require('../api/analyze-scan');
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=';
 // Existing authored fixture follows lib/scan/request.js, including per-field confidence.
 const MODEL_OUTPUT = fixtures.find(f => f.label.id === 'fixture-exact-read')!.model_output;
+const capturePhoto = jest.fn(captureAndProcessImage);
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
 const onVerify = jest.fn();
@@ -44,7 +45,7 @@ function PhotoFlow() {
       cameraRef, webCameraStream: null, isProcessing, scanError,
       setIsProcessing, setScanError, setScreenStep: jest.fn(), requestWebCameraPermission: jest.fn(),
       onCapture: async () => {
-        const captured = await captureAndProcessImage({
+        const captured = await capturePhoto({
           cameraRef, permission, isMobileWeb: false, setIsProcessing, setScanError,
           setProcessingMessage: jest.fn(), incrementScansUsed,
         });
@@ -54,6 +55,15 @@ function PhotoFlow() {
     <ImagePreviewModal visible={!!result} imageUri={result?.capturedImage?.uri ?? ''}
       scanResult={result} onRetake={() => setResult(null)} onVerify={onVerify} />
   </>;
+}
+
+// Wait for the in-process capture to finish so the assertions do not poll on a wall clock.
+async function uploadPhoto(screen: ReturnType<typeof render>) {
+  await act(async () => {
+    fireEvent.press(screen.getByText('Take or Upload Photo'));
+    expect(capturePhoto).toHaveBeenCalledTimes(1);
+    await capturePhoto.mock.results[0].value;
+  });
 }
 
 beforeEach(() => {
@@ -112,8 +122,8 @@ it('uploads a photo through the API and displays the parsed syringe and vial val
   const content = JSON.stringify(MODEL_OUTPUT);
   mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByText('Review Your Scan')).toBeTruthy());
+  await uploadPhoto(screen);
+  expect(screen.getByText('Review Your Scan')).toBeTruthy();
 
   expect(screen.getByLabelText('Retake photo').props.accessibilityRole).toBe('button');
 
@@ -180,8 +190,8 @@ it.each([
 ])('withholds the model fill despite confidence 1.0 (case %#)', async (content, units, ml) => {
   mockCreate.mockResolvedValue({ choices: [{ message: { content } }] });
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByText('Review Your Scan')).toBeTruthy());
+  await uploadPhoto(screen);
+  expect(screen.getByText('Review Your Scan')).toBeTruthy();
 
   expect(screen.getByText(/Read the fill line on your own syringe/)).toBeTruthy();
   expect(screen.getByText(/vial label/)).toBeTruthy();
@@ -208,10 +218,10 @@ it('refuses malformed provider JSON after an otherwise successful API response',
   const content = '{"syringe":';
   mockCreate.mockResolvedValue({ choices: [{ message: { content } }] });
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(
+  await uploadPhoto(screen);
+  expect(screen.getByRole('alert').props.children).toBe(
     'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.',
-  ));
+  );
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledTimes(1);
   expect(routeStatus).toBe(200);
