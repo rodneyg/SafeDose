@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-632",
+    "date": "2026-11-21",
+    "title": "Keep restored history visible if the local cache fails",
+    "status": "published",
+    "prs": [
+      632
+    ],
+    "sections": {
+      "Improved": [
+        "Keep restored history visible if the local cache fails"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-631",
     "date": "2026-11-21",
     "title": "Document SafeDose release evidence and remaining checks",
