@@ -80,6 +80,21 @@ it('uses the authenticated user customer and an allowed return URL', async () =>
   await handler(request({ idToken: 'valid-token', returnUrl }), res);
   expect(mockCreate).toHaveBeenCalledWith({ customer: 'cus_owned', return_url: returnUrl });
   expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+});
+
+it('applies the shared rate limit before authenticating a portal request', async () => {
+  const req = { ...request({ idToken: 'valid-token' }), socket: { remoteAddress: '192.0.2.1' } };
+  for (let attempt = 0; attempt < 30; attempt++) {
+    await handler(req, response());
+  }
+  jest.clearAllMocks();
+
+  const res = response();
+  await handler(req, res);
+  expect(res.status).toHaveBeenCalledWith(429);
+  expect(mockVerifyIdToken).not.toHaveBeenCalled();
+  expect(mockCreate).not.toHaveBeenCalled();
 });
 
 it.each([

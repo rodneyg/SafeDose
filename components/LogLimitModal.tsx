@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
+import { PHOTO_CHECK_MONTHLY_AMOUNT } from '../lib/plans';
 
 interface LogLimitModalProps {
   visible: boolean;
@@ -31,8 +32,8 @@ export default function LogLimitModal({
   }, [visible, triggerReason]);
 
   const handleUpgrade = () => {
-    console.log('[LogLimitModal] Upgrade to Pro button pressed');
-    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'upgrade_pro', type: triggerReason });
+    console.log('[LogLimitModal] View Photo Check button pressed');
+    logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'view_photo_check', type: triggerReason });
     router.push('/pricing');
     onClose();
   };
@@ -63,9 +64,9 @@ export default function LogLimitModal({
 
   const getMessage = () => {
     if (isPowerUserPromotion) {
-      return "Great job on completing multiple doses! Upgrade to Pro to unlock unlimited logs, access the AI vial scanner, and support the ongoing development of the tool.";
+      return `Great job on completing multiple doses. Your calculator stays free. Photo Check adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
     }
-    return "You've reached your monthly dose logging limit. Upgrade to Pro to save unlimited dose logs, access the AI vial scanner, and support ongoing development.";
+    return `You've reached your monthly dose logging limit. You can continue without saving. Photo Check adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
   };
 
   return (
@@ -85,7 +86,7 @@ export default function LogLimitModal({
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-              <Text style={styles.buttonText}>Upgrade to Pro</Text>
+              <Text style={styles.buttonText}>View Photo Check</Text>
             </TouchableOpacity>
             {isLogLimit && (
               <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleContinueWithoutSaving}>

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Text, TextInput, View } from 'react-native';
 import { SCAN_UNAVAILABLE_MESSAGE, SCAN_TIMEOUT_MS } from '../lib/scan/completeOnServer';
 import ScanScreen from './ScanScreen';
 import { captureAndProcessImage } from '../lib/cameraUtils';
+import { logAnalyticsEvent } from '../lib/analytics';
+import fixtures from '../evals/vision/fixtures/model-outputs.json';
 
 jest.mock('../lib/utils', () => ({ isWeb: true, isMobileWeb: false, MAX_FILE_SIZE: 5 * 1024 * 1024 }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
@@ -12,11 +14,16 @@ jest.mock('expo-camera', () => ({ CameraView: 'CameraView' }));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
 
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 const originalReader = Object.getOwnPropertyDescriptor(globalThis, 'FileReader');
 const originalFetch = globalThis.fetch;
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
 let selectedSize: number;
+let cancelSelection: boolean;
+let cookie: string;
+let cookieWrite: string;
+let allowCookies: boolean;
 let readFailure: 'error' | 'abort' | 'empty' | 'invalid' | 'throw' | null;
 
 // Keep the screen, capture helper, server-response parsing, and state updates real.
@@ -26,11 +33,11 @@ function PhotoFlow() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [step, setStep] = useState('scan');
   const [dose, setDose] = useState('12');
+  const cameraRef = useRef(null);
   if (step === 'manualEntry') return <View>
     <Text accessibilityRole="alert">{scanError}</Text>
     <TextInput accessibilityLabel="Dose" value={dose} onChangeText={setDose} />
   </View>;
-  const cameraRef = { current: null };
   const permission = { status: 'denied' };
   return <ScanScreen {...({
     permission, permissionStatus: 'denied', mobileWebPermissionDenied: true,
@@ -52,15 +59,35 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
   selectedSize = 100;
+  cancelSelection = false;
+  cookie = '';
+  cookieWrite = '';
+  allowCookies = true;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: { location: { protocol: 'https:' } },
+  });
   readFailure = null;
   const attached = new Set();
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
+    get cookie() { return cookie; },
+    set cookie(value: string) {
+      cookieWrite = value;
+      if (allowCookies) cookie = value.split(';')[0];
+    },
     querySelectorAll: () => [],
     body: { appendChild: (node: any) => attached.add(node), contains: (node: any) => attached.has(node), removeChild: (node: any) => attached.delete(node) },
     createElement: () => {
-      const input = { onchange: (_: any) => {}, click: () => {
-        Promise.resolve().then(() => input.onchange({ target: { files: [{ name: 'photo.jpg', type: 'image/jpeg', size: selectedSize }] } }));
-      } };
+      const input = {
+        onchange: (_: any) => {},
+        oncancel: () => {},
+        click: () => {
+          Promise.resolve().then(() => {
+            if (cancelSelection) input.oncancel();
+            else input.onchange({ target: { files: [{ name: 'photo.jpg', type: 'image/jpeg', size: selectedSize }] } });
+          });
+        },
+      };
       return input;
     },
   } });
@@ -82,7 +109,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  for (const [key, descriptor] of [['document', originalDocument], ['FileReader', originalReader]] as const) {
+  for (const [key, descriptor] of [['document', originalDocument], ['window', originalWindow], ['FileReader', originalReader]] as const) {
     if (descriptor) Object.defineProperty(globalThis, key, descriptor);
     else Reflect.deleteProperty(globalThis, key);
   }
@@ -164,3 +191,81 @@ it.each(['error', 'abort', 'empty', 'invalid', 'throw'] as const)(
     expect(onResult).not.toHaveBeenCalled();
   },
 );
+
+function mockScanRead(accepted: boolean) {
+  (fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: async () => ({ content: accepted ? JSON.stringify(fixtures[0].model_output) : '{}' }),
+  });
+}
+
+function experimentEvents() {
+  return (logAnalyticsEvent as jest.Mock).mock.calls
+    .filter(([name]) => typeof name === 'string' && name.startsWith('retake_guidance_'));
+}
+
+it('shows arm A on refusal, ignores a cancelled photo picker, and counts the successful retry once', async () => {
+  jest.spyOn(Math, 'random').mockReturnValue(0.2);
+  mockScanRead(false);
+  const screen = render(<PhotoFlow />);
+
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await screen.findByText('Retake in bright light, straight on');
+  expect(screen.getByRole('alert').props.children).toMatch(/enter the details manually/i);
+  expect(cookieWrite).toBe('safedose_retake_guidance_v1=a; Max-Age=7776000; Path=/; SameSite=Lax; Secure');
+  expect(incrementScansUsed).not.toHaveBeenCalled();
+  expect(experimentEvents()).toEqual([['retake_guidance_shown_a']]);
+
+  cancelSelection = true;
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await screen.findByText('No image selected');
+  expect(experimentEvents()).toEqual([['retake_guidance_shown_a']]);
+
+  cancelSelection = false;
+  mockScanRead(true);
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await waitFor(() => expect(onResult).toHaveBeenCalledTimes(1));
+  expect(incrementScansUsed).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('Retake in bright light, straight on')).toBeNull();
+  expect(experimentEvents()).toEqual([
+    ['retake_guidance_shown_a'],
+    ['retake_guidance_retry_a'],
+    ['retake_guidance_success_a'],
+  ]);
+});
+
+it('keeps arm B on remount and treats a repeat refusal as a new opportunity', async () => {
+  mockScanRead(false);
+  const random = jest.spyOn(Math, 'random').mockReturnValue(0.8);
+  const first = render(<PhotoFlow />);
+  fireEvent.press(first.getByText('Take or Upload Photo'));
+  await first.findByText('1. Use bright, even light.');
+  expect(first.getByText('2. Hold the camera straight on and steady.')).toBeTruthy();
+  expect(first.getByText('3. Keep the syringe markings and vial strength in view.')).toBeTruthy();
+  first.unmount();
+
+  random.mockReturnValue(0.2);
+  const second = render(<PhotoFlow />);
+  fireEvent.press(second.getByText('Take or Upload Photo'));
+  await second.findByText('1. Use bright, even light.');
+  fireEvent.press(second.getByText('Take or Upload Photo'));
+  await waitFor(() => expect(experimentEvents()).toEqual([
+    ['retake_guidance_shown_b'],
+    ['retake_guidance_shown_b'],
+    ['retake_guidance_retry_b'],
+    ['retake_guidance_shown_b'],
+  ]));
+  expect(random).toHaveBeenCalledTimes(1);
+  expect(onResult).not.toHaveBeenCalled();
+  expect(incrementScansUsed).not.toHaveBeenCalled();
+});
+
+it('keeps the existing refusal guidance when cookies are blocked', async () => {
+  allowCookies = false;
+  mockScanRead(false);
+  const screen = render(<PhotoFlow />);
+  fireEvent.press(screen.getByText('Take or Upload Photo'));
+  await screen.findByText(/Try a clear photo showing the syringe scale and vial strength/);
+  expect(experimentEvents()).toEqual([]);
+  expect(onResult).not.toHaveBeenCalled();
+});

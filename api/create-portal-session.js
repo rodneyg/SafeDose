@@ -1,8 +1,10 @@
+const { createRateLimit } = require('../lib/apiRateLimit');
 const Stripe = require('stripe');
 const admin = require('firebase-admin');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 
 const DEFAULT_RETURN_URL = 'https://safe-dose.vercel.app/settings';
+const allowRequest = createRateLimit(30);
 
 function isAllowedReturnUrl(value) {
   if (typeof value !== 'string') return false;
@@ -38,6 +40,7 @@ module.exports = async (req, res) => {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   const body = req.body;
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
