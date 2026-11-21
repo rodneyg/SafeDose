@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-587",
+    "date": "2026-11-21",
+    "title": "T-9123: Test exact dosing arithmetic",
+    "status": "published",
+    "prs": [
+      587
+    ],
+    "sections": {
+      "Improved": [
+        "T-9123: Test exact dosing arithmetic"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-574",
     "date": "2026-11-21",
     "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
