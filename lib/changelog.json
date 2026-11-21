@@ -966,6 +966,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-512",
+    "date": "2026-11-21",
+    "title": "Add vial and syringe scanner regression tests",
+    "status": "published",
+    "prs": [
+      512
+    ],
+    "sections": {
+      "Improved": [
+        "Add vial and syringe scanner regression tests"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-509",
     "date": "2026-11-21",
     "title": "Guide refused or unclear scans into manual entry",
