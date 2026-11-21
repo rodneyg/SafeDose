@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-601",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to scan hook",
+    "status": "published",
+    "prs": [
+      601
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to scan hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-600",
     "date": "2026-11-21",
     "title": "Add JSDoc documentation to subscription hook",
