@@ -3,6 +3,7 @@ import { Modal, View, ScrollView, Text, TouchableOpacity, StyleSheet } from 'rea
 import { useRouter } from 'expo-router';
 import UpgradeEmailForm from './UpgradeEmailForm';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
+import { FREE_SCAN_LIMIT, PHOTO_CHECK_MONTHLY_AMOUNT } from '../lib/plans';
 
 interface LimitModalProps {
   visible: boolean;
@@ -57,8 +58,8 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You’ve used all 3 free scans. You can keep using manual entry or view upgrade options.'
-              : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
+              ? `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`
+              : `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
@@ -68,7 +69,7 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
             )}
             {!isPremium && (
               <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-                <Text style={styles.buttonText}>Upgrade</Text>
+                <Text style={styles.buttonText}>View Photo Scan</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>

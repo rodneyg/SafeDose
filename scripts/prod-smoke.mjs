@@ -11,7 +11,58 @@ const pages = [
   ['/pricing', ['Photo Scan', '/month', '/year', 'Calculator stays free']],
   ['/login', ['Sign In with Google', 'Cancel']],
   ['/changelog', ['Changelog', 'New features, improvements, and fixes']],
+  ['/privacy', ['Privacy Policy']],
+  ['/terms', ['Terms of Service']],
+  ['/support', ['Support']],
 ];
+
+const guestId = 'safedose-smoke-guest';
+// An unsigned placeholder used only in intercepted Firebase responses.
+const guestToken = 'e30.' + Buffer.from(JSON.stringify({
+  sub: guestId, firebase: { sign_in_provider: 'anonymous' },
+})).toString('base64url') + '.fixture';
+const cors = { 'access-control-allow-origin': '*' };
+
+export async function isolateRequest(route, origin) {
+  const request = route.request();
+  const { origin: target, pathname } = new URL(request.url());
+  const method = request.method();
+
+  // Complete the Firebase startup locally so the smoke creates no guest accounts
+  // or installations and submits no analytics events.
+  if (method === 'POST' && target === 'https://identitytoolkit.googleapis.com') {
+    if (pathname === '/v1/accounts:signUp') {
+      return route.fulfill({ headers: cors, json: {
+        localId: guestId, idToken: guestToken, refreshToken: 'fixture', expiresIn: '3600',
+      } });
+    }
+    if (pathname === '/v1/accounts:lookup') {
+      return route.fulfill({ headers: cors, json: { users: [{ localId: guestId }] } });
+    }
+  }
+  if (method === 'POST' && target === 'https://firebaseinstallations.googleapis.com' &&
+      /^\/v1\/projects\/[^/]+\/installations$/.test(pathname)) {
+    return route.fulfill({ headers: cors, json: {
+      fid: request.postDataJSON().fid,
+      refreshToken: 'fixture',
+      authToken: { token: 'fixture', expiresIn: '3600s' },
+    } });
+  }
+  if (['GET', 'POST'].includes(method) && pathname === '/g/collect' &&
+      ['https://www.google-analytics.com', 'https://www.google.com'].includes(target)) {
+    return route.fulfill({ headers: cors, status: 204 });
+  }
+
+  const publicDependency =
+    (target === 'https://firebase.googleapis.com' && /^\/v1alpha\/projects\/-\/apps\/[^/]+\/webConfig$/.test(pathname)) ||
+    (target === 'https://www.googletagmanager.com' && pathname === '/gtag/js' && request.resourceType() === 'script') ||
+    (target === 'https://images.unsplash.com' && request.resourceType() === 'image');
+  if (method === 'GET' && (target === origin || publicDependency)) {
+    const headers = await request.allHeaders();
+    if (!headers.cookie && !headers.authorization) return route.continue();
+  }
+  return route.abort();
+}
 
 export function baseOrigin(input = production) {
   const url = new URL(input);
@@ -20,15 +71,21 @@ export function baseOrigin(input = production) {
   return url.origin;
 }
 
+function diagnosticUrl(value) {
+  try {
+    const url = new URL(value);
+    if (['https:', 'http:'].includes(url.protocol)) return url.origin + url.pathname;
+  } catch {
+    // Some console messages have no URL.
+  }
+  return '[unknown source]';
+}
+
 // Anonymous browser diagnostics only. Strip credentials, URL queries and common tokens.
 export function pageErrorDetail(error) {
   return String(error.stack || error.message || 'Unknown page error')
-    .replace(/https?:\/\/[^\s)]+/g, value => {
-      try {
-        const url = new URL(value);
-        return `${url.origin}${url.pathname}`;
-      } catch { return '[redacted URL]'; }
-    })
+    .replace(/https?:\/\/[^\s)]+/g, diagnosticUrl)
+    .replace(/\bAIza[A-Za-z0-9_-]{35}\b/g, '[redacted key]')
     .replace(/\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9_]+\b/g, '[redacted key]')
     .replace(/\bBearer\s+[^\s]+/gi, 'Bearer [redacted]')
     .replace(/((?:token|secret|password|api[_-]?key)\s*[=:]\s*)[^\s,;]+/gi, '$1[redacted]')
@@ -83,20 +140,31 @@ export async function runSmoke(base = production, { log = console.log } = {}) {
         // Fresh anonymous state for each page. No existing Chrome profiles are used.
         const context = await browser.newContext({ locale: 'en-US', serviceWorkers: 'block' });
         try {
-          await context.route('**/*', route => {
-            const request = route.request();
-            const headers = request.headers();
-            if (request.method() !== 'GET' || new URL(request.url()).origin !== origin ||
-                headers.cookie || headers.authorization) return route.abort();
-            return route.continue();
-          });
+          await context.route('**/*', route => isolateRequest(route, origin));
           const page = await context.newPage();
-          let errors = 0;
+          let pageErrors = 0;
+          let consoleErrors = 0;
+          let httpErrors = 0;
           page.on('pageerror', error => {
-            errors++;
+            pageErrors++;
             log(`PAGE ERROR ${path}: ${pageErrorDetail(error)}`);
           });
-          const response = await page.goto(`${origin}${path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          page.on('console', message => {
+            if (message.type() !== 'error') return;
+            consoleErrors++;
+            log(`CONSOLE ERROR ${path}: ${diagnosticUrl(message.location().url)}`);
+          });
+          page.on('response', response => {
+            const status = response.status();
+            const type = response.request().resourceType();
+            const servedHtml = [ 'script', 'stylesheet' ].includes(type) &&
+              response.headers()['content-type']?.startsWith('text/html');
+            if (status < 400 && !servedHtml) return;
+            httpErrors++;
+            const reason = servedHtml ? ' HTML for ' + type : '';
+            log(`HTTP ERROR ${path}: ${status}${reason} ${diagnosticUrl(response.url())}`);
+          });
+          const response = await page.goto(`${origin}${path}`, { waitUntil: 'load', timeout: 30000 });
           if (response?.status() !== 200) fail(`HTTP ${response?.status() ?? 'missing'}; expected 200`);
           await page.waitForURL(`${origin}${destination}`, { timeout: 15000 });
           for (const text of expected) {
@@ -104,8 +172,10 @@ export async function runSmoke(base = production, { log = console.log } = {}) {
           }
           // Allow delayed hydration errors to surface, without waiting on perpetual animations.
           await page.waitForTimeout(1500);
-          if (errors) fail(`${errors} page error(s)`);
-          return 'HTTP 200, expected visible text, no page errors';
+          if (pageErrors || consoleErrors || httpErrors) {
+            fail(`${pageErrors} page error(s), ${consoleErrors} console error(s), ${httpErrors} HTTP error(s)`);
+          }
+          return 'HTTP 200, expected visible text, no page, console or HTTP errors';
         } finally { await context.close(); }
       });
     }
