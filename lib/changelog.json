@@ -364,6 +364,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-533",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to hooks in SafeDose",
+    "status": "published",
+    "prs": [
+      533
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to hooks in SafeDose"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
