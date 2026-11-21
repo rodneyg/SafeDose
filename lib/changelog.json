@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-589",
+    "date": "2026-11-21",
+    "title": "T-9128: Test SafeDose syringe markings",
+    "status": "published",
+    "prs": [
+      589
+    ],
+    "sections": {
+      "Improved": [
+        "T-9128: Test SafeDose syringe markings"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-587",
     "date": "2026-11-21",
     "title": "T-9123: Test exact dosing arithmetic",
