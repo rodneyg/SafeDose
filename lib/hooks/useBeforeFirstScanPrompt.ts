@@ -12,10 +12,15 @@ interface BeforeFirstScanState {
 }
 
 export interface BeforeFirstScanPrompt {
+  /** Returns true after loading when the user has fewer than two views and has not opted out. */
   shouldShowPrompt: () => boolean;
+  /** Call after displaying the prompt to increment its saved view count. */
   markPromptAsShown: () => Promise<void>;
+  /** Call when the user opts out to save that preference for future scans. */
   markDontShowAgain: () => Promise<void>;
+  /** True until the initial storage read completes. */
   isLoading: boolean;
+  /** The current view count. It starts at zero while the saved count loads. */
   showCount: number;
 }
 
