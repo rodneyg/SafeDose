@@ -196,6 +196,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-559",
+    "date": "2026-11-21",
+    "title": "Test SafeDose billing endpoint failures",
+    "status": "published",
+    "prs": [
+      559
+    ],
+    "sections": {
+      "Improved": [
+        "Test SafeDose billing endpoint failures"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-558",
     "date": "2026-11-21",
     "title": "Test dose logging recovery from Firestore failures",
