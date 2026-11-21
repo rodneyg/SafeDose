@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-497",
+    "date": "2026-11-21",
+    "title": "Add render tests for 4 components",
+    "status": "published",
+    "prs": [
+      497
+    ],
+    "sections": {
+      "Improved": [
+        "Add render tests for 4 components"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-495",
     "date": "2026-11-21",
     "title": "Add TypeScript noEmit check in CI",
