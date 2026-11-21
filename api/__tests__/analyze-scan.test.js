@@ -241,7 +241,7 @@ describe('POST /api/analyze-scan', () => {
 
   it.each([
     'https://evil.vercel.app', 'https://safe-dose.evil.com', 'null',
-    'https://app.safedoseai.com', 'https://rodneygainous.com', 'https://www.rodneygainous.com',
+    'https://app.example.com', 'https://rodneygainous.com', 'https://www.rodneygainous.com',
     'https://safe-dose-attacker.vercel.app',
     'https://safe-dose-abc-team.vercel.app', 'http://safe-dose.vercel.app',
     'https://safe-dose.vercel.app/path', '', 'http://safedose.rodneygainous.com',
