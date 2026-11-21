@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-602",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to useAuth hook",
+    "status": "published",
+    "prs": [
+      602
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-600",
     "date": "2026-11-21",
     "title": "Add JSDoc documentation to subscription hook",
