@@ -22,7 +22,7 @@ function fillProtocol(dose = '.25') {
 }
 
 function pressSave() {
-  fireEvent.press(screen.getByRole('button', { name: 'Save and continue to scan' }));
+  fireEvent.press(screen.getByRole('button', { name: 'Save and continue' }));
 }
 
 it('goes directly to the scan path after No without storing a protocol', () => {
@@ -32,7 +32,10 @@ it('goes directly to the scan path after No without storing a protocol', () => {
   expect(router.replace).toHaveBeenCalledWith(scanRoute);
 });
 
-it('persists the prescribed details for this account before opening the scan path', async () => {
+it.each([
+  { action: 'Set up schedule and preview', route: { pathname: '/protocol', params: { onboarding: '1' } } },
+  { action: 'Continue to first scan', route: scanRoute },
+])('persists the prescribed details before allowing $action', async ({ action, route }) => {
   render(<ProtocolSetup />);
   fillProtocol();
   let finishWrite: () => void = () => {};
@@ -51,8 +54,14 @@ it('persists the prescribed details for this account before opening the scan pat
   expect(screen.getByRole('button', { name: 'Continue without saving' }).props.accessibilityState.disabled).toBe(true);
 
   await act(async () => finishWrite());
+  expect(router.replace).not.toHaveBeenCalled();
+  const nextButton = screen.getByRole('button', { name: action });
+  fireEvent.press(nextButton);
+  fireEvent.press(nextButton);
+
+  expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
   expect(router.replace).toHaveBeenCalledTimes(1);
-  expect(router.replace).toHaveBeenCalledWith(scanRoute);
+  expect(router.replace).toHaveBeenCalledWith(route);
 });
 
 it.each(['0', '-1', '0x10', '1e2', '1,5'])('rejects invalid dose input %s without saving', dose => {
@@ -83,5 +92,6 @@ it('keeps the form open after an incomplete or failed save and supports a retry'
   expect(router.replace).not.toHaveBeenCalled();
 
   await act(async () => pressSave());
+  fireEvent.press(screen.getByRole('button', { name: 'Continue to first scan' }));
   expect(router.replace).toHaveBeenCalledWith(scanRoute);
 });

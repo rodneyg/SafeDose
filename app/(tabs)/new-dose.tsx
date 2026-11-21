@@ -28,10 +28,12 @@ import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
+import { recordLandingCtaStart } from '../../lib/landingCtaExperiment';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
@@ -46,6 +48,7 @@ export default function NewDoseScreen() {
     kind: ReturnType<typeof photoUpgradeNudge>;
   } | null>(null);
   const scanAttemptInProgress = useRef(false);
+  const mobileScanArm = useRef<MobileScanCtaArm>();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -297,6 +300,18 @@ export default function NewDoseScreen() {
     handleInjectionSiteCancel,
   } = doseCalculator;
 
+  const handleIntroScanPress = (arm?: MobileScanCtaArm) => {
+    mobileScanArm.current = arm;
+    if (offline) handleSetScreenStep('manualEntry');
+    else doseCalculator.handleScanNavigation();
+  };
+
+  useEffect(() => {
+    if (!isScreenActive || (screenStep !== 'scan' && screenStep !== 'beforeFirstScan')) {
+      mobileScanArm.current = undefined;
+    }
+  }, [isScreenActive, screenStep]);
+
   const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
     ? null
     : onboardingSurvey.prompt;
@@ -523,16 +538,21 @@ export default function NewDoseScreen() {
 
   // Only called by the user's verification action in ImagePreviewModal.
   const applyVerifiedScanResults = (result: ScanResult) => {
-    const mapped = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
-    if (mapped.status !== 'ready') {
-      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+    const { inputs: scanned, status, reasons } = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
+    const { manualSyringe: scannedSyringe } = scanned;
+    if (!scannedSyringe) {
+      resetFullForm('dose');
+      setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
+      setSyringeHint('Check the syringe label and select its capacity manually.');
+      setScreenStep('manualEntry');
       return;
     }
-    const scanned = mapped.inputs;
-    if (scanned.manualSyringe) {
-      setManualSyringe(scanned.manualSyringe);
-      setSyringeHint('Detected from image scan');
+    if (status !== 'ready') {
+      setScanError(`Scan needs manual input: ${reasons.join(' ')}`);
+      return;
     }
+    setManualSyringe(scannedSyringe);
+    setSyringeHint('Detected from image scan');
     if (scanned.substance) {
       setSubstanceName(scanned.substance);
       setSubstanceNameHint('Detected from vial scan');
@@ -570,7 +590,7 @@ export default function NewDoseScreen() {
 
     doseCalculator.registerScannedFields({
       ...(scanned.substance ? { substanceName: scanned.substance } : {}),
-      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      manualSyringe: JSON.stringify(scannedSyringe),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
       } : {}),
@@ -787,6 +807,8 @@ export default function NewDoseScreen() {
       return;
     }
 
+    const startArm = mobileScanArm.current;
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -802,6 +824,7 @@ export default function NewDoseScreen() {
         return;
       }
 
+      recordLandingCtaStart('scan');
       console.log('handleScanAttempt: Processing image');
       const result = await captureAndProcessImage({
         cameraRef,
@@ -812,6 +835,12 @@ export default function NewDoseScreen() {
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        onImageReady: startArm ? () => {
+          if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
+            logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
+            mobileScanArm.current = undefined;
+          }
+        } : undefined,
         onScanUnavailable: () => {
           setManualStep('dose');
           setScreenStep('manualEntry');
@@ -1078,7 +1107,8 @@ export default function NewDoseScreen() {
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
           onScanLimit={openScanLimit}
-          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
+          onScanPress={handleIntroScanPress}
+          offline={offline}
         />
       )}
       {screenStep === 'beforeFirstScan' && (

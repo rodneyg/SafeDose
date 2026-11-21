@@ -18,7 +18,7 @@ type DoseUnit = typeof doseUnits[number];
 export default function ProtocolSetup() {
   const router = useRouter();
   const { user } = useAuth();
-  const [showForm, setShowForm] = useState(false);
+  const [step, setStep] = useState<'choice' | 'form' | 'saved'>('choice');
   const [type, setType] = useState<ProtocolType | null>(null);
   const [medication, setMedication] = useState('');
   const [dose, setDose] = useState('');
@@ -30,6 +30,12 @@ export default function ProtocolSetup() {
 
   const openFirstScan = () => {
     router.replace('/(tabs)/new-dose?startScan=true');
+  };
+
+  const openSchedule = () => {
+    if (submitting.current) return;
+    submitting.current = true;
+    router.replace({ pathname: '/protocol', params: { onboarding: '1' } });
   };
 
   const skipProtocol = () => {
@@ -61,14 +67,35 @@ export default function ProtocolSetup() {
         `@safedose/onboarding-protocol:${user?.uid ?? 'anonymous'}`,
         JSON.stringify({ type, medication: medication.trim(), dose: doseText, unit, frequency: frequency.trim() }),
       );
-      openFirstScan();
+      setStep('saved');
     } catch {
       setError('Your protocol could not be saved. Try again or continue without it.');
+    } finally {
       submitting.current = false;
       setSaving(false);
     }
   };
 
+  if (step === 'saved') {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text accessibilityRole="header" style={styles.title}>Protocol saved</Text>
+          <Text style={styles.description}>
+            You can set up a dose schedule and preview each dose, or go straight to your first scan.
+          </Text>
+          <TouchableOpacity accessibilityRole="button" onPress={openSchedule} style={styles.primary}>
+            <Text style={styles.primaryText}>Set up schedule and preview</Text>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={skipProtocol} style={styles.choice}>
+            <Text style={styles.choiceText}>Continue to first scan</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  const showForm = step === 'form';
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -120,11 +147,11 @@ export default function ProtocolSetup() {
             {error !== '' && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
             <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: saving, busy: saving }}
               disabled={saving} onPress={saveProtocol} style={[styles.primary, saving && styles.saving]}>
-              <Text style={styles.primaryText}>{saving ? 'Saving…' : 'Save and continue to scan'}</Text>
+              <Text style={styles.primaryText}>{saving ? 'Saving…' : 'Save and continue'}</Text>
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity accessibilityRole="button" onPress={() => setShowForm(true)} style={styles.primary}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => setStep('form')} style={styles.primary}>
             <Text style={styles.primaryText}>Yes, set up my protocol</Text>
           </TouchableOpacity>
         )}
