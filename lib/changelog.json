@@ -294,6 +294,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-540",
+    "date": "2026-11-21",
+    "title": "Add unit tests for subscription hook",
+    "status": "published",
+    "prs": [
+      540
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for subscription hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-539",
     "date": "2026-11-21",
     "title": "Add an internal SafeDose protocol review suggestion",
