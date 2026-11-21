@@ -350,6 +350,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-536",
+    "date": "2026-11-21",
+    "title": "Create initial SAFE_DOSE_REPORT.md documentation",
+    "status": "published",
+    "prs": [
+      536
+    ],
+    "sections": {
+      "Improved": [
+        "Create initial SAFE_DOSE_REPORT.md documentation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
