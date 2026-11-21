@@ -6,12 +6,20 @@ describe('scheduleProtocol', () => {
     { day: 8, dose: '4 mg' },
   ];
 
-  it('returns fresh entries without adding dates when a start date is not supplied', () => {
-    const scheduled = scheduleProtocol(protocol);
+  it('clears dates when an existing schedule loses its start date', () => {
+    const scheduled = scheduleProtocol(protocol, '2026-03-07');
 
-    expect(scheduled).toEqual(protocol);
-    expect(scheduled[0]).not.toBe(protocol[0]);
-    expect(scheduleProtocol(protocol, null)).toEqual(protocol);
+    expect(scheduleProtocol(scheduled, null)).toStrictEqual(protocol);
+    expect(scheduled.map(({ date }) => date)).toEqual(['2026-03-07', '2026-03-14']);
+  });
+
+  it.each([undefined, null])('returns fresh undated entries with a %s start date', (startDate) => {
+    const scheduled = scheduleProtocol(protocol, startDate);
+
+    expect(scheduled).toStrictEqual(protocol);
+    scheduled.forEach((entry, index) => {
+      expect(entry).not.toBe(protocol[index]);
+    });
   });
 
   it('translates protocol days without timezone-dependent parsing', () => {
@@ -21,13 +29,11 @@ describe('scheduleProtocol', () => {
     ]);
   });
 
-  it('handles month, year, and leap-day boundaries as calendar dates', () => {
-    expect(scheduleProtocol([{ day: 2, dose: 1 }], '2026-12-31')).toEqual([
-      { day: 2, dose: 1, date: '2027-01-01' },
-    ]);
-    expect(scheduleProtocol([{ day: 2, dose: 1 }], '2028-02-28')).toEqual([
-      { day: 2, dose: 1, date: '2028-02-29' },
-    ]);
+  it.each([
+    ['2026-12-31', '2027-01-01'],
+    ['2028-02-28', '2028-02-29'],
+  ])('schedules day two from %s on %s', (startDate, date) => {
+    expect(scheduleProtocol([{ day: 2, dose: 1 }], startDate)).toEqual([{ day: 2, dose: 1, date }]);
   });
 
   it('rejects invalid date-only input', () => {
@@ -36,6 +42,23 @@ describe('scheduleProtocol', () => {
     );
     expect(() => scheduleProtocol(protocol, '03/07/2026')).toThrow(
       'Start date must use YYYY-MM-DD format.',
+    );
+  });
+
+  it.each([
+    ['0000-01-01', 1, '0000-01-01'],
+    ['0099-12-31', 2, '0100-01-01'],
+    ['9999-12-30', 2, '9999-12-31'],
+  ])('keeps four-digit calendar years from %s on day %i', (startDate, day, date) => {
+    expect(scheduleProtocol([{ day, dose: 1 }], startDate)).toEqual([{ day, dose: 1, date }]);
+  });
+
+  it.each([
+    ['9999-12-31', 2],
+    ['2026-01-01', Number.MAX_SAFE_INTEGER],
+  ])('rejects out-of-range results from %s on day %i', (startDate, day) => {
+    expect(() => scheduleProtocol([{ day, dose: 1 }], startDate)).toThrow(
+      new RangeError('Scheduled date is outside the YYYY-MM-DD range.'),
     );
   });
 
