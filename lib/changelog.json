@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-526",
+    "date": "2026-11-21",
+    "title": "Add focused unit tests for five SafeDose modules",
+    "status": "published",
+    "prs": [
+      526
+    ],
+    "sections": {
+      "Improved": [
+        "Add focused unit tests for five SafeDose modules"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-522",
     "date": "2026-11-21",
     "title": "Implement soft monetization wall for AI logs",
