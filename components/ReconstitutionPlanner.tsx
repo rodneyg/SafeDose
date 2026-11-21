@@ -68,6 +68,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
       setIsProcessing(true);
       setError(null);
 
+      let retakeRequired = false;
       const result = await captureAndProcessImage({
         cameraRef,
         permission,
@@ -76,6 +77,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
         setIsProcessing,
         setProcessingMessage: () => {}, // We handle processing state in the component
         setScanError: setError,
+        onRetakeRequired: () => { retakeRequired = true; },
         incrementScansUsed: async () => {}, // This is a planning tool, not counted against scans
       });
 
@@ -86,7 +88,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
         if (amount.ok) setPeptideUnit(amount.value.unit);
         setStep('manualInput');
         if (!amount.ok) setError(amount.error);
-      } else {
+      } else if (!retakeRequired) {
         setError('Could not read vial information. Please enter manually.');
         setStep('manualInput');
       }

@@ -49,6 +49,9 @@ export default function InjectionSiteSelector({
         setShowWarning(false);
         setWarningMessage('');
       }
+    } else {
+      setShowWarning(false);
+      setWarningMessage('');
     }
   }, [selectedSite, doseHistory]);
 
