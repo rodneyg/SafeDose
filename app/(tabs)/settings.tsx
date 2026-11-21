@@ -79,14 +79,16 @@ export default function SettingsScreen() {
     logAnalyticsEvent(ANALYTICS_EVENTS.CANCEL_SUBSCRIPTION);
 
     try {
+      const idToken = await user?.getIdToken();
+      if (!idToken) throw new Error('Authentication required');
       const response = await fetch('/api/create-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customerId: subscriptionStatus.customerId,
-          returnUrl: typeof window !== 'undefined' ? window.location.href : 'https://safedose.app/settings',
+          idToken,
+          returnUrl: typeof window !== 'undefined' ? window.location.href : 'https://safe-dose.vercel.app/settings',
         }),
       });
 
