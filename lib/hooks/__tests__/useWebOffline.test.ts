@@ -18,6 +18,14 @@ it('reports online by default when no browser is available', () => {
   expect(result.current).toBe(false);
 });
 
+it('reports online when the browser starts online', () => {
+  setWindow(Object.assign(new EventTarget(), { navigator: { onLine: true } }));
+
+  const { result } = renderHook(useWebOffline);
+
+  expect(result.current).toBe(false);
+});
+
 it('tracks the initial connection and subsequent browser events, then removes both listeners', () => {
   const browser = Object.assign(new EventTarget(), { navigator: { onLine: false } });
   const add = jest.spyOn(browser, 'addEventListener');

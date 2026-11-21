@@ -2,6 +2,10 @@
 
 This first-slice report describes only behavior present in this repository at commit `3b70b3b`. It is not a clinical evaluation, a statement of regulatory status, or a revenue forecast.
 
+## What the app does
+
+The calculator uses a user-entered dose and medication strength to calculate a liquid volume and syringe marking. Users can enter vial and syringe details manually. The app also includes a [reconstitution planner](../app/reconstitution.tsx) and [dose logging with local storage](../lib/hooks/useDoseLogging.ts).
+
 ## Computer vision pipeline
 
 1. A user supplies a vial or syringe photo in the dose flow. The client sends a data URL to `POST /api/analyze-scan`; the OpenAI credential remains on the server. If the service is unavailable, the client directs the user to manual entry. See [`lib/scan/completeOnServer.ts`](../lib/scan/completeOnServer.ts) and [`api/analyze-scan.js`](../api/analyze-scan.js).
