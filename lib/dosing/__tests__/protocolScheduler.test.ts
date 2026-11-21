@@ -13,9 +13,13 @@ describe('scheduleProtocol', () => {
     expect(scheduled.map(({ date }) => date)).toEqual(['2026-03-07', '2026-03-14']);
   });
 
-  it('is a no-op when a start date is not supplied', () => {
-    expect(scheduleProtocol(protocol)).toEqual(protocol);
-    expect(scheduleProtocol(protocol, null)).toEqual(protocol);
+  it.each([undefined, null])('returns fresh undated entries with a %s start date', (startDate) => {
+    const scheduled = scheduleProtocol(protocol, startDate);
+
+    expect(scheduled).toStrictEqual(protocol);
+    scheduled.forEach((entry, index) => {
+      expect(entry).not.toBe(protocol[index]);
+    });
   });
 
   it('translates protocol days without timezone-dependent parsing', () => {
@@ -25,10 +29,11 @@ describe('scheduleProtocol', () => {
     ]);
   });
 
-  it('handles month and year boundaries as calendar dates', () => {
-    expect(scheduleProtocol([{ day: 2, dose: 1 }], '2026-12-31')).toEqual([
-      { day: 2, dose: 1, date: '2027-01-01' },
-    ]);
+  it.each([
+    ['2026-12-31', '2027-01-01'],
+    ['2028-02-28', '2028-02-29'],
+  ])('schedules day two from %s on %s', (startDate, date) => {
+    expect(scheduleProtocol([{ day: 2, dose: 1 }], startDate)).toEqual([{ day: 2, dose: 1, date }]);
   });
 
   it('rejects invalid date-only input', () => {
