@@ -59,7 +59,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
           GITHUB_EVENT_HEAD_COMMIT_MESSAGE: ${{ steps.head.outputs.message }}
         run: |
           set -euo pipefail
