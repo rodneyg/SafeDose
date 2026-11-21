@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-596",
+    "date": "2026-11-21",
+    "title": "Tag the tested SHA, not the checkout HEAD",
+    "status": "published",
+    "prs": [
+      596
+    ],
+    "sections": {
+      "Improved": [
+        "Tag the tested SHA, not the checkout HEAD"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-595",
     "date": "2026-11-21",
     "title": "Gate SafeDose release tags on green CI",
