@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-495",
+    "date": "2026-11-21",
+    "title": "Add TypeScript noEmit check in CI",
+    "status": "published",
+    "prs": [
+      495
+    ],
+    "sections": {
+      "Improved": [
+        "Add TypeScript noEmit check in CI"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-494",
     "date": "2026-11-21",
     "title": "Add Dependabot config for npm and actions",
