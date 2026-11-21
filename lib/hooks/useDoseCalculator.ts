@@ -35,7 +35,21 @@ const isValidValue = (value: any): boolean => {
   return true;
 };
 
-/** Manages the complete manual-entry and photo-scan dose calculation workflow. */
+/**
+ * Coordinates the dose calculator screens and form state for manual entry and
+ * photo scans. It validates inputs and delegates dose math to `calculateDose`.
+ * The confirmation step advances only when the result matches the current
+ * inputs, includes a syringe marking, and has no calculation error.
+ *
+ * @param options - Callbacks supplied by the calculator screen.
+ * @param options.checkUsageLimit - Checks whether a photo scan can proceed.
+ * The capture handler can pass a callback to receive verified scan usage.
+ * @param options.trackInteraction - Optional callback for tracking activity
+ * during the feedback flow.
+ * @returns The current screen and form steps, input values and setters,
+ * calculation results and validation errors, and handlers for navigation,
+ * scan access, confirmation, and feedback.
+ */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const isInitialized = useRef(false);
   const lastActionTimestamp = useRef(Date.now());
