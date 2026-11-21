@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-635",
+    "date": "2026-11-21",
+    "title": "Fix SafeDose onboarding web accessibility",
+    "status": "published",
+    "prs": [
+      635
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose onboarding web accessibility"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-634",
     "date": "2026-11-21",
     "title": "Remove tracked agent queue artifacts",
