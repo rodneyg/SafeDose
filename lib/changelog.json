@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-518",
+    "date": "2026-11-21",
+    "title": "Add optional dosing protocol setup and preview",
+    "status": "published",
+    "prs": [
+      518
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional dosing protocol setup and preview"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-516",
     "date": "2026-11-21",
     "title": "Add a CI smoke check for SafeDose web previews",
