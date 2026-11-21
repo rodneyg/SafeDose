@@ -6,7 +6,7 @@ jest.mock('../../lib/photoCheckStripe', () => ({ resolveCheckoutPriceId: jest.fn
 const { resolveCheckoutPriceId } = require('../../lib/photoCheckStripe');
 const handler = require('../create-checkout-session');
 let res;
-const urls = { successUrl: 'https://safedose.example/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://safedose.example/pricing' };
+const urls = { successUrl: 'https://safedose.rodneygainous.com/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://safedose.rodneygainous.com/pricing' };
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -42,6 +42,40 @@ it.each(['offer', 'success', 'cancel'])('rejects missing %s before creating a se
   expect(res.status).toHaveBeenCalledWith(400);
   expect(mockCreate).not.toHaveBeenCalled();
   expect(resolveCheckoutPriceId).not.toHaveBeenCalled();
+});
+it.each([null, 'body', [], 42])('rejects malformed body %p before creating a session', async body => {
+  await handler({ method: 'POST', body }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+  expect(resolveCheckoutPriceId).not.toHaveBeenCalled();
+});
+it.each([
+  { offerKey: 42, ...urls },
+  { priceId: {}, ...urls },
+  { offerKey: 'photo_check_monthly', successUrl: 42, cancelUrl: urls.cancelUrl },
+])('rejects wrong parameter types before creating a session', async body => {
+  await handler({ method: 'POST', body }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+  expect(resolveCheckoutPriceId).not.toHaveBeenCalled();
+});
+it.each(['successUrl', 'cancelUrl'])('rejects a %s on another origin', async field => {
+  const body = { offerKey: 'photo_check_monthly', ...urls, [field]: 'https://evil.example/checkout' };
+  await handler({ method: 'POST', body }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+  expect(resolveCheckoutPriceId).not.toHaveBeenCalled();
+});
+it.each([
+  ['offerKey', 'unknown_offer'],
+  ['priceId', 'price_unexpected'],
+])('returns a bad request for an unexpected %s', async (field, value) => {
+  const error = new Error(`Unsupported ${field}`);
+  error.statusCode = 400;
+  resolveCheckoutPriceId.mockRejectedValue(error);
+  await handler({ method: 'POST', body: { [field]: value, ...urls } }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
 });
 it('returns checkout failure to the caller', async () => {
   resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_mock', offerKey: 'photo_check_monthly' });

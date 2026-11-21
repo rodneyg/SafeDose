@@ -5,6 +5,21 @@ const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 const { resolveCheckoutPriceId } = require('../lib/photoCheckStripe');
 
+function isAllowedRedirectUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    if (url.hostname === 'localhost') return ['http:', 'https:'].includes(url.protocol);
+    return url.protocol === 'https:' && !url.port && (
+      url.hostname === 'safedose.rodneygainous.com' ||
+      url.hostname === 'safe-dose.vercel.app' ||
+      /^safe-dose-[a-z0-9-]+-rodneygs-projects\.vercel\.app$/.test(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -50,10 +65,20 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { priceId, offerKey, successUrl, cancelUrl, hasTrial } = req.body;
-  if ((!priceId && !offerKey) || !successUrl || !cancelUrl) {
+  const body = req.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({ error: 'Invalid parameters' });
+  }
+  const { priceId, offerKey, successUrl, cancelUrl, hasTrial } = body;
+  if (
+    (typeof priceId !== 'string' && typeof offerKey !== 'string') ||
+    (priceId !== undefined && priceId !== null && typeof priceId !== 'string') ||
+    (offerKey !== undefined && offerKey !== null && typeof offerKey !== 'string') ||
+    !isAllowedRedirectUrl(successUrl) ||
+    !isAllowedRedirectUrl(cancelUrl)
+  ) {
     console.log('Missing parameters:', { priceId: Boolean(priceId), offerKey, successUrl: Boolean(successUrl), cancelUrl: Boolean(cancelUrl) });
-    return res.status(400).json({ error: 'Missing parameters' });
+    return res.status(400).json({ error: 'Invalid parameters' });
   }
 
   try {
