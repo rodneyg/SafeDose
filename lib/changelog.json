@@ -98,6 +98,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-592",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useEvaluationDataCapture",
+    "status": "published",
+    "prs": [
+      592
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useEvaluationDataCapture"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-591",
     "date": "2026-11-21",
     "title": "Test Firestore environment write wrappers (T-9127)",
