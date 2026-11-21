@@ -112,6 +112,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-565",
+    "date": "2026-11-21",
+    "title": "Clear stale dates when a protocol start is removed",
+    "status": "published",
+    "prs": [
+      565
+    ],
+    "sections": {
+      "Improved": [
+        "Clear stale dates when a protocol start is removed"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-564",
     "date": "2026-11-21",
     "title": "Add Vercel Web Analytics to SafeDose web",
