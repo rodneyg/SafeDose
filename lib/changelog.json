@@ -392,6 +392,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-568",
+    "date": "2026-11-21",
+    "title": "Authorize create-portal-session and add tests",
+    "status": "published",
+    "prs": [
+      568
+    ],
+    "sections": {
+      "Improved": [
+        "Authorize create-portal-session and add tests"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-565",
     "date": "2026-11-21",
     "title": "Clear stale dates when a protocol start is removed",
