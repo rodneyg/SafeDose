@@ -336,6 +336,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-550",
+    "date": "2026-11-21",
+    "title": "Add tests for scheduling helpers",
+    "status": "published",
+    "prs": [
+      550
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for scheduling helpers"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-549",
     "date": "2026-11-21",
     "title": "Add tests for offline queue or sync helpers",
