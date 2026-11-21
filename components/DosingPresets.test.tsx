@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { act, create } from 'react-test-renderer';
 import DosingPresets from './DosingPresets';
 import { deleteDosingPreset, getDosingPresets, MAX_DOSING_PRESETS, saveDosingPreset } from '../lib/dosingPresets';
@@ -15,6 +16,14 @@ const preset = {
   id: '1', name: 'Morning', dose: '2', unit: 'mg' as const, substanceName: 'Example',
   medicationInputType: 'concentration' as const, concentrationAmount: '4', concentrationUnit: 'mg/ml' as const,
   totalAmount: '', totalAmountUnit: null, solutionVolume: '', manualSyringe: { type: 'Standard' as const, volume: '1 ml' as const },
+};
+
+const eveningPreset = {
+  ...preset,
+  id: '2',
+  name: 'Evening',
+  dose: '3',
+  substanceName: 'Sample',
 };
 
 let renderer: ReturnType<typeof create> | undefined;
@@ -37,13 +46,27 @@ it('shows a safe empty state without offering an apply action', async () => {
   expect(renderer!.root.findAllByProps({ accessibilityLabel: expect.stringContaining('Apply') })).toHaveLength(0);
 });
 
-it('applies the selected saved preset', async () => {
-  (getDosingPresets as jest.Mock).mockResolvedValue([preset]);
+it('renders the dose for each saved preset', async () => {
+  (getDosingPresets as jest.Mock).mockResolvedValue([preset, eveningPreset]);
+  await act(async () => { renderer = create(<DosingPresets mode="apply" onApply={jest.fn()} />); });
+  openPresets();
+
+  const morning = renderer!.root.findByProps({ accessibilityLabel: 'Apply Morning preset' });
+  const evening = renderer!.root.findByProps({ accessibilityLabel: 'Apply Evening preset' });
+  expect(morning.findAllByType(Text).map(text => React.Children.toArray(text.props.children).join('')))
+    .toEqual(['Morning', '2 mg Example']);
+  expect(evening.findAllByType(Text).map(text => React.Children.toArray(text.props.children).join('')))
+    .toEqual(['Evening', '3 mg Sample']);
+});
+
+it('applies only the selected saved preset', async () => {
+  (getDosingPresets as jest.Mock).mockResolvedValue([preset, eveningPreset]);
   const onApply = jest.fn();
   await act(async () => { renderer = create(<DosingPresets mode="apply" onApply={onApply} />); });
   openPresets();
-  act(() => renderer!.root.findByProps({ accessibilityLabel: 'Apply Morning preset' }).props.onPress());
-  expect(onApply).toHaveBeenCalledWith(preset);
+  act(() => renderer!.root.findByProps({ accessibilityLabel: 'Apply Evening preset' }).props.onPress());
+  expect(onApply).toHaveBeenCalledTimes(1);
+  expect(onApply).toHaveBeenCalledWith(eveningPreset);
 });
 
 it('saves a named preset with optional notes', async () => {
