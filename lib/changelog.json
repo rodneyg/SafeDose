@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-633",
+    "date": "2026-11-21",
+    "title": "Use saved history for injection-site suggestions (T-10130)",
+    "status": "published",
+    "prs": [
+      633
+    ],
+    "sections": {
+      "Improved": [
+        "Use saved history for injection-site suggestions (T-10130)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-631",
     "date": "2026-11-21",
     "title": "Document SafeDose release evidence and remaining checks",
