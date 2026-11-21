@@ -2,6 +2,8 @@ name: Tag and release
 
 # Wait for the CI workflow (name is exactly "CI") to finish on main, then tag
 # only the SHA that actually passed. Do not run in parallel with CI on push.
+# Check out the default branch so this privileged workflow runs release scripts
+# from already-merged main, not from workflow_run.head_sha.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -22,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Fetch the tested SHA
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "${{ github.event.workflow_run.head_sha }}"
       - name: Inspect head commit
         id: head
         run: |
