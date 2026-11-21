@@ -6,7 +6,7 @@ import Head from 'expo-router/head';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { isMobileWeb, isWeb } from '../../lib/utils';
 import IntroScreen from '../../components/IntroScreen';
@@ -36,6 +36,8 @@ import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCaptu
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
+import { loadPrescribedProtocol, protocolOccurrence, upcomingPrescribedDoses } from '../../lib/prescribedProtocol';
+import { localDateTimeFields } from '../../lib/protocolPlan';
 
 const SCAN_RETAKE_HINT = 'For a clearer photo, use even light, face the label straight on, and avoid glare.';
 
@@ -541,13 +543,15 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
+  const resetScanDetails = useCallback(() => resetFullForm('dose', { keepScheduledDose: true }), [resetFullForm]);
+
   const openManualEntryFromScan = (
     mapped: ReturnType<typeof mapScanToDoseInputs>,
     confirmedSubstance: string | null = null,
   ) => {
     const needsInput = mapped.status === 'needs-input';
     if (needsInput) {
-      resetFullForm('dose');
+      resetScanDetails();
       setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
       setSyringeHint('Check the syringe label and select its capacity manually.');
     }
@@ -930,27 +934,50 @@ export default function NewDoseScreen() {
     setShowLimitModal(true);
   }, []);
 
-  const startScanAppliedRef = useRef(false);
-  const { handleScanNavigation, beforeFirstScanPrompt } = doseCalculator;
+  const startScanAppliedRef = useRef<string | null>(null);
+  const { handleScanNavigation, beforeFirstScanPrompt, startScheduledDose } = doseCalculator;
   useEffect(() => {
-    if (searchParams.startScan !== 'true') {
-      startScanAppliedRef.current = false;
+    const scheduled = typeof searchParams.scheduledDose === 'string' ? searchParams.scheduledDose : null;
+    const entry = scheduled ?? (searchParams.startScan === 'true' ? 'scan' : null);
+    if (!entry) {
+      startScanAppliedRef.current = null;
       return;
     }
-    if (!isScreenActive || screenStep !== 'intro' || beforeFirstScanPrompt.isLoading ||
-        startScanAppliedRef.current) return;
+    if (!isScreenActive || (!scheduled && screenStep !== 'intro') || beforeFirstScanPrompt.isLoading ||
+        startScanAppliedRef.current === entry) return;
 
-    startScanAppliedRef.current = true;
-    if (offline) {
-      handleSetScreenStep('manualEntry');
-    } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
-      openScanLimit();
-    } else {
-      setNavigatingFromIntro(true);
-      void handleScanNavigation();
+    let active = true;
+    async function start() {
+      if (scheduled) {
+        const [protocol, history] = await Promise.all([
+          loadPrescribedProtocol(user?.uid).catch(() => null),
+          getDoseLogHistory(),
+        ]);
+        if (!active) return;
+        const next = protocol && upcomingPrescribedDoses(protocol, history)[0];
+        if (!protocol || next !== localDateTimeFields(new Date()).date ||
+            protocolOccurrence(protocol, next) !== scheduled) {
+          router.replace('/protocol-schedule');
+          return;
+        }
+        resetFullForm();
+        startScheduledDose(scheduled);
+      }
+      startScanAppliedRef.current = entry;
+      if (offline) {
+        handleSetScreenStep('manualEntry');
+      } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
+        openScanLimit();
+      } else {
+        setNavigatingFromIntro(true);
+        void handleScanNavigation();
+      }
     }
-  }, [searchParams.startScan, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading, offline,
-    handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation]);
+    void start();
+    return () => { active = false; };
+  }, [searchParams.startScan, searchParams.scheduledDose, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading,
+    offline, handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation,
+    startScheduledDose, getDoseLogHistory, resetFullForm, user?.uid]);
 
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
@@ -1162,7 +1189,7 @@ export default function NewDoseScreen() {
           setIsProcessing={setIsProcessing}
           setProcessingMessage={setProcessingMessage}
           setScanError={setScanError}
-          resetFullForm={resetFullForm}
+          resetFullForm={resetScanDetails}
           requestNativeCameraPermission={requestPermission}
           getNativeCameraPermission={getPermission}
           requestWebCameraPermission={requestWebCameraPermission}
@@ -1228,6 +1255,7 @@ export default function NewDoseScreen() {
           handleStartOver={handleStartOver}
           setScreenStep={handleSetScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          resolveScheduledDose={doseCalculator.resolveScheduledDose}
           onDoseSaved={onDoseSaved}
           lastActionType={lastActionType}
           validateDoseInput={validateDoseInput}

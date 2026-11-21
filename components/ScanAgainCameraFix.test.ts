@@ -292,7 +292,7 @@ it('requires a fresh syringe selection when the scanned capacity exceeds the vis
   mockCapture.mockResolvedValueOnce(parseScanModelOutput(raw));
   await act(async () => { await camera().props.onCapture(); });
   expect(renderer.root.findByType('ImagePreviewModal' as never).props.visible).toBe(false);
-  expect(mockCalculator.resetFullForm).toHaveBeenCalledWith('dose');
+  expect(mockCalculator.resetFullForm).toHaveBeenCalledWith('dose', { keepScheduledDose: true });
   expect(mockCalculator.setManualSyringe.mock.calls).toEqual([[{ type: 'Standard', volume: '', needsConfirmation: true }]]);
   expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
   expect(mockCalculator.setConcentrationAmount).toHaveBeenLastCalledWith('10');

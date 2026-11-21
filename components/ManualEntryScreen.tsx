@@ -1,3 +1,4 @@
+import type { DoseLogContext } from '../types/doseLog';
 import { getManualProgress } from '../lib/manualProgress';
 import { SyringeSelection } from '../lib/dosing';
 import { AmountUnit, formatDoseNumber, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
@@ -66,6 +67,7 @@ interface ManualEntryScreenProps {
   handleStartOver: () => void;
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
   handleGoToFeedback: (nextAction: 'new_dose' | 'scan_again' | 'start_over') => void;
+  resolveScheduledDose?: (dose: DoseLogContext) => Promise<string | undefined>;
   onDoseSaved?: (localDoseCount?: number) => void;
   lastActionType: 'manual' | 'scan' | null;
   validateDoseInput?: (dose: string, unit: 'mg' | 'mcg' | 'units' | 'mL') => boolean;
@@ -123,6 +125,7 @@ export default function ManualEntryScreen({
   handleStartOver,
   setScreenStep,
   handleGoToFeedback,
+  resolveScheduledDose,
   onDoseSaved,
   lastActionType,
   validateDoseInput,
@@ -367,6 +370,7 @@ export default function ManualEntryScreen({
           handleStartOver={handleStartOver}
           setScreenStep={setScreenStep}
           handleGoToFeedback={handleGoToFeedback}
+          resolveScheduledDose={resolveScheduledDose}
           onDoseSaved={onDoseSaved}
           lastActionType={lastActionType}
           isMobileWeb={isMobileWeb}
