@@ -6,6 +6,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
 import { AppErrorBoundary } from '../components/AppErrorBoundary';
+import { WebAnalytics } from '../lib/WebAnalytics';
 import "../global.css";
 
 // Keep the splash screen visible while we fetch resources
@@ -35,6 +36,7 @@ export default function RootLayout() {
         <UserProfileProvider>
           <OnboardingProvider>
             <Slot />
+            <WebAnalytics />
           </OnboardingProvider>
         </UserProfileProvider>
       </AuthProvider>

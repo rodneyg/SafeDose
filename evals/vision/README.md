@@ -3,8 +3,15 @@
 **Labels pending Rodney verification. Scores are not an official accuracy gate.**
 
 The app and harness use `lib/scan`: `readScan`, `parseScanModelOutput`,
-`mapScanToDoseInputs`, and the same `SCAN_PROMPT` and request builder. This PR
-changes evaluation tooling only. It does not change the app prompt or dosing math.
+`mapScanToDoseInputs`, and the same `SCAN_PROMPT` and request builder. The app
+withholds the model's fill estimate and requires the user to verify the syringe
+and vial label before opening dose entry.
+
+The scorer reports accepted scans with withheld fills as `unconfirmed-fill`
+when there is no visible mismatch. It preserves raw fill errors in field
+accuracy, and continues to count wrong visible scan metadata or calculated
+numbers. Authored dose scenarios simulate manual entry after verification.
+The recorded holdout replays exercise the pre-verification gate.
 
 ## Dataset and provenance
 
@@ -139,6 +146,19 @@ a short allowlist of categories; keys, requests and pixels are not logged.
 
 CI validates all labels, corpus copies and the grouped split lock, runs metadata
 fixture checks, typecheck, vision tests, and offline eval without keys or pixels.
+To run the blocking wrong-number check locally:
+
+```sh
+SAFEDOSE_EVAL_RECORDINGS=evals/vision/fixtures/development-recordings.json \
+  npm run eval:vision -- --offline --gate-wrong-number
+```
+
+The committed fixture contains authored responses tied to synthetic development
+IDs and image hashes. It covers insulin and standard syringe reads and an
+explicit refusal. The check rejects empty fixtures and entries outside the
+development split. It exits with status 1 when the replay exceeds the
+wrong-number allowance in `thresholds.json`, currently zero.
+
 `thresholds.json` retains Rodney's SAF-106 `approved-pending-labels` status.
 Pending corpus labels cannot enforce an official gate, even with
 `SAFEDOSE_EVAL_ENFORCE=1`. The diagnostic text fixture deliberately fails the

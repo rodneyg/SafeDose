@@ -9,6 +9,7 @@ export default function PublicLinks({ onDarkBackground = false }: { onDarkBackgr
       <Link href="/terms" style={linkStyle}>Terms of Service</Link>
       <Link href="/privacy" style={linkStyle}>Privacy Policy</Link>
       <Link href="/support" style={linkStyle}>Support</Link>
+      <Link href="/dosing-problem" style={linkStyle}>Understanding dosing</Link>
     </View>
   );
 }

@@ -322,9 +322,7 @@ export default function NewDoseScreen() {
   const webCameraRequestInFlight = useRef(false);
 
   // Image preview modal state
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const [capturedImageUri, setCapturedImageUri] = useState<string>('');
-  const [pendingScanResult, setPendingScanResult] = useState<any>(null);
+  const [pendingScanResult, setPendingScanResult] = useState<ScanResult | null>(null);
 
   const applyDosingPreset = useCallback((preset: DosingPreset) => {
     setDose(preset.dose);
@@ -523,18 +521,23 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
-  // Function to apply scan results to form state
-  const applyScanResults = (result: ScanResult) => {
-    const mapped = mapScanToDoseInputs(result);
-    if (mapped.status === 'needs-input') {
-      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
+  // Only called by the user's verification action in ImagePreviewModal.
+  const applyVerifiedScanResults = (result: ScanResult) => {
+    const { inputs: scanned, status, reasons } = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
+    const { manualSyringe: scannedSyringe } = scanned;
+    if (!scannedSyringe) {
+      resetFullForm('dose');
+      setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
+      setSyringeHint('Check the syringe label and select its capacity manually.');
+      setScreenStep('manualEntry');
       return;
     }
-    const scanned = mapped.inputs;
-    if (scanned.manualSyringe) {
-      setManualSyringe(scanned.manualSyringe);
-      setSyringeHint('Detected from image scan');
+    if (status !== 'ready') {
+      setScanError(`Scan needs manual input: ${reasons.join(' ')}`);
+      return;
     }
+    setManualSyringe(scannedSyringe);
+    setSyringeHint('Detected from image scan');
     if (scanned.substance) {
       setSubstanceName(scanned.substance);
       setSubstanceNameHint('Detected from vial scan');
@@ -572,7 +575,7 @@ export default function NewDoseScreen() {
 
     doseCalculator.registerScannedFields({
       ...(scanned.substance ? { substanceName: scanned.substance } : {}),
-      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      manualSyringe: JSON.stringify(scannedSyringe),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
       } : {}),
@@ -581,7 +584,9 @@ export default function NewDoseScreen() {
       } : {}),
     });
     console.log('[Process] Scan successful, transitioning to manual entry');
-    // Clear calculation-related state without resetting the scan results
+    // Start with an empty dose so the user supplies it for this scan.
+    setDose('');
+    setDoseValue(null);
     doseCalculator.setGuidance(null);
     setCalculatedVolume(null);
     setRecommendedMarking(null);
@@ -855,17 +860,7 @@ export default function NewDoseScreen() {
           });
         }
         
-        // If we have a captured image, show the preview modal first
-        if (result.capturedImage?.uri) {
-          console.log('[Process] Showing image preview modal');
-          setCapturedImageUri(result.capturedImage.uri);
-          setPendingScanResult(result);
-          setShowImagePreview(true);
-          return; // Don't proceed to manual entry yet
-        }
-
-        // If no captured image, proceed directly (fallback for older flow)
-        applyScanResults(result);
+        setPendingScanResult(result);
       } else {
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_FAILURE, { reason: 'No results returned' });
         // The capture utility supplies a specific error. Keep it visible on Scan;
@@ -953,24 +948,16 @@ export default function NewDoseScreen() {
   // Image preview modal handlers
   const handleImagePreviewRetake = useCallback(() => {
     console.log('[ImagePreview] User chose to retake image');
-    setShowImagePreview(false);
-    setCapturedImageUri('');
     setPendingScanResult(null);
     setScanNudge(null);
     // Stay on scan screen for retake
   }, []);
 
-  const handleImagePreviewContinue = useCallback(() => {
-    console.log('[ImagePreview] User chose to continue with image');
-    setShowImagePreview(false);
-    setCapturedImageUri('');
-    
-    // Apply the pending scan results and proceed to manual entry
-    if (pendingScanResult) {
-      applyScanResults(pendingScanResult);
-      setPendingScanResult(null);
-    }
-  }, [pendingScanResult]);
+  const handleImagePreviewVerified = () => {
+    if (!pendingScanResult) return;
+    applyVerifiedScanResults(pendingScanResult);
+    setPendingScanResult(null);
+  };
 
   // Feedback handlers
   const handleFeedbackSubmit = useCallback(async (feedbackType: any, notes?: string) => {
@@ -1011,7 +998,7 @@ export default function NewDoseScreen() {
   console.log('[NewDoseScreen] Rendering', { screenStep });
 
   const canOfferUpgrade = user?.uid && hasVerifiedUsage && !offline && isFreeScanPlan(usageData);
-  const showScanNudge = manualStep === 'dose' && !showImagePreview && scanNudge?.userId === user?.uid;
+  const showScanNudge = manualStep === 'dose' && pendingScanResult === null && scanNudge?.userId === user?.uid;
   const showManualNudge = manualStep === 'finalResult' && !calculationError && recommendedMarking &&
     lastActionType !== 'scan' && usageData.scansUsed === 0;
   let nudgeKind: UpgradeNudgeKind | null = null;
@@ -1228,12 +1215,11 @@ export default function NewDoseScreen() {
         // volumeErrorValue={volumeErrorValue} // Pass if needed by the modal for display
       />
       <ImagePreviewModal
-        visible={showImagePreview}
-        imageUri={capturedImageUri}
+        visible={pendingScanResult !== null}
+        imageUri={pendingScanResult?.capturedImage?.uri ?? ''}
         scanResult={pendingScanResult}
         onRetake={handleImagePreviewRetake}
-        onContinue={handleImagePreviewContinue}
-        autoAdvanceDelay={15000} // 15 seconds auto-advance for concentration
+        onVerify={handleImagePreviewVerified}
       />
       {isProcessing && (
         <View style={styles.loadingOverlay}>

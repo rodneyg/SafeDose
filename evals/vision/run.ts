@@ -10,7 +10,7 @@ import {
 } from './harness';
 
 interface Recording { id: string; sha256: string; model_output: unknown }
-interface Recordings { model: string; temperature: number; prompt_sha256: string; outputs: Recording[] }
+interface Recordings { model: string; temperature: number; prompt_sha256: string; provenance?: string; outputs: Recording[] }
 const readJson = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, 'utf8'));
 
 function validateLabels(value: unknown): EvalLabel[] {
@@ -28,16 +28,21 @@ function validateLabels(value: unknown): EvalLabel[] {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const limitArg = args.find(arg => arg.startsWith('--limit='));
-  if (args.some(arg => !['--offline', '--live', '--legacy'].includes(arg) && !/^--limit=\d+$/.test(arg)) || (args.includes('--offline') && args.includes('--live'))) {
-    throw new Error('Usage: npm run eval:vision -- [--offline | --live] [--limit=12] [--legacy]');
+  if (args.some(arg => !['--offline', '--live', '--legacy', '--gate-wrong-number'].includes(arg) && !/^--limit=\d+$/.test(arg)) || (args.includes('--offline') && args.includes('--live'))) {
+    throw new Error('Usage: npm run eval:vision -- [--offline | --live] [--gate-wrong-number] [--limit=12] [--legacy]');
   }
   // Always require explicit --live, even when a key happens to exist in the shell.
   const live = args.includes('--live');
   const imageRoot = process.env.SAFEDOSE_EVAL_IMAGES_DIR;
+  const recordingsPath = process.env.SAFEDOSE_EVAL_RECORDINGS;
+  const wrongNumberGate = args.includes('--gate-wrong-number');
   if (live && !imageRoot) throw new Error('SAFEDOSE_EVAL_IMAGES_DIR is required for --live.');
   if (live && !process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required for --live.');
   const directory = resolve('evals/vision');
   const legacy = args.includes('--legacy');
+  if (wrongNumberGate && (!args.includes('--offline') || live || legacy || imageRoot || !recordingsPath)) {
+    throw new Error('--gate-wrong-number requires --offline and SAFEDOSE_EVAL_RECORDINGS, without a legacy manifest or image store.');
+  }
   if (!legacy) execFileSync(process.execPath, [resolve(directory, 'check-corpus.js')], { stdio: 'pipe' });
   const allLabels = legacy
     ? validateLabels(await readJson(resolve(directory, 'manifest.json')))
@@ -45,25 +50,34 @@ async function main(): Promise<void> {
   const limit = Number(limitArg?.split('=')[1] ?? 12);
   if (limitArg && !live) throw new Error('--limit requires --live');
   if (live && legacy) throw new Error('Legacy source inventory is not eligible for live calls');
-  const labels = live ? selectDevelopment(allLabels, limit) : allLabels;
+  const eligibleLabels = live ? selectDevelopment(allLabels, limit)
+    : wrongNumberGate ? allLabels.filter(label => label.split === 'development') : allLabels;
   // Fail closed before any paid request, never score changed/missing pixels.
   if (imageRoot) {
     execFileSync(process.execPath, [resolve(directory, 'check-exif.js'), resolve(imageRoot, 'images')], { stdio: 'pipe' });
-    for (const label of labels) if ((await loadImage(imageRoot, label)).status !== 'verified') throw new Error('Image integrity preflight failed');
+    for (const label of eligibleLabels) if ((await loadImage(imageRoot, label)).status !== 'verified') throw new Error('Image integrity preflight failed');
   }
   const fixtures = await readJson(resolve(directory, 'fixtures/model-outputs.json')) as Fixture[];
   validateLabels(fixtures.map(fixture => fixture.label));
   if (fixtures.some(f => f.verified_by !== 'pending-rodney' || f.label.verified_by !== 'pending-rodney' || f.label.review.status !== 'pending')) throw new Error('Synthetic fixtures must remain pending Rodney verification.');
   const thresholds = await readJson(resolve(directory, 'thresholds.json')) as Thresholds;
   const recordings = new Map<string, Recording>();
-  if (process.env.SAFEDOSE_EVAL_RECORDINGS) {
-    const file = await readJson(resolve(process.env.SAFEDOSE_EVAL_RECORDINGS)) as Recordings;
+  let recordingProvenance: string | undefined;
+  if (recordingsPath) {
+    const file = await readJson(resolve(recordingsPath)) as Recordings;
     if (file.model !== SCAN_MODEL || file.temperature !== 0 || file.prompt_sha256 !== sha256(SCAN_PROMPT) || !Array.isArray(file.outputs)) throw new Error('Recording model, temperature, or prompt hash does not match the current scan path.');
+    recordingProvenance = file.provenance;
     for (const output of file.outputs) {
-      if (recordings.has(output.id) || !labels.some(label => label.id === output.id && label.sha256 === output.sha256)) throw new Error('Recording id/sha256 must match exactly one label.');
+      if (recordings.has(output.id) || !eligibleLabels.some(label => label.id === output.id && label.sha256 === output.sha256)) throw new Error('Recording id/sha256 must match exactly one eligible label.');
+      if (wrongNumberGate && !(typeof output.model_output === 'string' ? output.model_output.trim()
+        : output.model_output && typeof output.model_output === 'object' && !Array.isArray(output.model_output) && Object.keys(output.model_output).length)) {
+        throw new Error('Every gated recording must contain a model response.');
+      }
       recordings.set(output.id, output);
     }
   }
+  if (wrongNumberGate && !recordings.size) throw new Error('The wrong-number gate requires at least one development recording.');
+  const labels = wrongNumberGate ? eligibleLabels.filter(label => recordings.has(label.id)) : eligibleLabels;
   if (live && ![process.env.SAFEDOSE_EVAL_INPUT_USD_PER_MILLION, process.env.SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION].every(rate => rate && Number.isFinite(Number(rate)) && Number(rate) > 0)) throw new Error('Live calls require positive token rates for cost accounting');
   const client = live ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 45000, maxRetries: 0 }) : null;
   const rows: EvalResult[] = [];
@@ -126,33 +140,44 @@ async function main(): Promise<void> {
     }
   }
   // CI exercises the complete path without pixels or a network. Do not mix synthetic scores into live accuracy.
-  if (!live) for (const fixture of fixtures) {
+  if (!live && !wrongNumberGate) for (const fixture of fixtures) {
     const start = performance.now();
     const scan = await readScan('', { modelOutput: JSON.stringify(fixture.model_output) });
-    rows.push(scoreScan(fixture.label, scan, { source: 'synthetic', image_status: 'text-only-fixture', latency_ms: performance.now() - start, cost_usd: 0 }));
+    // Authored dose scenarios simulate entering an independent dose after reviewing the scan.
+    rows.push(scoreScan(fixture.label, scan, {
+      source: 'synthetic', image_status: 'text-only-fixture', latency_ms: performance.now() - start,
+      cost_usd: 0, syringeAndVialVerified: Boolean(fixture.label.dose),
+    }));
   }
   const summary = summarize(rows);
   const realSummary = summarize(rows.filter(row => row.source !== 'synthetic'));
   const syntheticSummary = summarize(rows.filter(row => row.source === 'synthetic'));
   const gate = evaluateThresholds(summary, thresholds);
   const pending = labels.some(label => label.review.status === 'pending');
-  const enforced = !pending && (process.env.SAFEDOSE_EVAL_ENFORCE === '1' || thresholds.status === 'approved');
+  const enforced = !wrongNumberGate && !pending && (process.env.SAFEDOSE_EVAL_ENFORCE === '1' || thresholds.status === 'approved');
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const timestamp = new Date().toISOString();
   const base = resolve('evals/results', `${runId}-${commit.slice(0, 8)}-${live ? 'live' : 'offline'}`);
   const context = { mode: live ? 'live' : 'offline', commit, enforced, manifest_count: labels.length };
-  const markdown = renderMarkdown(summary, gate, context) +
-    `\n## Prediction provenance\n\nImage predictions: ${realSummary.observed}/${labels.length}. Synthetic fixtures: ${syntheticSummary.observed}. Image-only accuracy is not yet established by an offline fixture run. JSON contains separate image and synthetic summaries.\n`;
+  const markdown = renderMarkdown(summary, gate, context) + (wrongNumberGate
+    ? `\nWrong-number gate: **${gate.wrong_number_shown_pass ? 'PASS' : 'FAIL'}** on ${realSummary.observed} development replays.\n` +
+      (recordingProvenance ? `\nFixture provenance: ${recordingProvenance}\n` : '')
+    :
+    `\n## Prediction provenance\n\nImage predictions: ${realSummary.observed}/${labels.length}. ` +
+    `Image wrong-number-shown: ${realSummary.classes['wrong-number-shown']}. ` +
+    `Image unconfirmed fills: ${realSummary.classes['unconfirmed-fill']}. ` +
+    `Synthetic fixtures: ${syntheticSummary.observed}. The adjacent JSON reports accuracy separately for image predictions and authored fixtures.\n`);
   await mkdir(resolve('evals/results'), { recursive: true });
   await writeFile(`${base}.json`, JSON.stringify({
     notice: 'LABELS PENDING RODNEY VERIFICATION: scores are not an official accuracy gate.',
-    ...context, total_cost_usd: spent, stopped_for_budget: stoppedForBudget, corpus: legacy ? 'legacy-source-inventory' : 'synthetic-v1', split: live ? 'development-only' : 'all, integrity only without recordings', pending_labels: pending, timestamp, model: SCAN_MODEL, temperature: 0, prompt_sha256: sha256(SCAN_PROMPT),
+    ...context, total_cost_usd: spent, stopped_for_budget: stoppedForBudget, corpus: legacy ? 'legacy-source-inventory' : 'synthetic-v1', split: live || wrongNumberGate ? 'development-only' : 'all, integrity only without recordings', pending_labels: pending, timestamp, model: SCAN_MODEL, temperature: 0, prompt_sha256: sha256(SCAN_PROMPT),
+    wrong_number_gate_enforced: wrongNumberGate, recording_provenance: recordingProvenance,
     live_baseline: live ? 'this run; labels still pending verification' : 'not yet run',
     thresholds, gate, summary, image_summary: realSummary, synthetic_summary: syntheticSummary, results: rows,
   }, null, 2) + '\n');
   await writeFile(`${base}.md`, markdown);
   process.stdout.write(markdown);
-  if (enforced && !gate.would_pass) process.exitCode = 1;
+  if (wrongNumberGate ? !gate.wrong_number_shown_pass : enforced && !gate.would_pass) process.exitCode = 1;
 }
 
 main().catch((error: unknown) => {
