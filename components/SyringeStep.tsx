@@ -28,6 +28,7 @@ export default function SyringeStep({
   concentrationUnit,
   medicationInputType
 }: Props) {
+  const needsCapacitySelection = manualSyringe.needsConfirmation || !manualSyringe.volume;
   const availableVolumes = manualSyringe.needsConfirmation ? [] : manualSyringe.type === 'Insulin' ? (manualSyringe.insulinScale === 'U-40' ? ['0.5 ml', '1 ml'] : insulinVolumes) : standardVolumes;
   const isValidSyringeOption = getSyringeMarkings(manualSyringe);
 
@@ -73,7 +74,7 @@ export default function SyringeStep({
               setSyringeHint("No compatible insulin syringes for this dose.");
               return;
             }
-            setManualSyringe({ type: 'Insulin', volume: manualSyringe.needsConfirmation ? '' : insulinVolumes[2], insulinScale: manualSyringe.insulinScale || 'U-100', needsScaleConfirmation: manualSyringe.needsScaleConfirmation });
+            setManualSyringe({ type: 'Insulin', volume: needsCapacitySelection ? '' : insulinVolumes[2], insulinScale: manualSyringe.insulinScale || 'U-100', needsScaleConfirmation: manualSyringe.needsScaleConfirmation });
             setSyringeHint(null);
           }}
         >
@@ -99,7 +100,7 @@ export default function SyringeStep({
               setSyringeHint("No compatible standard syringes for this dose.");
               return;
             }
-            setManualSyringe({ type: 'Standard', volume: manualSyringe.needsConfirmation ? '' : standardVolumes[1] });
+            setManualSyringe({ type: 'Standard', volume: needsCapacitySelection ? '' : standardVolumes[1] });
             setSyringeHint(null);
           }}
         >

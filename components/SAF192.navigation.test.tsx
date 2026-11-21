@@ -12,7 +12,8 @@ jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) })
 let mockFocused = true;
 let mockFocusRuns = 0;
 const mockNavigation = {};
-const mockParams = {};
+const mockParams: { startScan?: string } = {};
+const mockUsage = { plan: 'free', scansUsed: 0, limit: 3 };
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => mockFocused }));
 jest.mock('expo-router', () => ({
   useNavigation: () => mockNavigation,
@@ -29,14 +30,15 @@ jest.mock('expo-router', () => ({
 const mockNoop = jest.fn();
 const mockCalculator = new Proxy({
   onboardingSurvey: { prompt: null },
-  resetFullForm: jest.fn(),
+  resetFullForm: jest.fn(), setScreenStep: jest.fn(), handleScanNavigation: jest.fn(),
+  beforeFirstScanPrompt: { isLoading: false },
   screenStep: 'manualEntry', manualStep: 'finalResult', stateHealth: 'healthy',
   manualSyringe: { type: 'Standard', volume: '3 ml' }, logUsageData: { plan: 'free' },
   recommendedMarking: '1 mL', calculatedVolume: 1, dose: '1', unit: 'mL',
 }, { get: (target, key) => key in target ? target[key as keyof typeof target] : mockNoop });
 // Return a new object every render, matching the actual hook's return identity.
 jest.mock('../lib/hooks/useDoseCalculator', () => ({ __esModule: true, default: () => new Proxy({}, { get: (_, key) => mockCalculator[key as keyof typeof mockCalculator] }) }));
-jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' } }) }));
+jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: mockUsage }) }));
 jest.mock('../lib/hooks/useFeedbackStorage', () => ({ useFeedbackStorage: () => ({}) }));
 jest.mock('../lib/hooks/useSignUpPrompt', () => ({ useSignUpPrompt: () => ({}) }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({}) }));
@@ -56,6 +58,10 @@ jest.mock('./SignUpPrompt', () => 'SignUpPrompt');
 let renderer: ReturnType<typeof create>;
 beforeEach(() => {
   mockFocused = true;
+  delete mockParams.startScan;
+  mockCalculator.screenStep = 'manualEntry';
+  mockCalculator.beforeFirstScanPrompt.isLoading = false;
+  mockUsage.scansUsed = 0;
   mockFocusRuns = 0;
   jest.clearAllMocks();
   jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -73,7 +79,38 @@ it.each(['Reference', 'Log'])('immediately removes the result and modals when na
   act(() => renderer.update(<NewDoseScreen />));
   expect(renderer.toJSON()).toBeNull();
   mockFocused = true;
+  delete mockParams.startScan;
+  mockCalculator.screenStep = 'manualEntry';
+  mockCalculator.beforeFirstScanPrompt.isLoading = false;
+  mockUsage.scansUsed = 0;
   act(() => renderer.update(<NewDoseScreen />));
   expect(renderer.root.findByType('ManualEntryScreen' as any).props.manualStep).toBe('finalResult');
   expect(mockCalculator.resetFullForm).not.toHaveBeenCalled();
+});
+
+it('waits for the first-scan preferences and starts the usual scan path once', () => {
+  mockParams.startScan = 'true';
+  mockCalculator.screenStep = 'intro';
+  mockCalculator.beforeFirstScanPrompt.isLoading = true;
+  act(() => { renderer = create(<NewDoseScreen />); });
+  expect(mockCalculator.handleScanNavigation).not.toHaveBeenCalled();
+
+  mockCalculator.beforeFirstScanPrompt.isLoading = false;
+  act(() => renderer.update(<NewDoseScreen />));
+  expect(mockCalculator.handleScanNavigation).toHaveBeenCalledTimes(1);
+
+  mockCalculator.screenStep = 'beforeFirstScan';
+  act(() => renderer.update(<NewDoseScreen />));
+  mockCalculator.screenStep = 'intro';
+  act(() => renderer.update(<NewDoseScreen />));
+  expect(mockCalculator.handleScanNavigation).toHaveBeenCalledTimes(1);
+});
+
+it('opens the existing limit dialog instead of starting a scan when the allowance is used', () => {
+  mockParams.startScan = 'true';
+  mockCalculator.screenStep = 'intro';
+  mockUsage.scansUsed = mockUsage.limit;
+  act(() => { renderer = create(<NewDoseScreen />); });
+  expect(mockCalculator.handleScanNavigation).not.toHaveBeenCalled();
+  expect(renderer.root.findByType('LimitModal' as never).props.visible).toBe(true);
 });
