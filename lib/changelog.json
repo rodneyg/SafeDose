@@ -770,6 +770,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-507",
+    "date": "2026-11-21",
+    "title": "Require confirmation of scanned vial substance",
+    "status": "published",
+    "prs": [
+      507
+    ],
+    "sections": {
+      "Improved": [
+        "Require confirmation of scanned vial substance"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-506",
     "date": "2026-11-21",
     "title": "Require manual selection for uncertain scan capacity",
