@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-600",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to subscription hook",
+    "status": "published",
+    "prs": [
+      600
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to subscription hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-599",
     "date": "2026-11-21",
     "title": "Add unit tests for readPhotoMetrics.web.ts",
