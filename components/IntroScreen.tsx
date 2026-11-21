@@ -26,6 +26,7 @@ import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../li
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
 import { FREE_SCAN_LIMIT, hasScanCapacity } from '../lib/plans';
+import { useFirstScanCopy } from '../lib/firstScanExperiment';
 import { logAnalyticsEvent } from '../lib/analytics';
 import {
   assignMobileScanCtaArm, isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm,
@@ -83,6 +84,9 @@ export default function IntroScreen({
   useEffect(() => {
     if (arm) logAnalyticsEvent(mobileScanCtaEvent('view', arm));
   }, [arm]);
+
+  const variant = useFirstScanCopy();
+  const showFirstScanCopy = variant && !isOutOfScans && !offline;
 
   const [signInFailed, setSignInFailed] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -413,7 +417,7 @@ export default function IntroScreen({
       accessibilityRole="button"
     >
       <CameraIcon color="#fff" size={20} />
-      <Text style={styles.buttonText}>{isOutOfScans ? 'Upgrade' : 'Scan'}</Text>
+      <Text style={styles.buttonText}>{isOutOfScans ? 'Upgrade' : showFirstScanCopy ? 'Scan photo' : 'Scan'}</Text>
     </TouchableOpacity>
   );
 
@@ -453,7 +457,12 @@ export default function IntroScreen({
               {prominentScan && scanButton}
               <View style={[styles.welcomeContainer, isMobileWeb && styles.welcomeContainerMobile]}>
                 <Syringe color="#6ee7b7" size={64} style={[styles.icon, isMobileWeb && styles.iconMobile]} />
-                {user && !user.isAnonymous && user.displayName ? (
+                {showFirstScanCopy ? (
+                  <>
+                    <Text style={styles.welcomeText}>Take your first photo</Text>
+                    <Text style={styles.firstScanHint}>Show the syringe markings and vial label in one photo.</Text>
+                  </>
+                ) : user && !user.isAnonymous && user.displayName ? (
                   <Text style={styles.welcomeText}>
                     Hello, {user.displayName.split(' ')[0]}!
                   </Text>
@@ -730,6 +739,14 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#666',
+    textAlign: 'center',
+  },
+
+  firstScanHint: {
+    marginTop: 6,
+    paddingHorizontal: 16,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
   },
