@@ -32,7 +32,7 @@ export default function LogLimitModal({
   }, [visible, triggerReason]);
 
   const handleUpgrade = () => {
-    console.log('[LogLimitModal] View Photo Check button pressed');
+    console.log('[LogLimitModal] View Photo Scan button pressed');
     logAnalyticsEvent(ANALYTICS_EVENTS.LIMIT_MODAL_ACTION, { action: 'view_photo_check', type: triggerReason });
     router.push('/pricing');
     onClose();
@@ -64,9 +64,9 @@ export default function LogLimitModal({
 
   const getMessage = () => {
     if (isPowerUserPromotion) {
-      return `Great job on completing multiple doses. Your calculator stays free. Photo Check adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
+      return `Great job on completing multiple doses. Your calculator stays free. Photo Scan adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
     }
-    return `You've reached your monthly dose logging limit. You can continue without saving. Photo Check adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
+    return `You've reached your monthly dose logging limit. You can continue without saving. Photo Scan adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
   };
 
   return (
@@ -86,7 +86,7 @@ export default function LogLimitModal({
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-              <Text style={styles.buttonText}>View Photo Check</Text>
+              <Text style={styles.buttonText}>View Photo Scan</Text>
             </TouchableOpacity>
             {isLogLimit && (
               <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleContinueWithoutSaving}>

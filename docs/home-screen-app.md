@@ -33,7 +33,7 @@ Real iPhone checks still required on the deployed preview:
 1. Confirm the home-screen icon and standalone launch.
 2. Finish onboarding online, close and reopen, then enable airplane mode.
 3. Cold-launch offline, enter a manual calculation, and confirm photo entry
-   directs to manual mode. Reconnect and confirm normal photo-check behavior.
+   directs to manual mode. Reconnect and confirm normal photo-scan behavior.
 4. Allow and deny camera permission; test capture from the installed app.
 5. Open an updated build, close all SafeDose windows, and confirm the next launch
    uses the new build. Check cold and cached load times on mobile data.

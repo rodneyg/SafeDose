@@ -8,7 +8,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const pages = [
   ['/', ['Verify Materials', 'Calculate Doses'], '/onboarding'],
   ['/onboarding', ['Verify Materials', 'Calculate Doses']],
-  ['/pricing', ['Photo Check', '/month', '/year', 'Calculator stays free']],
+  ['/pricing', ['Photo Scan', '/month', '/year', 'Calculator stays free']],
   ['/login', ['Sign In with Google', 'Cancel']],
   ['/changelog', ['Changelog', 'New features, improvements, and fixes']],
   ['/privacy', ['Privacy Policy']],

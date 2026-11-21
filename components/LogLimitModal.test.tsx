@@ -14,7 +14,7 @@ const onContinueWithoutSaving = jest.fn();
 
 beforeEach(() => jest.clearAllMocks());
 
-it('offers the existing Photo Check plan and keeps a no-purchase path', () => {
+it('offers the existing Photo Scan plan and keeps a no-purchase path', () => {
   render(
     <LogLimitModal
       visible
@@ -24,7 +24,7 @@ it('offers the existing Photo Check plan and keeps a no-purchase path', () => {
     />
   );
 
-  expect(screen.getByText(/Photo Check adds unlimited AI scans for \$2\.99\/month/)).toBeTruthy();
+  expect(screen.getByText(/Photo Scan adds unlimited AI scans for \$2\.99\/month/)).toBeTruthy();
   fireEvent.press(screen.getByText('Continue without saving'));
   expect(onContinueWithoutSaving).toHaveBeenCalledTimes(1);
   expect(onClose).toHaveBeenCalledTimes(1);
@@ -40,7 +40,7 @@ it('routes the upgrade action to the existing pricing page', () => {
     />
   );
 
-  fireEvent.press(screen.getByText('View Photo Check'));
+  fireEvent.press(screen.getByText('View Photo Scan'));
   expect(router.push).toHaveBeenCalledWith('/pricing');
   expect(onClose).toHaveBeenCalledTimes(1);
 });
