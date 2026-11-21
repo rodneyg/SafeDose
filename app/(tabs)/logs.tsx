@@ -1,6 +1,6 @@
 import { formatDrawToText, formatConcentration } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Trash2, Calendar, Pill } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
@@ -47,29 +47,32 @@ export default function LogsScreen() {
 
   const handleDeleteLog = useCallback((log: DoseLog) => {
     const displayName = getDisplaySubstanceName(log.substanceName);
-    Alert.alert(
-      'Delete Log Entry',
-      `Are you sure you want to delete this dose log?\n\n${displayName} - ${log.doseValue} ${log.unit}`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteDoseLog(log.id);
-              await loadLogs(); // Refresh the list
-            } catch (error) {
-              console.error('Error deleting log:', error);
-              Alert.alert('Error', 'Failed to delete log entry. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+    const title = 'Delete Log Entry';
+    const message = `Are you sure you want to delete this dose log?\n\n${displayName} - ${log.doseValue} ${log.unit}`;
+    const confirmDelete = async () => {
+      try {
+        await deleteDoseLog(log.id);
+        await loadLogs();
+      } catch (error) {
+        console.error('Error deleting log:', error);
+        const failure = 'Failed to delete log entry. Please try again.';
+        if (Platform.OS === 'web') {
+          window.alert(failure);
+        } else {
+          Alert.alert('Error', failure);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) void confirmDelete();
+      return;
+    }
+
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: confirmDelete },
+    ]);
   }, [deleteDoseLog, loadLogs]);
 
   const formatDate = (timestamp: string) => {
@@ -130,7 +133,7 @@ export default function LogsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View nativeID="dose-log-screen" style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Recent Doses</Text>
         <Text style={styles.subtitle}>Your medication history</Text>
@@ -142,7 +145,7 @@ export default function LogsScreen() {
         )}
         {logs.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Pill color="#8E8E93" size={48} style={styles.emptyIcon} />
+            <Pill color="#62626D" size={48} style={styles.emptyIcon} />
             <Text style={styles.emptyText}>No doses logged yet</Text>
             <Text style={styles.emptySubtext}>
               Completed doses will automatically appear here
@@ -187,16 +190,18 @@ export default function LogsScreen() {
                       )}
                     </View>
                     <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete log for ${getDisplaySubstanceName(log.substanceName)}, ${formatDate(log.timestamp)} at ${formatTime(log.timestamp)}`}
                       style={styles.deleteButton}
                       onPress={() => handleDeleteLog(log)}
                     >
-                      <Trash2 color="#F87171" size={20} />
+                      <Trash2 color="#BA1A1A" size={20} />
                     </TouchableOpacity>
                   </View>
                   
                   <View style={styles.logFooter}>
                     <View style={styles.timeInfo}>
-                      <Calendar color="#8E8E93" size={14} />
+                      <Calendar color="#62626D" size={14} />
                       <Text style={styles.timeText}>
                         {formatDate(log.timestamp)} at {formatTime(log.timestamp)}
                       </Text>
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 17,
-    color: '#8E8E93',
+    color: '#62626D',
   },
   logsList: {
     flex: 1,
@@ -270,14 +275,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    color: '#8E8E93',
+    color: '#62626D',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
   },
   emptySubtext: {
     textAlign: 'center',
-    color: '#8E8E93',
+    color: '#62626D',
     fontSize: 15,
   },
   logCard: {
@@ -289,7 +294,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5EA',
   },
   mostRecentCard: {
-    borderColor: '#007AFF',
+    borderColor: '#005DBF',
     borderWidth: 2,
   },
   logHeader: {
@@ -315,17 +320,17 @@ const styles = StyleSheet.create({
   doseAmount: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#007AFF',
+    color: '#005DBF',
     marginRight: 8,
   },
   volumeAmount: {
     fontSize: 16,
-    color: '#10B981',
+    color: '#08764F',
     fontWeight: '500',
   },
   injectionSiteText: {
     fontSize: 15,
-    color: '#007AFF',
+    color: '#005DBF',
     fontWeight: '500',
   },
   concentrationInfo: {
@@ -341,7 +346,7 @@ const styles = StyleSheet.create({
   },
   drawToText: {
     fontSize: 15,
-    color: '#FF0000',
+    color: '#BA1A1A',
     fontWeight: '600',
   },
   deleteButton: {
@@ -359,11 +364,11 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: '#62626D',
     marginLeft: 4,
   },
   recentBadge: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#005DBF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
