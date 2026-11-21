@@ -333,7 +333,7 @@ export default function NewDoseScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>('Processing image... This may take a few seconds');
   const [scanError, setScanError] = useState<string | null>(null);
-  const [doseHistory, setDoseHistory] = useState<import('../../types/doseLog').DoseLog[]>([]);
+  const [doseHistory, setDoseHistory] = useState<import('../../types/doseLog').DoseLog[] | null>(null);
   const [webFlashlightEnabled, setWebFlashlightEnabled] = useState(false);
   const [webFlashlightSupported, setWebFlashlightSupported] = useState(false);
   const [lastScreenStep, setLastScreenStep] = useState<ScreenStep>('intro');
@@ -528,19 +528,25 @@ export default function NewDoseScreen() {
 
   // Load dose history when injection site selection screen is shown
   useEffect(() => {
-    if (screenStep === 'injectionSiteSelection') {
-      const loadDoseHistory = async () => {
-        try {
-          const history = await getDoseLogHistory();
-          setDoseHistory(history);
-        } catch (error) {
-          console.error('Error loading dose history for injection site selection:', error);
-          setDoseHistory([]); // Fallback to empty array
-        }
-      };
-      
-      loadDoseHistory();
+    if (screenStep !== 'injectionSiteSelection') {
+      setDoseHistory(null);
+      return;
     }
+
+    let active = true;
+    const loadDoseHistory = async () => {
+      try {
+        const history = await getDoseLogHistory();
+        if (active) setDoseHistory(history);
+      } catch (error) {
+        if (!active) return;
+        console.error('Error loading dose history for injection site selection:', error);
+        setDoseHistory([]);
+      }
+    };
+
+    loadDoseHistory();
+    return () => { active = false; };
   }, [screenStep, getDoseLogHistory]);
 
   const resetScanDetails = useCallback(() => resetFullForm('dose', { keepScheduledDose: true }), [resetFullForm]);
