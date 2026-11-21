@@ -102,8 +102,18 @@ def format_tag(version):
     return "v%d.%d.%d" % version
 
 
+def resolve_sha():
+    """Prefer RELEASE_SHA. GITHUB_SHA is reserved by Actions and stays on the checkout HEAD."""
+    return (
+        (os.environ.get("RELEASE_SHA") or "").strip()
+        or (os.environ.get("GITHUB_SHA") or "").strip()
+        or run(["git", "rev-parse", "HEAD"]).stdout.strip()
+    )
+
+
 def main():
-    sha = os.environ.get("GITHUB_SHA") or run(["git", "rev-parse", "HEAD"]).stdout.strip()
+    sha = resolve_sha()
+    print("Release SHA:", sha)
     message = os.environ.get("GITHUB_EVENT_HEAD_COMMIT_MESSAGE") or ""
     if not message:
         message = run(["git", "log", "-1", "--format=%B", sha]).stdout
@@ -122,7 +132,10 @@ def main():
     print(f"Bumping {current_tag or 'no previous tag'} with a {kind} bump to {tag}")
     run(["git", "config", "user.name", "github-actions[bot]"])
     run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"])
-    run(["git", "tag", "-a", tag, sha, "-m", tag])
+    run(["git", "tag", "-a", "-m", tag, tag, sha])
+    pointed = run(["git", "rev-list", "-n", "1", tag]).stdout.strip()
+    if pointed != sha:
+        raise SystemExit(f"tag {tag} points at {pointed}, expected {sha}")
     run(["git", "push", "origin", tag])
     body = {
         "tag_name": tag,
