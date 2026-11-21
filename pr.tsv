@@ -1,2 +1,0 @@
-pr_url	status	evidence
-	ready	Branch t-safedose-checkout-redirect-policy committed locally; final task rule prohibits pushing or opening a live PR.

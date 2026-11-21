@@ -1,9 +1,12 @@
 // Note: Ensure STRIPE_LIVE_SECRET_KEY is set in your deployment environment (e.g., Vercel).
 // In Vercel, go to Settings > Environment Variables, add STRIPE_LIVE_SECRET_KEY with your live secret key (sk_live_...), and redeploy the app.
 
+const { createRateLimit } = require('../lib/apiRateLimit');
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 const { resolveCheckoutPriceId } = require('../lib/photoCheckStripe');
+
+const allowRequest = createRateLimit(30);
 
 function isAllowedRedirectUrl(value) {
   if (typeof value !== 'string') return false;
@@ -25,6 +28,7 @@ module.exports = async (req, res) => {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   // Validate Stripe configuration before proceeding
   if (!stripeConfig.secretKey) {

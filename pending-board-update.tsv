@@ -1,0 +1,5 @@
+task_id	sheet	tab	row_or_key	field	value	recorded_at_et
+T-881	board	Tasks	T-881	Status	In progress	2026-11-19 20:18:28 ET
+T-881	board	Tasks	T-881	Status	Done	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Done at (ET)	2026-11-19 20:19:15 ET	2026-11-19 20:19:15 ET
+T-881	board	Tasks	T-881	Result	Added focused success and error tests for scanner processing state ordering and finally cleanup.	2026-11-19 20:19:15 ET
