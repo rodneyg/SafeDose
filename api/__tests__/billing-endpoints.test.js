@@ -89,10 +89,26 @@ beforeEach(() => {
 
 afterEach(() => jest.restoreAllMocks());
 
+const portalBody = { idToken: 'fixture-id-token' };
+
 describe.each([
-  ['create-portal-session', () => portalHandler],
-  ['get-subscription-status', loadSubscriptionHandler],
-])('%s request and config failures', (_endpoint, loadHandler) => {
+  {
+    endpoint: 'create-portal-session',
+    loadHandler: () => portalHandler,
+    body: portalBody,
+    missingKey: /Stripe is not configured properly/,
+    invalidKey: /Stripe is not configured properly/,
+    constructorError: 'Failed to create portal session',
+  },
+  {
+    endpoint: 'get-subscription-status',
+    loadHandler: loadSubscriptionHandler,
+    body: { idToken: 'fixture-id-token' },
+    missingKey: /Stripe secret key is not configured for test mode/,
+    invalidKey: /Invalid secret key format/,
+    constructorError: 'Failed to initialize Stripe configuration',
+  },
+])('$endpoint request and config failures', ({ loadHandler, body, missingKey, invalidKey, constructorError }) => {
   it('rejects GET and advertises POST before constructing Stripe', async () => {
     stripeConfig.secretKey = null;
 
@@ -105,12 +121,15 @@ describe.each([
   });
 
   it.each([
-    ['missing', null, /Stripe secret key is not configured for test mode/],
-    ['invalid', 'bad_fixture', /Invalid secret key format/],
-  ])('rejects %s Stripe config before constructing Stripe', async (_description, secretKey, error) => {
+    ['missing', null, 'missing'],
+    ['invalid', 'bad_fixture', 'invalid'],
+  ])('rejects %s Stripe config before constructing Stripe', async (_description, secretKey, kind) => {
+    const error = kind === 'missing' ? missingKey : invalidKey;
     stripeConfig.secretKey = secretKey;
 
-    await loadHandler()({ method: 'POST' }, res);
+    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
+    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
+    await loadHandler()({ method: 'POST', body }, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: expect.stringMatching(error) });
@@ -122,19 +141,21 @@ describe.each([
       throw new Error('Fixture initialization failure');
     });
 
-    await loadHandler()({ method: 'POST' }, res);
+    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
+    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
+    await loadHandler()({ method: 'POST', body }, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to initialize Stripe configuration' });
+    expect(res.json).toHaveBeenCalledWith({ error: constructorError });
   });
 });
 
 describe('create-portal-session', () => {
-  it('rejects a missing customer ID before creating a session', async () => {
+  it('rejects a missing ID token before creating a session', async () => {
     await portalHandler({ method: 'POST', body: {} }, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Customer ID is required' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid request' });
     expect(createSession).not.toHaveBeenCalled();
   });
 
@@ -145,13 +166,15 @@ describe('create-portal-session', () => {
     const failure = new Error('Fixture portal failure');
     failure.type = type;
     createSession.mockRejectedValueOnce(failure);
-    const returnUrl = 'https://safedose.example/settings';
+    const returnUrl = 'https://safe-dose.vercel.app/settings';
+    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
+    getUser.mockResolvedValueOnce({ exists: true, data: () => ({ stripeCustomerId: 'cus_fixture' }) });
 
-    await portalHandler({ method: 'POST', body: { customerId: 'cus_fixture', returnUrl } }, res);
+    await portalHandler({ method: 'POST', body: { ...portalBody, returnUrl } }, res);
 
     expect(createSession).toHaveBeenCalledWith({ customer: 'cus_fixture', return_url: returnUrl });
     expect(res.status).toHaveBeenCalledWith(status);
-    expect(res.json).toHaveBeenCalledWith({ error, details: failure.message });
+    expect(res.json).toHaveBeenCalledWith({ error });
   });
 });
 

@@ -21,6 +21,7 @@ describe('Vercel response headers', () => {
     expect(api.dest).toBe('/api/$1.js');
     expect(filesystem.handle).toBe('filesystem');
     expect(staticAssets.status).toBe(404);
+    expect(new RegExp('^' + staticAssets.src + '$').test('/assets/missing.js')).toBe(true);
     expect(spa.dest).toBe('/index.html');
   });
 });
