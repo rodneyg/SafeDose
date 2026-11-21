@@ -1,6 +1,6 @@
 # SafeDose Model Fine-Tuning Guide
 
-This comprehensive guide explains how to use automatically captured user interaction data to fine-tune AI models for improved SafeDose accuracy, with specific instructions for OpenAI's platform.
+This guide describes a development workflow for evaluating and experimenting with models. The command-line exporter uses bundled synthetic examples. See the [evaluation guide](../Evals.md#privacy-and-security) for current app data handling.
 
 ## Table of Contents
 
@@ -17,14 +17,10 @@ This comprehensive guide explains how to use automatically captured user interac
 
 ## Overview
 
-SafeDose automatically captures every user interaction (dose calculations and AI scans) to build a continuously growing evaluation dataset. This data can be exported and used to fine-tune AI models, creating a self-improving system where real-world usage directly enhances accuracy.
-
-### Key Benefits
-
-- **Zero manual effort**: Data collection happens automatically during normal app usage
-- **Real-world scenarios**: Training data reflects actual user needs and edge cases
-- **Quality filtering**: Automatic scoring ensures only high-quality examples are used
-- **Continuous improvement**: Models get better over time as more data is collected
+SafeDose has an evaluation capture hook for manual calculations and scan
+results. Capture runs when the hook is available and idle. See
+[the evaluation guide](../Evals.md#privacy-and-security) for where scan images
+and evaluation records go.
 
 ### What Gets Captured
 
@@ -103,10 +99,10 @@ evaluationDataCapture.captureUserInteraction({
 
 ### Data Storage
 
-- **Local Storage**: All data stored in AsyncStorage using `evaluation_data_${userId}` key
-- **Firestore (Optional)**: Authenticated users can opt-in to sync anonymized metadata
-- **Privacy**: Images never leave the device; only metadata synced to cloud
-- **Limits**: Maximum 500 most recent interactions per user to prevent storage bloat
+- The hook writes evaluation records to AsyncStorage.
+- For signed-in users, the hook can also write an evaluation record to
+  Firestore with image metadata in place of image bytes. Scan photos go to the
+  analysis API during a scan.
 
 ### Quality Scoring
 
@@ -166,7 +162,7 @@ node scripts/export-evaluation-data.js
 ```
 
 This script:
-1. Fetches all captured user interaction data
+1. Reads bundled synthetic examples
 2. Filters by quality score (default: ≥0.6)
 3. Converts to evaluation format
 4. Converts to training format (JSONL)

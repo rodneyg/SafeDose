@@ -196,18 +196,10 @@ Document evaluation runs in `evals/results/` with:
 
 ### Automatic Data Collection
 
-SafeDose now automatically captures user interactions to continuously build and improve the evaluation dataset:
-
-- **Every dose calculation** (manual entry) is saved with input parameters and results
-- **Every AI scan** is captured with the image, prompt, and extracted data
-- **User feedback** and corrections are tracked to improve accuracy
-- **Data quality scoring** ensures only high-quality examples are used for training
-
-This automatic collection enables:
-- **Continuous model improvement** through real-world usage data
-- **Effortless dataset building** - no manual data collection needed
-- **Easy fine-tuning workflows** - download data, plug into training scripts
-- **Quality-controlled training data** with automatic scoring and filtering
+The app can capture manual calculation inputs and results and successful scan
+results for evaluation. Capture runs when the evaluation hook is available and
+idle. Each record has a quality score based on heuristics such as whether an
+image URI or result is present.
 
 ### Data Export for Fine-Tuning
 
@@ -231,7 +223,7 @@ console.log(`Exported ${trainingData.length} high-quality training examples`);
 
 #### Quick Start: Export and Use Data
 
-1. **Export Data**: Run the export script to gather captured interactions
+1. **Export examples**: Run the sample exporter to write its bundled synthetic examples
    ```bash
    node scripts/export-evaluation-data.js
    ```
@@ -246,10 +238,12 @@ For detailed instructions on preparing data, using OpenAI's platform, best pract
 
 ### Privacy and Security
 
-- **Image data** is stored locally only (not sent to external servers)
-- **Personal information** is automatically filtered out
-- **Anonymous users** have their data stored locally only
-- **Authenticated users** can opt-in to contribute anonymized data to the community dataset
+The photo scan sends the image to the SafeDose scan API, which passes it to
+OpenAI for analysis. The app can save evaluation records locally. For signed-in
+users it can also save evaluation records to Firestore, with image metadata in
+place of the image itself. Guest evaluation records are stored locally. The
+command-line exporter reads synthetic examples. See the [Privacy Policy](https://safedose.rodneygainous.com/privacy)
+for how SafeDose handles scan and account data.
 
 ### Collaborative Improvement Process
 
