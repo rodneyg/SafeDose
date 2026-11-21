@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-594",
+    "date": "2026-11-21",
+    "title": "Add unit tests for apiRateLimit.js",
+    "status": "published",
+    "prs": [
+      594
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for apiRateLimit.js"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-574",
     "date": "2026-11-21",
     "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
