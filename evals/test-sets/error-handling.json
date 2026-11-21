@@ -10,7 +10,7 @@
       "image": null,
       "prompt": "Calculate dose: 0.01 mg medication, 100 mg/ml concentration",
       "expected_output": {
-        "calculatedVolume": 0.0001,
+        "calculatedVolume": null,
         "calculationError": "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.",
         "recommendedMarking": null
       }
@@ -22,8 +22,8 @@
       "image": null,
       "prompt": "Calculate dose: 50 mg medication, 10 mg/ml concentration",
       "expected_output": {
-        "calculatedVolume": 5.0,
-        "calculationError": "VOLUME_THRESHOLD_ERROR:Calculated volume is outside safe thresholds.",
+        "calculatedVolume": null,
+        "calculationError": "VOLUME_THRESHOLD_ERROR:The 2 mL per-injection safety limit applies, including with 3 mL and 5 mL syringes. Please verify the concentration and protocol.",
         "recommendedMarking": null
       }
     },

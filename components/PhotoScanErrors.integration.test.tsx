@@ -19,6 +19,7 @@ const originalReader = Object.getOwnPropertyDescriptor(globalThis, 'FileReader')
 const originalFetch = globalThis.fetch;
 const incrementScansUsed = jest.fn(async () => {});
 const onResult = jest.fn();
+const onImageReady = jest.fn();
 let selectedSize: number;
 let cancelSelection: boolean;
 let cookie: string;
@@ -46,7 +47,7 @@ function PhotoFlow() {
     onCapture: async () => {
       const result = await captureAndProcessImage({
         cameraRef, permission, isMobileWeb: false, setIsProcessing, setScanError,
-        setProcessingMessage: jest.fn(), incrementScansUsed,
+        setProcessingMessage: jest.fn(), incrementScansUsed, onImageReady,
         onScanUnavailable: () => setStep('manualEntry'),
       });
       if (result) onResult(result);
@@ -137,6 +138,8 @@ it.each([
   expect(incrementScansUsed).not.toHaveBeenCalled();
   expect(onResult).not.toHaveBeenCalled();
   expect(fetch).toHaveBeenCalledTimes(1);
+  expect(onImageReady).toHaveBeenCalledTimes(1);
+  expect(onImageReady.mock.invocationCallOrder[0]).toBeLessThan((fetch as jest.Mock).mock.invocationCallOrder[0]);
 });
 
 it('takes a timed-out request to manual entry and ignores a late success', async () => {
@@ -170,6 +173,7 @@ it('takes an oversized photo to manual entry with values retained and no request
   expect(screen.queryByText('Take or Upload Photo')).toBeNull();
   expect(screen.queryByText('Processing...')).toBeNull();
   expect(fetch).not.toHaveBeenCalled();
+  expect(onImageReady).not.toHaveBeenCalled();
   expect(incrementScansUsed).not.toHaveBeenCalled();
 });
 
@@ -187,6 +191,7 @@ it.each(['error', 'abort', 'empty', 'invalid', 'throw'] as const)(
     expect(screen.getByLabelText('Dose').props.value).toBe('15');
     expect(screen.queryByText('Processing...')).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
+    expect(onImageReady).not.toHaveBeenCalled();
     expect(incrementScansUsed).not.toHaveBeenCalled();
     expect(onResult).not.toHaveBeenCalled();
   },

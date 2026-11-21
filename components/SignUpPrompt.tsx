@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail } from 'lucide-react-native';
+import { recordLandingCtaStart } from '../lib/landingCtaExperiment';
 
 interface SignUpPromptProps {
   visible: boolean;
@@ -51,6 +52,7 @@ export default function SignUpPrompt({ visible, onSignUp, onDismiss, onShow }: S
   }, [visible, slideAnim, opacityAnim, onShow]);
 
   const handleSignUp = () => {
+    recordLandingCtaStart('signup');
     onSignUp();
     router.push('/login');
   };
