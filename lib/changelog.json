@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-21-pr-564",
+    "date": "2026-11-21",
+    "title": "Add Vercel Web Analytics to SafeDose web",
+    "status": "published",
+    "prs": [
+      564
+    ],
+    "sections": {
+      "Improved": [
+        "Add Vercel Web Analytics to SafeDose web"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-563",
+    "date": "2026-11-21",
+    "title": "Remove the lapsed SafeDose domain from scan API references",
+    "status": "published",
+    "prs": [
+      563
+    ],
+    "sections": {
+      "Improved": [
+        "Remove the lapsed SafeDose domain from scan API references"
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",
