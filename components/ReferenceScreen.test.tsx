@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import ReferenceScreen from '../app/(tabs)/reference';
 
 // Mock Firebase
@@ -39,6 +39,23 @@ describe('ReferenceScreen', () => {
     
     // Check for feedback button
     expect(getByText('Suggest a compound to add')).toBeTruthy();
+  });
+
+  it('names the suggestion controls and lets users dismiss the form', () => {
+    const { getByRole, getByLabelText, queryByRole } = render(<ReferenceScreen />);
+    const open = () => fireEvent.press(getByRole('button', { name: 'Suggest a compound to add' }));
+
+    open();
+    expect(getByLabelText('Compound Name')).toBeTruthy();
+    expect(getByLabelText('Common Dosage Range')).toBeTruthy();
+    expect(getByLabelText('Notes / Use Cases')).toBeTruthy();
+
+    fireEvent.press(getByRole('button', { name: 'Close suggestion form' }));
+    expect(queryByRole('button', { name: 'Submit Suggestion' })).toBeNull();
+
+    open();
+    fireEvent.press(getByRole('button', { name: 'Cancel' }));
+    expect(queryByRole('button', { name: 'Submit Suggestion' })).toBeNull();
   });
 
   it('displays popular badges for trending compounds', () => {

@@ -1,3 +1,4 @@
+const { createRateLimit } = require('../lib/apiRateLimit');
 const { createHash } = require('node:crypto');
 const { cert, getApps, initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
@@ -6,8 +7,10 @@ const { normalizeUpgradeEmail } = require('../lib/upgradeEmail');
 
 const APP_NAME = 'upgrade-email';
 
+const allowRequest = createRateLimit(10);
+
 module.exports = async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
+  if (req.method !== 'POST') res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).end();
@@ -20,6 +23,7 @@ module.exports = async (req, res) => {
   // A separate database keeps leads outside the rules used for app data.
   const enabled = Boolean(projectId && clientEmail && privateKey && databaseId && databaseId !== '(default)');
   if (req.method === 'GET') return res.status(200).json({ enabled });
+  if (!allowRequest(req, res)) return;
   if (!enabled) return res.status(503).end();
 
   const headers = req.headers || {};

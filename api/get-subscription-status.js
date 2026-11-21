@@ -1,3 +1,4 @@
+const { createRateLimit } = require('../lib/apiRateLimit');
 const Stripe = require('stripe');
 const stripeConfig = require('../lib/stripeConfig.server.js');
 const { mapPriceIdToPlan } = require('../lib/plans');
@@ -29,6 +30,8 @@ try {
   console.warn('Firebase Admin not available:', error.message);
 }
 
+const allowRequest = createRateLimit(30);
+
 module.exports = async (req, res) => {
   console.log('Received request to /api/get-subscription-status');
 
@@ -36,6 +39,7 @@ module.exports = async (req, res) => {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   // Validate Stripe configuration before proceeding
   if (!stripeConfig.secretKey) {
