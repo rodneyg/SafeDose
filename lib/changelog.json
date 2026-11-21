@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-514",
+    "date": "2026-11-21",
+    "title": "Test dose conversions at syringe ticks and capacity",
+    "status": "published",
+    "prs": [
+      514
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose conversions at syringe ticks and capacity"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-513",
     "date": "2026-11-21",
     "title": "T-1210: Show errors in web dose entry",
