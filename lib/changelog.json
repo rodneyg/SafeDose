@@ -546,6 +546,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-523",
+    "date": "2026-11-21",
+    "title": "Ask for a retake before uploading blurry or overexposed photos",
+    "status": "published",
+    "prs": [
+      523
+    ],
+    "sections": {
+      "Improved": [
+        "Ask for a retake before uploading blurry or overexposed photos"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-522",
     "date": "2026-11-21",
     "title": "Implement soft monetization wall for AI logs",
