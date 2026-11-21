@@ -378,6 +378,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-571",
+    "date": "2026-11-21",
+    "title": "Add unit tests for Stripe webhook handler",
+    "status": "published",
+    "prs": [
+      571
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for Stripe webhook handler"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-570",
     "date": "2026-11-21",
     "title": "Add unit tests for ReconstitutionPlanner",
