@@ -490,6 +490,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-532",
+    "date": "2026-11-21",
+    "title": "Test useAuth provider requirement",
+    "status": "published",
+    "prs": [
+      532
+    ],
+    "sections": {
+      "Improved": [
+        "Test useAuth provider requirement"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
