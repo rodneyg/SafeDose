@@ -448,6 +448,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-529",
+    "date": "2026-11-21",
+    "title": "Add optional protocol setup before the first scan",
+    "status": "published",
+    "prs": [
+      529
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional protocol setup before the first scan"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-526",
     "date": "2026-11-21",
     "title": "Add focused unit tests for five SafeDose modules",
