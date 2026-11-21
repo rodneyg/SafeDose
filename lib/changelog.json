@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-626",
+    "date": "2026-11-21",
+    "title": "Fix main full-suite PhotoScan wait helper",
+    "status": "published",
+    "prs": [
+      626
+    ],
+    "sections": {
+      "Improved": [
+        "Fix main full-suite PhotoScan wait helper"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-623",
     "date": "2026-11-21",
     "title": "Harden checkout session validation",
