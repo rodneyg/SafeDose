@@ -1,28 +1,58 @@
 name: Tag and release
 
+# Wait for the CI workflow (name is exactly "CI") to finish on main, then tag
+# only the SHA that actually passed. Do not run in parallel with CI on push.
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
   release:
-    # Changelog publishes are a follow-up commit from the existing changelog
-    # workflow, not a merge. Skip them so we do not create a second tag.
     if: >-
-      github.actor != 'github-actions[bot]' &&
-      !startsWith(github.event.head_commit.message, 'docs: publish changelog')
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Inspect head commit
+        id: head
+        run: |
+          set -euo pipefail
+          sha="${{ github.event.workflow_run.head_sha }}"
+          msg="$(git log -1 --format=%s "$sha")"
+          author="$(git log -1 --format=%an "$sha")"
+          committer="$(git log -1 --format=%cn "$sha")"
+          {
+            echo "message<<EOF"
+            git log -1 --format=%B "$sha"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          skip=false
+          reason="ok"
+          if [[ "$author" == "github-actions[bot]" || "$committer" == "github-actions[bot]" ]]; then
+            skip=true
+            reason="head commit is github-actions[bot]"
+          fi
+          if [[ "$msg" == "docs: publish changelog"* ]]; then
+            skip=true
+            reason="head commit is a changelog publish"
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$sha skip=$skip reason=$reason author=$author committer=$committer subject=$msg"
       - name: Create semver tag and GitHub Release
+        if: steps.head.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_EVENT_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_EVENT_HEAD_COMMIT_MESSAGE: ${{ steps.head.outputs.message }}
         run: python3 scripts/create-release.py
