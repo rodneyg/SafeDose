@@ -40,7 +40,8 @@
     "prestart": "npm run changelog:build",
     "predev": "npm run changelog:build",
     "e2e:prod-scan": "playwright test --config playwright.prod.config.ts",
-    "smoke:prod": "node scripts/prod-smoke.mjs"
+    "smoke:prod": "node scripts/prod-smoke.mjs",
+    "test:dependabot-config": "node --test scripts/dependabot-config.test.mjs"
   },
   "vercel": {
     "projectRoot": "."
@@ -56,6 +57,7 @@
     "@stripe/stripe-js": "^7.2.0",
     "@types/stripe": "^8.0.416",
     "@vercel/analytics": "^2.0.1",
+    "base64-js": "^1.5.1",
     "class-variance-authority": "^0.7.1",
     "dotenv": "^16.5.0",
     "expo": "^52.0.42",
@@ -65,6 +67,7 @@
     "expo-dev-client": "~5.0.15",
     "expo-font": "^13.0.3",
     "expo-haptics": "^14.0.1",
+    "expo-image-manipulator": "~13.0.6",
     "expo-linear-gradient": "^14.0.2",
     "expo-linking": "^7.0.5",
     "expo-network": "~7.0.5",
@@ -77,11 +80,12 @@
     "firebase": "^11.6.1",
     "firebase-admin": "^13.10.0",
     "framer-motion": "^12.7.4",
+    "jpeg-js": "^0.4.4",
     "lucide-react": "^0.488.0",
     "lucide-react-native": "^0.475.0",
     "micro": "^10.0.1",
     "nativewind": "~4.2.7",
-    "openai": "^4.90.0",
+    "openai": "^7.59.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.7",
@@ -127,7 +131,20 @@
     "vercel": "^28.4.8"
   },
   "overrides": {
-    "ts-node": "10.9.1"
+    "ts-node": "10.9.1",
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.13.6"
+    },
+    "minimatch@3": "^3.1.5",
+    "nanoid@3": "^3.3.20",
+    "path-to-regexp@0.1": "~0.1.13",
+    "path-to-regexp@6": "^6.3.0",
+    "qs@6": "^6.16.2",
+    "semver@6": "^6.3.1",
+    "semver@7": "^7.5.2",
+    "@expo/metro-config": {
+      "postcss": "^8.5.23"
+    }
   },
   "@vercel/node": {
     "ts-node": "10.9.1",

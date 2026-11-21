@@ -1,8 +1,8 @@
 import { getManualProgress } from '../lib/manualProgress';
 import { SyringeSelection } from '../lib/dosing';
 import { AmountUnit, formatDoseNumber, parseDoseInput, validateUnitCompatibility } from '../lib/dosing';
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 import { isMobileWeb } from '../lib/utils';
@@ -216,72 +216,24 @@ export default function ManualEntryScreen({
     return result;
   };
 
-  // Create a handler for next button press
-  // This function orchestrates the step-by-step validation and navigation flow
-  // ensuring users can only proceed when current step data is valid
-  const handleNextButtonPress = useCallback(() => {
-    try {
-      console.log('[ManualEntryScreen] ========== STEP NAVIGATION ==========');
-      console.log('[ManualEntryScreen] Next button pressed for step:', manualStep);
-      console.log('[ManualEntryScreen] Current form state:', {
-        dose,
-        unit,
-        substanceName,
-        medicationInputType,
-        concentrationAmount,
-        concentrationUnit,
-        totalAmount,
-        syringeType: manualSyringe?.type,
-        syringeVolume: manualSyringe?.volume
-      });
-      
-      // If the current step is not valid, do nothing
-      const isValid = isCurrentStepValid();
-      console.log('[ManualEntryScreen] Step validation result:', isValid);
-      if (!isValid) {
-        console.log('[ManualEntryScreen] Step invalid, preventing navigation');
-        return;
-      }
-
-      // Navigate directly to the next step without confirmation
-      console.log('[ManualEntryScreen] Navigating from step:', manualStep);
-      if (manualStep === 'dose') {
-        console.log('[ManualEntryScreen] → Calling handleNextDose()');
-        handleNextDose();
-      } else if (manualStep === 'medicationSource') {
-        console.log('[ManualEntryScreen] → Calling handleNextMedicationSource()');
-        handleNextMedicationSource();
-      } else if (manualStep === 'concentrationInput') {
-        console.log('[ManualEntryScreen] → Calling handleNextConcentrationInput()');
-        handleNextConcentrationInput();
-      } else if (manualStep === 'totalAmountInput') {
-        console.log('[ManualEntryScreen] → Calling handleNextTotalAmountInput()');
-        handleNextTotalAmountInput();
-      } else if (manualStep === 'reconstitution') {
-        console.log('[ManualEntryScreen] → Calling handleNextReconstitution()');
-        handleNextReconstitution();
-      } else if (manualStep === 'syringe') {
-        console.log('[ManualEntryScreen] → Calling handleCalculateFinal()');
-        handleCalculateFinal();
-      } else if (manualStep === 'preDoseConfirmation') {
-        console.log('[ManualEntryScreen] → Calling handleNextPreDoseConfirmation()');
-        handleNextPreDoseConfirmation();
-      }
-      console.log('[ManualEntryScreen] ✅ Navigation action completed');
-    } catch (error) {
-      console.error('[ManualEntryScreen] ❌ Error in next button handler:', error);
-    }
-  }, [
-    manualStep,
-    isCurrentStepValid,
-    handleNextDose,
-    handleNextMedicationSource,
-    handleNextConcentrationInput,
-    handleNextTotalAmountInput,
-    handleNextReconstitution,
-    handleCalculateFinal,
-    handleNextPreDoseConfirmation
-  ]);
+  const isWeb = Platform.OS === 'web';
+  const isReviewStep = manualStep === 'preDoseConfirmation';
+  // Web input steps report their errors on submit. Syringe and review still
+  // require a valid selection or result before their actions can run.
+  const canSubmit = (isWeb && !isReviewStep && manualStep !== 'syringe' && manualStep !== 'finalResult') || isCurrentStepValid();
+  const nextActions = {
+    dose: handleNextDose,
+    medicationSource: handleNextMedicationSource,
+    concentrationInput: handleNextConcentrationInput,
+    totalAmountInput: handleNextTotalAmountInput,
+    reconstitution: handleNextReconstitution,
+    syringe: handleCalculateFinal,
+    preDoseConfirmation: handleNextPreDoseConfirmation,
+    finalResult: undefined,
+  };
+  const handleNextButtonPress = () => {
+    if (canSubmit) nextActions[manualStep]?.();
+  };
 
   let currentStepComponent;
 
@@ -296,7 +248,7 @@ export default function ManualEntryScreen({
           setDose={setDose}
           unit={unit}
           setUnit={setUnit}
-          formError={formError}
+          formError={isWeb ? null : formError}
           validateInput={validateDoseInput}
         /></>
       );
@@ -325,7 +277,7 @@ export default function ManualEntryScreen({
           setConcentrationHint={setConcentrationHint}
           concentrationHint={concentrationHint}
           doseUnit={unit}
-          formError={formError}
+          formError={isWeb ? null : formError}
         />
       );
       break;
@@ -429,7 +381,9 @@ export default function ManualEntryScreen({
       currentStepComponent = <Text style={styles.errorText}>Invalid step</Text>;
   }
 
-  const isReviewStep = manualStep === 'preDoseConfirmation';
+  const visibleError = isWeb && manualStep === 'syringe' && !canSubmit
+    ? 'Select a syringe size to calculate.'
+    : formError;
   const stepButtons = (
     <View style={[styles.buttonContainer, isMobileWeb && styles.buttonContainerMobile]}>
       <TouchableOpacity
@@ -442,11 +396,11 @@ export default function ManualEntryScreen({
       <TouchableOpacity
         style={[
           styles.nextButton,
-          !isCurrentStepValid() && styles.disabledButton,
+          !canSubmit && styles.disabledButton,
           isMobileWeb && styles.nextButtonMobile
         ]}
         onPress={handleNextButtonPress}
-        disabled={!isCurrentStepValid()}
+        disabled={!canSubmit}
         accessibilityRole="button"
         accessibilityLabel={manualStep === 'syringe' ? "Calculate dose" : isReviewStep ? "Proceed to result" : "Next step"}
       >
@@ -474,7 +428,11 @@ export default function ManualEntryScreen({
         <CustomProgressBar {...getManualProgress(manualStep, medicationInputType)} />
         <View style={[styles.formWrapper, isMobileWeb && styles.formWrapperMobile, isReviewStep && styles.reviewContent]}>
           {currentStepComponent}
-          {formError && <Text style={styles.errorText}>{formError}</Text>}
+          {visibleError && (
+            <Text accessibilityRole={isWeb ? 'alert' : undefined} style={[styles.errorText, isWeb && styles.webErrorText]}>
+              {visibleError}
+            </Text>
+          )}
           {!isReviewStep && manualStep !== 'finalResult' && stepButtons}
         </View>
       </ScrollView>
@@ -517,6 +475,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16, // Tighter bottom padding
   },
   reviewContent: { paddingBottom: 0 },
+  webErrorText: { color: '#991b1b', backgroundColor: '#fee2e2' },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },
   buttonContainer: { 
     flexDirection: 'row', 

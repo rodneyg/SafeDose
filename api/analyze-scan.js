@@ -1,15 +1,12 @@
 const OpenAI = require('openai');
+const { createRateLimit, WINDOW_MS } = require('../lib/apiRateLimit');
 const { buildScanRequest } = require('../lib/scan/request');
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const IMAGE_DATA_URL = /^data:image\/(jpeg|jpg|png|webp|gif);base64,([A-Za-z0-9+/=\s]+)$/i;
 
-// Best-effort, per-instance protection: cold starts and other Vercel instances
-// have independent windows. Forwarded IP headers must be supplied by the host proxy.
 const RATE_LIMIT_REQUESTS = 10;
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const MAX_RATE_LIMIT_IPS = 10000;
-const requestWindows = new Map();
+const allowRequest = createRateLimit(RATE_LIMIT_REQUESTS, 'Too many scan requests. Please try again later.');
 
 // Unknown statuses become null; never serialize arbitrary provider fields.
 const PROVIDER_ERROR_STATUSES = [400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504];
@@ -44,29 +41,6 @@ function allowedOrigin(origin) {
   }
 }
 
-function retryAfter(req, now) {
-  const headers = req.headers || {};
-  const forwarded = headers['x-forwarded-for'];
-  const ip = (typeof forwarded === 'string' && forwarded.split(',')[0].trim()) ||
-    headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || 'unknown';
-  for (const [key, timestamps] of requestWindows) {
-    const active = timestamps.filter(time => time > now - RATE_LIMIT_WINDOW_MS);
-    if (active.length) requestWindows.set(key, active);
-    else requestWindows.delete(key);
-  }
-  const timestamps = requestWindows.get(ip) || [];
-  if (timestamps.length >= RATE_LIMIT_REQUESTS) {
-    return Math.max(1, Math.ceil((timestamps[0] + RATE_LIMIT_WINDOW_MS - now) / 1000));
-  }
-  // Fail closed rather than evicting active windows under high-cardinality abuse.
-  if (!requestWindows.has(ip) && requestWindows.size >= MAX_RATE_LIMIT_IPS) {
-    return Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
-  }
-  timestamps.push(now);
-  requestWindows.set(ip, timestamps);
-  return 0;
-}
-
 function validateImage(image) {
   if (typeof image !== 'string' || !image) {
     return 'An image is required.';
@@ -93,11 +67,7 @@ module.exports = async (req, res) => {
   if (!allowedOrigin((req.headers || {}).origin)) {
     return res.status(403).json({ error: 'Origin is not allowed.' });
   }
-  const retry = retryAfter(req, Date.now());
-  if (retry) {
-    res.setHeader('Retry-After', String(retry));
-    return res.status(429).json({ error: 'Too many scan requests. Please try again later.' });
-  }
+  if (!allowRequest(req, res)) return;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || typeof apiKey !== 'string') {
@@ -166,4 +136,4 @@ module.exports.validateImage = validateImage;
 module.exports.MAX_IMAGE_BYTES = MAX_IMAGE_BYTES;
 
 module.exports.RATE_LIMIT_REQUESTS = RATE_LIMIT_REQUESTS;
-module.exports.RATE_LIMIT_WINDOW_MS = RATE_LIMIT_WINDOW_MS;
+module.exports.RATE_LIMIT_WINDOW_MS = WINDOW_MS;

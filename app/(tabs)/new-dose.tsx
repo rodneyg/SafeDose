@@ -28,11 +28,15 @@ import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
+import { recordLandingCtaStart } from '../../lib/landingCtaExperiment';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
+
+const SCAN_RETAKE_HINT = 'For a clearer photo, use even light, face the label straight on, and avoid glare.';
 
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
@@ -46,6 +50,7 @@ export default function NewDoseScreen() {
     kind: ReturnType<typeof photoUpgradeNudge>;
   } | null>(null);
   const scanAttemptInProgress = useRef(false);
+  const mobileScanArm = useRef<MobileScanCtaArm>();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -297,6 +302,18 @@ export default function NewDoseScreen() {
     handleInjectionSiteCancel,
   } = doseCalculator;
 
+  const handleIntroScanPress = (arm?: MobileScanCtaArm) => {
+    mobileScanArm.current = arm;
+    if (offline) handleSetScreenStep('manualEntry');
+    else doseCalculator.handleScanNavigation();
+  };
+
+  useEffect(() => {
+    if (!isScreenActive || (screenStep !== 'scan' && screenStep !== 'beforeFirstScan')) {
+      mobileScanArm.current = undefined;
+    }
+  }, [isScreenActive, screenStep]);
+
   const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
     ? null
     : onboardingSurvey.prompt;
@@ -307,7 +324,7 @@ export default function NewDoseScreen() {
     }
   }, [offline, screenStep, setScreenStep]);
 
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -325,6 +342,7 @@ export default function NewDoseScreen() {
   const [pendingScanResult, setPendingScanResult] = useState<ScanResult | null>(null);
 
   const applyDosingPreset = useCallback((preset: DosingPreset) => {
+    if (pendingScanResult) return;
     setDose(preset.dose);
     setUnit(preset.unit);
     setSubstanceName(preset.substanceName);
@@ -336,14 +354,15 @@ export default function NewDoseScreen() {
     setSolutionVolume(preset.solutionVolume);
     setManualSyringe(preset.manualSyringe);
     setManualStep('dose');
-  }, [doseCalculator, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
+  }, [doseCalculator, pendingScanResult, setConcentrationAmount, setConcentrationUnit, setDose, setManualStep, setManualSyringe, setMedicationInputType, setSolutionVolume, setSubstanceName, setTotalAmount, setUnit]);
 
   console.log('Usage Data:', usageData);
 
   useEffect(() => {
     if (screenStep !== 'scan') {
       // Keep the scan failure visible when capture routes to manual entry.
-      setScanError(error => screenStep === 'manualEntry' && error === SCAN_UNAVAILABLE_MESSAGE ? error : null);
+      setScanError(error => screenStep === 'manualEntry' &&
+        (error === SCAN_UNAVAILABLE_MESSAGE || error === SCAN_RETAKE_HINT) ? error : null);
       setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }
@@ -521,21 +540,29 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
-  // Only called by the user's verification action in ImagePreviewModal.
-  const applyVerifiedScanResults = (result: ScanResult) => {
-    const mapped = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
-    if (mapped.status !== 'ready') {
-      setScanError(`Scan needs manual input: ${mapped.reasons.join(' ')}`);
-      return;
+  const openManualEntryFromScan = (
+    mapped: ReturnType<typeof mapScanToDoseInputs>,
+    confirmedSubstance: string | null = null,
+  ) => {
+    const needsInput = mapped.status === 'needs-input';
+    if (needsInput) {
+      resetFullForm('dose');
+      setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
+      setSyringeHint('Check the syringe label and select its capacity manually.');
     }
+
     const scanned = mapped.inputs;
-    if (scanned.manualSyringe) {
-      setManualSyringe(scanned.manualSyringe);
+    const scannedSyringe = needsInput ? null : scanned.manualSyringe;
+    if (scannedSyringe) {
+      setManualSyringe(scannedSyringe);
       setSyringeHint('Detected from image scan');
     }
-    if (scanned.substance) {
-      setSubstanceName(scanned.substance);
-      setSubstanceNameHint('Detected from vial scan');
+    const vialHint = needsInput ? 'From photo scan. Check the vial label.' : 'Detected from vial scan';
+    if (!needsInput) {
+      setSubstanceName(confirmedSubstance ?? '');
+      setSubstanceNameHint(confirmedSubstance && confirmedSubstance === scanned.substance
+        ? 'Confirmed from vial label'
+        : null);
     }
     // Clear previous medication values so an absent field cannot reuse a stale number.
     setConcentrationAmount('');
@@ -547,20 +574,17 @@ export default function NewDoseScreen() {
     if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
       setTotalAmount(String(scanned.totalAmount));
       doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
-      setTotalAmountHint('Detected from vial scan');
+      setTotalAmountHint(vialHint);
     }
     if (scanned.concentration !== null && scanned.concentrationUnit) {
       setConcentrationAmount(String(scanned.concentration));
       setConcentrationUnit(scanned.concentrationUnit);
       setMedicationInputType('concentration');
-      setConcentrationHint('Detected from vial scan');
+      setConcentrationHint(vialHint);
       if (scanned.totalAmount === null) setTotalAmountHint(null);
     } else if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
-      doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
-      setTotalAmount(String(scanned.totalAmount));
       setConcentrationUnit(`${scanned.totalAmountUnit}/ml`);
       setMedicationInputType('totalAmount');
-      setTotalAmountHint('Detected from vial scan');
       setConcentrationHint(null);
     } else {
       setMedicationInputType(null);
@@ -569,8 +593,8 @@ export default function NewDoseScreen() {
     }
 
     doseCalculator.registerScannedFields({
-      ...(scanned.substance ? { substanceName: scanned.substance } : {}),
-      ...(scanned.manualSyringe ? { manualSyringe: JSON.stringify(scanned.manualSyringe) } : {}),
+      ...(!needsInput && confirmedSubstance && scanned.substance ? { substanceName: scanned.substance } : {}),
+      ...(scannedSyringe ? { manualSyringe: JSON.stringify(scannedSyringe) } : {}),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
       } : {}),
@@ -578,7 +602,7 @@ export default function NewDoseScreen() {
         totalAmount: String(scanned.totalAmount), totalAmountUnit: scanned.totalAmountUnit,
       } : {}),
     });
-    console.log('[Process] Scan successful, transitioning to manual entry');
+    if (needsInput) setScanError(SCAN_RETAKE_HINT);
     // Start with an empty dose so the user supplies it for this scan.
     setDose('');
     setDoseValue(null);
@@ -787,6 +811,8 @@ export default function NewDoseScreen() {
       return;
     }
 
+    const startArm = mobileScanArm.current;
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -802,6 +828,7 @@ export default function NewDoseScreen() {
         return;
       }
 
+      recordLandingCtaStart('scan');
       console.log('handleScanAttempt: Processing image');
       const result = await captureAndProcessImage({
         cameraRef,
@@ -812,6 +839,13 @@ export default function NewDoseScreen() {
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        returnIncompleteScan: true,
+        onImageReady: startArm ? () => {
+          if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
+            logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
+            mobileScanArm.current = undefined;
+          }
+        } : undefined,
         onScanUnavailable: () => {
           setManualStep('dose');
           setScreenStep('manualEntry');
@@ -819,6 +853,11 @@ export default function NewDoseScreen() {
       });
 
       if (result) {
+        const mapped = mapScanToDoseInputs(result);
+        if (mapped.status === 'needs-input') {
+          openManualEntryFromScan(mapped);
+          return;
+        }
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
         const firstLocalScan = await recordSuccessfulScan(user.uid);
@@ -890,6 +929,28 @@ export default function NewDoseScreen() {
     setShowLimitModal(true);
   }, []);
 
+  const startScanAppliedRef = useRef(false);
+  const { handleScanNavigation, beforeFirstScanPrompt } = doseCalculator;
+  useEffect(() => {
+    if (searchParams.startScan !== 'true') {
+      startScanAppliedRef.current = false;
+      return;
+    }
+    if (!isScreenActive || screenStep !== 'intro' || beforeFirstScanPrompt.isLoading ||
+        startScanAppliedRef.current) return;
+
+    startScanAppliedRef.current = true;
+    if (offline) {
+      handleSetScreenStep('manualEntry');
+    } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
+      openScanLimit();
+    } else {
+      setNavigatingFromIntro(true);
+      void handleScanNavigation();
+    }
+  }, [searchParams.startScan, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading, offline,
+    handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation]);
+
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
     
@@ -948,9 +1009,12 @@ export default function NewDoseScreen() {
     // Stay on scan screen for retake
   }, []);
 
-  const handleImagePreviewVerified = () => {
+  const handleImagePreviewVerified = (confirmedSubstance: string | null) => {
     if (!pendingScanResult) return;
-    applyVerifiedScanResults(pendingScanResult);
+    openManualEntryFromScan(
+      mapScanToDoseInputs(pendingScanResult, { syringeAndVialVerified: true }),
+      confirmedSubstance,
+    );
     setPendingScanResult(null);
   };
 
@@ -1056,7 +1120,8 @@ export default function NewDoseScreen() {
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
           onScanLimit={openScanLimit}
-          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
+          onScanPress={handleIntroScanPress}
+          offline={offline}
         />
       )}
       {screenStep === 'beforeFirstScan' && (
@@ -1096,6 +1161,8 @@ export default function NewDoseScreen() {
           setProcessingMessage={setProcessingMessage}
           setScanError={setScanError}
           resetFullForm={resetFullForm}
+          requestNativeCameraPermission={requestPermission}
+          getNativeCameraPermission={getPermission}
           requestWebCameraPermission={requestWebCameraPermission}
           handleGoHome={handleGoHome}
           onCapture={handleScanAttempt}
@@ -1104,7 +1171,7 @@ export default function NewDoseScreen() {
           toggleWebFlashlight={toggleWebFlashlight}
         />
       )}
-      {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
+      {screenStep === 'manualEntry' && scanError && (
         <Text accessibilityRole="alert">{scanError}</Text>
       )}
       {nudgeKind && user?.uid && (
