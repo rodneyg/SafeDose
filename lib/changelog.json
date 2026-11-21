@@ -140,6 +140,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-581",
+    "date": "2026-11-21",
+    "title": "Add unit tests for hooks/use-toast.ts",
+    "status": "published",
+    "prs": [
+      581
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for hooks/use-toast.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-574",
     "date": "2026-11-21",
     "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
