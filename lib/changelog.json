@@ -294,6 +294,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-546",
+    "date": "2026-11-21",
+    "title": "Add unit tests for protocol list rendering",
+    "status": "published",
+    "prs": [
+      546
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for protocol list rendering"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-542",
     "date": "2026-11-21",
     "title": "Add unit tests for useAuth",
