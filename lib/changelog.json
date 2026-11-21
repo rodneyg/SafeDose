@@ -392,6 +392,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-547",
+    "date": "2026-11-21",
+    "title": "Add unit tests for manual dose entry",
+    "status": "published",
+    "prs": [
+      547
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for manual dose entry"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-546",
     "date": "2026-11-21",
     "title": "Add unit tests for protocol list rendering",
