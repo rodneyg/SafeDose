@@ -364,6 +364,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-548",
+    "date": "2026-11-21",
+    "title": "Fix and test dose history date display",
+    "status": "published",
+    "prs": [
+      548
+    ],
+    "sections": {
+      "Improved": [
+        "Fix and test dose history date display"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-546",
     "date": "2026-11-21",
     "title": "Add unit tests for protocol list rendering",
