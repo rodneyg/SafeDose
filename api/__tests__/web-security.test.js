@@ -4,7 +4,7 @@ const { createRateLimit } = require('../../lib/apiRateLimit');
 
 describe('Vercel response headers', () => {
   it('applies security headers before the API, filesystem, and SPA routes', () => {
-    const [security, api, filesystem, spa] = routes;
+    const [security, api, filesystem, missingAsset, spa] = routes;
     const matcher = new RegExp('^' + security.src + '$');
     for (const path of ['/', '/settings', '/assets/app.js', '/api/health']) {
       expect(matcher.test(path)).toBe(true);
@@ -19,6 +19,7 @@ describe('Vercel response headers', () => {
     });
     expect(api.dest).toBe('/api/$1.js');
     expect(filesystem.handle).toBe('filesystem');
+    expect(missingAsset).toEqual({ src: '/(?:_expo|assets|icons|workers)/.*', status: 404 });
     expect(spa.dest).toBe('/index.html');
   });
 });
