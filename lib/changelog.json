@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-623",
+    "date": "2026-11-21",
+    "title": "Harden checkout session validation",
+    "status": "published",
+    "prs": [
+      623
+    ],
+    "sections": {
+      "Improved": [
+        "Harden checkout session validation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-616",
     "date": "2026-11-21",
     "title": "Guard Expo SDK 52 updates and pin checkout workflow refs",
