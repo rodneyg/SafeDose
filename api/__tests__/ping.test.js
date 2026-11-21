@@ -32,6 +32,7 @@ describe('GET /api/ping', () => {
 
     expect(res.statusCode).toBe(405);
     expect(res.headers.Allow).toBe('GET');
+    expect(res.headers['Cache-Control']).toBe('no-store');
     expect(res.body).toEqual({ error: 'Method Not Allowed' });
   });
 });
