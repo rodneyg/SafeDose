@@ -99,3 +99,19 @@ it('rejects non-POST methods', async () => {
   expect(res.setHeader).toHaveBeenCalledWith('Allow', 'POST');
   expect(mockCreate).not.toHaveBeenCalled();
 });
+
+it('returns a non-cacheable 429 before Stripe after 30 requests from one client', async () => {
+  jest.spyOn(Date, 'now').mockReturnValue(100_000);
+  const body = { offerKey: 'photo_check_monthly', ...urls };
+  const req = { method: 'POST', body, socket: { remoteAddress: '192.0.2.10' } };
+  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_mock', offerKey: body.offerKey });
+  for (let i = 0; i < 30; i++) {
+    await handler(req, res);
+  }
+  expect(res.status).toHaveBeenLastCalledWith(200);
+  await handler(req, res);
+  expect(res.status).toHaveBeenLastCalledWith(429);
+  expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '60');
+  expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+  expect(mockCreate).toHaveBeenCalledTimes(30);
+});

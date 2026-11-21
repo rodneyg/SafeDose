@@ -1,5 +1,900 @@
 [
   {
+    "id": "2026-11-21-pr-598",
+    "date": "2026-11-21",
+    "title": "Add unit tests for imageQualityMetrics",
+    "status": "published",
+    "prs": [
+      598
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for imageQualityMetrics"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-597",
+    "date": "2026-11-21",
+    "title": "Add unit tests for lib/pricingDefault.ts",
+    "status": "published",
+    "prs": [
+      597
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/pricingDefault.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-596",
+    "date": "2026-11-21",
+    "title": "Tag the tested SHA, not the checkout HEAD",
+    "status": "published",
+    "prs": [
+      596
+    ],
+    "sections": {
+      "Improved": [
+        "Tag the tested SHA, not the checkout HEAD"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-595",
+    "date": "2026-11-21",
+    "title": "Gate SafeDose release tags on green CI",
+    "status": "published",
+    "prs": [
+      595
+    ],
+    "sections": {
+      "Improved": [
+        "Gate SafeDose release tags on green CI"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-594",
+    "date": "2026-11-21",
+    "title": "Add unit tests for apiRateLimit.js",
+    "status": "published",
+    "prs": [
+      594
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for apiRateLimit.js"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-591",
+    "date": "2026-11-21",
+    "title": "Test Firestore environment write wrappers (T-9127)",
+    "status": "published",
+    "prs": [
+      591
+    ],
+    "sections": {
+      "Improved": [
+        "Test Firestore environment write wrappers (T-9127)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-590",
+    "date": "2026-11-21",
+    "title": "T-9126: Test syringe marking guidance",
+    "status": "published",
+    "prs": [
+      590
+    ],
+    "sections": {
+      "Improved": [
+        "T-9126: Test syringe marking guidance"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-589",
+    "date": "2026-11-21",
+    "title": "T-9128: Test SafeDose syringe markings",
+    "status": "published",
+    "prs": [
+      589
+    ],
+    "sections": {
+      "Improved": [
+        "T-9128: Test SafeDose syringe markings"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-587",
+    "date": "2026-11-21",
+    "title": "T-9123: Test exact dosing arithmetic",
+    "status": "published",
+    "prs": [
+      587
+    ],
+    "sections": {
+      "Improved": [
+        "T-9123: Test exact dosing arithmetic"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-583",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useFeedbackStorage",
+    "status": "published",
+    "prs": [
+      583
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useFeedbackStorage"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-582",
+    "date": "2026-11-21",
+    "title": "Test the shared scan request builder",
+    "status": "published",
+    "prs": [
+      582
+    ],
+    "sections": {
+      "Improved": [
+        "Test the shared scan request builder"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-581",
+    "date": "2026-11-21",
+    "title": "Add unit tests for hooks/use-toast.ts",
+    "status": "published",
+    "prs": [
+      581
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for hooks/use-toast.ts"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-574",
+    "date": "2026-11-21",
+    "title": "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep",
+    "status": "published",
+    "prs": [
+      574
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for DoseInputStep, ConcentrationInputStep, and PreDoseConfirmationStep"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-573",
+    "date": "2026-11-21",
+    "title": "T-1641: Test reconstitution planner validation and exact handoff",
+    "status": "published",
+    "prs": [
+      573
+    ],
+    "sections": {
+      "Improved": [
+        "T-1641: Test reconstitution planner validation and exact handoff"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-570",
+    "date": "2026-11-21",
+    "title": "Add unit tests for ReconstitutionPlanner",
+    "status": "published",
+    "prs": [
+      570
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for ReconstitutionPlanner"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-565",
+    "date": "2026-11-21",
+    "title": "Clear stale dates when a protocol start is removed",
+    "status": "published",
+    "prs": [
+      565
+    ],
+    "sections": {
+      "Improved": [
+        "Clear stale dates when a protocol start is removed"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-564",
+    "date": "2026-11-21",
+    "title": "Add Vercel Web Analytics to SafeDose web",
+    "status": "published",
+    "prs": [
+      564
+    ],
+    "sections": {
+      "Improved": [
+        "Add Vercel Web Analytics to SafeDose web"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-563",
+    "date": "2026-11-21",
+    "title": "Remove the lapsed SafeDose domain from scan API references",
+    "status": "published",
+    "prs": [
+      563
+    ],
+    "sections": {
+      "Improved": [
+        "Remove the lapsed SafeDose domain from scan API references"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-562",
+    "date": "2026-11-21",
+    "title": "Cover AuthContext recovery and empty sessions",
+    "status": "published",
+    "prs": [
+      562
+    ],
+    "sections": {
+      "Improved": [
+        "Cover AuthContext recovery and empty sessions"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-561",
+    "date": "2026-11-21",
+    "title": "Keep protocol dates within the four-digit calendar range",
+    "status": "published",
+    "prs": [
+      561
+    ],
+    "sections": {
+      "Improved": [
+        "Keep protocol dates within the four-digit calendar range"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-560",
+    "date": "2026-11-21",
+    "title": "Test web scan and injection-site recovery (T-2120)",
+    "status": "published",
+    "prs": [
+      560
+    ],
+    "sections": {
+      "Improved": [
+        "Test web scan and injection-site recovery (T-2120)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-559",
+    "date": "2026-11-21",
+    "title": "Test SafeDose billing endpoint failures",
+    "status": "published",
+    "prs": [
+      559
+    ],
+    "sections": {
+      "Improved": [
+        "Test SafeDose billing endpoint failures"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-558",
+    "date": "2026-11-21",
+    "title": "Test dose logging recovery from Firestore failures",
+    "status": "published",
+    "prs": [
+      558
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose logging recovery from Firestore failures"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-557",
+    "date": "2026-11-21",
+    "title": "Keep keyboard focus in the web date picker (T-2048)",
+    "status": "published",
+    "prs": [
+      557
+    ],
+    "sections": {
+      "Improved": [
+        "Keep keyboard focus in the web date picker (T-2048)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-555",
+    "date": "2026-11-21",
+    "title": "Restore the standalone evaluation validator (T-1729)",
+    "status": "published",
+    "prs": [
+      555
+    ],
+    "sections": {
+      "Improved": [
+        "Restore the standalone evaluation validator (T-1729)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-550",
+    "date": "2026-11-21",
+    "title": "Add tests for scheduling helpers",
+    "status": "published",
+    "prs": [
+      550
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for scheduling helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-549",
+    "date": "2026-11-21",
+    "title": "Add tests for offline queue or sync helpers",
+    "status": "published",
+    "prs": [
+      549
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for offline queue or sync helpers"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-548",
+    "date": "2026-11-21",
+    "title": "Fix and test dose history date display",
+    "status": "published",
+    "prs": [
+      548
+    ],
+    "sections": {
+      "Improved": [
+        "Fix and test dose history date display"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-546",
+    "date": "2026-11-21",
+    "title": "Add unit tests for protocol list rendering",
+    "status": "published",
+    "prs": [
+      546
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for protocol list rendering"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-542",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useAuth",
+    "status": "published",
+    "prs": [
+      542
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useAuth"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-541",
+    "date": "2026-11-21",
+    "title": "Add SafeDose dosing page to the sitemap",
+    "status": "published",
+    "prs": [
+      541
+    ],
+    "sections": {
+      "Improved": [
+        "Add SafeDose dosing page to the sitemap"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-540",
+    "date": "2026-11-21",
+    "title": "Add unit tests for subscription hook",
+    "status": "published",
+    "prs": [
+      540
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for subscription hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-539",
+    "date": "2026-11-21",
+    "title": "Add an internal SafeDose protocol review suggestion",
+    "status": "published",
+    "prs": [
+      539
+    ],
+    "sections": {
+      "Improved": [
+        "Add an internal SafeDose protocol review suggestion"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-538",
+    "date": "2026-11-21",
+    "title": "Document the first SafeDose roadmap slice",
+    "status": "published",
+    "prs": [
+      538
+    ],
+    "sections": {
+      "Improved": [
+        "Document the first SafeDose roadmap slice"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-537",
+    "date": "2026-11-21",
+    "title": "Test mobile web Scan button placement (T-1228)",
+    "status": "published",
+    "prs": [
+      537
+    ],
+    "sections": {
+      "Improved": [
+        "Test mobile web Scan button placement (T-1228)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-536",
+    "date": "2026-11-21",
+    "title": "Create initial SAFE_DOSE_REPORT.md documentation",
+    "status": "published",
+    "prs": [
+      536
+    ],
+    "sections": {
+      "Improved": [
+        "Create initial SAFE_DOSE_REPORT.md documentation"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-534",
+    "date": "2026-11-21",
+    "title": "Test monthly and annual pricing defaults",
+    "status": "published",
+    "prs": [
+      534
+    ],
+    "sections": {
+      "Improved": [
+        "Test monthly and annual pricing defaults"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-533",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to hooks in SafeDose",
+    "status": "published",
+    "prs": [
+      533
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to hooks in SafeDose"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-532",
+    "date": "2026-11-21",
+    "title": "Test useAuth provider requirement",
+    "status": "published",
+    "prs": [
+      532
+    ],
+    "sections": {
+      "Improved": [
+        "Test useAuth provider requirement"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-530",
+    "date": "2026-11-21",
+    "title": "Test SafeDose landing CTA wording (T-1219)",
+    "status": "published",
+    "prs": [
+      530
+    ],
+    "sections": {
+      "Improved": [
+        "Test SafeDose landing CTA wording (T-1219)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-529",
+    "date": "2026-11-21",
+    "title": "Add optional protocol setup before the first scan",
+    "status": "published",
+    "prs": [
+      529
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional protocol setup before the first scan"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-526",
+    "date": "2026-11-21",
+    "title": "Add focused unit tests for five SafeDose modules",
+    "status": "published",
+    "prs": [
+      526
+    ],
+    "sections": {
+      "Improved": [
+        "Add focused unit tests for five SafeDose modules"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-524",
+    "date": "2026-11-21",
+    "title": "Add the SafeDose /ping deployment check",
+    "status": "published",
+    "prs": [
+      524
+    ],
+    "sections": {
+      "Improved": [
+        "Add the SafeDose /ping deployment check"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-523",
+    "date": "2026-11-21",
+    "title": "Ask for a retake before uploading blurry or overexposed photos",
+    "status": "published",
+    "prs": [
+      523
+    ],
+    "sections": {
+      "Improved": [
+        "Ask for a retake before uploading blurry or overexposed photos"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-522",
+    "date": "2026-11-21",
+    "title": "Implement soft monetization wall for AI logs",
+    "status": "published",
+    "prs": [
+      522
+    ],
+    "sections": {
+      "Improved": [
+        "Implement soft monetization wall for AI logs"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-521",
+    "date": "2026-11-21",
+    "title": "Improve Log and Reference keyboard access and contrast",
+    "status": "published",
+    "prs": [
+      521
+    ],
+    "sections": {
+      "Improved": [
+        "Improve Log and Reference keyboard access and contrast"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-520",
+    "date": "2026-11-21",
+    "title": "Complete local dosing presets",
+    "status": "published",
+    "prs": [
+      520
+    ],
+    "sections": {
+      "Improved": [
+        "Complete local dosing presets"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-518",
+    "date": "2026-11-21",
+    "title": "Add optional dosing protocol setup and preview",
+    "status": "published",
+    "prs": [
+      518
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional dosing protocol setup and preview"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-517",
+    "date": "2026-11-21",
+    "title": "Recover from denied or unavailable iOS camera",
+    "status": "published",
+    "prs": [
+      517
+    ],
+    "sections": {
+      "Improved": [
+        "Recover from denied or unavailable iOS camera"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-516",
+    "date": "2026-11-21",
+    "title": "Add a CI smoke check for SafeDose web previews",
+    "status": "published",
+    "prs": [
+      516
+    ],
+    "sections": {
+      "Improved": [
+        "Add a CI smoke check for SafeDose web previews"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-515",
+    "date": "2026-11-21",
+    "title": "Harden web responses and limit client API requests",
+    "status": "published",
+    "prs": [
+      515
+    ],
+    "sections": {
+      "Improved": [
+        "Harden web responses and limit client API requests"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-514",
+    "date": "2026-11-21",
+    "title": "Test dose conversions at syringe ticks and capacity",
+    "status": "published",
+    "prs": [
+      514
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose conversions at syringe ticks and capacity"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-513",
+    "date": "2026-11-21",
+    "title": "T-1210: Show errors in web dose entry",
+    "status": "published",
+    "prs": [
+      513
+    ],
+    "sections": {
+      "Improved": [
+        "T-1210: Show errors in web dose entry"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-508",
+    "date": "2026-11-21",
+    "title": "Gate wrong numbers in offline vision replays",
+    "status": "published",
+    "prs": [
+      508
+    ],
+    "sections": {
+      "Improved": [
+        "Gate wrong numbers in offline vision replays"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-506",
+    "date": "2026-11-21",
+    "title": "Require manual selection for uncertain scan capacity",
+    "status": "published",
+    "prs": [
+      506
+    ],
+    "sections": {
+      "Improved": [
+        "Require manual selection for uncertain scan capacity"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-505",
+    "date": "2026-11-21",
+    "title": "T-1293: Compare retake tips after refused scans",
+    "status": "published",
+    "prs": [
+      505
+    ],
+    "sections": {
+      "Improved": [
+        "T-1293: Compare retake tips after refused scans"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-501",
+    "date": "2026-11-21",
+    "title": "T-1141 Fix SafeDose web startup and extend production smoke",
+    "status": "published",
+    "prs": [
+      501
+    ],
+    "sections": {
+      "Improved": [
+        "T-1141 Fix SafeDose web startup and extend production smoke"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-500",
+    "date": "2026-11-21",
+    "title": "Fix compatible npm audit findings",
+    "status": "published",
+    "prs": [
+      500
+    ],
+    "sections": {
+      "Improved": [
+        "Fix compatible npm audit findings"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-498",
+    "date": "2026-11-21",
+    "title": "Add top-level error boundary with fallback",
+    "status": "published",
+    "prs": [
+      498
+    ],
+    "sections": {
+      "Improved": [
+        "Add top-level error boundary with fallback"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-497",
+    "date": "2026-11-21",
+    "title": "Add render tests for 4 components",
+    "status": "published",
+    "prs": [
+      497
+    ],
+    "sections": {
+      "Improved": [
+        "Add render tests for 4 components"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-495",
+    "date": "2026-11-21",
+    "title": "Add TypeScript noEmit check in CI",
+    "status": "published",
+    "prs": [
+      495
+    ],
+    "sections": {
+      "Improved": [
+        "Add TypeScript noEmit check in CI"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-494",
+    "date": "2026-11-21",
+    "title": "Add Dependabot config for npm and actions",
+    "status": "published",
+    "prs": [
+      494
+    ],
+    "sections": {
+      "Improved": [
+        "Add Dependabot config for npm and actions"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-490",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useBeforeFirstScanPrompt",
+    "status": "published",
+    "prs": [
+      490
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useBeforeFirstScanPrompt"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-20-scan-review",
+    "date": "2026-11-20",
+    "title": "See what SafeDose detected before you continue",
+    "status": "published",
+    "prs": [],
+    "sections": {
+      "Improved": [
+        "After a photo scan, the review screen lists the syringe and vial details SafeDose detected alongside your photo.",
+        "Check those details against your syringe and vial label. Read the syringe fill line yourself, then choose I checked both. You can retake the photo from the same screen."
+      ]
+    }
+  },
+  {
     "id": "2026-11-20-pr-504",
     "date": "2026-11-20",
     "title": "Add secondary dosing problem page",
@@ -44,14 +939,14 @@
   {
     "id": "2026-11-20-pr-493",
     "date": "2026-11-20",
-    "title": "Add unit tests for useDoseLogging",
+    "title": "Prevent duplicate dose saves",
     "status": "published",
     "prs": [
       493
     ],
     "sections": {
-      "Improved": [
-        "Add unit tests for useDoseLogging"
+      "Fixed": [
+        "Repeated save taps while a dose is already saving no longer start duplicate saves."
       ]
     }
   },
@@ -198,14 +1093,14 @@
   {
     "id": "2026-11-20-pr-477",
     "date": "2026-11-20",
-    "title": "Add optional SafeDose protocol scheduler",
+    "title": "Add a protocol date helper for developers",
     "status": "published",
     "prs": [
       477
     ],
     "sections": {
       "Improved": [
-        "Add optional SafeDose protocol scheduler"
+        "Added a library helper that maps protocol days to calendar dates. The app has no scheduling screen in this release."
       ]
     }
   },
@@ -352,14 +1247,14 @@
   {
     "id": "2026-11-19-pr-352",
     "date": "2026-11-19",
-    "title": "Add repeat last dose shortcut",
+    "title": "Test the existing Use Last Dose shortcut",
     "status": "published",
     "prs": [
       352
     ],
     "sections": {
       "Improved": [
-        "Add repeat last dose shortcut"
+        "Added a regression test for opening manual entry with the last saved dose."
       ]
     }
   },

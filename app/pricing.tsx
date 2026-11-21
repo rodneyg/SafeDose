@@ -2,13 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { getCheckoutStripe } from "../lib/checkoutStripe";
 import { useAuth } from "../contexts/AuthContext";
 import { billingRequest } from "../lib/subscriptionStatus";
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Platform } from "react-native";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import PublicLinks from "../components/PublicLinks";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { CheckCircle, Shield, Zap, Clock, LucideIcon } from "lucide-react-native";
 import { getApiBaseUrl } from "../lib/apiBase";
+import {
+  assignPricingDefault,
+  pricingEvent,
+  type PricingDefault,
+} from "../lib/pricingDefault";
 import {
   PHOTO_CHECK_MONTHLY_AMOUNT,
   PHOTO_CHECK_ANNUAL_AMOUNT,
@@ -21,43 +26,49 @@ import {
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+const pricingPlansData = [
+  {
+    id: 'photo_check_monthly',
+    name: "Photo Check",
+    price: PHOTO_CHECK_MONTHLY_AMOUNT,
+    priceSuffix: "/month",
+    subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
+    offerKey: 'photo_check_monthly',
+    badgeText: "Web",
+    planType: 'photo_check',
+    isMonthly: true,
+    hasTrial: false,
+  },
+  {
+    id: 'photo_check_yearly',
+    name: "Photo Check",
+    price: PHOTO_CHECK_ANNUAL_AMOUNT,
+    originalPrice: 35.88,
+    priceSuffix: "/year",
+    subtext: `Save ${PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT}%`,
+    offerKey: 'photo_check_annual',
+    badgeText: "Best Value",
+    savings: PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
+    planType: 'photo_check',
+    isMonthly: false,
+    hasTrial: false,
+  },
+];
+
+const [monthlyPlan, annualPlan] = pricingPlansData;
+
+type PricingPlan = (typeof pricingPlansData)[number];
+
 export default function PricingPage() {
   const { profile } = useUserProfile();
   const { user } = useAuth();
   const { offer } = useLocalSearchParams<{ offer?: string }>();
+  const isWeb = Platform.OS === 'web';
   
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const pricingPlansData = [
-    {
-      id: 'photo_check_monthly',
-      name: "Photo Check",
-      price: PHOTO_CHECK_MONTHLY_AMOUNT,
-      priceSuffix: "/month",
-      subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo checks`,
-      offerKey: 'photo_check_monthly',
-      badgeText: "Web",
-      planType: 'photo_check',
-      isMonthly: true,
-      hasTrial: false,
-    },
-    {
-      id: 'photo_check_yearly',
-      name: "Photo Check",
-      price: PHOTO_CHECK_ANNUAL_AMOUNT,
-      originalPrice: 35.88,
-      priceSuffix: "/year",
-      subtext: `Save ${PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT}%`,
-      offerKey: 'photo_check_annual',
-      badgeText: "Best Value",
-      savings: PHOTO_CHECK_ANNUAL_SAVINGS_PERCENT,
-      planType: 'photo_check',
-      isMonthly: false,
-      hasTrial: false,
-    },
-  ];
 
   const getKeyFeatures = (planType: string): { icon: LucideIcon; text: string; color: string; disabled?: boolean }[] => {
     if (planType === 'photo_check') {
@@ -87,19 +98,36 @@ export default function PricingPage() {
     }
   };
 
-  const defaultPlan = pricingPlansData.find(plan => plan.offerKey === offer) || pricingPlansData[0];
-  const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
-  const [selectedPlanType, setSelectedPlanType] = useState(defaultPlan.planType);
+  const [pricingDefault, setPricingDefault] = useState<PricingDefault | null | undefined>(
+    isWeb ? undefined : null,
+  );
+  const [chosenPlan, setChosenPlan] = useState<PricingPlan | null>(null);
+  const requestedPlan = pricingPlansData.find(plan => plan.offerKey === offer);
+  const selectedPlan = chosenPlan ?? requestedPlan ?? (pricingDefault === 'annual' ? annualPlan : monthlyPlan);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   // Get current key features based on selected plan type
-  const keyFeatures = getKeyFeatures(selectedPlanType);
+  const keyFeatures = getKeyFeatures(selectedPlan.planType);
 
-  // Log view_pricing_page event when component mounts
+  const pricingViewLogged = useRef(false);
   useEffect(() => {
+    if (pricingViewLogged.current) return;
+    pricingViewLogged.current = true;
+    const arm = isWeb ? assignPricingDefault() : null;
+    setPricingDefault(arm);
     logAnalyticsEvent(ANALYTICS_EVENTS.VIEW_PRICING_PAGE);
-    
+    if (arm) logAnalyticsEvent(pricingEvent(arm, 'view'));
+  }, [isWeb]);
+
+  const selectPlan = (plan: PricingPlan) => {
+    setChosenPlan(plan);
+    if (pricingDefault) {
+      logAnalyticsEvent(pricingEvent(pricingDefault, plan.isMonthly ? 'select_mo' : 'select_yr'));
+    }
+  };
+
+  useEffect(() => {
     // Start entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -153,6 +181,13 @@ export default function PricingPage() {
         hasTrial: selectedPlan.hasTrial,
       });
 
+      if (typeof sessionId !== 'string' || !sessionId) {
+        throw new Error("Unable to open checkout. Please try again.");
+      }
+
+      if (pricingDefault) {
+        logAnalyticsEvent(pricingEvent(pricingDefault, 'checkout_start'), { plan: selectedPlan.offerKey });
+      }
       const result = await stripe.redirectToCheckout({ sessionId });
       if (result.error) throw new Error(result.error.message);
     } catch (error) {
@@ -223,14 +258,18 @@ export default function PricingPage() {
 
       {/* Monthly/Yearly Toggle */}
       <View style={styles.plansContainer}>
-        {pricingPlansData.filter(plan => plan.planType === selectedPlanType).map((plan) => (
+        {pricingPlansData.map((plan) => (
           <TouchableOpacity
             key={plan.id}
             style={[
               styles.planBox,
               plan.id === selectedPlan.id && styles.selectedPlanBox,
             ]}
-            onPress={() => setSelectedPlan(plan)}
+            onPress={() => selectPlan(plan)}
+            disabled={pricingDefault === undefined}
+            accessibilityRole="button"
+            aria-pressed={isWeb ? plan.id === selectedPlan.id : undefined}
+            accessibilityState={isWeb ? undefined : { selected: plan.id === selectedPlan.id }}
             activeOpacity={0.8}
           >
             {plan.badgeText && plan.id === selectedPlan.id && (
@@ -264,7 +303,7 @@ export default function PricingPage() {
       <TouchableOpacity 
         style={styles.ctaButton} 
         onPress={initiateStripeCheckout}
-        disabled={isLoading}
+        disabled={isLoading || pricingDefault === undefined}
         activeOpacity={0.9}
       >
         <Text style={styles.ctaButtonText}>

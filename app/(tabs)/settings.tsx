@@ -160,6 +160,12 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <View style={styles.card}>
+            <Link href="/protocol" style={styles.protocolLink}>Dosing protocol</Link>
+          </View>
+        </View>
+
         {/* Subscription Management */}
         {user && !user.isAnonymous && (
           <View style={styles.section}>
@@ -284,6 +290,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
+  protocolLink: { color: '#007AFF', fontSize: 17, fontWeight: '600' },
   section: {
     marginBottom: 24,
   },

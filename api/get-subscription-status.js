@@ -1,11 +1,15 @@
 const { billingFailure, billingRefs, billingUser } = require('../lib/billing.server');
 const { isPaidPlan } = require('../lib/plans');
+const { createRateLimit } = require('../lib/apiRateLimit');
+
+const allowRequest = createRateLimit(30);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   try {
     const { uid, db } = await billingUser(req);

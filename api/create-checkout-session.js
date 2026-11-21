@@ -2,14 +2,18 @@ const {
   billingError, billingFailure, billingRefs, billingReturnOrigin, billingStripe, billingUser, getOrCreateCustomer,
 } = require('../lib/billing.server');
 const stripeConfig = require('../lib/stripeConfig.server');
+const { createRateLimit } = require('../lib/apiRateLimit');
 const { resolveCheckoutPriceId } = require('../lib/photoCheckStripe');
 const { mapPriceIdToPlan } = require('../lib/plans');
+
+const allowRequest = createRateLimit(30);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (!allowRequest(req, res)) return;
 
   try {
     const { priceId, offerKey, successUrl, cancelUrl, hasTrial } = req.body || {};

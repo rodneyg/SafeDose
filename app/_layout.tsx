@@ -5,6 +5,8 @@ import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
+import { AppErrorBoundary } from '../components/AppErrorBoundary';
+import { WebAnalytics } from '../lib/WebAnalytics';
 import "../global.css";
 
 // Keep the splash screen visible while we fetch resources
@@ -29,12 +31,15 @@ export default function RootLayout() {
   
   console.log('[RootLayout] Rendering providers and slot');
   return (
-    <AuthProvider>
-      <UserProfileProvider>
-        <OnboardingProvider>
-          <Slot />
-        </OnboardingProvider>
-      </UserProfileProvider>
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <UserProfileProvider>
+          <OnboardingProvider>
+            <Slot />
+            <WebAnalytics />
+          </OnboardingProvider>
+        </UserProfileProvider>
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }

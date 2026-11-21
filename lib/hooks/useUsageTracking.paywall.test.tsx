@@ -2,6 +2,7 @@ import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDoc } from 'firebase/firestore';
+import { setDocWithEnv } from '../firestoreWithEnv';
 import { useUsageTracking } from './useUsageTracking';
 import { getSubscriptionStatus } from '../subscriptionStatus';
 
@@ -9,7 +10,7 @@ jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('reac
 let mockUser: any;
 jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
 const mockDb = {};
-jest.mock('firebase/firestore', () => ({ getFirestore: () => mockDb, doc: jest.fn(), getDoc: jest.fn(), setDoc: jest.fn(), updateDoc: jest.fn(), increment: jest.fn() }));
+jest.mock('firebase/firestore', () => ({ getFirestore: () => mockDb, doc: jest.fn(() => ({ path: 'users/member' })), getDoc: jest.fn(), setDoc: jest.fn(), updateDoc: jest.fn(), increment: jest.fn() }));
 jest.mock('../firestoreWithEnv', () => ({ setDocWithEnv: jest.fn() }));
 jest.mock('../analytics', () => ({ setAnalyticsUserProperties: jest.fn(), USER_PROPERTIES: {} }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: jest.fn(async () => null), setItem: jest.fn(async () => {}) }));
@@ -22,6 +23,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'log').mockImplementation(() => {});
   mockUser = { uid: 'member', isAnonymous: false };
+  (getSubscriptionStatus as jest.Mock).mockReset().mockResolvedValue({ plan: 'free', hasActiveSubscription: false });
 });
 afterEach(() => { act(() => tree?.unmount()); jest.restoreAllMocks(); });
 
@@ -78,4 +80,51 @@ it('denies a user without a UID without fetching usage', async () => {
   await act(async () => { tree = create(<Probe />); });
   await expect(usage.checkUsageLimit()).resolves.toBe(false);
   expect(getDoc).not.toHaveBeenCalled();
+});
+
+it('refreshes a free user to the existing photo_check paid plan before allowing an upgrade scan', async () => {
+  const lastReset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  (getDoc as jest.Mock)
+    .mockResolvedValue({ metadata: { fromCache: false }, data: () => ({ plan: 'free', scansUsed: 3, lastReset }) });
+  (getSubscriptionStatus as jest.Mock)
+    .mockResolvedValueOnce({ plan: 'free', hasActiveSubscription: false })
+    .mockResolvedValueOnce({ plan: 'photo_check', hasActiveSubscription: true });
+
+  await act(async () => { tree = create(<Probe />); });
+  expect(usage.usageData).toMatchObject({ plan: 'free', scansUsed: 3, limit: 3 });
+
+  const onVerifiedUsage = jest.fn();
+  await act(async () => {
+    await expect(usage.checkUsageLimit(onVerifiedUsage)).resolves.toBe(true);
+  });
+
+  expect(usage.usageData).toMatchObject({ plan: 'photo_check', scansUsed: 3, limit: -1 });
+  expect(onVerifiedUsage).toHaveBeenCalledWith(expect.objectContaining({ plan: 'photo_check', limit: -1 }));
+});
+
+it('creates free plan state when the user document is empty', async () => {
+  (getDoc as jest.Mock).mockResolvedValue({ metadata: { fromCache: false }, data: () => undefined });
+
+  await act(async () => { tree = create(<Probe />); });
+
+  expect(usage.usageData).toMatchObject({ plan: 'free', scansUsed: 0, limit: 3 });
+  expect(setDocWithEnv).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+    scansUsed: 0,
+  }), { merge: true });
+});
+
+it('recovers with server scan counts after cached storage errors', async () => {
+  const lastReset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  (AsyncStorage.getItem as jest.Mock).mockRejectedValueOnce(new Error('storage unavailable'));
+  (getDoc as jest.Mock).mockResolvedValue({
+    metadata: { fromCache: false },
+    data: () => ({ plan: 'free', scansUsed: 1, lastReset }),
+  }).mockResolvedValueOnce({ metadata: { fromCache: true } });
+  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+  await act(async () => { tree = create(<Probe />); });
+  await act(async () => { await usage.checkUsageLimit(); });
+
+  expect(usage.usageData).toMatchObject({ scansUsed: 1, plan: 'free', limit: 3, lastReset });
+  expect(warn).toHaveBeenCalledWith('Could not read cached scan usage.');
 });
