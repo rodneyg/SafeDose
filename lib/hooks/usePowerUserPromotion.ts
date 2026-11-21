@@ -17,7 +17,7 @@ const DAYS_BETWEEN_PROMOTIONS = 14; // 2 weeks
 export interface UsePowerUserPromotionResult {
   /** The current dose count, promotion history, and subscription state. */
   promotionData: PowerUserPromotionData;
-  /** Whether the hook is still loading persisted promotion data. */
+  /** Whether the initial load of promotion data is still in progress. */
   isLoading: boolean;
   /** Returns whether the promotion is currently eligible to be shown. */
   shouldShowPromotion: () => boolean;
@@ -31,6 +31,8 @@ export interface UsePowerUserPromotionResult {
 
 /**
  * Tracks whether the current user should see the power-user subscription promotion.
+ * Eligibility requires enough recorded doses, no active subscription, and a
+ * completed cooldown if the promotion has been shown before.
  *
  * Takes no parameters. The current user is read from `useAuth()`.
  *
