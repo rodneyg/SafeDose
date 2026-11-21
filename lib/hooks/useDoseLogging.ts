@@ -268,8 +268,12 @@ export function useDoseLogging() {
       
       // Update local storage with merged logs (for offline access)
       if (firestoreLogs.length > 0) {
-        await AsyncStorage.setItem(storageKey, JSON.stringify(allLogs.slice(0, 100)));
-        console.log('[useDoseLogging] Updated local storage with merged logs');
+        try {
+          await AsyncStorage.setItem(storageKey, JSON.stringify(allLogs.slice(0, 100)));
+          console.log('[useDoseLogging] Updated local storage with merged logs');
+        } catch (error) {
+          console.error('[useDoseLogging] Error caching dose history:', error);
+        }
       }
       
       return allLogs;
