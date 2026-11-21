@@ -70,6 +70,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-593",
+    "date": "2026-11-21",
+    "title": "Add unit tests for useWebOffline.ts",
+    "status": "published",
+    "prs": [
+      593
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for useWebOffline.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-591",
     "date": "2026-11-21",
     "title": "Test Firestore environment write wrappers (T-9127)",
