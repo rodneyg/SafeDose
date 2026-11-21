@@ -46,6 +46,29 @@ function hook() {
   return () => result!;
 }
 
+describe('manual dose entry validation', () => {
+  it.each([
+    ['', 'Please enter a dose amount'],
+    ['not-a-number', 'Please enter a valid dose amount greater than 0'],
+    ['0', 'Please enter a valid dose amount greater than 0'],
+    ['-0.5', 'Please enter a valid dose amount greater than 0'],
+  ])('rejects invalid manual entry %p', (dose, expectedError) => {
+    const h = hook();
+
+    act(() => { expect(h().validateDoseInput(dose, 'mg')).toBe(false); });
+
+    expect(h().formError).toBe(expectedError);
+  });
+
+  it.each(['0.25', '1', '1000'])('accepts valid manual entry %p', dose => {
+    const h = hook();
+
+    act(() => { expect(h().validateDoseInput(dose, 'mg')).toBe(true); });
+
+    expect(h().formError).toBeNull();
+  });
+});
+
 it('keeps the feedback flow in place and offers the survey only after a successful save', async () => {
   const h = hook();
   mockLogDose.mockReset().mockResolvedValueOnce({ success: false })
