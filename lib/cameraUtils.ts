@@ -10,20 +10,24 @@ import {
 } from './scan/retakeGuidance';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import Constants from 'expo-constants';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
-import { CameraView } from 'expo-camera';
+import { CameraView, type CameraCapturedPicture } from 'expo-camera';
+import type { PhotoSource } from './scan/imageQualityMetrics';
+import { photoRetakeMessage } from './scan/photoRetake';
 
 const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
+const NATIVE_CAPTURE_ERROR = 'We could not take a photo. Try again or enter the details manually.';
 
 // Only exact, authored messages may cross the capture/upload boundary into the UI.
 const PHOTO_ERROR_MESSAGES = new Map<string, string>([
   ['No file selected or user cancelled', 'No image selected'],
   ['File selection cancelled after timeout', 'Image selection cancelled'],
   ['Selected image exceeds the 5 MB limit. Please choose a smaller image.', 'Selected image exceeds the 5 MB limit. Please choose a smaller image.'],
-  ['Camera not ready', 'Camera not ready'],
-  ['Camera permission required', 'Camera permission required'],
-  ['Camera returned no picture', 'Camera returned no picture'],
-  ['Failed to capture image data', 'Failed to capture image data'],
+  ['Camera not ready', 'The camera is not ready. Try again or enter the details manually.'],
+  ['Camera permission required', 'Allow camera access in Settings, or enter the details manually.'],
+  ['Camera returned no picture', NATIVE_CAPTURE_ERROR],
+  ['Failed to capture image data', NATIVE_CAPTURE_ERROR],
   ['Unrecognized image format', 'Image format could not be processed'],
   ['Could not reach the scan service. Please try again.', 'Could not reach the scan service. Please try again.'],
   ['Image analysis failed. Please try again.', 'Image analysis failed. Please try again.'],
@@ -33,7 +37,7 @@ const PHOTO_ERROR_MESSAGES = new Map<string, string>([
 ]);
 
 interface CameraRef {
-  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<{ base64?: string; uri?: string } | undefined>;
+  takePictureAsync: (options: { base64: boolean; quality: number }) => Promise<Partial<CameraCapturedPicture> | undefined>;
 }
 
 interface CaptureAndProcessImageProps {
@@ -46,6 +50,8 @@ interface CaptureAndProcessImageProps {
   incrementScansUsed: () => Promise<void>;
   onImageReady?: () => void;
   onScanUnavailable?: () => void;
+  returnIncompleteScan?: boolean;
+  onRetakeRequired?: () => void;
   webCameraStream?: MediaStream | null;
 }
 
@@ -59,6 +65,8 @@ export async function captureAndProcessImage({
   incrementScansUsed,
   onImageReady,
   onScanUnavailable,
+  returnIncompleteScan,
+  onRetakeRequired,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
   const retakeSession = getRetakeSession(cameraRef);
@@ -74,6 +82,7 @@ export async function captureAndProcessImage({
   try {
     let base64Image: string | undefined;
     let mimeType: string = '';
+    let nativePhoto: Omit<PhotoSource, 'imageUrl'> = {};
 
     if (isWeb) {
       // For any web platform (mobile or desktop), use web camera stream if available, otherwise file input
@@ -189,6 +198,7 @@ export async function captureAndProcessImage({
       if (!photo) throw new Error('Camera returned no picture');
       console.log('[Capture] Picture taken successfully');
 
+      nativePhoto = { uri: photo.uri, width: photo.width, height: photo.height };
       base64Image = photo.base64;
       if (!base64Image && photo.uri) {
         console.log('[Capture] Base64 missing, reading from URI:', photo.uri);
@@ -233,12 +243,24 @@ export async function captureAndProcessImage({
       }
     }
 
+    const imageUrl = `data:${mimeType};base64,${base64Image}`;
+    if (Constants.expoConfig?.extra?.scanQualityPrecheck === true && /^image\/(jpeg|jpg|png|webp)$/i.test(mimeType)) {
+      setProcessingMessage('Checking photo quality...');
+      const metrics = await import('./scan/readPhotoMetrics')
+        .then(({ readPhotoMetrics }) => readPhotoMetrics({ imageUrl, ...nativePhoto }))
+        // A decoder that cannot inspect this photo leaves it to the scan service.
+        .catch(() => undefined);
+      const message = metrics && photoRetakeMessage(metrics);
+      if (message) {
+        setScanError(message);
+        onRetakeRequired?.();
+        return null;
+      }
+    }
+
     onImageReady?.();
     setProcessingMessage('Analyzing image with AI...');
     console.log('[Process] Starting image processing');
-
-    const imageUrl = `data:${mimeType};base64,${base64Image}`;
-    console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
     console.log('[Process] Sending image to /api/analyze-scan');
 
     const retakeVariant = beginGuidedRetake(retakeSession);
@@ -248,6 +270,7 @@ export async function captureAndProcessImage({
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      if (returnIncompleteScan) return result;
       offerRetakeGuidance(retakeSession);
       throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
