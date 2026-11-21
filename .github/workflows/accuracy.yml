@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -34,7 +34,7 @@ jobs:
           }
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows.join('\n') + '\n');
           NODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: dosing-coverage
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -55,13 +55,17 @@ jobs:
       - run: npm run test:vision
       - name: Offline vision eval (accuracy informational pending verification)
         run: npm run eval:vision -- --offline
+      - name: Gate wrong numbers in development replays
+        env:
+          SAFEDOSE_EVAL_RECORDINGS: evals/vision/fixtures/development-recordings.json
+        run: npm run eval:vision -- --offline --gate-wrong-number
       - name: Write eval summary
         if: always()
         run: |
           if compgen -G 'evals/results/*.md' > /dev/null; then
             cat evals/results/*.md >> "$GITHUB_STEP_SUMMARY"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: vision-eval-results
