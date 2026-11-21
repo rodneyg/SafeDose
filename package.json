@@ -82,7 +82,7 @@
     "framer-motion": "^12.7.4",
     "jpeg-js": "^0.4.4",
     "lucide-react": "^0.488.0",
-    "lucide-react-native": "^1.75.0",
+    "lucide-react-native": "^0.577.0",
     "micro": "^10.0.1",
     "nativewind": "~4.2.7",
     "openai": "^7.59.0",

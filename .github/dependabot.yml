@@ -23,6 +23,9 @@ updates:
       # Keep the verified Reanimated 3.17 line until the Expo SDK is upgraded.
       - dependency-name: react-native-reanimated
         versions: [">= 3.18.0"]
+      # Lucide 1.x fails the web bundle scan and the Expo Jest suite.
+      - dependency-name: lucide-react-native
+        versions: [">= 1.0.0"]
 
   - package-ecosystem: github-actions
     directory: /
