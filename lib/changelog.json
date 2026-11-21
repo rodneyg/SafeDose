@@ -294,6 +294,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-541",
+    "date": "2026-11-21",
+    "title": "Add SafeDose dosing page to the sitemap",
+    "status": "published",
+    "prs": [
+      541
+    ],
+    "sections": {
+      "Improved": [
+        "Add SafeDose dosing page to the sitemap"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-540",
     "date": "2026-11-21",
     "title": "Add unit tests for subscription hook",
