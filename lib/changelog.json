@@ -476,6 +476,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-584",
+    "date": "2026-11-21",
+    "title": "Test scan retake guidance (T-9124)",
+    "status": "published",
+    "prs": [
+      584
+    ],
+    "sections": {
+      "Improved": [
+        "Test scan retake guidance (T-9124)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-583",
     "date": "2026-11-21",
     "title": "Add unit tests for useFeedbackStorage",
