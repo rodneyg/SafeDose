@@ -1,6 +1,13 @@
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
 import { completeScanOnServer, SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
+import {
+  beginGuidedRetake,
+  getRetakeSession,
+  offerRetakeGuidance,
+  recordGuidedRetakeSuccess,
+  UNREADABLE_PHOTO_MESSAGE,
+} from './scan/retakeGuidance';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
@@ -10,7 +17,6 @@ import type { PhotoSource } from './scan/imageQualityMetrics';
 import { photoRetakeMessage } from './scan/photoRetake';
 
 const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
-const UNREADABLE_PHOTO_MESSAGE = 'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.';
 
 // Only exact, authored messages may cross the capture/upload boundary into the UI.
 const PHOTO_ERROR_MESSAGES = new Map<string, string>([
@@ -58,6 +64,7 @@ export async function captureAndProcessImage({
   onRetakeRequired,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
+  const retakeSession = getRetakeSession(cameraRef);
   console.log('[Capture] Button pressed - Start');
 
   // OpenAI keys stay on the server. The client only posts the image to /api/analyze-scan.
@@ -250,15 +257,18 @@ export async function captureAndProcessImage({
     console.log('[Process] Starting image processing');
     console.log('[Process] Sending image to /api/analyze-scan');
 
+    const retakeVariant = beginGuidedRetake(retakeSession);
     const result = await readScan(imageUrl, {
       complete: () => completeScanOnServer(imageUrl),
     });
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      offerRetakeGuidance(retakeSession);
       throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
 
+    recordGuidedRetakeSuccess(retakeVariant);
     await incrementScansUsed();
     console.log('[Process] Incremented scans used');
 
