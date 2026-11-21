@@ -58,8 +58,8 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`
-              : `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`}
+              ? `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`
+              : `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Scan for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
@@ -69,7 +69,7 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
             )}
             {!isPremium && (
               <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-                <Text style={styles.buttonText}>View Photo Check</Text>
+                <Text style={styles.buttonText}>View Photo Scan</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>

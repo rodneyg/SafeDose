@@ -1,4 +1,4 @@
-# Photo Check readiness review — 2026-11-15
+# Photo Scan readiness review — 2026-11-15
 
 Captured the deployed https://safe-dose.vercel.app/pricing with a separate Playwright headless Chromium process (1440×1100 desktop; 390×844 mobile). No existing browser or screen was controlled. Screenshots show production, whose paywall UI is unchanged by this server-only patch.
 

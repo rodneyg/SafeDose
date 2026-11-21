@@ -20,7 +20,7 @@ module.exports = {
     bundleIdentifier: 'com.safedoseapp.boltexponativewind',
     infoPlist: {
       NSCameraUsageDescription:
-        'This app uses the camera to scan your syringe and medication vial to help you verify materials match your prescription and calculate doses.',
+        'SafeDose uses the camera to read details from your syringe or medication vial for you to review.',
     },
   },
   android: {

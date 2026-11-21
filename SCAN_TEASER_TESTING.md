@@ -20,7 +20,7 @@
    - [ ] Complete calculation
 4. [ ] **VERIFY**: On the final result screen, check that:
    - [ ] Calculation result shows (e.g., "Draw to 5.0 ml")
-   - [ ] Teaser text appears: "Want to double-check with a vial/syringe photo?"
+   - [ ] Teaser text appears: "Scan a vial or syringe to fill in details faster."
    - [ ] "Try AI Scan" button is visible with camera icon
    - [ ] Teaser is positioned between disclaimer and action buttons
    - [ ] Styling is subtle (small text, compact button)
