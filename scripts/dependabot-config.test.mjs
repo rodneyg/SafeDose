@@ -65,6 +65,9 @@ updates:
       # Lucide 1.x fails the web bundle scan and the Expo Jest suite.
       - dependency-name: lucide-react-native
         versions: [">= 1.0.0"]
+      # NativeWind 4's Metro integration requires Tailwind CSS 3.
+      - dependency-name: tailwindcss
+        versions: [">= 4.0.0"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -73,7 +76,7 @@ updates:
     open-pull-requests-limit: 3
 `;
 
-test('Dependabot checks npm and GitHub Actions weekly and skips incompatible Expo and Firebase dependency updates', async () => {
+test('Dependabot checks npm and GitHub Actions weekly and skips incompatible dependency updates', async () => {
   const config = await readFile(new URL('../.github/dependabot.yml', import.meta.url), 'utf8');
 
   assert.equal(config, expectedConfig);
