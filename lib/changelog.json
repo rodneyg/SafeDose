@@ -448,6 +448,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-567",
+    "date": "2026-11-21",
+    "title": "Add tests for checkout session redirects",
+    "status": "published",
+    "prs": [
+      567
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for checkout session redirects"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-565",
     "date": "2026-11-21",
     "title": "Clear stale dates when a protocol start is removed",
