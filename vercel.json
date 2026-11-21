@@ -22,6 +22,7 @@
       },
       "continue": true
     },
+    { "src": "/ping", "dest": "/api/deploy-ping.js" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
 
     { "handle": "filesystem" },
