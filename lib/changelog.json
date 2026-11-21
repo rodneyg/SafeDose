@@ -140,6 +140,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-562",
+    "date": "2026-11-21",
+    "title": "Cover AuthContext recovery and empty sessions",
+    "status": "published",
+    "prs": [
+      562
+    ],
+    "sections": {
+      "Improved": [
+        "Cover AuthContext recovery and empty sessions"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-561",
     "date": "2026-11-21",
     "title": "Keep protocol dates within the four-digit calendar range",
