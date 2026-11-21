@@ -311,3 +311,63 @@ property('decimal displays have no float artifacts at supported precisions', fc.
     const rounded = BigInt(display.replace('.', ''));
     expect(rounded).toBe(n * scale / d + (n * scale % d * BigInt(2) >= d ? BigInt(1) : BigInt(0)));
   }));
+
+const insulinConfigurations = [
+  { scale: 100, volume: '0.3 ml', capacityMarks: 30, tick: 5 },
+  { scale: 100, volume: '0.5 ml', capacityMarks: 50, tick: 5 },
+  { scale: 100, volume: '1 ml', capacityMarks: 100, tick: 10 },
+  { scale: 40, volume: '0.5 ml', capacityMarks: 20, tick: 1 },
+  { scale: 40, volume: '1 ml', capacityMarks: 40, tick: 1 },
+] as const;
+
+for (const { scale, volume, capacityMarks, tick } of insulinConfigurations) {
+  const label = `U-${scale} ${volume}`;
+  const manualSyringe = { type: 'Insulin' as const, volume, insulinScale: `U-${scale}` };
+
+  property(`tick guidance preserves exact between-tick doses on ${label}`, fc.property(
+    fc.integer({ min: 1, max: capacityMarks / tick - 1 }),
+    fc.integer({ min: 11, max: tick * 1000 - 11 }),
+    (tickIndex, thousandthsPastTick) => {
+      const lower = tickIndex * tick;
+      const thousandths = lower * 1000 + thousandthsPastTick;
+      // Medication concentration differs from the barrel scale.
+      const result = calculate({ unit: 'units', concentrationUnit: 'units/ml',
+        doseValue: thousandths * 2, concentration: scale * 2000, manualSyringe });
+      const marking = success(result);
+      expectRatio(marking, BigInt(thousandths), 1000n);
+      const [marks, denominator] = ratio(marking);
+      expect(Number(marks) / (Number(denominator) * scale)).toBe(result.calculatedVolume);
+      expect(result.calculatedVolume).toBe(thousandths / (1000 * scale));
+      const display = (Math.floor((thousandths + 5) / 10) / 100).toFixed(2);
+      expect(result.guidance).toBe(
+        `Draw to ${display} units, which is between the ${lower} units and ${lower + tick} units marks.`,
+      );
+    }));
+
+  property(`exact capacity is checked before display rounding on ${label}`, fc.property(
+    fc.integer({ min: 1, max: 4999 }), distance => {
+      const capacityMillionths = capacityMarks * 1000000;
+      const concentration = scale * 1000000;
+      for (const offset of [-distance, 0, distance]) {
+        const dose = capacityMillionths + offset;
+        const inputs: Partial<CalculateDoseParams>[] = [
+          { unit: 'units', concentrationUnit: 'units/ml', doseValue: dose, concentration },
+          { unit: 'mg', concentrationUnit: 'mcg/ml', doseValue: dose / 1000, concentration },
+          { unit: 'mcg', concentrationUnit: 'mg/ml', doseValue: dose, concentration: concentration / 1000 },
+        ];
+        for (const input of inputs) {
+          const result = calculate({ ...input, manualSyringe });
+          if (offset > 0) {
+            failure(result);
+            expect(result.calculationError).toMatch(/exceeds syringe capacity|too large for practical use/);
+          } else {
+            const marking = success(result);
+            expectRatio(marking, BigInt(dose), 1000000n);
+            expect(result.calculatedVolume).toBe(dose / concentration);
+            expect(formatDrawToText({ recommendedMarking: marking, syringeType: 'Insulin' }))
+              .toBe(`Draw to ${capacityMarks}.00 units`);
+          }
+        }
+      }
+    }));
+}
