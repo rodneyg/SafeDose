@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-508",
+    "date": "2026-11-21",
+    "title": "Gate wrong numbers in offline vision replays",
+    "status": "published",
+    "prs": [
+      508
+    ],
+    "sections": {
+      "Improved": [
+        "Gate wrong numbers in offline vision replays"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-506",
     "date": "2026-11-21",
     "title": "Require manual selection for uncertain scan capacity",
