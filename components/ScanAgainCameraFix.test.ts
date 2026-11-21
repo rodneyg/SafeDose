@@ -4,6 +4,7 @@ import NewDoseScreen from '../app/(tabs)/new-dose';
 import fixtures from '../evals/vision/fixtures/model-outputs.json';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
 import { parseScanModelOutput } from '../lib/scan';
+import type { UseDoseCalculatorProps } from '../lib/hooks/useDoseCalculator';
 
 // Render the real dose screen. Child screens and unrelated services are boundaries;
 // camera permission, stream ownership, cleanup, and transition effects run unchanged.
@@ -44,11 +45,20 @@ const mockCalculator = new Proxy({
   setConcentrationUnit: jest.fn(), setTotalAmountUnit: jest.fn(), setConcentrationHint: jest.fn(),
   setSubstanceNameHint: jest.fn(), setManualStep: jest.fn(), registerScannedFields: jest.fn(),
 }, { get: (target, key) => key in target ? target[key as keyof typeof target] : mockNoop });
-jest.mock('../lib/hooks/useDoseCalculator', () => ({ __esModule: true, default: () => mockCalculator }));
-jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' } }) }));
+let mockUseRealCalculator = false;
+jest.mock('../lib/hooks/useDoseCalculator', () => ({
+  __esModule: true,
+  default: (props: UseDoseCalculatorProps) => mockUseRealCalculator
+    ? jest.requireActual('../lib/hooks/useDoseCalculator').default(props)
+    : mockCalculator,
+}));
+jest.mock('../lib/hooks/useOnboardingSurvey', () => ({ useOnboardingSurvey: () => ({ prompt: null }) }));
+jest.mock('../lib/hooks/usePowerUserPromotion', () => ({ usePowerUserPromotion: () => ({}) }));
+jest.mock('../lib/hooks/useBeforeFirstScanPrompt', () => ({ useBeforeFirstScanPrompt: () => ({}) }));
+jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' }, checkUsageLimit: async () => true }) }));
 jest.mock('../lib/hooks/useFeedbackStorage', () => ({ useFeedbackStorage: () => ({}) }));
 jest.mock('../lib/hooks/useSignUpPrompt', () => ({ useSignUpPrompt: () => ({ trackInteraction: jest.fn() }) }));
-jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({}) }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logUsageData: { plan: 'free' } }) }));
 jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({ captureUserInteraction: jest.fn(async () => {}) }) }));
 jest.mock('./IntroScreen', () => 'IntroScreen');
 jest.mock('./BeforeFirstScanScreen', () => 'BeforeFirstScanScreen');
@@ -91,6 +101,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   act(() => renderer.unmount());
+  mockUseRealCalculator = false;
   jest.useRealTimers();
   if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
   else Reflect.deleteProperty(globalThis, 'navigator');
@@ -299,4 +310,46 @@ it('requires a fresh syringe selection when the scanned capacity exceeds the vis
   expect(mockCalculator.setSubstanceName).not.toHaveBeenCalled();
   expect(mockCalculator.registerScannedFields).toHaveBeenCalledWith({ concentrationAmount: '10', concentrationUnit: 'mg/ml' });
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+});
+
+it('uses the verified vial strength without carrying forward the previous medication name or solution', async () => {
+  act(() => renderer.unmount());
+  mockUseRealCalculator = true;
+  mockGetUserMedia.mockResolvedValueOnce(stream());
+  const raw = JSON.parse(wrongFills[0]);
+  const scan = parseScanModelOutput(JSON.stringify({
+    ...raw,
+    vial: { substance: null, totalAmount: '10 mg', concentration: null, expiration: null },
+    confidence: { ...raw.confidence, 'vial.totalAmount': 1 },
+  }));
+  expect(scan.refuse).toBe(false);
+  mockCapture.mockResolvedValueOnce(scan);
+
+  act(() => { renderer = create(React.createElement(NewDoseScreen)); });
+  const intro = renderer.root.findByType('IntroScreen' as never);
+  act(() => intro.props.setScreenStep('manualEntry'));
+  const manual = () => renderer.root.findByType('ManualEntryScreen' as never);
+  act(() => {
+    manual().props.setDose('2');
+    manual().props.setSubstanceName('Previous medication');
+    manual().props.setSubstanceNameHint('Detected on the previous scan');
+    manual().props.setConcentrationAmount('8');
+    manual().props.setSolutionVolume('2');
+  });
+  act(() => manual().props.handleBack());
+  act(() => renderer.root.findByType('IntroScreen' as never).props.setScreenStep('scan'));
+  await settle();
+  await act(async () => { await camera().props.onCapture(); });
+
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  expect(preview.props.visible).toBe(true);
+  act(() => preview.props.onVerify(null));
+
+  expect(manual().props).toMatchObject({
+    manualStep: 'dose', dose: '', doseValue: null, substanceName: '', substanceNameHint: null,
+    concentrationAmount: '', concentrationUnit: 'mg/ml',
+    medicationInputType: 'totalAmount', totalAmount: '10', totalAmountUnit: 'mg',
+    solutionVolume: '', manualSyringe: { type: scan.syringe.type, volume: scan.syringe.volume },
+    calculatedVolume: null, recommendedMarking: null,
+  });
 });
