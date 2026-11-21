@@ -39,6 +39,14 @@ export function parseScanQuantity(value: string | null, concentration = false):
   return { value: Number(match[1]), unit: unit === 'mg' ? 'mg' : ['mcg', 'µg', 'μg'].includes(unit) ? 'mcg' : 'units' };
 }
 
+function parseSyringeMarkings(markings: string | null): number[] | null {
+  const values = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? Number(mark.trim()) : NaN) ?? [];
+  if (values.length < 2 || values.some((value, i) => !Number.isFinite(value) || (i > 0 && value <= values[i - 1]))) {
+    return null;
+  }
+  return values;
+}
+
 /** No I/O. Fail closed, retaining raw output for audit. Expected labels never enter this function. */
 export function parseScanModelOutput(raw: string): ScanResult {
   let root: Record<string, unknown> = {};
@@ -62,8 +70,8 @@ export function parseScanModelOutput(raw: string): ScanResult {
   const markings = text(s.markings);
   if (!type || capacity === null || !scale) reasons.push('Syringe type, capacity, or scale is missing or unreadable.');
   if ((type === 'Insulin' && scale !== 'U-100') || (type === 'Standard' && scale !== 'mL')) reasons.push('Unsupported or contradictory syringe scale; confirm manually.');
-  const marks = markings?.split(',').map(mark => /^\d+(?:\.\d+)?$/.test(mark.trim()) ? Number(mark.trim()) : NaN) ?? [];
-  if (marks.length < 2 || marks.some((mark, i) => !Number.isFinite(mark) || mark < 0 || (i > 0 && mark <= marks[i - 1]))) {
+  const marks = parseSyringeMarkings(markings);
+  if (!marks) {
     reasons.push('Missing, garbled, or reversed syringe markings.');
   } else if (capacity !== null && scale && marks[marks.length - 1] > capacity * (scale === 'U-100' ? 100 : scale === 'U-40' ? 40 : 1)) {
     reasons.push('Syringe markings exceed stated capacity.');
@@ -122,15 +130,21 @@ export function mapScanToDoseInputs(
   { syringeAndVialVerified = false }: { syringeAndVialVerified?: boolean } = {},
 ): { status: 'ready' | 'needs-input' | 'needs-verification'; reasons: string[]; inputs: ScanDoseInputs } {
   const reasons = [...scan.reasons];
-  const { type, volume } = scan.syringe;
-  const supported = type && volume && Object.prototype.hasOwnProperty.call(syringeOptions[type], volume);
-  if (!supported) reasons.push('Confirm a supported syringe type and capacity.');
+  const { type, volume, capacity_ml: capacity, scale, markings } = scan.syringe;
   const trusted = (key: string) => scan.confidence[key] >= SCAN_MIN_CONFIDENCE;
+  const scaleMatchesType = (type === 'Insulin' && scale === 'U-100') || (type === 'Standard' && scale === 'mL');
+  const marks = parseSyringeMarkings(markings);
+  const manualSyringe = type && volume && capacity !== null && volume === `${capacity} ml`
+    && Object.prototype.hasOwnProperty.call(syringeOptions[type], volume)
+    && scaleMatchesType && marks && marks[marks.length - 1] === capacity * (scale === 'U-100' ? 100 : 1)
+    && ['type', 'capacity_ml', 'scale', 'markings'].every(key => trusted(`syringe.${key}`))
+    ? { type, volume } : null;
+  if (!manualSyringe) reasons.push('Check the syringe label and select its capacity manually.');
   const concentration = trusted('vial.concentration') ? parseScanQuantity(scan.vial.concentration, true) : null;
   const total = trusted('vial.totalAmount') ? parseScanQuantity(scan.vial.totalAmount) : null;
   if (!concentration && !total) reasons.push('Vial strength is missing or unreadable.');
   const inputs: ScanDoseInputs = {
-    manualSyringe: supported && ['type', 'capacity_ml', 'scale', 'markings'].every(key => trusted(`syringe.${key}`)) && type && volume ? { type, volume } : null,
+    manualSyringe,
     substance: trusted('vial.substance') && scan.vial.substance?.toLowerCase() !== 'unreadable' ? scan.vial.substance : null,
     concentration: concentration?.value ?? null,
     concentrationUnit: concentration ? `${concentration.unit}/ml` : null,

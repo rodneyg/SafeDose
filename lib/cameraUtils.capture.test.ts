@@ -6,7 +6,10 @@ jest.mock('./utils', () => ({ isWeb: false }));
 jest.mock('./analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('./scan', () => ({ readScan: jest.fn(), mapScanToDoseInputs: jest.fn() }));
 jest.mock('./scan/completeOnServer', () => ({ completeScanOnServer: jest.fn() }));
-jest.mock('expo-file-system', () => ({ readAsStringAsync: jest.fn() }));
+jest.mock('expo-file-system', () => ({
+  readAsStringAsync: jest.fn(),
+  EncodingType: { Base64: 'base64' },
+}));
 
 it('reports an empty native capture and resets processing without analyzing or counting a scan', async () => {
   const setIsProcessing = jest.fn();
@@ -23,7 +26,7 @@ it('reports an empty native capture and resets processing without analyzing or c
   });
 
   expect(result).toBeNull();
-  expect(setScanError).toHaveBeenLastCalledWith('Camera returned no picture');
+  expect(setScanError).toHaveBeenLastCalledWith('We could not take a photo. Try again or enter the details manually.');
   expect(setIsProcessing.mock.calls).toEqual([[true], [false]]);
   expect(readScan).not.toHaveBeenCalled();
   expect(incrementScansUsed).not.toHaveBeenCalled();
@@ -46,6 +49,9 @@ it.each(['camera', 'filesystem'] as const)('sanitizes a raw %s rejection at the 
     permission: { status: 'granted' }, isMobileWeb: false,
     setIsProcessing, setProcessingMessage: jest.fn(), setScanError, incrementScansUsed,
   })).toBeNull();
+  if (source === 'filesystem') {
+    expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith('file:///photo.jpg', { encoding: 'base64' });
+  }
   expect(setScanError).toHaveBeenLastCalledWith('We could not process this photo. Please try another photo or enter the details manually.');
   expect(setIsProcessing.mock.calls).toEqual([[true], [false]]);
   expect(readScan).not.toHaveBeenCalled();

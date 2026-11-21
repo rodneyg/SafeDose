@@ -28,10 +28,12 @@ import { useFeedbackStorage } from '../../lib/hooks/useFeedbackStorage';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
 import { useSignUpPrompt } from '../../lib/hooks/useSignUpPrompt';
 import { useAuth } from '../../contexts/AuthContext';
+import { recordLandingCtaStart } from '../../lib/landingCtaExperiment';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
+import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
 
 const SCAN_RETAKE_HINT = 'For a clearer photo, use even light, face the label straight on, and avoid glare.';
@@ -48,6 +50,7 @@ export default function NewDoseScreen() {
     kind: ReturnType<typeof photoUpgradeNudge>;
   } | null>(null);
   const scanAttemptInProgress = useRef(false);
+  const mobileScanArm = useRef<MobileScanCtaArm>();
   const searchParams = useLocalSearchParams();
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [hasInitializedAfterNavigation, setHasInitializedAfterNavigation] = useState(false);
@@ -299,6 +302,18 @@ export default function NewDoseScreen() {
     handleInjectionSiteCancel,
   } = doseCalculator;
 
+  const handleIntroScanPress = (arm?: MobileScanCtaArm) => {
+    mobileScanArm.current = arm;
+    if (offline) handleSetScreenStep('manualEntry');
+    else doseCalculator.handleScanNavigation();
+  };
+
+  useEffect(() => {
+    if (!isScreenActive || (screenStep !== 'scan' && screenStep !== 'beforeFirstScan')) {
+      mobileScanArm.current = undefined;
+    }
+  }, [isScreenActive, screenStep]);
+
   const surveyPrompt = signUpPrompt.shouldShowPrompt || showLogLimitModal
     ? null
     : onboardingSurvey.prompt;
@@ -309,7 +324,7 @@ export default function NewDoseScreen() {
     }
   }, [offline, screenStep, setScreenStep]);
 
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>('undetermined');
   const [mobileWebPermissionDenied, setMobileWebPermissionDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -526,7 +541,11 @@ export default function NewDoseScreen() {
 
   const openManualEntryFromScan = (mapped: ReturnType<typeof mapScanToDoseInputs>) => {
     const needsInput = mapped.status === 'needs-input';
-    if (needsInput) resetFullForm();
+    if (needsInput) {
+      resetFullForm('dose');
+      setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
+      setSyringeHint('Check the syringe label and select its capacity manually.');
+    }
 
     const scanned = mapped.inputs;
     const scannedSyringe = needsInput ? null : scanned.manualSyringe;
@@ -786,6 +805,8 @@ export default function NewDoseScreen() {
       return;
     }
 
+    const startArm = mobileScanArm.current;
+
     // Log scan attempt
     logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_ATTEMPT);
     
@@ -801,6 +822,7 @@ export default function NewDoseScreen() {
         return;
       }
 
+      recordLandingCtaStart('scan');
       console.log('handleScanAttempt: Processing image');
       const result = await captureAndProcessImage({
         cameraRef,
@@ -812,6 +834,12 @@ export default function NewDoseScreen() {
         setScanError,
         incrementScansUsed,
         returnIncompleteScan: true,
+        onImageReady: startArm ? () => {
+          if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
+            logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
+            mobileScanArm.current = undefined;
+          }
+        } : undefined,
         onScanUnavailable: () => {
           setManualStep('dose');
           setScreenStep('manualEntry');
@@ -894,6 +922,28 @@ export default function NewDoseScreen() {
     logAnalyticsEvent(ANALYTICS_EVENTS.REACH_SCAN_LIMIT);
     setShowLimitModal(true);
   }, []);
+
+  const startScanAppliedRef = useRef(false);
+  const { handleScanNavigation, beforeFirstScanPrompt } = doseCalculator;
+  useEffect(() => {
+    if (searchParams.startScan !== 'true') {
+      startScanAppliedRef.current = false;
+      return;
+    }
+    if (!isScreenActive || screenStep !== 'intro' || beforeFirstScanPrompt.isLoading ||
+        startScanAppliedRef.current) return;
+
+    startScanAppliedRef.current = true;
+    if (offline) {
+      handleSetScreenStep('manualEntry');
+    } else if (!hasScanCapacity(usageData.scansUsed, usageData.limit)) {
+      openScanLimit();
+    } else {
+      setNavigatingFromIntro(true);
+      void handleScanNavigation();
+    }
+  }, [searchParams.startScan, isScreenActive, screenStep, beforeFirstScanPrompt.isLoading, offline,
+    handleSetScreenStep, usageData.scansUsed, usageData.limit, openScanLimit, handleScanNavigation]);
 
   const handleTryAIScan = useCallback(async () => {
     console.log('handleTryAIScan: Called from teaser');
@@ -1061,7 +1111,8 @@ export default function NewDoseScreen() {
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
           onScanLimit={openScanLimit}
-          onScanPress={offline ? () => handleSetScreenStep('manualEntry') : doseCalculator.handleScanNavigation}
+          onScanPress={handleIntroScanPress}
+          offline={offline}
         />
       )}
       {screenStep === 'beforeFirstScan' && (
@@ -1101,6 +1152,8 @@ export default function NewDoseScreen() {
           setProcessingMessage={setProcessingMessage}
           setScanError={setScanError}
           resetFullForm={resetFullForm}
+          requestNativeCameraPermission={requestPermission}
+          getNativeCameraPermission={getPermission}
           requestWebCameraPermission={requestWebCameraPermission}
           handleGoHome={handleGoHome}
           onCapture={handleScanAttempt}

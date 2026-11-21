@@ -21,11 +21,27 @@ jest.mock('../contexts/OnboardingContext', () => ({ useOnboardingDetails: () => 
 jest.mock('../lib/hooks/useOnboardingIntentStorage', () => ({ useOnboardingIntentStorage: () => ({ submitOnboardingIntent: mockSubmit }) }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
-jest.mock('@react-native-async-storage/async-storage', () => ({ setItem: (...args: unknown[]) => mockSetItem(...args) }));
+jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: async () => null, setItem: (...args: unknown[]) => mockSetItem(...args) }));
 jest.mock('../lib/firebase', () => ({ db: {} }));
 jest.mock('firebase/firestore', () => ({ doc: jest.fn(), getDoc: jest.fn() }));
 
 beforeEach(() => jest.clearAllMocks());
+
+it('opens protocol setup after completing personalization', async () => {
+  const tree = create(<UserType />);
+  const press = (label: string) => act(() => tree.root.findByProps({ accessibilityLabel: label }).props.onPress());
+  try {
+    press('General User');
+    press('Continue to next step');
+    press('Medical/Prescribed');
+    press('Continue to next step');
+    await act(async () => tree.root.findByProps({ accessibilityLabel: 'Complete setup' }).props.onPress());
+    expect(mockSave).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledWith('/onboarding/protocol-setup');
+  } finally {
+    act(() => tree.unmount());
+  }
+});
 it.each([false, true])('skips unanswered personalization without submitting a profile, storage failure=%s', async fail => {
   if (fail) mockSetItem.mockRejectedValueOnce(new Error('Storage unavailable'));
   const tree = create(<UserType />);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import useDoseCalculator from '../lib/hooks/useDoseCalculator';
 import ManualEntryScreen from './ManualEntryScreen';
@@ -286,4 +287,80 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
     act(() => state!.handleBack());
     expectStep(index);
   }
+});
+
+it.each(['concentration', 'totalAmount'] as const)('reports required and invalid web inputs on the %s path', async inputType => {
+  jest.replaceProperty(Platform, 'OS', 'web');
+  let state!: ReturnType<typeof useDoseCalculator>;
+  function Flow() {
+    state = useDoseCalculator({ checkUsageLimit: async () => true });
+    return <ManualEntryScreen {...state as any} />;
+  }
+  await act(async () => { renderer = create(<Flow />); });
+
+  const next = () => {
+    const button = renderer.root.findByProps({ accessibilityLabel: 'Next step' });
+    expect(button.props.disabled).toBe(false);
+    act(() => button.props.onPress());
+  };
+  const alerts = () => renderer.root.findAllByProps({ accessibilityRole: 'alert' })
+    .map(node => node.props.children);
+  const reject = (step: typeof state.manualStep, message: string) => {
+    next();
+    expect(state.manualStep).toBe(step);
+    expect(alerts()).toEqual([message]);
+  };
+
+  reject('dose', 'Please enter a dose amount');
+  act(() => state.setDose('1mg'));
+  reject('dose', 'Please enter a valid dose amount greater than 0');
+  act(() => state.setDose('0.5'));
+  next();
+
+  reject('medicationSource', 'Please select how the medication amount is specified on the vial label');
+  act(() => state.setMedicationInputType(inputType));
+  expect(alerts()).toEqual([]);
+  next();
+
+  if (inputType === 'concentration') {
+    reject('concentrationInput', 'Please enter a concentration amount');
+    act(() => state.setConcentrationAmount('0'));
+    reject('concentrationInput', 'Please enter a valid concentration amount greater than 0');
+    act(() => { state.setConcentrationAmount('2.5'); state.setNeedsConcentrationUnit(true); });
+    reject('concentrationInput', 'Please select a concentration unit');
+    act(() => {
+      state.setConcentrationUnit('mg/ml');
+      state.setTotalAmount('invalid');
+      state.setTotalAmountHint('From reconstitution planner');
+    });
+    next();
+    reject('totalAmountInput', 'Please enter a valid total amount greater than 0');
+    act(() => state.setTotalAmount(''));
+  }
+
+  reject('totalAmountInput', 'Please enter the total amount in the vial');
+  act(() => state.setTotalAmount('-5'));
+  reject('totalAmountInput', 'Please enter a valid total amount greater than 0');
+  act(() => { state.setTotalAmount('5'); state.setTotalAmountUnit(null); });
+  reject('totalAmountInput', 'Needs input: select the total amount unit.');
+  act(() => state.setTotalAmountUnit('mg'));
+  next();
+
+  if (inputType === 'totalAmount') {
+    reject('reconstitution', 'Please enter the solution volume in mL');
+    act(() => state.setSolutionVolume('2mL'));
+    reject('reconstitution', 'Please enter a valid solution volume greater than 0');
+    act(() => state.handleBack());
+    next();
+    expect(state.manualStep).toBe('reconstitution');
+    expect(state.solutionVolume).toBe('2mL');
+    act(() => state.setSolutionVolume('2'));
+    next();
+  }
+
+  expect(state.manualStep).toBe('syringe');
+  expect(alerts()).toEqual([]);
+  act(() => state.setManualSyringe({ type: 'Standard', volume: '' }));
+  expect(alerts()).toEqual(['Select a syringe size to calculate.']);
+  expect(renderer.root.findByProps({ accessibilityLabel: 'Calculate dose' }).props.disabled).toBe(true);
 });
