@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -28,7 +28,7 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -43,7 +43,7 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -58,6 +58,11 @@ jobs:
           EXPO_NO_TELEMETRY: '1'
           EXPO_OFFLINE: '1'
         run: npx expo export --platform ios --dev --max-workers 2 --output-dir "${{ runner.temp }}/safedose-ios"
+      - name: Bundle Android with Expo Metro
+        env:
+          EXPO_NO_TELEMETRY: '1'
+          EXPO_OFFLINE: '1'
+        run: npx expo export --platform android --dev --max-workers 2 --output-dir "${{ runner.temp }}/safedose-android"
       - name: Reject secrets in web export and resolved Expo extra
         run: npm run check:bundle-secrets
       - run: npm run test:scan-api
@@ -105,7 +110,7 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -118,7 +123,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -145,7 +150,7 @@ jobs:
   #   continue-on-error: true
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v7
+  #     - uses: actions/setup-node@v7.1.0
   #       with:
   #         node-version-file: .nvmrc
   #         cache: npm

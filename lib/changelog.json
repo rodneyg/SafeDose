@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-604",
+    "date": "2026-11-21",
+    "title": "Fix New Dose browser title",
+    "status": "published",
+    "prs": [
+      604
+    ],
+    "sections": {
+      "Improved": [
+        "Fix New Dose browser title"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-603",
     "date": "2026-11-21",
     "title": "Add email capture to upgrade flow",
@@ -10,6 +24,34 @@
     "sections": {
       "Improved": [
         "Add email capture to upgrade flow"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-602",
+    "date": "2026-11-21",
+    "title": "Add JSDoc to useAuth hook",
+    "status": "published",
+    "prs": [
+      602
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth hook"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-600",
+    "date": "2026-11-21",
+    "title": "Add JSDoc documentation to subscription hook",
+    "status": "published",
+    "prs": [
+      600
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc documentation to subscription hook"
       ]
     }
   },
@@ -766,6 +808,20 @@
     "sections": {
       "Improved": [
         "Complete local dosing presets"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-519",
+    "date": "2026-11-21",
+    "title": "Fix native build for iOS and Android",
+    "status": "published",
+    "prs": [
+      519
+    ],
+    "sections": {
+      "Improved": [
+        "Fix native build for iOS and Android"
       ]
     }
   },
