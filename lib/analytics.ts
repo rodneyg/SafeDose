@@ -27,6 +27,7 @@ export const ANALYTICS_EVENTS = {
   LIMIT_MODAL_ACTION: 'limit_modal_action',
   ERROR_OCCURRED: 'error_occurred',
   // Onboarding events
+  WELCOME_PRIMARY_CTA_CLICK: 'welcome_primary_cta_click',
   ONBOARDING_STEP_START: 'onboarding_step_start',
   ONBOARDING_STEP_COMPLETE: 'onboarding_step_complete',
   ONBOARDING_STEP_SKIP: 'onboarding_step_skip',

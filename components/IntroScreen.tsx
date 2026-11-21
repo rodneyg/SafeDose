@@ -1,6 +1,6 @@
 import SignInError from './SignInError';
 import React, { useRef, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -27,6 +27,10 @@ import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
 import { FREE_SCAN_LIMIT, hasScanCapacity } from '../lib/plans';
 import { useFirstScanCopy } from '../lib/firstScanExperiment';
+import { logAnalyticsEvent } from '../lib/analytics';
+import {
+  assignMobileScanCtaArm, isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm,
+} from '../lib/mobileScanCtaExperiment';
 
 interface IntroScreenProps {
   setScreenStep: (step: 'intro' | 'scan' | 'manualEntry') => void;
@@ -42,9 +46,9 @@ interface IntroScreenProps {
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
   applyLastDose?: () => Promise<boolean>;
-  onScanPress?: () => void;
+  onScanPress?: (arm?: MobileScanCtaArm) => void;
+  offline?: boolean;
   onScanLimit?: () => void;
-  scanUnavailable?: boolean;
 }
 
 export default function IntroScreen({
@@ -54,7 +58,7 @@ export default function IntroScreen({
   applyLastDose,
   onScanPress,
   onScanLimit,
-  scanUnavailable,
+  offline = false,
 }: IntroScreenProps) {
   const { user, auth, logout, isSigningOut, hasSignedOut } = useAuth();
   const { disclaimerText, profile, isLoading } = useUserProfile();
@@ -64,9 +68,25 @@ export default function IntroScreen({
   const scanLimit = usageData?.limit ?? FREE_SCAN_LIMIT;
   const scansUsed = usageData?.scansUsed ?? 0;
   const isOutOfScans = !hasScanCapacity(scansUsed, scanLimit);
+  const { width } = useWindowDimensions();
+  const canEnroll = Platform.OS === 'web' && isMobileScanViewport(width)
+    && !isLoading && !isSigningOut && !offline && !isOutOfScans && Boolean(onScanPress);
+  const [assignedArm, setAssignedArm] = useState<MobileScanCtaArm | null>(null);
+  const arm = canEnroll ? assignedArm : null;
+  const prominentScan = arm === 'variant';
+
+  useEffect(() => {
+    if (canEnroll && typeof document !== 'undefined') {
+      setAssignedArm(assignMobileScanCtaArm(document, window.location.protocol === 'https:'));
+    }
+  }, [canEnroll]);
+
+  useEffect(() => {
+    if (arm) logAnalyticsEvent(mobileScanCtaEvent('view', arm));
+  }, [arm]);
 
   const variant = useFirstScanCopy();
-  const showFirstScanCopy = variant && !isOutOfScans && !scanUnavailable;
+  const showFirstScanCopy = variant && !isOutOfScans && !offline;
 
   const [signInFailed, setSignInFailed] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -330,11 +350,12 @@ export default function IntroScreen({
     
     // Use custom scan handler if provided, otherwise default behavior
     if (onScanPress) {
-      onScanPress();
+      if (arm) onScanPress(arm);
+      else onScanPress();
     } else {
       setScreenStep('scan');
     }
-  }, [setScreenStep, setNavigatingFromIntro, isOutOfScans, handleUpgradePress, onScanPress]);
+  }, [setScreenStep, setNavigatingFromIntro, isOutOfScans, handleUpgradePress, onScanPress, arm]);
 
   const handleManualEntryPress = useCallback(() => {
     setNavigatingFromIntro?.(true);
@@ -384,6 +405,22 @@ export default function IntroScreen({
   /* =========================================================================
      RENDER
   ========================================================================= */
+  const scanButton = (
+    <TouchableOpacity
+      style={[
+        styles.button,
+        isOutOfScans ? styles.outOfScansButton : styles.primaryButton,
+        isMobileWeb && styles.buttonMobile,
+        prominentScan && styles.prominentScanButton,
+      ]}
+      onPress={handleScanPress}
+      accessibilityRole="button"
+    >
+      <CameraIcon color="#fff" size={20} />
+      <Text style={styles.buttonText}>{isOutOfScans ? 'Upgrade' : showFirstScanCopy ? 'Scan photo' : 'Scan'}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
@@ -417,6 +454,7 @@ export default function IntroScreen({
           <>
             {/* ===================== MAIN CONTENT ===================== */}
             <View style={[styles.content, isMobileWeb && styles.contentMobile]}>
+              {prominentScan && scanButton}
               <View style={[styles.welcomeContainer, isMobileWeb && styles.welcomeContainerMobile]}>
                 <Syringe color="#6ee7b7" size={64} style={[styles.icon, isMobileWeb && styles.iconMobile]} />
                 {showFirstScanCopy ? (
@@ -434,19 +472,7 @@ export default function IntroScreen({
               </View>
 
               <View style={[styles.actionButtonsContainer, isMobileWeb && styles.actionButtonsContainerMobile]}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    isOutOfScans ? styles.outOfScansButton : styles.primaryButton,
-                    isMobileWeb && styles.buttonMobile
-                  ]}
-                  onPress={handleScanPress}
-                >
-                  <CameraIcon color="#fff" size={20} />
-                  <Text style={styles.buttonText}>
-                    {isOutOfScans ? 'Upgrade' : showFirstScanCopy ? 'Scan photo' : 'Scan'}
-                  </Text>
-                </TouchableOpacity>
+                {!prominentScan && scanButton}
 
                 <TouchableOpacity
                   style={[
@@ -762,6 +788,14 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: '#007AFF',
+  },
+  prominentScanButton: {
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: 500,
+    height: 56,
+    marginBottom: 16,
+    backgroundColor: '#005FCC',
   },
   outOfScansButton: {
     backgroundColor: '#f59e0b', // Orange color to indicate upgrade needed
