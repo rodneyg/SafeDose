@@ -12,6 +12,8 @@ module.exports = {
     }],
   },
   moduleNameMapper: {
+    // Jest runs in CommonJS. Resolve Lucide's public require entry.
+    '^lucide-react-native$': require.resolve('lucide-react-native'),
     // Handle path aliases used in the project
     '^@/(.*)$': '<rootDir>/$1',
   },

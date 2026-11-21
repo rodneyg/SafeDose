@@ -32,23 +32,24 @@ describe('ConcentrationInputStep', () => {
     expect(setConcentrationUnit).not.toHaveBeenCalled();
   });
 
-  it('auto-switches an incompatible concentration unit to match doseUnit and sets a hint', () => {
+  it('keeps a filled concentration paired with its unit and defaults an empty one', () => {
     const setConcentrationUnit = jest.fn();
     const setConcentrationHint = jest.fn();
 
-    render(
-      <ConcentrationInputStep
-        concentrationAmount="100"
-        setConcentrationAmount={jest.fn()}
-        concentrationUnit="mg/ml"
-        setConcentrationUnit={setConcentrationUnit}
-        setConcentrationHint={setConcentrationHint}
-        concentrationHint={null}
-        doseUnit="units"
-        formError={null}
-      />,
-    );
+    const props = {
+      setConcentrationAmount: jest.fn(),
+      concentrationUnit: 'mg/ml',
+      setConcentrationUnit,
+      setConcentrationHint,
+      concentrationHint: null,
+      doseUnit: 'units',
+      formError: null,
+    } as const;
+    const screen = render(<ConcentrationInputStep {...props} concentrationAmount="100" />);
+    expect(setConcentrationUnit).not.toHaveBeenCalled();
+    expect(setConcentrationHint).not.toHaveBeenCalled();
 
+    screen.rerender(<ConcentrationInputStep {...props} concentrationAmount="" />);
     expect(setConcentrationUnit).toHaveBeenCalledWith('units/ml');
     expect(setConcentrationHint).toHaveBeenCalledWith(
       'Unit automatically changed to match dose unit (units)',

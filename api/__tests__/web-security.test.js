@@ -3,10 +3,10 @@ const { routes } = require('../../vercel.json');
 const { createRateLimit } = require('../../lib/apiRateLimit');
 
 describe('Vercel response headers', () => {
-  it('applies security headers before the API, filesystem, and SPA routes', () => {
-    const [security, api, filesystem, staticAssets, spa] = routes;
+  it('applies security headers before the ping, API, filesystem, and SPA routes', () => {
+    const [security, ping, api, filesystem, staticAssets, spa] = routes;
     const matcher = new RegExp('^' + security.src + '$');
-    for (const path of ['/', '/settings', '/assets/app.js', '/api/health']) {
+    for (const path of ['/', '/ping', '/settings', '/assets/app.js', '/api/health']) {
       expect(matcher.test(path)).toBe(true);
     }
     expect(security.continue).toBe(true);
@@ -17,6 +17,7 @@ describe('Vercel response headers', () => {
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Content-Security-Policy': "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
     });
+    expect(ping).toEqual({ src: '/ping', dest: '/api/deploy-ping.js' });
     expect(api.dest).toBe('/api/$1.js');
     expect(filesystem.handle).toBe('filesystem');
     expect(staticAssets.status).toBe(404);
