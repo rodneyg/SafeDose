@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-520",
+    "date": "2026-11-21",
+    "title": "Complete local dosing presets",
+    "status": "published",
+    "prs": [
+      520
+    ],
+    "sections": {
+      "Improved": [
+        "Complete local dosing presets"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-518",
     "date": "2026-11-21",
     "title": "Add optional dosing protocol setup and preview",
