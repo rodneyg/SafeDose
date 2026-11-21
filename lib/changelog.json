@@ -532,6 +532,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-551",
+    "date": "2026-11-21",
+    "title": "Test and harden dose and scan guardrails (T-1502)",
+    "status": "published",
+    "prs": [
+      551
+    ],
+    "sections": {
+      "Improved": [
+        "Test and harden dose and scan guardrails (T-1502)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-550",
     "date": "2026-11-21",
     "title": "Add tests for scheduling helpers",
