@@ -5,7 +5,7 @@ import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { UserProfileProvider } from '../contexts/UserProfileContext';
 import { getAnalyticsInstance } from '../lib/firebase';
-import { initializeWebAnalytics } from '../lib/webAnalytics';
+import { WebAnalytics } from '../lib/WebAnalytics';
 import "../global.css";
 
 // Keep the splash screen visible while we fetch resources
@@ -19,8 +19,6 @@ export default function RootLayout() {
     // Hide the native splash screen to show our custom animated one
     SplashScreen.hideAsync();
     
-    initializeWebAnalytics();
-
     // Initialize Firebase Analytics lazily
     const analytics = getAnalyticsInstance();
     if (analytics) {
@@ -36,6 +34,7 @@ export default function RootLayout() {
       <UserProfileProvider>
         <OnboardingProvider>
           <Slot />
+          <WebAnalytics />
         </OnboardingProvider>
       </UserProfileProvider>
     </AuthProvider>
