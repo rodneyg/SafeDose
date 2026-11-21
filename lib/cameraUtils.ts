@@ -1,6 +1,13 @@
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from './analytics';
 import { readScan, mapScanToDoseInputs, type ScanResult } from './scan';
 import { completeScanOnServer, SCAN_UNAVAILABLE_MESSAGE } from './scan/completeOnServer';
+import {
+  beginGuidedRetake,
+  getRetakeSession,
+  offerRetakeGuidance,
+  recordGuidedRetakeSuccess,
+  UNREADABLE_PHOTO_MESSAGE,
+} from './scan/retakeGuidance';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { insulinVolumes, standardVolumes, MAX_FILE_SIZE, isWeb } from '../lib/utils';
@@ -8,7 +15,6 @@ import { CameraView } from 'expo-camera';
 
 const PHOTO_ERROR_FALLBACK = 'We could not process this photo. Please try another photo or enter the details manually.';
 const NATIVE_CAPTURE_ERROR = 'We could not take a photo. Try again or enter the details manually.';
-const UNREADABLE_PHOTO_MESSAGE = 'We could not read the syringe size or vial strength safely. Try a clear photo showing the syringe scale and vial strength, or enter the details manually.';
 
 // Only exact, authored messages may cross the capture/upload boundary into the UI.
 const PHOTO_ERROR_MESSAGES = new Map<string, string>([
@@ -39,6 +45,7 @@ interface CaptureAndProcessImageProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   incrementScansUsed: () => Promise<void>;
+  onImageReady?: () => void;
   onScanUnavailable?: () => void;
   webCameraStream?: MediaStream | null;
 }
@@ -51,9 +58,11 @@ export async function captureAndProcessImage({
   setProcessingMessage,
   setScanError,
   incrementScansUsed,
+  onImageReady,
   onScanUnavailable,
   webCameraStream,
 }: CaptureAndProcessImageProps): Promise<ScanResult | null> {
+  const retakeSession = getRetakeSession(cameraRef);
   console.log('[Capture] Button pressed - Start');
 
   // OpenAI keys stay on the server. The client only posts the image to /api/analyze-scan.
@@ -225,6 +234,7 @@ export async function captureAndProcessImage({
       }
     }
 
+    onImageReady?.();
     setProcessingMessage('Analyzing image with AI...');
     console.log('[Process] Starting image processing');
 
@@ -232,15 +242,18 @@ export async function captureAndProcessImage({
     console.log('[Process] Constructed Image URL (first 150 chars):', imageUrl.substring(0, 150));
     console.log('[Process] Sending image to /api/analyze-scan');
 
+    const retakeVariant = beginGuidedRetake(retakeSession);
     const result = await readScan(imageUrl, {
       complete: () => completeScanOnServer(imageUrl),
     });
     const mapped = mapScanToDoseInputs(result);
     if (mapped.status === 'needs-input') {
       logAnalyticsEvent(ANALYTICS_EVENTS.SAFETY_REFUSAL, { stage: 'scan', reason: mapped.reasons.join(' ') });
+      offerRetakeGuidance(retakeSession);
       throw new Error(UNREADABLE_PHOTO_MESSAGE);
     }
 
+    recordGuidedRetakeSuccess(retakeVariant);
     await incrementScansUsed();
     console.log('[Process] Incremented scans used');
 

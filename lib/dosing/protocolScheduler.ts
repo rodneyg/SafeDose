@@ -14,7 +14,9 @@ function parseDateOnly(value: string): Date {
   if (!match) throw new Error('Start date must use YYYY-MM-DD format.');
 
   const [, year, month, day] = match;
-  const parsed = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  const parsed = new Date(0);
+  // Date.UTC interprets years 0 through 99 as 1900 through 1999.
+  parsed.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
   if (
     parsed.getUTCFullYear() !== Number(year) ||
     parsed.getUTCMonth() !== Number(month) - 1 ||
@@ -33,7 +35,13 @@ export function scheduleProtocol<T>(
   protocol: readonly ProtocolDay<T>[],
   startDate?: string | null,
 ): ScheduledProtocolDay<T>[] {
-  if (!startDate) return protocol.map((entry) => ({ ...entry }));
+  if (!startDate) {
+    return protocol.map((entry) => {
+      const unscheduled: ScheduledProtocolDay<T> = { ...entry };
+      delete unscheduled.date;
+      return unscheduled;
+    });
+  }
 
   const start = parseDateOnly(startDate);
   return protocol.map((entry) => {
@@ -42,7 +50,10 @@ export function scheduleProtocol<T>(
     }
 
     const scheduled = new Date(start);
-    scheduled.setUTCDate(start.getUTCDate() + entry.day - 1);
+    const scheduledTime = scheduled.setUTCDate(start.getUTCDate() + entry.day - 1);
+    if (Number.isNaN(scheduledTime) || scheduled.getUTCFullYear() > 9999) {
+      throw new RangeError('Scheduled date is outside the YYYY-MM-DD range.');
+    }
     return { ...entry, date: scheduled.toISOString().slice(0, 10) };
   });
 }
