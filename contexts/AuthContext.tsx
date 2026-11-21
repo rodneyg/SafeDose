@@ -311,7 +311,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+/**
+ * Returns the current Firebase authentication state and sign-out controls.
+ *
+ * @returns The authentication context supplied by the nearest `AuthProvider`.
+ * @throws {Error} If called outside an `AuthProvider`.
+ */
+export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) {
     throw new Error('useAuth must be used within an AuthProvider');

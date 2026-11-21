@@ -22,10 +22,11 @@ describe('shared scan boundary', () => {
   it('preserves legacy fields and maps explicit unit-bearing quantities', () => {
     const scan = parse(output());
     expect(scan.syringe).toMatchObject({ type: 'Insulin', volume: '1 ml', scale: 'U-100', capacity_ml: 1 });
-    expect(mapScanToDoseInputs(scan)).toEqual({ status: 'ready', reasons: [], inputs: {
+    expect(mapScanToDoseInputs(scan)).toEqual({ status: 'needs-verification', reasons: [], inputs: {
       manualSyringe: { type: 'Insulin', volume: '1 ml' }, substance: 'Example compound',
       concentration: 10, concentrationUnit: 'mg/ml', totalAmount: null, totalAmountUnit: null,
     } });
+    expect(mapScanToDoseInputs(scan, { syringeAndVialVerified: true }).status).toBe('ready');
   });
   it.each(['not json', 'null', '[]', '{}', '{"syringe":"Insulin"}'])('refuses malformed/incomplete content %s', raw => {
     expect(parseScanModelOutput(raw).refuse).toBe(true);
@@ -39,7 +40,7 @@ describe('shared scan boundary', () => {
     const fixture = fixtures.find(f => f.label.id === id)!;
     const scan = parse(fixture.model_output);
     expect(scan.refuse).toBe(true);
-    expect(mapScanToDoseInputs(scan).status).toBe('needs-input');
+    expect(mapScanToDoseInputs(scan, { syringeAndVialVerified: true }).status).toBe('needs-input');
   });
   it('does not snap a between-marks fill', () => {
     const scan = parse(fixtures.find(f => f.label.id === 'fixture-between-marks')!.model_output);
@@ -80,6 +81,38 @@ describe('shared scan boundary', () => {
       const o = output(); Object.assign(o.syringe, change);
       expect(mapScanToDoseInputs(parse(o)).status).toBe('needs-input');
     }
+  });
+  // Syringe fields from development-only T-1150 validation outputs. Keep the
+  // existing vial and fill fixture so only the syringe determines the outcome.
+  const insulin = { type: 'Insulin', scale: 'U-100', volume: '0.5 ml', markings: '0,10,20,30,40,50' }; // c1-b0-s1
+  const largeMarks = '0,20,40,60,80,100'; // c2-b0-s1
+  it.each([
+    ['missing capacity', { ...insulin, volume: null }],
+    ['markings below reported capacity', { ...insulin, volume: '1 ml' }],
+    ['markings above reported capacity', { ...insulin, markings: largeMarks }],
+    ['type conflicts with scale', { ...insulin, type: 'Standard' }],
+    ['scale conflicts with type', { ...insulin, scale: 'mL' }],
+    ['standard scale contains implausible markings', {
+      type: 'Standard', scale: 'mL', volume: '5 ml', markings: '0,0.5,1,5,10,20,30,40,50', // c7-b1-s3
+    }],
+  ])('withholds the syringe even after review for %s', (_label, syringe) => {
+    const o = output();
+    o.syringe = syringe;
+    const scan = parse(o);
+    const mapped = mapScanToDoseInputs(scan, { syringeAndVialVerified: true });
+    expect(mapped.status).toBe('needs-input');
+    expect(mapped.inputs.manualSyringe).toBeNull();
+    expect(mapped.reasons).toContain('Check the syringe label and select its capacity manually.');
+  });
+  it('keeps the existing verification step when development markings corroborate the capacity', () => {
+    const o = output();
+    o.syringe = insulin;
+    const scan = parse(o);
+    expect(mapScanToDoseInputs(scan).status).toBe('needs-verification');
+    expect(mapScanToDoseInputs(scan, { syringeAndVialVerified: true })).toMatchObject({
+      status: 'ready',
+      inputs: { manualSyringe: { type: 'Insulin', volume: '0.5 ml' } },
+    });
   });
   it('does not apply an amount in different units to the calculator', () => {
     const o = output(); o.vial.totalAmount = '1000 mcg';

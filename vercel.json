@@ -1,14 +1,33 @@
 {
   "version": 2,
+  "git": {
+    "deploymentEnabled": {
+      "t1190-scan-fill-failsafe": false
+    }
+  },
   "ignoreCommand": "node scripts/vercel-ignore.mjs",
   "builds": [
     { "src": "package.json",      "use": "@vercel/static-build", "config": { "buildCommand":"npm run build:web", "outputDirectory":"dist" } },
-    { "src": "api/**/*.js",       "use": "@vercel/node" }
+    { "src": "api/*.js",       "use": "@vercel/node" }
   ],
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Strict-Transport-Security": "max-age=31536000",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+      },
+      "continue": true
+    },
+    { "src": "/ping", "dest": "/api/deploy-ping.js" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
 
     { "handle": "filesystem" },
+
+    { "src": "/(?:_expo|assets|icons|workers)/.*", "status": 404 },
 
     { "src": "/(.*)",      "dest": "/index.html" }
   ]

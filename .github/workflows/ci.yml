@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -16,7 +28,7 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -31,11 +43,15 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Export iOS and Android bundles
+        env:
+          EXPO_NO_TELEMETRY: '1'
+        run: npx expo export --platform ios --platform android --max-workers 2 --output-dir "$RUNNER_TEMP/native-export"
       - run: npm run build:web
       - name: Bundle iOS with Expo Metro
         env:
@@ -73,7 +89,7 @@ jobs:
           NODE
       - name: Upload dosing coverage summary
         if: ${{ always() && hashFiles('coverage/coverage-summary.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dosing-coverage-summary
           path: |
@@ -89,7 +105,7 @@ jobs:
       FC_SEED: '1032026'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -101,7 +117,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -128,7 +144,7 @@ jobs:
   #   continue-on-error: true
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
+  #     - uses: actions/setup-node@v7
   #       with:
   #         node-version-file: .nvmrc
   #         cache: npm

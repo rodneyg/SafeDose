@@ -1,11 +1,18 @@
 import React, { RefObject, useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, AppState, Linking, Platform } from 'react-native';
 import { Camera as CameraIcon, Flashlight, Zap, ZapOff } from 'lucide-react-native';
 import { CameraView, FlashMode } from 'expo-camera';
 import { isMobileWeb, isWeb } from '../lib/utils';
+import {
+  getRetakeSession,
+  recordGuidanceShown,
+  startRetakeSession,
+  UNREADABLE_PHOTO_MESSAGE,
+  type RetakeGuidance,
+} from '../lib/scan/retakeGuidance';
 
 interface ScanScreenProps {
-  permission: { status: string } | null;
+  permission: { status: string; canAskAgain?: boolean } | null;
   permissionStatus: 'undetermined' | 'granted' | 'denied';
   mobileWebPermissionDenied: boolean;
   isProcessing: boolean;
@@ -28,12 +35,41 @@ interface ScanScreenProps {
   setProcessingMessage: (message: string) => void;
   setScanError: (error: string | null) => void;
   resetFullForm: (startStep?: 'dose' | 'medicationSource' | 'concentrationInput' | 'totalAmountInput' | 'reconstitution' | 'syringe' | 'finalResult') => void;
+  requestNativeCameraPermission: () => Promise<unknown>;
+  getNativeCameraPermission: () => Promise<unknown>;
   requestWebCameraPermission: () => Promise<void>;
   handleGoHome: () => void;
   onCapture: () => void;
   webFlashlightEnabled?: boolean;
   webFlashlightSupported?: boolean;
   toggleWebFlashlight?: () => void;
+}
+
+const RETAKE_CHECKLIST = [
+  'Use bright, even light.',
+  'Hold the camera straight on and steady.',
+  'Keep the syringe markings and vial strength in view.',
+];
+
+function RefusalGuidance({ guidance }: { guidance: RetakeGuidance }) {
+  useEffect(() => {
+    recordGuidanceShown(guidance);
+  }, [guidance]);
+
+  return (
+    <View style={styles.guidance} accessibilityLiveRegion="polite">
+      <Text accessibilityRole="alert" style={styles.errorText}>
+        We could not read the syringe size or vial strength safely. You can enter the details manually.
+      </Text>
+      {guidance.variant === 'a' ? (
+        <Text style={styles.guidanceText}>Retake in bright light, straight on</Text>
+      ) : (
+        RETAKE_CHECKLIST.map((step, index) => (
+          <Text key={step} style={styles.guidanceText}>{`${index + 1}. ${step}`}</Text>
+        ))
+      )}
+    </View>
+  );
 }
 
 export default function ScanScreen({
@@ -60,6 +96,8 @@ export default function ScanScreen({
   setProcessingMessage,
   setScanError,
   resetFullForm,
+  requestNativeCameraPermission,
+  getNativeCameraPermission,
   requestWebCameraPermission,
   handleGoHome,
   onCapture,
@@ -76,6 +114,13 @@ export default function ScanScreen({
     platformOS: Platform.OS
   });
   
+  const isNativeIOS = !isWeb && Platform.OS === 'ios';
+  const permissionGranted = permission?.status === 'granted';
+  const needsCameraSettings = !isWeb && !permissionGranted && permission?.canAskAgain === false;
+  const [cameraState, setCameraState] = useState<'starting' | 'ready' | 'unavailable'>('starting');
+  const [permissionActionFailed, setPermissionActionFailed] = useState(false);
+  const [requestingPermission, setRequestingPermission] = useState(false);
+  const nativeCaptureDisabled = isProcessing || (isNativeIOS && cameraState !== 'ready');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
   const [cameraFacing] = useState<'front' | 'back'>('back'); // Explicitly manage camera facing
@@ -87,6 +132,13 @@ export default function ScanScreen({
   const [qualityIndicator, setQualityIndicator] = useState<'poor' | 'good' | 'excellent'>('poor');
   const autocaptureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const qualityCheckIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isWeb) return startRetakeSession(cameraRef);
+  }, [cameraRef]);
+
+  const guidance = getRetakeSession(cameraRef)?.guidance;
+  const showGuidance = !isProcessing && scanError === UNREADABLE_PHOTO_MESSAGE && guidance;
 
   // Debug component mount and initial state
   useEffect(() => {
@@ -145,7 +197,7 @@ export default function ScanScreen({
   // Autocapture functionality
   const analyzeImageQuality = useCallback(async () => {
     try {
-      if (!autoCaptureEnabled || isProcessing) return;
+      if (!autoCaptureEnabled || isProcessing || guidance) return;
 
       let score = 0;
       
@@ -219,6 +271,8 @@ export default function ScanScreen({
         const countdown = (remaining: number) => {
           if (remaining <= 0) {
             setAutoCaptureCountdown(null);
+            // Wait for a manual retake so the user can act on the guidance.
+            if (getRetakeSession(cameraRef)?.guidance) return;
             // Trigger capture by calling onCapture directly
             if (typeof onCapture === 'function') {
               onCapture();
@@ -239,7 +293,7 @@ export default function ScanScreen({
     } catch (error) {
       console.error('[Autocapture] Error analyzing image quality:', error);
     }
-  }, [autoCaptureEnabled, isProcessing, webCameraStream, autoCaptureCountdown, onCapture]);
+  }, [autoCaptureEnabled, isProcessing, guidance, webCameraStream, autoCaptureCountdown, cameraRef, onCapture]);
 
   const cancelAutocapture = useCallback(() => {
     if (autocaptureTimeoutRef.current) {
@@ -248,6 +302,10 @@ export default function ScanScreen({
     }
     setAutoCaptureCountdown(null);
   }, []);
+
+  useEffect(() => {
+    if (guidance) cancelAutocapture();
+  }, [guidance, cancelAutocapture]);
 
   const toggleAutocapture = useCallback(() => {
     setAutoCaptureEnabled(prev => {
@@ -267,9 +325,51 @@ export default function ScanScreen({
     });
   }, [cancelAutocapture]);
 
+  useEffect(() => {
+    if (!needsCameraSettings) return;
+
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        void getNativeCameraPermission().catch(() => setPermissionActionFailed(true));
+      }
+    });
+    return () => subscription.remove();
+  }, [needsCameraSettings, getNativeCameraPermission]);
+
+  useEffect(() => {
+    if (!isNativeIOS || !permissionGranted || cameraState !== 'starting') return;
+
+    // Expo can omit both startup callbacks when no iOS camera session starts.
+    const timeout = setTimeout(() => {
+      setCameraState(state => state === 'starting' ? 'unavailable' : state);
+    }, 8000);
+    return () => clearTimeout(timeout);
+  }, [isNativeIOS, permissionGranted, cameraState]);
+
+  const handleNativePermission = async () => {
+    setPermissionActionFailed(false);
+    setRequestingPermission(true);
+    try {
+      if (needsCameraSettings) {
+        await Linking.openSettings();
+      } else {
+        await requestNativeCameraPermission();
+      }
+    } catch {
+      setPermissionActionFailed(true);
+    } finally {
+      setRequestingPermission(false);
+    }
+  };
+
+  const enterDetailsManually = () => {
+    resetFullForm('dose');
+    setScreenStep('manualEntry');
+  };
+
   // Quality checking interval
   useEffect(() => {
-    if (autoCaptureEnabled && permission?.status === 'granted') {
+    if (autoCaptureEnabled && permissionGranted && !nativeCaptureDisabled && cameraState !== 'unavailable') {
       qualityCheckIntervalRef.current = setInterval(analyzeImageQuality, 500) as unknown as number;
     } else {
       if (qualityCheckIntervalRef.current) {
@@ -284,7 +384,7 @@ export default function ScanScreen({
         qualityCheckIntervalRef.current = null;
       }
     };
-  }, [autoCaptureEnabled, permission?.status, analyzeImageQuality]);
+  }, [autoCaptureEnabled, permissionGranted, nativeCaptureDisabled, cameraState, analyzeImageQuality]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -318,7 +418,9 @@ export default function ScanScreen({
           <Text style={styles.errorText}>
             Camera access was denied. You can still scan by uploading a photo or adjust your browser settings to allow camera access.
           </Text>
-          {scanError && <Text accessibilityRole="alert" style={styles.errorText}>{scanError}</Text>}
+          {showGuidance ? <RefusalGuidance guidance={guidance} /> : (
+            scanError && <Text accessibilityRole="alert" style={styles.errorText}>{scanError}</Text>
+          )}
           <TouchableOpacity
             style={[styles.button, isMobileWeb && styles.buttonMobile, isProcessing && styles.disabledButton]}
             onPress={handleButtonPress}
@@ -356,10 +458,12 @@ export default function ScanScreen({
           />
         )}
         <View style={styles.overlayBottom}>
-          {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          {showGuidance ? <RefusalGuidance guidance={guidance} /> : (
+            scanError && <Text accessibilityRole="alert" style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>
+          )}
           
           {/* Autocapture status */}
-          {autoCaptureEnabled && (
+          {autoCaptureEnabled && !guidance && (
             <View style={styles.autocaptureStatus}>
               <View style={[styles.qualityIndicator, { poor: styles.qualityPoor, good: styles.qualityGood, excellent: styles.qualityExcellent }[qualityIndicator]]}>
                 <Text style={styles.qualityText}>
@@ -390,7 +494,7 @@ export default function ScanScreen({
           )}
           
           <Text style={styles.scanText}>
-            {autoCaptureEnabled 
+            {autoCaptureEnabled && !guidance
               ? 'Auto-capture is ON - will capture when conditions are perfect' 
               : 'Position both syringe and vial clearly in view'}
           </Text>
@@ -418,6 +522,8 @@ export default function ScanScreen({
               style={[styles.captureButton, isProcessing && styles.disabledButton]}
               onPress={handleButtonPress}
               disabled={isProcessing}
+              accessibilityLabel="Capture photo"
+              accessibilityRole="button"
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
@@ -435,6 +541,8 @@ export default function ScanScreen({
               style={styles.backButtonScan}
               onPress={handleGoHome}
               disabled={isProcessing}
+              accessibilityLabel="Cancel scan"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -444,33 +552,7 @@ export default function ScanScreen({
     );
   }
 
-  if (!permission) {
-    console.log('[ScanScreen] Rendering permission loading view - permission object is null');
-    return (
-      <View style={styles.content}>
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={styles.text}>Checking permissions...</Text>
-      </View>
-    );
-  }
-
-  console.log('[ScanScreen] Permission object available', { 
-    status: permission.status, 
-    permission,
-    isMobileWeb,
-    platformOS: Platform.OS,
-    isPermissionGranted: permission.status === 'granted',
-    canShowCamera: permission.status === 'granted' && !isMobileWeb
-  });
-
-  if (permission.status === 'granted') {
-    console.log('[ScanScreen] Rendering camera view', { 
-      facing: cameraFacing, 
-      flashMode, 
-      isMobileWeb, 
-      platformOS: Platform.OS,
-      permissionStatus: permission.status
-    });
+  if (permissionGranted && cameraState !== 'unavailable') {
     return (
       <View style={styles.scanContainer}>
         <CameraView 
@@ -478,11 +560,12 @@ export default function ScanScreen({
           style={StyleSheet.absoluteFill} 
           facing={cameraFacing} 
           flash={flashMode}
-          onCameraReady={() => console.log('[ScanScreen] Camera ready with facing:', cameraFacing)}
+          onCameraReady={() => setCameraState(state => state === 'starting' ? 'ready' : state)}
+          onMountError={() => setCameraState('unavailable')}
           mode="picture"
         />
         <View style={styles.overlayBottom}>
-          {scanError && <Text style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
+          {scanError && <Text accessibilityRole="alert" style={[styles.errorText, { marginBottom: 10 }]}>{scanError}</Text>}
           
           {/* Autocapture status */}
           {autoCaptureEnabled && (
@@ -516,7 +599,7 @@ export default function ScanScreen({
           )}
           
           <Text style={styles.scanText}>
-            {autoCaptureEnabled 
+            {isNativeIOS && cameraState === 'starting' ? 'Starting camera…' : autoCaptureEnabled
               ? 'Auto-capture is ON - will capture when conditions are perfect' 
               : 'Position both syringe and vial clearly in view'}
           </Text>
@@ -541,9 +624,11 @@ export default function ScanScreen({
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.captureButton, isProcessing && styles.disabledButton]}
+              style={[styles.captureButton, nativeCaptureDisabled && styles.disabledButton]}
               onPress={handleButtonPress}
-              disabled={isProcessing}
+              disabled={nativeCaptureDisabled}
+              accessibilityLabel="Capture photo"
+              accessibilityRole="button"
             >
               {isProcessing ? <ActivityIndicator color="#fff" /> : <CameraIcon color={'#fff'} size={24} />}
             </TouchableOpacity>
@@ -553,7 +638,7 @@ export default function ScanScreen({
           <View style={styles.bottomButtons}>
             <TouchableOpacity
               style={styles.manualEntryButtonScan}
-              onPress={() => { resetFullForm('dose'); setScreenStep('manualEntry'); }}
+              onPress={enterDetailsManually}
             >
               <Text style={styles.backButtonText}>Manual Entry</Text>
             </TouchableOpacity>
@@ -561,6 +646,8 @@ export default function ScanScreen({
               style={styles.backButtonScan}
               onPress={handleGoHome}
               disabled={isProcessing}
+              accessibilityLabel="Cancel scan"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -570,38 +657,51 @@ export default function ScanScreen({
     );
   }
 
-  if (permission.status === 'denied') {
-    console.log('[ScanScreen] Rendering permission denied view');
-    return (
-      <View style={styles.content}>
-        <Text style={styles.errorText}>Camera permission is required to scan items.</Text>
-        <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-          <Text style={styles.buttonText}>Request Permissions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-          <Text style={styles.buttonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
+  const cameraUnavailable = permissionGranted && cameraState === 'unavailable';
+  const cameraDenied = permission?.status === 'denied';
+  let message = 'Allow camera access to scan, or enter the details manually.';
+  if (cameraUnavailable) {
+    message = 'The camera couldn’t start. Try again or enter the details manually.';
+  } else if (needsCameraSettings) {
+    message = 'Camera access is off. Turn it on in Settings, or enter the details manually.';
+  } else if (cameraDenied) {
+    message = 'Camera access was denied. Try allowing access again, or enter the details manually.';
+  } else if (!permission) {
+    message = 'Checking camera access… You can also enter the details manually.';
   }
 
-  if (permission.status === 'undetermined') {
-    console.log('[ScanScreen] Rendering permission undetermined view');
-    return (
-      <View style={styles.content}>
-        <Text style={styles.text}>Camera permission is needed to scan items.</Text>
-        <TouchableOpacity style={[styles.button, isMobileWeb && styles.buttonMobile]} onPress={requestWebCameraPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+  return (
+    <View style={styles.content}>
+      <Text accessibilityRole={cameraUnavailable || cameraDenied ? 'alert' : undefined} style={styles.text}>
+        {message}
+      </Text>
+      {permissionActionFailed && (
+        <Text accessibilityRole="alert" style={styles.text}>
+          Couldn’t change camera access. Try again or enter the details manually.
+        </Text>
+      )}
+      {cameraUnavailable ? (
+        <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => setCameraState('starting')}>
+          <Text style={styles.buttonText}>Try Camera Again</Text>
         </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, isMobileWeb && styles.backButtonMobile]} onPress={() => setScreenStep('intro')}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-      </View>
-    );
-  }
+      ) : permission && (
+        <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={handleNativePermission} disabled={requestingPermission}>
+          <Text style={styles.buttonText}>{needsCameraSettings ? 'Open Settings' : 'Allow Camera Access'}</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={enterDetailsManually}>
+        <Text style={styles.buttonText}>Enter Details Manually</Text>
+      </TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={handleNavigateToIntro}>
+        <Text style={styles.buttonText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  guidance: { width: '100%', maxWidth: 400, paddingBottom: 10, paddingHorizontal: 12, backgroundColor: '#1f2937', borderRadius: 8 },
+  guidanceText: { color: '#fff', fontSize: 14, lineHeight: 20, marginTop: 4, paddingHorizontal: 10 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 20 },
   text: { fontSize: 16, color: '#000000', textAlign: 'center', paddingHorizontal: 16 },
   errorText: { fontSize: 14, color: '#f87171', textAlign: 'center', padding: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginTop: 10 },

@@ -1,0 +1,67 @@
+name: Tag and release
+
+# Wait for the CI workflow (name is exactly "CI") to finish on main, then tag
+# only the SHA that actually passed. Do not run in parallel with CI on push.
+# Check out the default branch (not workflow_run.head_sha) so this privileged
+# workflow runs release scripts from already-merged main.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Inspect head commit
+        id: head
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          data="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}")"
+          msg="$(printf '%s' "$data" | jq -r '.commit.message' | head -n 1)"
+          author="$(printf '%s' "$data" | jq -r '.commit.author.name')"
+          committer="$(printf '%s' "$data" | jq -r '.commit.committer.name')"
+          {
+            echo "message<<EOF"
+            printf '%s' "$data" | jq -r '.commit.message'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          skip=false
+          reason="ok"
+          if [[ "$author" == "github-actions[bot]" || "$committer" == "github-actions[bot]" ]]; then
+            skip=true
+            reason="head commit is github-actions[bot]"
+          fi
+          if [[ "$msg" == "docs: publish changelog"* ]]; then
+            skip=true
+            reason="head commit is a changelog publish"
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$SHA skip=$skip reason=$reason author=$author committer=$committer subject=$msg"
+      - name: Create semver tag and GitHub Release
+        if: steps.head.outputs.skip == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_EVENT_HEAD_COMMIT_MESSAGE: ${{ steps.head.outputs.message }}
+        run: |
+          set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 scripts/create-release.py

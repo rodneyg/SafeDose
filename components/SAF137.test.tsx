@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import useDoseCalculator from '../lib/hooks/useDoseCalculator';
 import ManualEntryScreen from './ManualEntryScreen';
@@ -14,10 +15,17 @@ jest.mock('../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../lib/analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ disclaimerText: 'Verify prescription' }) }));
-jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: jest.fn() }) }));
-jest.mock('../lib/hooks/useWhyAreYouHereTracking', () => ({ useWhyAreYouHereTracking: () => ({}) }));
-jest.mock('../lib/hooks/usePMFSurvey', () => ({ usePMFSurvey: () => ({}) }));
-jest.mock('../lib/hooks/usePowerUserPromotion', () => ({ usePowerUserPromotion: () => ({}) }));
+const mockOfferSurvey = jest.fn();
+const mockLogDose = jest.fn();
+jest.mock('../lib/hooks/useOnboardingSurvey', () => ({ useOnboardingSurvey: () => ({ offerSurvey: mockOfferSurvey }) }));
+jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: () => ({ logDose: mockLogDose }) }));
+jest.mock('../lib/hooks/usePowerUserPromotion', () => ({
+  usePowerUserPromotion: () => ({
+    incrementDoseCount: async () => {},
+    shouldShowPromotion: () => false,
+    promotionData: { doseCount: 0 },
+  }),
+}));
 jest.mock('../lib/hooks/useBeforeFirstScanPrompt', () => ({ useBeforeFirstScanPrompt: () => ({}) }));
 jest.mock('../lib/hooks/useEvaluationDataCapture', () => ({ useEvaluationDataCapture: () => ({ isCapturing: true }) }));
 jest.mock('./DoseInputStep', () => 'DoseInputStep');
@@ -37,6 +45,27 @@ function hook() {
   act(() => { renderer = create(<Probe />); });
   return () => result!;
 }
+
+it('keeps the feedback flow in place and offers the survey only after a successful save', async () => {
+  const h = hook();
+  mockLogDose.mockReset().mockResolvedValueOnce({ success: false })
+    .mockResolvedValueOnce({ success: true, localDoseCount: 2 });
+  mockOfferSurvey.mockClear();
+
+  for (let i = 0; i < 2; i++) {
+    act(() => h().handleGoToFeedback('start_over'));
+    expect(h().screenStep).toBe('injectionSiteSelection');
+    act(() => h().handleInjectionSiteSelected());
+    expect(h().screenStep).toBe('postDoseFeedback');
+    expect(mockOfferSurvey).not.toHaveBeenCalled();
+    await act(async () => h().handleFeedbackComplete());
+    expect(h().screenStep).toBe('intro');
+  }
+
+  expect(mockLogDose).toHaveBeenCalledTimes(2);
+  expect(mockOfferSurvey).toHaveBeenCalledTimes(1);
+  expect(mockOfferSurvey).toHaveBeenCalledWith(2, 'manual');
+});
 
 it.each([
   ['units', 'units/ml', '10', '100'],
@@ -243,4 +272,80 @@ it.each(['concentration', 'totalAmount'] as const)('keeps seven steps through fo
     act(() => state!.handleBack());
     expectStep(index);
   }
+});
+
+it.each(['concentration', 'totalAmount'] as const)('reports required and invalid web inputs on the %s path', async inputType => {
+  jest.replaceProperty(Platform, 'OS', 'web');
+  let state!: ReturnType<typeof useDoseCalculator>;
+  function Flow() {
+    state = useDoseCalculator({ checkUsageLimit: async () => true });
+    return <ManualEntryScreen {...state as any} />;
+  }
+  await act(async () => { renderer = create(<Flow />); });
+
+  const next = () => {
+    const button = renderer.root.findByProps({ accessibilityLabel: 'Next step' });
+    expect(button.props.disabled).toBe(false);
+    act(() => button.props.onPress());
+  };
+  const alerts = () => renderer.root.findAllByProps({ accessibilityRole: 'alert' })
+    .map(node => node.props.children);
+  const reject = (step: typeof state.manualStep, message: string) => {
+    next();
+    expect(state.manualStep).toBe(step);
+    expect(alerts()).toEqual([message]);
+  };
+
+  reject('dose', 'Please enter a dose amount');
+  act(() => state.setDose('1mg'));
+  reject('dose', 'Please enter a valid dose amount greater than 0');
+  act(() => state.setDose('0.5'));
+  next();
+
+  reject('medicationSource', 'Please select how the medication amount is specified on the vial label');
+  act(() => state.setMedicationInputType(inputType));
+  expect(alerts()).toEqual([]);
+  next();
+
+  if (inputType === 'concentration') {
+    reject('concentrationInput', 'Please enter a concentration amount');
+    act(() => state.setConcentrationAmount('0'));
+    reject('concentrationInput', 'Please enter a valid concentration amount greater than 0');
+    act(() => { state.setConcentrationAmount('2.5'); state.setNeedsConcentrationUnit(true); });
+    reject('concentrationInput', 'Please select a concentration unit');
+    act(() => {
+      state.setConcentrationUnit('mg/ml');
+      state.setTotalAmount('invalid');
+      state.setTotalAmountHint('From reconstitution planner');
+    });
+    next();
+    reject('totalAmountInput', 'Please enter a valid total amount greater than 0');
+    act(() => state.setTotalAmount(''));
+  }
+
+  reject('totalAmountInput', 'Please enter the total amount in the vial');
+  act(() => state.setTotalAmount('-5'));
+  reject('totalAmountInput', 'Please enter a valid total amount greater than 0');
+  act(() => { state.setTotalAmount('5'); state.setTotalAmountUnit(null); });
+  reject('totalAmountInput', 'Needs input: select the total amount unit.');
+  act(() => state.setTotalAmountUnit('mg'));
+  next();
+
+  if (inputType === 'totalAmount') {
+    reject('reconstitution', 'Please enter the solution volume in mL');
+    act(() => state.setSolutionVolume('2mL'));
+    reject('reconstitution', 'Please enter a valid solution volume greater than 0');
+    act(() => state.handleBack());
+    next();
+    expect(state.manualStep).toBe('reconstitution');
+    expect(state.solutionVolume).toBe('2mL');
+    act(() => state.setSolutionVolume('2'));
+    next();
+  }
+
+  expect(state.manualStep).toBe('syringe');
+  expect(alerts()).toEqual([]);
+  act(() => state.setManualSyringe({ type: 'Standard', volume: '' }));
+  expect(alerts()).toEqual(['Select a syringe size to calculate.']);
+  expect(renderer.root.findByProps({ accessibilityLabel: 'Calculate dose' }).props.disabled).toBe(true);
 });

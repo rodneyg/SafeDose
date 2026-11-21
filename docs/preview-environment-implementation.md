@@ -68,7 +68,7 @@ The following files were updated to use the wrapper functions:
 1. **contexts/UserProfileContext.tsx** - User profile creation
 2. **lib/hooks/useDoseLogging.ts** - Dose log creation  
 3. **app/(tabs)/reference.tsx** - Compound suggestions
-4. **lib/hooks/usePMFSurvey.tsx** - PMF survey responses
+4. **lib/hooks/useOnboardingSurvey.ts** - PMF survey responses
 5. **lib/hooks/useOnboardingIntentStorage.ts** - Onboarding intent data
 6. **lib/hooks/useFeedbackStorage.ts** - User feedback
 7. **lib/hooks/useUsageTracking.ts** - User usage tracking documents (create only)

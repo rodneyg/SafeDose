@@ -7,15 +7,20 @@ import { getNetworkStateAsync } from 'expo-network';
 import { setAnalyticsUserProperties, USER_PROPERTIES } from '../analytics';
 import { getLimitForPlan, hasScanCapacity } from '../plans';
 
+export type ScanUsage = { scansUsed: number; plan: string; limit: number; lastReset: string | null };
+
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
 // Unpaid users (anonymous or signed-in) share a monthly gpt-4o photo-scan cap.
 // Paid photo-check and legacy paid plans are not limited by that cap. Limits live in lib/plans.js.
+/** Tracks photo-scan usage, connectivity, and plan capacity for the current user. */
 export function useUsageTracking() {
   const { user } = useAuth();
   const db = getFirestore();
-  const [usageData, setUsageData] = useState({ scansUsed: 0, plan: 'free', limit: 3, lastReset: null });
+  const [usageData, setUsageData] = useState<ScanUsage & { verifiedOwner?: string }>({
+    scansUsed: 0, plan: 'free', limit: 3, lastReset: null,
+  });
   const [isOnline, setIsOnline] = useState(true);
 
   // Load cached usage data from AsyncStorage
@@ -24,7 +29,9 @@ export function useUsageTracking() {
       const cached = await AsyncStorage.getItem(`usage_${user?.uid || 'anonymous'}`);
       if (cached) {
         const parsed = JSON.parse(cached);
-        setUsageData(parsed);
+        setUsageData(previous =>
+          previous.verifiedOwner === user?.uid ? previous : { ...parsed, verifiedOwner: undefined }
+        );
         console.log('Loaded cached usage:', parsed);
       }
     } catch (error) {
@@ -33,7 +40,7 @@ export function useUsageTracking() {
   };
 
   // Save usage data to AsyncStorage
-  const saveCachedUsage = async (data: { scansUsed: number; plan: string; limit: number; lastReset?: string | null }) => {
+  const saveCachedUsage = async (data: ScanUsage) => {
     try {
       await AsyncStorage.setItem(`usage_${user?.uid || 'anonymous'}`, JSON.stringify(data));
     } catch (error) {
@@ -117,7 +124,7 @@ export function useUsageTracking() {
           }
           const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
           const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
-          setUsageData(newUsageData);
+          setUsageData({ ...newUsageData, verifiedOwner: user.uid });
           await saveCachedUsage(newUsageData);
           
           // Set user properties for analytics when plan data is available
@@ -139,7 +146,7 @@ export function useUsageTracking() {
     fetchUsageData();
   }, [user, isOnline]);
 
-  const checkUsageLimit = async () => {
+  const checkUsageLimit = async (onVerifiedUsage?: (usage: ScanUsage) => void) => {
     console.log('[useUsageTracking] ========== CHECKING USAGE LIMIT ==========');
     console.log('[useUsageTracking] Checking usage limit:', {
       user: user ? user.uid : 'No user',
@@ -200,8 +207,9 @@ export function useUsageTracking() {
         }
         const limit = getLimitForPlan(data.plan || 'free', user.isAnonymous);
         const newUsageData = { scansUsed: data.scansUsed || 0, plan: data.plan || 'free', limit, lastReset: data.lastReset };
-        setUsageData(newUsageData);
+        setUsageData({ ...newUsageData, verifiedOwner: user.uid });
         await saveCachedUsage(newUsageData);
+        onVerifiedUsage?.(newUsageData);
         return hasScanCapacity(newUsageData.scansUsed, newUsageData.limit);
       };
       return await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
@@ -242,10 +250,11 @@ export function useUsageTracking() {
         await updateDoc(userDocRef, { scansUsed: increment(1) });
         
         setUsageData((prev) => {
-          const newData = { ...prev, scansUsed: prev.scansUsed + 1 };
+          const { verifiedOwner, ...previousUsage } = prev;
+          const newData = { ...previousUsage, scansUsed: previousUsage.scansUsed + 1 };
           console.log('[useUsageTracking] Updated local usage data:', newData);
           saveCachedUsage(newData);
-          return newData;
+          return { ...newData, verifiedOwner };
         });
         console.log('[useUsageTracking] ✅ Successfully incremented scans used');
       };
@@ -255,5 +264,10 @@ export function useUsageTracking() {
     }
   };
 
-  return { usageData, checkUsageLimit, incrementScansUsed };
+  return {
+    usageData,
+    hasVerifiedUsage: !!user?.uid && user.uid === usageData.verifiedOwner,
+    checkUsageLimit,
+    incrementScansUsed,
+  };
 }

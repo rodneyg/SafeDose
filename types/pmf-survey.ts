@@ -18,16 +18,18 @@ export interface PMFSurveyResponse {
   };
 }
 
-export interface PMFSurveyState {
-  currentQuestion: number;
-  responses: PMFSurveyResponse['responses'];
-  isCompleted: boolean;
-  isSkipped: boolean;
-}
+export type WhyAreYouHereResponse =
+  | 'reddit'
+  | 'twitter'
+  | 'friend'
+  | 'clean_calculator'
+  | 'ai_scan'
+  | 'dose_logs'
+  | 'comparing_tools'
+  | 'other';
 
-export interface PMFSurveyTriggerData {
-  sessionCount: number;
-  lastSessionType: 'scan' | 'manual';
-  shouldShowSurvey: boolean;
-  hasShownBefore: boolean;
+export interface OnboardingSurveyResult {
+  whyHere?: { response: WhyAreYouHereResponse; customText?: string };
+  pmf?: Required<PMFSurveyResponse['responses']>;
+  questionIndex: number;
 }

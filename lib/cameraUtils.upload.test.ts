@@ -6,6 +6,14 @@ jest.mock('./utils', () => ({ isWeb: true, MAX_FILE_SIZE: 5 * 1024 * 1024 }));
 jest.mock('./analytics', () => ({ logAnalyticsEvent: jest.fn(), ANALYTICS_EVENTS: {} }));
 jest.mock('expo-file-system', () => ({}));
 
+const mockExtra: { scanQualityPrecheck?: boolean } = {};
+jest.mock('expo-constants', () => ({ get expoConfig() { return { extra: mockExtra }; } }));
+
+const mockReadPhotoMetrics = jest.fn();
+jest.mock('./scan/readPhotoMetrics', () => ({
+  readPhotoMetrics: (...args: unknown[]) => mockReadPhotoMetrics(...args),
+}));
+
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
 const originalReader = Object.getOwnPropertyDescriptor(globalThis, 'FileReader');
 const originalFetch = globalThis.fetch;
@@ -14,17 +22,20 @@ let mockCancel = false;
 let mockFile = { name: 'syringe.jpg', type: 'image/jpeg', size: 100 };
 let input: any;
 let options: Parameters<typeof captureAndProcessImage>[0];
+let processingAtCapture = false;
 
 beforeEach(() => {
   jest.useFakeTimers();
   mockReadFails = false;
   mockCancel = false;
+  processingAtCapture = false;
   mockFile = { name: 'syringe.jpg', type: 'image/jpeg', size: 100 };
   const attached = new Set();
   Object.defineProperty(globalThis, 'document', { configurable: true, value: {
     querySelectorAll: () => [],
     body: { appendChild: (node: any) => attached.add(node), contains: (node: any) => attached.has(node), removeChild: (node: any) => attached.delete(node) },
     createElement: () => (input = { click: () => {
+      processingAtCapture = (options.setIsProcessing as jest.Mock).mock.calls.at(-1)?.[0] === true;
       // A real picker dispatches change asynchronously after click returns.
       Promise.resolve().then(() => {
         if (mockCancel) input.oncancel?.();
@@ -106,6 +117,22 @@ it('returns a successful photo scan for preview and counts it once', async () =>
 });
 
 it.each([
+  ['success', false],
+  ['error', true],
+] as const)('sets processing before capture and clears it in finally on %s', async (_, readFails) => {
+  mockReadFails = readFails;
+  (fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: async () => ({ content: JSON.stringify(fixtures[0].model_output) }),
+  });
+
+  await captureAndProcessImage(options);
+
+  expect(processingAtCapture).toBe(true);
+  expect((options.setIsProcessing as jest.Mock).mock.calls).toEqual([[true], [false]]);
+});
+
+it.each([
   'ERR_VISION_FAILED: internal provider details',
   'File size ERR_INTERNAL: private server details',
   'No file selected ERR_INTERNAL',
@@ -128,4 +155,66 @@ it('opens manual entry without uploading or charging for an oversized photo', as
   expect(options.incrementScansUsed).not.toHaveBeenCalled();
   expect(jest.getTimerCount()).toBe(0);
   expect(fetch).not.toHaveBeenCalled();
+});
+
+describe('photo quality precheck', () => {
+  const completeScan = () => (fetch as jest.Mock).mockResolvedValue({
+    ok: true, json: async () => ({ content: JSON.stringify(fixtures[0].model_output) }),
+  });
+
+  beforeEach(() => {
+    mockExtra.scanQualityPrecheck = true;
+    mockReadPhotoMetrics.mockReset();
+  });
+
+  afterEach(() => {
+    delete mockExtra.scanQualityPrecheck;
+  });
+
+  it.each([
+    ['blur', { laplacianVariance: 1, highlightRatio: 0 }, /blurry.*retake/i],
+    ['glare', { laplacianVariance: 300, highlightRatio: 0.95 }, /glare.*retake/i],
+  ] as const)('asks for a %s retake before sending or charging, then accepts a usable photo', async (_, metrics, message) => {
+    const onRetakeRequired = jest.fn();
+    const onImageReady = jest.fn();
+    const captureOptions = { ...options, onRetakeRequired, onImageReady };
+    mockReadPhotoMetrics.mockResolvedValueOnce(metrics);
+    expect(await captureAndProcessImage(captureOptions)).toBeNull();
+    expect(options.setScanError).toHaveBeenLastCalledWith(expect.stringMatching(message));
+    expect(options.setIsProcessing).toHaveBeenLastCalledWith(false);
+    expect(onRetakeRequired).toHaveBeenCalledTimes(1);
+    expect(onImageReady).not.toHaveBeenCalled();
+    expect(options.onScanUnavailable).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(options.incrementScansUsed).not.toHaveBeenCalled();
+
+    mockReadPhotoMetrics.mockResolvedValueOnce({ laplacianVariance: 200, highlightRatio: 0.1 });
+    completeScan();
+    expect(await captureAndProcessImage(captureOptions)).toMatchObject({ refuse: false });
+    expect(options.setScanError).toHaveBeenLastCalledWith(null);
+    expect(onRetakeRequired).toHaveBeenCalledTimes(1);
+    expect(onImageReady).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onImageReady.mock.invocationCallOrder[0]).toBeLessThan((fetch as jest.Mock).mock.invocationCallOrder[0]);
+    expect(options.incrementScansUsed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does no quality work with the flag unset', async () => {
+    delete mockExtra.scanQualityPrecheck;
+    completeScan();
+    expect(await captureAndProcessImage(options)).toMatchObject({ refuse: false });
+    expect(mockReadPhotoMetrics).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['rejects', () => Promise.reject(new Error('unsupported'))],
+    ['throws', () => { throw new Error('unsupported'); }],
+  ] as const)('uses the normal scan path if the decoder %s', async (_, readMetrics) => {
+    mockReadPhotoMetrics.mockImplementationOnce(readMetrics);
+    completeScan();
+    expect(await captureAndProcessImage(options)).toMatchObject({ refuse: false });
+    expect(mockReadPhotoMetrics).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 });

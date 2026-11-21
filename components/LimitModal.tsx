@@ -1,16 +1,19 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import UpgradeEmailForm from './UpgradeEmailForm';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
+import { FREE_SCAN_LIMIT, PHOTO_CHECK_MONTHLY_AMOUNT } from '../lib/plans';
 
 interface LimitModalProps {
   visible: boolean;
   isAnonymous: boolean;
   isPremium?: boolean;
   onClose: () => void;
+  getEmailCaptureToken?: () => Promise<string>;
 }
 
-export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose }: LimitModalProps) {
+export default function LimitModal({ visible, isAnonymous, isPremium = false, onClose, getEmailCaptureToken }: LimitModalProps) {
   const router = useRouter();
 
   console.log('[LimitModal] Rendering', { visible, isAnonymous, isPremium });
@@ -49,14 +52,14 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>
             {isAnonymous ? 'Free Scan Limit Reached' : 'Plan Limit Reached'}
           </Text>
           <Text style={styles.message}>
             {isAnonymous
-              ? 'You’ve used all 3 free scans. Sign in to get 10 scans per month or upgrade for more.'
-              : 'You’ve reached your plan’s scan limit. Upgrade to a premium plan for additional scans.'}
+              ? `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`
+              : `You’ve used all ${FREE_SCAN_LIMIT} free scans this month. Keep using manual entry, or get unlimited scans with Photo Check for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`}
           </Text>
           <View style={styles.buttonContainer}>
             {isAnonymous && (
@@ -66,14 +69,17 @@ export default function LimitModal({ visible, isAnonymous, isPremium = false, on
             )}
             {!isPremium && (
               <TouchableOpacity style={[styles.button, styles.upgradeButton]} onPress={handleUpgrade}>
-                <Text style={styles.buttonText}>Upgrade</Text>
+                <Text style={styles.buttonText}>View Photo Check</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </View>
+          {visible && !isPremium && getEmailCaptureToken && (
+            <UpgradeEmailForm getIdToken={getEmailCaptureToken} onClose={onClose} />
+          )}
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -89,9 +95,13 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 24,
+    flexGrow: 0,
+    maxHeight: '90%',
     width: '85%',
     maxWidth: 400,
+  },
+  modalContent: {
+    padding: 24,
     alignItems: 'center',
   },
   title: {

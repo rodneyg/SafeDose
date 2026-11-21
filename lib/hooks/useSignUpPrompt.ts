@@ -12,6 +12,7 @@ interface SignUpPromptState {
   lastDismissedAt: string | null;
 }
 
+/** Tracks anonymous-user interactions and controls the sign-up prompt. */
 export function useSignUpPrompt() {
   const { user } = useAuth();
   const [shouldShowPrompt, setShouldShowPrompt] = useState(false);

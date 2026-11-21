@@ -1,6 +1,9 @@
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import NewDoseScreen from '../app/(tabs)/new-dose';
+import modelOutputs from '../evals/vision/fixtures/model-outputs.json';
+import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
+import { parseScanModelOutput } from '../lib/scan';
 
 // Render the real dose screen. Child screens and unrelated services are boundaries;
 // camera permission, stream ownership, cleanup, and transition effects run unchanged.
@@ -31,10 +34,12 @@ jest.mock('expo-router', () => ({
 }));
 const mockNoop = jest.fn();
 const mockCalculator = new Proxy({
+  onboardingSurvey: { prompt: null },
   resetFullForm: jest.fn(), setManualSyringe: jest.fn(), setTotalAmount: jest.fn(), setConcentrationAmount: jest.fn(), setSubstanceName: jest.fn(), setScreenStep: jest.fn(), handleCapture: jest.fn(async () => true),
   screenStep: 'intro', manualStep: 'finalResult', stateHealth: 'healthy',
   manualSyringe: { type: 'Standard', volume: '3 ml' }, logUsageData: { plan: 'free' },
   recommendedMarking: '1 mL', calculatedVolume: 1, dose: '1', unit: 'mL',
+  setDose: jest.fn(), setDoseValue: jest.fn(), handleCalculateFinal: jest.fn(),
 }, { get: (target, key) => key in target ? target[key as keyof typeof target] : mockNoop });
 jest.mock('../lib/hooks/useDoseCalculator', () => ({ __esModule: true, default: () => mockCalculator }));
 jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({ usageData: { plan: 'free' } }) }));
@@ -46,10 +51,8 @@ jest.mock('./IntroScreen', () => 'IntroScreen');
 jest.mock('./BeforeFirstScanScreen', () => 'BeforeFirstScanScreen');
 jest.mock('./ScanScreen', () => 'ScanScreen');
 jest.mock('./ManualEntryScreen', () => 'ManualEntryScreen');
-jest.mock('./WhyAreYouHereScreen', () => 'WhyAreYouHereScreen');
 jest.mock('./InjectionSiteSelector', () => 'InjectionSiteSelector');
 jest.mock('./PostDoseFeedbackScreen', () => 'PostDoseFeedbackScreen');
-jest.mock('./PMFSurveyModal', () => 'PMFSurveyModal');
 jest.mock('./LimitModal', () => 'LimitModal');
 jest.mock('./LogLimitModal', () => 'LogLimitModal');
 jest.mock('./VolumeErrorModal', () => 'VolumeErrorModal');
@@ -199,4 +202,48 @@ it('shows a successful scan in the image preview', async () => {
   const preview = renderer.root.findByType('ImagePreviewModal' as never);
   expect(preview.props.visible).toBe(true);
   expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+});
+
+
+it.each(wrongFills)('requires explicit review before applying accepted capture %#, even without an image', async raw => {
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(raw));
+  await act(async () => { await camera().props.onCapture(); });
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  expect(preview.props.visible).toBe(true);
+  expect(preview.props.imageUri).toBe('');
+  expect(mockCalculator.setScreenStep).not.toHaveBeenCalled();
+  expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
+  expect(mockCalculator.setDose).not.toHaveBeenCalled();
+  expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+
+  act(() => { preview.props.onVerify(); });
+  expect(preview.props.visible).toBe(false);
+  expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
+  expect(mockCalculator.setConcentrationAmount).toHaveBeenCalledWith(
+    JSON.parse(raw).vial.concentration.split(' ')[0],
+  );
+  expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
+  expect(mockCalculator.setDoseValue.mock.calls).toEqual([[null]]);
+  expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+});
+
+it('requires a fresh syringe selection when the scanned capacity exceeds the visible scale', async () => {
+  // Capacity and marks come from development validation cases c2-b0-s1 and c1-b0-s1.
+  const output = modelOutputs[0].model_output;
+  const raw = JSON.stringify({ ...output, syringe: { ...output.syringe, markings: '0,10,20,30,40,50' } });
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(raw));
+  await act(async () => { await camera().props.onCapture(); });
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  expect(preview.props.visible).toBe(true);
+  expect(mockCalculator.setManualSyringe).not.toHaveBeenCalled();
+
+  act(() => { preview.props.onVerify(); });
+  expect(preview.props.visible).toBe(false);
+  expect(mockCalculator.resetFullForm).toHaveBeenCalledWith('dose');
+  expect(mockCalculator.setManualSyringe.mock.calls).toEqual([[{ type: 'Standard', volume: '', needsConfirmation: true }]]);
+  expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
+  expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
+  expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
 });

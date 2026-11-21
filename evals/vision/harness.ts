@@ -5,7 +5,7 @@ import { calculateDose, type CalculateDoseParams, type CalculateDoseResult } fro
 import { mapScanToDoseInputs, parseScanQuantity, type ScanResult } from '../../lib/scan';
 
 export const REPORT_HEADER = 'LABELS PENDING RODNEY VERIFICATION: scores are not an official accuracy gate.';
-export type Classification = 'exact-correct' | 'refused-or-asked' | 'wrong-number-shown';
+export type Classification = 'exact-correct' | 'refused-or-asked' | 'unconfirmed-fill' | 'wrong-number-shown';
 export type Fields = Record<string, string | number | boolean | null>;
 export interface EvalLabel {
   id: string;
@@ -118,11 +118,15 @@ export function fieldMismatches(expected: Fields, got: Fields): string[] {
   return Object.keys(expected).filter(key => expected[key] !== null && expected[key] !== 'unknown' && expected[key] !== got[key]);
 }
 
-export function runDosePipeline(scan: ScanResult, scenario?: DoseScenario): EvalResult['pipeline'] {
+export function runDosePipeline(
+  scan: ScanResult,
+  scenario?: DoseScenario,
+  { syringeAndVialVerified = false }: { syringeAndVialVerified?: boolean } = {},
+): EvalResult['pipeline'] {
   if (!scenario) return { status: 'no-dose-scenario', expected: null, got: null };
-  const mapped = mapScanToDoseInputs(scan);
+  const mapped = mapScanToDoseInputs(scan, { syringeAndVialVerified });
   const asked = (status: string): EvalResult['pipeline'] => ({ status, expected: scenario.expected, got: null });
-  if (mapped.status === 'needs-input') return asked('needs-input');
+  if (mapped.status !== 'ready') return asked(mapped.status);
   if (!Number.isFinite(scenario.doseValue) || scenario.doseValue <= 0 || !['mg', 'mcg', 'units', 'mL'].includes(scenario.unit)) return asked('invalid-dose-context');
   const input = mapped.inputs;
   const concentration = input.concentration;
@@ -147,21 +151,26 @@ export function runDosePipeline(scan: ScanResult, scenario?: DoseScenario): Eval
 export function classifyResult(input: {
   refused: boolean; asked: boolean; expectedBehavior: 'read' | 'refuse'; mismatches: string[];
   numberShown?: boolean;
+  unconfirmedFill?: boolean;
 }): Classification {
   const wrong = input.expectedBehavior === 'refuse' || input.mismatches.length > 0;
   if (input.refused || (input.asked && !(input.numberShown && wrong))) return 'refused-or-asked';
-  return wrong ? 'wrong-number-shown' : 'exact-correct';
+  if (wrong) return 'wrong-number-shown';
+  return input.unconfirmedFill ? 'unconfirmed-fill' : 'exact-correct';
 }
 
 export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
   source: EvalResult['source']; image_status: string; latency_ms: number;
   cost_usd: number | null; usage?: EvalResult['usage'];
+  syringeAndVialVerified?: boolean;
 }): EvalResult {
   const observed = meta.source !== 'not-evaluated';
   const expected = expectedFields(label), got = gotFields(scan);
-  const pipeline = runDosePipeline(scan, label.dose);
+  const { syringeAndVialVerified, ...observation } = meta;
+  const pipeline = runDosePipeline(scan, label.dose, { syringeAndVialVerified });
   const mapped = mapScanToDoseInputs(scan);
-  const asked = !observed || mapped.status === 'needs-input' || (pipeline.status !== 'no-dose-scenario' && pipeline.status !== 'number-shown');
+  const asked = !observed || mapped.status === 'needs-input' ||
+    !['no-dose-scenario', 'needs-verification', 'number-shown'].includes(pipeline.status);
   const mismatches = fieldMismatches(expected, got);
   // Conservatively score any numeric output, even on an error, as potentially visible.
   // SAF-103 clears rejected outputs; this still detects a regression in that contract.
@@ -171,15 +180,22 @@ export function scoreScan(label: EvalLabel, scan: ScanResult, meta: {
     if (volumeShown && pipeline.got.calculatedVolume !== pipeline.expected.calculatedVolume) mismatches.push('dose.calculatedVolume');
     if (markingShown && pipeline.got.recommendedMarking !== pipeline.expected.recommendedMarking) mismatches.push('dose.recommendedMarking');
   }
+  // The preview displays syringe metadata and vial label fields. It never renders the model fill.
+  // Keep all raw mismatches for accuracy analysis and score only visible fields for safety.
+  const visibleMismatches = mismatches.filter(key => !key.startsWith('fill.'));
   return {
     id: label.id, sha256: label.sha256, sha256_kind: meta.source === 'synthetic' ? 'text-fixture' : 'image',
     group: label.group, brand: label.syringe?.brand ?? 'untagged',
     lighting: label.conditions?.lighting ?? 'untagged', angle: label.conditions?.angle ?? 'untagged',
-    ...meta, usage: meta.usage ?? null, observed, expected_behavior: label.expected_behavior, expected, got,
+    ...observation, usage: meta.usage ?? null, observed, expected_behavior: label.expected_behavior, expected, got,
     refused: observed && scan.refuse, asked, pipeline, mismatches, confidence: scan.confidence,
     raw_model_output: observed ? scan.raw : null,
     reasons: !observed ? [`Not evaluated: ${meta.image_status}. No model prediction is claimed.`] : mapped.reasons,
-    classification: classifyResult({ refused: scan.refuse, asked, expectedBehavior: label.expected_behavior, mismatches, numberShown: observed && (volumeShown || markingShown) }),
+    classification: classifyResult({
+      refused: scan.refuse, asked, expectedBehavior: label.expected_behavior,
+      mismatches: visibleMismatches, numberShown: observed && (volumeShown || markingShown),
+      unconfirmedFill: mapped.status === 'needs-verification',
+    }),
   };
 }
 
@@ -200,7 +216,7 @@ export interface EvalSummary extends Counts {
 }
 function counts(rows: EvalResult[]): Counts {
   const field_accuracy: Record<string, FieldAccuracy> = {};
-  const classes: Counts['classes'] = { 'exact-correct': 0, 'refused-or-asked': 0, 'wrong-number-shown': 0 };
+  const classes: Counts['classes'] = { 'exact-correct': 0, 'refused-or-asked': 0, 'unconfirmed-fill': 0, 'wrong-number-shown': 0 };
   let observed = 0, refused = 0, uncaught_syringe_misses = 0;
   for (const row of rows) {
     classes[row.classification]++;
@@ -242,14 +258,15 @@ export interface Thresholds {
 }
 export function evaluateThresholds(summary: EvalSummary, thresholds: Thresholds) {
   const violations: string[] = [], unassessed: string[] = [];
-  if (summary.classes['wrong-number-shown'] > 0) violations.push('wrong-number-shown exceeds the zero allowance');
+  const wrong_number_shown_pass = summary.classes['wrong-number-shown'] <= thresholds.wrong_number_shown_allowed;
+  if (!wrong_number_shown_pass) violations.push(`wrong-number-shown exceeds the allowance of ${thresholds.wrong_number_shown_allowed}`);
   if (summary.uncaught_syringe_misses > thresholds.uncaught_syringe_misses_allowed) violations.push('a syringe miss was not caught by refusal/confirmation');
   for (const [field, minimum] of [['syringe.type', thresholds.syringe_type_min_accuracy], ['syringe.capacity_ml', thresholds.syringe_capacity_min_accuracy]] as const) {
     const accuracy = summary.field_accuracy[field]?.accuracy;
     if (accuracy === null || accuracy === undefined) unassessed.push(field);
     else if (accuracy < minimum) violations.push(`${field} accuracy ${accuracy} is below ${minimum}`);
   }
-  return { would_pass: violations.length === 0 && unassessed.length === 0, violations, unassessed, status: thresholds.status };
+  return { would_pass: violations.length === 0 && unassessed.length === 0, wrong_number_shown_pass, violations, unassessed, status: thresholds.status };
 }
 
 export function renderMarkdown(summary: EvalSummary, gate: ReturnType<typeof evaluateThresholds>, context: {
@@ -261,6 +278,7 @@ export function renderMarkdown(summary: EvalSummary, gate: ReturnType<typeof eva
     'Synthetic fixtures are authored test doubles, not recorded image predictions. Missing recordings are not accuracy observations. Strict field equality is used; photo estimates and their tolerances still need Rodney review.', '',
     `Observed: ${summary.observed}/${summary.total}. Not evaluated: ${summary.not_evaluated}. Refusal rate (observed only): ${pct(summary.refusal_rate)}.`, '',
     '| Class | Count |', '| --- | ---: |', ...Object.entries(summary.classes).map(([key, value]) => `| ${key} | ${value} |`), '',
+    'Unconfirmed fill means the scan withheld its fill reading and requires a physical syringe and vial label check. Model fill errors still count in raw field accuracy.', '',
     'Unevaluated rows are placed in refused-or-asked with an explicit not-evaluated reason. They are excluded from field accuracy and refusal-rate denominators.', '',
     '| Field (syringe fields on readable labels) | Correct | Evaluated | Labeled | Accuracy |', '| --- | ---: | ---: | ---: | ---: |',
     ...Object.entries(summary.field_accuracy).map(([key, v]) => `| ${key} | ${v.correct} | ${v.evaluated} | ${v.labeled} | ${pct(v.accuracy)} |`), '',
@@ -268,8 +286,8 @@ export function renderMarkdown(summary: EvalSummary, gate: ReturnType<typeof eva
     ...gate.violations.map(v => `- ${v}`), ...gate.unassessed.map(v => `- No observations for ${v}`), '',
   ];
   for (const [dimension, groups] of Object.entries({ group: summary.by_group, brand: summary.by_brand, lighting: summary.by_lighting, angle: summary.by_angle })) {
-    lines.push(`## By ${dimension}`, '', '| Tag | Observed / total | Exact | Refused/asked | Wrong number | Refusal rate | Type accuracy | Capacity accuracy | Fill mL accuracy | Vial concentration accuracy |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
-    for (const [tag, c] of Object.entries(groups)) lines.push(`| ${safe(tag)} | ${c.observed}/${c.total} | ${c.classes['exact-correct']} | ${c.classes['refused-or-asked']} | ${c.classes['wrong-number-shown']} | ${pct(c.refusal_rate)} | ${pct(c.field_accuracy['syringe.type']?.accuracy ?? null)} | ${pct(c.field_accuracy['syringe.capacity_ml']?.accuracy ?? null)} | ${pct(c.field_accuracy['fill.ml']?.accuracy ?? null)} | ${pct(c.field_accuracy['vial.concentration']?.accuracy ?? null)} |`);
+    lines.push(`## By ${dimension}`, '', '| Tag | Observed / total | Exact | Refused/asked | Unconfirmed fill | Wrong number | Refusal rate | Type accuracy | Capacity accuracy | Fill mL accuracy | Vial concentration accuracy |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+    for (const [tag, c] of Object.entries(groups)) lines.push(`| ${safe(tag)} | ${c.observed}/${c.total} | ${c.classes['exact-correct']} | ${c.classes['refused-or-asked']} | ${c.classes['unconfirmed-fill']} | ${c.classes['wrong-number-shown']} | ${pct(c.refusal_rate)} | ${pct(c.field_accuracy['syringe.type']?.accuracy ?? null)} | ${pct(c.field_accuracy['syringe.capacity_ml']?.accuracy ?? null)} | ${pct(c.field_accuracy['fill.ml']?.accuracy ?? null)} | ${pct(c.field_accuracy['vial.concentration']?.accuracy ?? null)} |`);
     lines.push('');
   }
   lines.push('## Every wrong-number-shown case', '');
