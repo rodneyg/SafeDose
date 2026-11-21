@@ -1,176 +1,127 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
-
-interface ScanResult {
-  syringe: {
-    type: 'Insulin' | 'Standard' | 'unreadable' | null;
-    volume: string | 'unreadable' | null;
-    markings: string | 'unreadable' | null;
-  };
-  vial: {
-    substance: string | 'unreadable' | null;
-    totalAmount: string | 'unreadable' | null;
-    concentration: string | 'unreadable' | null;
-    expiration: string | 'unreadable' | null;
-  };
-  capturedImage?: {
-    uri: string;
-    mimeType: string;
-  };
-}
+import React, { useState } from 'react';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
 
 interface ImagePreviewModalProps {
   visible: boolean;
   imageUri: string;
-  scanResult?: ScanResult | null;
+  scanResult: ScanResult | null;
   onRetake: () => void;
-  onContinue: () => void;
-  autoAdvanceDelay?: number; // in milliseconds, default 15000 (15 seconds)
+  onVerify: (substance: string | null) => void;
 }
 
-export default function ImagePreviewModal({ 
-  visible, 
-  imageUri, 
+function ScanSection({ title, fields }: { title: string; fields: [string, string | null][] }) {
+  return (
+    <View style={styles.scanSection}>
+      <Text style={styles.scanSectionTitle}>{title}</Text>
+      {fields.map(([label, value]) => (
+        <View key={label} style={styles.scanRow}>
+          <Text style={styles.scanLabel}>{label}</Text>
+          <Text style={styles.scanValue}>{value ?? 'Not detected'}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export default function ImagePreviewModal({
+  visible,
   scanResult,
-  onRetake, 
-  onContinue,
-  autoAdvanceDelay = 15000
+  ...props
 }: ImagePreviewModalProps) {
-  const [countdown, setCountdown] = useState<number>(autoAdvanceDelay / 1000);
-  const [userInteracted, setUserInteracted] = useState(false);
+  if (!visible || !scanResult) return null;
+  return <ScanReview {...props} scanResult={scanResult} />;
+}
 
-  useEffect(() => {
-    if (!visible) {
-      setCountdown(autoAdvanceDelay / 1000);
-      setUserInteracted(false);
-      return;
-    }
-
-    if (userInteracted) return;
-
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onContinue();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [visible, userInteracted, autoAdvanceDelay, onContinue]);
-
-  const handleRetake = () => {
-    setUserInteracted(true);
-    onRetake();
-  };
-
-  const handleContinue = () => {
-    setUserInteracted(true);
-    onContinue();
-  };
-
-  // Helper function to format scan result values
-  const formatValue = (value: string | 'unreadable' | null): string => {
-    if (value === null) return 'Not detected';
-    if (value === 'unreadable') return 'Unreadable';
-    return value;
-  };
-
-  // Helper function to render scan result section
-  const renderScanSection = (title: string, data: Record<string, any>) => {
-    const hasData = Object.values(data).some(value => value !== null && value !== 'unreadable');
-    
-    return (
-      <View style={styles.scanSection}>
-        <Text style={styles.scanSectionTitle}>{title}</Text>
-        {hasData ? (
-          Object.entries(data).map(([key, value]) => {
-            if (key === 'markings' && (!value || value === 'unreadable')) return null; // Skip markings if not useful
-            return (
-              <View key={key} style={styles.scanRow}>
-                <Text style={styles.scanLabel}>
-                  {key === 'type' ? 'Type' : 
-                   key === 'volume' ? 'Volume' :
-                   key === 'substance' ? 'Substance' :
-                   key === 'totalAmount' ? 'Total Amount' :
-                   key === 'concentration' ? 'Concentration' :
-                   key === 'expiration' ? 'Expiration' : 
-                   key.charAt(0).toUpperCase() + key.slice(1)}:
-                </Text>
-                <Text style={styles.scanValue}>{formatValue(value)}</Text>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={styles.noDataText}>No information detected</Text>
-        )}
-      </View>
-    );
-  };
-
-  if (!visible) return null;
-
-  const screenDimensions = Dimensions.get('window');
-  const imageHeight = Math.min(screenDimensions.height * 0.5, 300);
+function ScanReview({ imageUri, scanResult, onRetake, onVerify }:
+  Omit<ImagePreviewModalProps, 'visible' | 'scanResult'> & { scanResult: ScanResult }) {
+  const { syringe, vial } = scanResult;
+  const { manualSyringe } = mapScanToDoseInputs(scanResult).inputs;
+  const [editedSubstance, setEditedSubstance] = useState<string | null>(null);
+  const substance = editedSubstance?.trim() ?? vial.substance;
+  const needsSubstanceReview = Boolean(manualSyringe) && vial.substance !== null;
+  const canVerify = !needsSubstanceReview || Boolean(substance);
+  const verificationLabel = needsSubstanceReview ? 'Confirm substance and all details' : 'I checked both';
+  const imageHeight = Math.min(Dimensions.get('window').height * 0.5, 300);
 
   return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onContinue}
-    >
+    <Modal animationType="fade" transparent visible onRequestClose={onRetake}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>Review Your Scan</Text>
-          
-          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-            {imageUri && (
-              <View style={[styles.imageContainer, { height: imageHeight }]}>
-                <Image 
-                  source={{ uri: imageUri }} 
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-              </View>
-            )}
-            
+          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={styles.message}>
-              Review your captured image and detected information below:
+              Read the fill line on your own syringe and verify the detected details against your syringe
+              and vial label. The scan provides no medical advice.
             </Text>
-            
-            {scanResult && (
-              <View style={styles.scanResultsContainer}>
-                <Text style={styles.scanResultsTitle}>Detected Information</Text>
-                {renderScanSection('Syringe', scanResult.syringe)}
-                {renderScanSection('Vial', scanResult.vial)}
+            {imageUri ? (
+              <View style={[styles.imageContainer, { height: imageHeight }]}>
+                <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
               </View>
-            )}
-            
-            {!userInteracted && (
-              <Text style={styles.countdown}>
-                Auto-continuing in {countdown} seconds...
-              </Text>
-            )}
+            ) : null}
+            <View style={styles.scanResultsContainer}>
+              <Text style={styles.scanResultsTitle}>Detected Information</Text>
+              <ScanSection title="Syringe" fields={[
+                ['Type', syringe.type], ['Capacity', manualSyringe?.volume ?? 'Check the label and select manually'], ['Scale', syringe.scale],
+              ]} />
+              <ScanSection title="Vial" fields={[
+                ['Total amount', vial.totalAmount],
+                ['Concentration', vial.concentration], ['Expiration', vial.expiration],
+              ]} />
+              {vial.substance !== null ? (
+                <View>
+                  <Text style={styles.scanLabel}>Unconfirmed vial substance</Text>
+                  {editedSubstance === null ? (
+                    <View style={styles.scanRow}>
+                      <Text style={styles.substanceName}>{vial.substance}</Text>
+                      {manualSyringe ? (
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          accessibilityRole="button"
+                          accessibilityLabel="Edit vial substance"
+                          onPress={() => setEditedSubstance(vial.substance)}
+                        >
+                          <Text style={styles.editText}>Edit</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  ) : (
+                    <TextInput
+                      autoFocus
+                      accessibilityLabel="Vial substance"
+                      style={styles.substanceInput}
+                      value={editedSubstance}
+                      onChangeText={setEditedSubstance}
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={styles.scanRow}>
+                  <Text style={styles.scanLabel}>Substance</Text>
+                  <Text style={styles.scanValue}>Not detected</Text>
+                </View>
+              )}
+            </View>
           </ScrollView>
-          
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.retakeButton]} 
-              onPress={handleRetake}
+            <TouchableOpacity
+              style={[styles.button, styles.retakeButton]}
+              onPress={onRetake}
               accessibilityLabel="Retake photo"
               accessibilityRole="button"
             >
               <Text style={styles.buttonText}>Retake</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.continueButton]} 
-              onPress={handleContinue}
+            <TouchableOpacity
+              style={[styles.button, styles.continueButton, !canVerify && styles.disabledButton]}
+              disabled={!canVerify}
+              accessibilityState={{ disabled: !canVerify }}
+              onPress={() => { if (canVerify) onVerify(manualSyringe ? substance : null); }}
+              accessibilityRole="button"
             >
-              <Text style={styles.buttonText}>Continue</Text>
+              <Text style={styles.buttonText}>
+                {manualSyringe ? verificationLabel : 'Enter details manually'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -268,17 +219,29 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexWrap: 'wrap',
   },
-  noDataText: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontStyle: 'italic',
+  substanceName: {
+    color: '#333333',
+    flex: 1,
+    fontSize: 16,
+    alignSelf: 'center',
   },
-  countdown: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontStyle: 'italic',
+  editButton: {
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  editText: {
+    color: '#005BBB',
+    fontWeight: '600',
+  },
+  substanceInput: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#8E8E93',
+    borderWidth: 1,
+    borderRadius: 8,
+    color: '#000000',
+    padding: 10,
+    marginTop: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -289,6 +252,7 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
     flex: 1,
@@ -299,9 +263,13 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: '#007AFF',
   },
+  disabledButton: {
+    backgroundColor: '#6D6D72',
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

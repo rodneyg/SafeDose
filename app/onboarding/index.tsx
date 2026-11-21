@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, Image, Platform, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Link, useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
+import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../../lib/analytics';
 import { isMobileWeb } from '../../lib/utils';
 import PublicLinks from '../../components/PublicLinks';
 import { useAuth } from '../../contexts/AuthContext';
 import { signInWithGoogle } from '../../lib/googleAuth';
+import {
+  assignLandingCtaArm,
+  LANDING_CTA_LABELS,
+  recordLandingCtaClick,
+  recordLandingCtaExposure,
+  recordLandingCtaStart,
+} from '../../lib/landingCtaExperiment';
 import { loadRemoteUserProfile, routeAfterGoogleSignIn } from '../../lib/onboardingState';
 import { startFirstDoseTimer } from '../../lib/firstDoseExperiment';
 
@@ -21,10 +29,22 @@ export default function Welcome() {
   const [signInError, setSignInError] = useState('');
 
   useEffect(() => { startFirstDoseTimer(); }, []);
+  const [ctaArm, setCtaArm] = useState<ReturnType<typeof assignLandingCtaArm>>(null);
+  const exposed = useRef(false);
+  const ctaLabel = LANDING_CTA_LABELS[ctaArm ?? 'control'];
+
+  useEffect(() => {
+    if (exposed.current) return;
+    exposed.current = true;
+    const arm = assignLandingCtaArm();
+    setCtaArm(arm);
+    if (arm) recordLandingCtaExposure(arm);
+  }, []);
 
   const handleStart = useCallback(() => {
+    if (ctaArm) recordLandingCtaClick(ctaArm);
     router.navigate('/onboarding/age');
-  }, [router]);
+  }, [ctaArm, router]);
 
   const handleSignIn = useCallback(async () => {
     if (isSigningIn) return;
@@ -78,11 +98,14 @@ export default function Welcome() {
         <Animated.View entering={FadeInUp.delay(900).duration(800)} style={[styles.footer, isMobileWeb && styles.footerMobile]}>
           <TouchableOpacity 
             style={[styles.button, isMobileWeb && styles.buttonMobile]} 
-            onPress={handleStart}
+            onPress={() => {
+              logAnalyticsEvent(ANALYTICS_EVENTS.WELCOME_PRIMARY_CTA_CLICK);
+              handleStart();
+            }}
             accessibilityRole="button"
-            accessibilityLabel="Start demo"
-            accessibilityHint="Begins the SafeDose app demonstration">
-            <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>Try Now</Text>
+            accessibilityLabel={Platform.OS === 'web' ? ctaLabel : 'Start demo'}
+            accessibilityHint={ctaArm === 'variant' ? 'Opens onboarding before you can scan a vial' : 'Begins the SafeDose app demonstration'}>
+            <Text style={[styles.buttonText, isMobileWeb && styles.buttonTextMobile]}>{ctaLabel}</Text>
             <ArrowRight size={isMobileWeb ? 18 : 20} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.accountLinks}>
@@ -100,6 +123,7 @@ export default function Welcome() {
             </TouchableOpacity>
             <Link
               href={{ pathname: '/login', params: { from: 'welcome' } }}
+              onPress={() => recordLandingCtaStart('signup')}
               style={[styles.signInLink, styles.signInLinkText, isMobileWeb && styles.disclaimerMobile]}
             >
               Create an account
@@ -110,7 +134,7 @@ export default function Welcome() {
           ) : (
             <Text style={[styles.disclaimer, isMobileWeb && styles.disclaimerMobile]}>No account needed to try</Text>
           )}
-          <PublicLinks onDarkBackground />
+          <PublicLinks onDarkBackground showChangelog />
         </Animated.View>
       </View>
     </View>
