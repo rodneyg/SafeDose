@@ -36,6 +36,8 @@ import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
 
+const SCAN_RETAKE_HINT = 'For a clearer photo, use even light, face the label straight on, and avoid glare.';
+
 type ScreenStep = 'intro' | 'beforeFirstScan' | 'scan' | 'manualEntry' | 'injectionSiteSelection' | 'postDoseFeedback';
 
 export default function NewDoseScreen() {
@@ -359,7 +361,8 @@ export default function NewDoseScreen() {
   useEffect(() => {
     if (screenStep !== 'scan') {
       // Keep the scan failure visible when capture routes to manual entry.
-      setScanError(error => screenStep === 'manualEntry' && error === SCAN_UNAVAILABLE_MESSAGE ? error : null);
+      setScanError(error => screenStep === 'manualEntry' &&
+        (error === SCAN_UNAVAILABLE_MESSAGE || error === SCAN_RETAKE_HINT) ? error : null);
       setIsProcessing(false);
       setProcessingMessage('Processing image... This may take a few seconds');
     }
@@ -537,27 +540,30 @@ export default function NewDoseScreen() {
     }
   }, [screenStep, getDoseLogHistory]);
 
-  // Only called by the user's verification action in ImagePreviewModal.
-  const applyVerifiedScanResults = (result: ScanResult, confirmedSubstance: string | null) => {
-    const { inputs: scanned, status, reasons } = mapScanToDoseInputs(result, { syringeAndVialVerified: true });
-    const { manualSyringe: scannedSyringe } = scanned;
-    if (!scannedSyringe) {
+  const openManualEntryFromScan = (
+    mapped: ReturnType<typeof mapScanToDoseInputs>,
+    confirmedSubstance: string | null = null,
+  ) => {
+    const needsInput = mapped.status === 'needs-input';
+    if (needsInput) {
       resetFullForm('dose');
       setManualSyringe({ type: 'Standard', volume: '', needsConfirmation: true });
       setSyringeHint('Check the syringe label and select its capacity manually.');
-      setScreenStep('manualEntry');
-      return;
     }
-    if (status !== 'ready') {
-      setScanError(`Scan needs manual input: ${reasons.join(' ')}`);
-      return;
+
+    const scanned = mapped.inputs;
+    const scannedSyringe = needsInput ? null : scanned.manualSyringe;
+    if (scannedSyringe) {
+      setManualSyringe(scannedSyringe);
+      setSyringeHint('Detected from image scan');
     }
-    setManualSyringe(scannedSyringe);
-    setSyringeHint('Detected from image scan');
-    setSubstanceName(confirmedSubstance ?? '');
-    setSubstanceNameHint(confirmedSubstance && confirmedSubstance === scanned.substance
-      ? 'Confirmed from vial label'
-      : null);
+    const vialHint = needsInput ? 'From photo scan. Check the vial label.' : 'Detected from vial scan';
+    if (!needsInput) {
+      setSubstanceName(confirmedSubstance ?? '');
+      setSubstanceNameHint(confirmedSubstance && confirmedSubstance === scanned.substance
+        ? 'Confirmed from vial label'
+        : null);
+    }
     // Clear previous medication values so an absent field cannot reuse a stale number.
     setConcentrationAmount('');
     setConcentration(null);
@@ -568,20 +574,17 @@ export default function NewDoseScreen() {
     if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
       setTotalAmount(String(scanned.totalAmount));
       doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
-      setTotalAmountHint('Detected from vial scan');
+      setTotalAmountHint(vialHint);
     }
     if (scanned.concentration !== null && scanned.concentrationUnit) {
       setConcentrationAmount(String(scanned.concentration));
       setConcentrationUnit(scanned.concentrationUnit);
       setMedicationInputType('concentration');
-      setConcentrationHint('Detected from vial scan');
+      setConcentrationHint(vialHint);
       if (scanned.totalAmount === null) setTotalAmountHint(null);
     } else if (scanned.totalAmount !== null && scanned.totalAmountUnit) {
-      doseCalculator.setTotalAmountUnit(scanned.totalAmountUnit);
-      setTotalAmount(String(scanned.totalAmount));
       setConcentrationUnit(`${scanned.totalAmountUnit}/ml`);
       setMedicationInputType('totalAmount');
-      setTotalAmountHint('Detected from vial scan');
       setConcentrationHint(null);
     } else {
       setMedicationInputType(null);
@@ -590,8 +593,8 @@ export default function NewDoseScreen() {
     }
 
     doseCalculator.registerScannedFields({
-      ...(scanned.substance ? { substanceName: scanned.substance } : {}),
-      manualSyringe: JSON.stringify(scannedSyringe),
+      ...(!needsInput && confirmedSubstance && scanned.substance ? { substanceName: scanned.substance } : {}),
+      ...(scannedSyringe ? { manualSyringe: JSON.stringify(scannedSyringe) } : {}),
       ...(scanned.concentration !== null && scanned.concentrationUnit ? {
         concentrationAmount: String(scanned.concentration), concentrationUnit: scanned.concentrationUnit,
       } : {}),
@@ -599,7 +602,7 @@ export default function NewDoseScreen() {
         totalAmount: String(scanned.totalAmount), totalAmountUnit: scanned.totalAmountUnit,
       } : {}),
     });
-    console.log('[Process] Scan successful, transitioning to manual entry');
+    if (needsInput) setScanError(SCAN_RETAKE_HINT);
     // Start with an empty dose so the user supplies it for this scan.
     setDose('');
     setDoseValue(null);
@@ -836,6 +839,7 @@ export default function NewDoseScreen() {
         setProcessingMessage,
         setScanError,
         incrementScansUsed,
+        returnIncompleteScan: true,
         onImageReady: startArm ? () => {
           if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
             logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
@@ -849,6 +853,11 @@ export default function NewDoseScreen() {
       });
 
       if (result) {
+        const mapped = mapScanToDoseInputs(result);
+        if (mapped.status === 'needs-input') {
+          openManualEntryFromScan(mapped);
+          return;
+        }
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
         const firstLocalScan = await recordSuccessfulScan(user.uid);
@@ -1002,7 +1011,10 @@ export default function NewDoseScreen() {
 
   const handleImagePreviewVerified = (confirmedSubstance: string | null) => {
     if (!pendingScanResult) return;
-    applyVerifiedScanResults(pendingScanResult, confirmedSubstance);
+    openManualEntryFromScan(
+      mapScanToDoseInputs(pendingScanResult, { syringeAndVialVerified: true }),
+      confirmedSubstance,
+    );
     setPendingScanResult(null);
   };
 
@@ -1159,7 +1171,7 @@ export default function NewDoseScreen() {
           toggleWebFlashlight={toggleWebFlashlight}
         />
       )}
-      {screenStep === 'manualEntry' && scanError === SCAN_UNAVAILABLE_MESSAGE && (
+      {screenStep === 'manualEntry' && scanError && (
         <Text accessibilityRole="alert">{scanError}</Text>
       )}
       {nudgeKind && user?.uid && (

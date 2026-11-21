@@ -25,3 +25,11 @@ test('the code report stays aligned with scan and plan rules', () => {
   expect(report).toContain(`$${PHOTO_CHECK_ANNUAL_AMOUNT} per year`);
   expect(report).toContain('this report does not calculate or estimate revenue');
 });
+
+test('the product overview links to the planner and dose logging', () => {
+  expect(report).toContain('## What the app does');
+  expect(report).toContain('[reconstitution planner](../app/reconstitution.tsx)');
+  expect(report).toContain('[dose logging with local storage](../lib/hooks/useDoseLogging.ts)');
+  expect(fs.existsSync(path.resolve(__dirname, '../app/reconstitution.tsx'))).toBe(true);
+  expect(fs.existsSync(path.resolve(__dirname, '../lib/hooks/useDoseLogging.ts'))).toBe(true);
+});
