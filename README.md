@@ -2,21 +2,17 @@
 
 [![CI](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml)
 
-**A verification and calculation tool for administering injectable medications prescribed by your healthcare provider.**  
-Created by **SafeLab**, SafeDose helps you verify medication materials, perform unit conversion calculations, and reduce math errors when executing your provider's prescription.
-
-Whether you're working with mg/ml, reconstituted peptides, or insulin units, SafeDose helps you verify your materials match your prescription and calculate the volume to draw.
+**A verification and calculation tool for injectable medications prescribed by your healthcare provider.**
+Created by **SafeLab**, SafeDose calculates a draw volume from the dose and syringe details you enter or confirm. It uses the medication strength when converting a dose to volume. Compare those inputs and the result with your prescription before use.
 
 ---
 
 ## 🔮 VisionOS Vision
 
-SafeDose today works in two steps:
-
-1. **Specify Dose**: The user enters their prescribed dose (e.g., "2.5 mg Semaglutide")
-2. **Scan & Verify**: They scan their supplies. The app uses computer vision to identify the syringe and vial, which the user confirms. It then calculates the volume to draw based on the verified information.
-
-This mobile design is deliberate. It ensures SafeDose knows the intended dose before analyzing supplies, and it uses a guided verification flow with user confirmation at each step.
+SafeDose's current dose workflow offers Manual entry and a Scan option. Manual
+entry starts with the prescribed dose. Scan can start with photos of the vial
+and syringe. Users review the scan results and confirm the fields in the manual
+form before calculating the volume to draw.
 
 **The longer-term vision is a glasses-native workflow:**
 
@@ -50,7 +46,7 @@ A hosted version of SafeDose: https://safedose.rodneygainous.com/ (fallback: htt
 
 ### Versioning and rollback
 
-Every merge to `main` creates a semver tag and a GitHub Release. The bump is a patch by default. Add a `minor` or `major` label on the PR, or start the title with `feat:` or `feat!:`, to bump those instead.
+The release workflow runs on pushes to `main` and skips automated changelog commits. It creates a semver tag and a GitHub Release for the commit. The bump is a patch by default. Use the `minor` or `major` PR label, or a squash commit subject starting with `feat:` or `feat!:`, to request a minor or major bump.
 
 To put a previous tagged build back on production:
 
@@ -67,50 +63,36 @@ Use `--dry-run` to print the Vercel promotion command without changing productio
 
 To run the open-source version locally:
 
-### 1. Clone the repo
-```bash
-git clone https://github.com/your-org/rodneyg-safedose.git
-cd rodneyg-safedose
+### 1. Clone the repo and install dependencies
 
-2. Install dependencies
+Use Node.js 22, as specified in `.nvmrc`.
 
-npm install
-
-3. iOS (Xcode required)
-
-npx pod-install
-npx expo run:ios
-
-4. Android (Android Studio required)
-
-npx expo run:android
-
-5. Web (experimental)
-
-npx expo start --web
-
-Note: The AI-powered scan feature calls a server route (`/api/analyze-scan`) that reads `OPENAI_API_KEY` on the server. Do not put this key in `app.config.js` extra or prefix it with `EXPO_PUBLIC_`.
-
-⸻
-
-🔧 Environment Setup
-
-Create a `.env` file in the root for local API routes and the vision eval CLI:
-
-```
-# Server-side only — never exposed to the browser
-OPENAI_API_KEY=your-openai-key-here
+```sh
+git clone https://github.com/rodneyg/SafeDose.git
+cd SafeDose
+npm ci
 ```
 
-On Vercel, set `OPENAI_API_KEY` as a server Environment Variable for Production, Preview, and Development (not a client/`EXPO_PUBLIC_` variable).
+### 2. Run a target
 
+- iOS (Xcode required) runs with `npm run ios`.
+- Android (Android Studio required) runs with `npm run android`.
+- Web runs with `npm run web`.
 
+### Environment setup
+
+See [`.env.example`](.env.example) for the configuration used by the app and
+server. Photo analysis requires the server route `/api/analyze-scan` and a
+server-side `OPENAI_API_KEY`. Keep this key out of Expo config and
+`EXPO_PUBLIC_` variables. On Vercel, configure the key for the environments
+that serve the scan API.
 
 ⸻
 
 📁 Directory Structure
 
-rodneyg-safedose/
+```text
+SafeDose/
 ├── app/                 # Screens and navigation
 ├── hooks/               # Camera + system hooks
 ├── assets/              # Icons and images
@@ -122,31 +104,29 @@ rodneyg-safedose/
 │   └── FINE_TUNING_QUICK_START.md  # Quick start guide
 ├── evals/               # Evaluation framework
 │   ├── test-sets/       # Evaluation test cases
-│   ├── exported-data/   # Captured user interaction data
+│   ├── exported-data/   # Output from the sample evaluation exporter
 │   └── README.md        # Evaluation documentation
 ├── types/               # Global type definitions
 ├── Evals.md             # Evaluation framework overview
 ├── package.json         # Dependencies
 ├── app.config.js        # Expo app configuration
-├── tsconfig.json        # TypeScript settings
-
+└── tsconfig.json        # TypeScript settings
+```
 
 
 ⸻
 
-📊 Model Improvement & Evaluation
+## Model evaluation and scan data
 
-SafeDose automatically captures user interactions to continuously improve AI accuracy:
+SafeDose can save scan and calculation evaluation records locally. These
+records can include inputs, results, and quality metadata. For signed-in
+users, SafeDose can also send evaluation records to Firestore with image
+metadata in place of the image itself.
 
-- **Automatic Data Capture**: Every dose calculation and AI scan is saved locally
-- **Quality Scoring**: Automatic filtering ensures only high-quality examples for training
-- **Easy Export**: One-click export to training-ready format for model fine-tuning
-- **Privacy-First**: Images stored locally only, no personal data transmitted
-
-**Resources**:
-- **Quick Start**: [docs/FINE_TUNING_QUICK_START.md](docs/FINE_TUNING_QUICK_START.md) - 5-minute guide
-- **Complete Guide**: [docs/MODEL_FINE_TUNING_GUIDE.md](docs/MODEL_FINE_TUNING_GUIDE.md) - Full instructions
-- **Evaluation Framework**: [Evals.md](Evals.md) - Testing and benchmarking
+The scan feature sends the photo to SafeDose's analysis API, which passes
+it to OpenAI for analysis. See the [Privacy Policy](https://safedose.rodneygainous.com/privacy)
+for details. See [the evaluation guide](Evals.md) for evaluation tools and
+test data.
 
 ⸻
 
@@ -166,7 +146,7 @@ Please avoid introducing breaking changes or external dependencies unless necess
 
 🛡 License
 
-MIT License.
+The project declares the MIT License. The full license text is currently absent from this repository.
 By using this project, you agree not to market it as a certified medical device without independent validation and regulatory approval.
 
 ⸻
@@ -175,11 +155,20 @@ Built by SafeLab — advancing open tools for human systems.
 
 
 ### Changelog updates
-- `changelog/*.md` is the source of truth for public `/changelog`; entries use date, title, status, prs frontmatter and New/Improved/Fixed bullet groups.
-- Run `npm run changelog:add` with authenticated GitHub CLI to draft merged PRs since the latest published date; same-day PRs are deduplicated by number.
-- On merges to main, the Draft changelog Action uses only GITHUB_TOKEN to push a `changelog/pr-*` branch and open a draft PR, preferring a `## Changelog` section over the PR title.
-- Review user-facing wording, discard internal-only drafts, set `status: published`, and run `npm run changelog:build` to refresh `lib/changelog.json`; web builds regenerate it too.
-- If repository policy blocks token-created PRs, the pushed draft branch remains available for a manual PR. No secrets or setting changes are needed; changelog branches do not trigger more drafts.
+
+- Published entries in `changelog/*.md` feed the public `/changelog` page.
+  Each entry has `date`, `title`, `status`, and `prs` frontmatter and bullets
+  under New, Improved, or Fixed.
+- When a non-bot PR merges into `main`, the Publish changelog Action uses
+  the PR title for its entry, rebuilds `lib/changelog.json`, and commits both
+  to `main`. The `skip-changelog` label skips this step.
+- For manual backfills, run `npm run changelog:add` with an authenticated
+  GitHub CLI. It drafts missing entries from the latest published UTC date
+  onward, including that date, and deduplicates by PR number. It uses
+  `## Changelog` bullets when present and otherwise uses the PR title.
+- Review the wording, keep user-facing entries, set `status: published`,
+  and run `npm run changelog:build` to refresh `lib/changelog.json`. Web
+  builds regenerate it as well.
 
 ### Read-only production smoke
 
@@ -204,10 +193,9 @@ the smoke creates no guest accounts and sends no analytics events.
 
 The only live POST sends `{}` to `/api/analyze-scan` and expects a 4xx validation
 response. No images, keys, sign-in, checkout or authenticated features are used.
-`/api/health` is requested only when `api/health.js` exists in the locally fetched
-`origin/main`; otherwise the script prints SKIP. Fetch main first to make that
-check current. A missing main ref is a failure. Health currently follows draft
-PR #450's `HTTP 200` and `ok: true` contract without adopting its code.
+The smoke runner checks `/api/health` for HTTP 200 and `ok: true` when
+`api/health.js` exists on the locally fetched `origin/main`. It reports a
+skip if the file is absent and a failure if the main ref is missing.
 
 Checks print PASS/FAIL, with a nonzero exit code for any failure. Response bodies
 and page contents are never printed. Browser exception diagnostics are sanitized. This limited smoke does

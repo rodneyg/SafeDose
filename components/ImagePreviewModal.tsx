@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import { mapScanToDoseInputs, type ScanResult } from '../lib/scan';
 
 interface ImagePreviewModalProps {
@@ -7,7 +7,7 @@ interface ImagePreviewModalProps {
   imageUri: string;
   scanResult: ScanResult | null;
   onRetake: () => void;
-  onVerify: () => void;
+  onVerify: (substance: string | null) => void;
 }
 
 function ScanSection({ title, fields }: { title: string; fields: [string, string | null][] }) {
@@ -26,23 +26,30 @@ function ScanSection({ title, fields }: { title: string; fields: [string, string
 
 export default function ImagePreviewModal({
   visible,
-  imageUri,
   scanResult,
-  onRetake,
-  onVerify,
+  ...props
 }: ImagePreviewModalProps) {
   if (!visible || !scanResult) return null;
+  return <ScanReview {...props} scanResult={scanResult} />;
+}
 
+function ScanReview({ imageUri, scanResult, onRetake, onVerify }:
+  Omit<ImagePreviewModalProps, 'visible' | 'scanResult'> & { scanResult: ScanResult }) {
   const { syringe, vial } = scanResult;
   const { manualSyringe } = mapScanToDoseInputs(scanResult).inputs;
+  const [editedSubstance, setEditedSubstance] = useState<string | null>(null);
+  const substance = editedSubstance?.trim() ?? vial.substance;
+  const needsSubstanceReview = Boolean(manualSyringe) && vial.substance !== null;
+  const canVerify = !needsSubstanceReview || Boolean(substance);
+  const verificationLabel = needsSubstanceReview ? 'Confirm substance and all details' : 'I checked both';
   const imageHeight = Math.min(Dimensions.get('window').height * 0.5, 300);
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onRetake}>
+    <Modal animationType="fade" transparent visible onRequestClose={onRetake}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>Review Your Scan</Text>
-          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={styles.message}>
               Read the fill line on your own syringe and verify the detected details against your syringe
               and vial label. The scan provides no medical advice.
@@ -58,9 +65,42 @@ export default function ImagePreviewModal({
                 ['Type', syringe.type], ['Capacity', manualSyringe?.volume ?? 'Check the label and select manually'], ['Scale', syringe.scale],
               ]} />
               <ScanSection title="Vial" fields={[
-                ['Substance', vial.substance], ['Total amount', vial.totalAmount],
+                ['Total amount', vial.totalAmount],
                 ['Concentration', vial.concentration], ['Expiration', vial.expiration],
               ]} />
+              {vial.substance !== null ? (
+                <View>
+                  <Text style={styles.scanLabel}>Unconfirmed vial substance</Text>
+                  {editedSubstance === null ? (
+                    <View style={styles.scanRow}>
+                      <Text style={styles.substanceName}>{vial.substance}</Text>
+                      {manualSyringe ? (
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          accessibilityRole="button"
+                          accessibilityLabel="Edit vial substance"
+                          onPress={() => setEditedSubstance(vial.substance)}
+                        >
+                          <Text style={styles.editText}>Edit</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  ) : (
+                    <TextInput
+                      autoFocus
+                      accessibilityLabel="Vial substance"
+                      style={styles.substanceInput}
+                      value={editedSubstance}
+                      onChangeText={setEditedSubstance}
+                    />
+                  )}
+                </View>
+              ) : (
+                <View style={styles.scanRow}>
+                  <Text style={styles.scanLabel}>Substance</Text>
+                  <Text style={styles.scanValue}>Not detected</Text>
+                </View>
+              )}
             </View>
           </ScrollView>
           <View style={styles.buttonContainer}>
@@ -73,11 +113,15 @@ export default function ImagePreviewModal({
               <Text style={styles.buttonText}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.continueButton]}
-              onPress={onVerify}
+              style={[styles.button, styles.continueButton, !canVerify && styles.disabledButton]}
+              disabled={!canVerify}
+              accessibilityState={{ disabled: !canVerify }}
+              onPress={() => { if (canVerify) onVerify(manualSyringe ? substance : null); }}
               accessibilityRole="button"
             >
-              <Text style={styles.buttonText}>{manualSyringe ? 'I checked both' : 'Enter details manually'}</Text>
+              <Text style={styles.buttonText}>
+                {manualSyringe ? verificationLabel : 'Enter details manually'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -175,6 +219,30 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexWrap: 'wrap',
   },
+  substanceName: {
+    color: '#333333',
+    flex: 1,
+    fontSize: 16,
+    alignSelf: 'center',
+  },
+  editButton: {
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  editText: {
+    color: '#005BBB',
+    fontWeight: '600',
+  },
+  substanceInput: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#8E8E93',
+    borderWidth: 1,
+    borderRadius: 8,
+    color: '#000000',
+    padding: 10,
+    marginTop: 8,
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -184,6 +252,7 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
     flex: 1,
@@ -194,9 +263,13 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: '#007AFF',
   },
+  disabledButton: {
+    backgroundColor: '#6D6D72',
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });
