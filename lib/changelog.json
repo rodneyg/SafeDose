@@ -392,6 +392,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-569",
+    "date": "2026-11-21",
+    "title": "Add tests for dose input validation",
+    "status": "published",
+    "prs": [
+      569
+    ],
+    "sections": {
+      "Improved": [
+        "Add tests for dose input validation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-568",
     "date": "2026-11-21",
     "title": "Authorize create-portal-session and add tests",
