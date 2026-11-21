@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-616",
+    "date": "2026-11-21",
+    "title": "Guard Expo SDK 52 updates and pin checkout workflow refs",
+    "status": "published",
+    "prs": [
+      616
+    ],
+    "sections": {
+      "Improved": [
+        "Guard Expo SDK 52 updates and pin checkout workflow refs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-615",
     "date": "2026-11-21",
     "title": "Clear stale injection site rotation warning",
