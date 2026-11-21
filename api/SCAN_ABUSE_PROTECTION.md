@@ -1,19 +1,24 @@
 # Scan abuse protection
 
-`POST /api/analyze-scan` permits 10 attempts per IP in a sliding 60-second
-window, including failed requests. It returns HTTP 429 with `Retry-After`
-in seconds before calling OpenAI. Constants live in `analyze-scan.js`.
-The address comes from the first `x-forwarded-for` entry, then `x-real-ip`,
-then the socket address; unidentified clients share a window. Deploy behind
-Vercel's trusted proxy, which supplies the forwarding headers.
+Each of these routes has its own per-IP limit for POST requests, including
+failed attempts, over a sliding 60-second window:
 
-Windows are in module memory, separately for each instance. Cold starts reset
-them and traffic across instances has separate allowances. This is best-effort
-abuse protection, not a global spend cap or authentication. Shared-IP clients
-share an allowance. At 10,000 active IPs the instance rejects new IPs until
-capacity is available rather than evicting active limits. No paid service or
-new secret is required. Firebase Admin is not a dependency in this repository,
-so client-provided identities are not trusted or used to bypass IP limits.
+- 10 requests: `/api/analyze-scan` and `/api/upgrade-email`
+- 30 requests: `/api/create-checkout-session`, `/api/create-portal-session`,
+  `/api/get-subscription-status`, and `/api/validate-session`
+
+Requests over the limit return HTTP 429 with `Retry-After` in seconds before
+reaching OpenAI, Firebase Admin, or Stripe. On Vercel the key comes from its
+`x-vercel-forwarded-for` header when it contains a valid IP. Direct connections
+use the socket address. Requests with no address share one bucket. The Stripe
+webhook and public health checks keep their existing handling.
+
+Windows are in module memory. Cold starts reset them and each instance has
+its own allowances. At 10,000 active IPs, an instance rejects new IPs until
+capacity is available. Clients on a shared IP share an allowance.
+
+SafeDose uses Firebase client authentication and sends Firebase ID tokens
+where the API requires them. The app does not issue authentication cookies.
 
 Browser Origins must be HTTPS `safedose.rodneygainous.com` (canonical), `safe-dose.vercel.app` (fallback), or a team preview
 `safe-dose-<hash>-rodneygs-projects.vercel.app` or a branch preview `safe-dose-git-<branch>-rodneygs-projects.vercel.app`. HTTP/HTTPS localhost with optional ports is also allowed. Native requests without Origin are allowed. Origin filtering is

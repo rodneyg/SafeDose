@@ -253,30 +253,30 @@ describe('POST /api/analyze-scan', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('limits each forwarded IP, returns Retry-After, and expires the sliding window', async () => {
+  it('limits each client IP, returns Retry-After, and expires the sliding window', async () => {
     process.env.OPENAI_API_KEY = 'test-key';
     create.mockResolvedValue({ choices: [{ message: { content: '{}' } }] });
     let now = 100000;
     const clock = jest.spyOn(Date, 'now').mockImplementation(() => now);
-    const send = async headers => {
+    const send = async remoteAddress => {
       const res = mockRes();
-      await handler({ method: 'POST', headers, body: { image: SMALL_JPEG } }, res);
+      await handler({ method: 'POST', socket: { remoteAddress }, body: { image: SMALL_JPEG } }, res);
       return res;
     };
     try {
-      const headers = { 'x-forwarded-for': '192.0.2.1, 10.0.0.1' };
+      const client = '192.0.2.1';
       for (let i = 0; i < handler.RATE_LIMIT_REQUESTS; i++) {
-        expect((await send(headers)).statusCode).toBe(200);
+        expect((await send(client)).statusCode).toBe(200);
         now += 1000;
       }
-      const limited = await send({ 'x-forwarded-for': '192.0.2.1, 10.0.0.2' });
+      const limited = await send(client);
       expect(limited.statusCode).toBe(429);
       expect(limited.headers['Retry-After']).toBe('50');
       expect(create).toHaveBeenCalledTimes(handler.RATE_LIMIT_REQUESTS);
-      expect((await send({ 'x-real-ip': '192.0.2.2' })).statusCode).toBe(200);
+      expect((await send('192.0.2.2')).statusCode).toBe(200);
       now = 100000 + handler.RATE_LIMIT_WINDOW_MS;
-      expect((await send(headers)).statusCode).toBe(200);
-      expect((await send(headers)).statusCode).toBe(429);
+      expect((await send(client)).statusCode).toBe(200);
+      expect((await send(client)).statusCode).toBe(429);
     } finally {
       clock.mockRestore();
     }
