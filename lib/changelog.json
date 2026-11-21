@@ -140,6 +140,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-561",
+    "date": "2026-11-21",
+    "title": "Keep protocol dates within the four-digit calendar range",
+    "status": "published",
+    "prs": [
+      561
+    ],
+    "sections": {
+      "Improved": [
+        "Keep protocol dates within the four-digit calendar range"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-530",
     "date": "2026-11-21",
     "title": "Test SafeDose landing CTA wording (T-1219)",
