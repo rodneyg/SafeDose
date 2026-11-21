@@ -247,8 +247,10 @@ it.each([
 it('offers manual entry if the real scan route cannot complete a provider request', async () => {
   mockCreate.mockRejectedValue(new Error('private provider diagnostic'));
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE));
+  // Reuse the capture helper used by the other cases so this assertion waits on the
+  // in-process promise rather than an undeclared polling helper.
+  await uploadPhoto(screen);
+  expect(screen.getByRole('alert').props.children).toBe(SCAN_UNAVAILABLE_MESSAGE);
 
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledTimes(1);
