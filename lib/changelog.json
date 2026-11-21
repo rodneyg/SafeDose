@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-505",
+    "date": "2026-11-21",
+    "title": "T-1293: Compare retake tips after refused scans",
+    "status": "published",
+    "prs": [
+      505
+    ],
+    "sections": {
+      "Improved": [
+        "T-1293: Compare retake tips after refused scans"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-501",
     "date": "2026-11-21",
     "title": "T-1141 Fix SafeDose web startup and extend production smoke",
