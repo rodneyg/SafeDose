@@ -4,7 +4,9 @@ import stripeConfig from "../lib/stripeConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Platform } from "react-native";
 import { Link, router } from "expo-router";
 import PublicLinks from "../components/PublicLinks";
+import UpgradeEmailForm from "../components/UpgradeEmailForm";
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from "../lib/analytics";
+import { useAuth } from "../contexts/AuthContext";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { CheckCircle, Shield, Zap, Clock, LucideIcon } from "lucide-react-native";
 import { getApiBaseUrl } from "../lib/apiBase";
@@ -60,6 +62,7 @@ type PricingPlan = (typeof pricingPlansData)[number];
 
 export default function PricingPage() {
   const { profile } = useUserProfile();
+  const { user } = useAuth();
   const isWeb = Platform.OS === 'web';
   
   // Animation refs
@@ -406,6 +409,10 @@ export default function PricingPage() {
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
+
+      {user && (
+        <UpgradeEmailForm getIdToken={() => user.getIdToken()} onClose={() => {}} />
+      )}
 
       {/* Footer Actions */}
       <View style={styles.footerActions}>
