@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-627",
+    "date": "2026-11-21",
+    "title": "Expand dose calculator hook JSDoc",
+    "status": "published",
+    "prs": [
+      627
+    ],
+    "sections": {
+      "Improved": [
+        "Expand dose calculator hook JSDoc"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-626",
     "date": "2026-11-21",
     "title": "Fix main full-suite PhotoScan wait helper",
