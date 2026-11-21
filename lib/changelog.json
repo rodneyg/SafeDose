@@ -98,6 +98,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-573",
+    "date": "2026-11-21",
+    "title": "T-1641: Test reconstitution planner validation and exact handoff",
+    "status": "published",
+    "prs": [
+      573
+    ],
+    "sections": {
+      "Improved": [
+        "T-1641: Test reconstitution planner validation and exact handoff"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-564",
     "date": "2026-11-21",
     "title": "Add Vercel Web Analytics to SafeDose web",
