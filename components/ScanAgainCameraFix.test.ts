@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import NewDoseScreen from '../app/(tabs)/new-dose';
+import modelOutputs from '../evals/vision/fixtures/model-outputs.json';
 import wrongFills from '../evals/vision/fixtures/holdout-wrong-fills.json';
 import { parseScanModelOutput } from '../lib/scan';
 import type { UseDoseCalculatorProps } from '../lib/hooks/useDoseCalculator';
@@ -235,6 +236,26 @@ it.each(wrongFills)('requires explicit review before applying accepted capture %
   );
   expect(mockCalculator.setDose.mock.calls).toEqual([['']]);
   expect(mockCalculator.setDoseValue.mock.calls).toEqual([[null]]);
+  expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
+});
+
+it('requires a fresh syringe selection when the scanned capacity exceeds the visible scale', async () => {
+  // Capacity and marks come from development validation cases c2-b0-s1 and c1-b0-s1.
+  const output = modelOutputs[0].model_output;
+  const raw = JSON.stringify({ ...output, syringe: { ...output.syringe, markings: '0,10,20,30,40,50' } });
+  navigate('scan');
+  mockCapture.mockResolvedValueOnce(parseScanModelOutput(raw));
+  await act(async () => { await camera().props.onCapture(); });
+  const preview = renderer.root.findByType('ImagePreviewModal' as never);
+  expect(preview.props.visible).toBe(true);
+  expect(mockCalculator.setManualSyringe).not.toHaveBeenCalled();
+
+  act(() => { preview.props.onVerify(); });
+  expect(preview.props.visible).toBe(false);
+  expect(mockCalculator.resetFullForm).toHaveBeenCalledWith('dose');
+  expect(mockCalculator.setManualSyringe.mock.calls).toEqual([[{ type: 'Standard', volume: '', needsConfirmation: true }]]);
+  expect(mockCalculator.setScreenStep).toHaveBeenCalledWith('manualEntry');
+  expect(mockCalculator.setConcentrationAmount).not.toHaveBeenCalled();
   expect(mockCalculator.handleCalculateFinal).not.toHaveBeenCalled();
 });
 

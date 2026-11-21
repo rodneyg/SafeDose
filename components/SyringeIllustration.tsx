@@ -6,10 +6,12 @@ type Props = {
   syringeType: 'Insulin' | 'Standard';
   syringeVolume: string;
   recommendedMarking: string | null;
+  showDrawLabel?: boolean;
+  width?: number;
   syringeOptions: { [key: string]: { [key: string]: string } };
 };
 
-export default function SyringeIllustration({ syringeType, syringeVolume, recommendedMarking, syringeOptions }: Props) {
+export default function SyringeIllustration({ syringeType, syringeVolume, recommendedMarking, syringeOptions, showDrawLabel = true, width = 300 }: Props) {
   const unit = syringeType === 'Insulin' ? 'Units' : 'ml';
   const markingsString = syringeOptions[syringeType]?.[syringeVolume];
   
@@ -17,7 +19,7 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
   if (!markingsString) {
     // Return a simple placeholder view when markings are unavailable
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { width }]}>
         <View style={styles.syringeBody} />
         <View style={styles.syringeLine} />
         <Text style={styles.noMarkingsText}>No markings available for this syringe</Text>
@@ -27,19 +29,18 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
   
   const markings = [0, ...markingsString.split(',').map(m => parseFloat(m))];
   const maxMarking = Math.max(...markings);
-  const syringeWidth = 300;
-  const markingPositions = markings.map(m => (m / maxMarking) * syringeWidth);
+  const markingPositions = markings.map(m => (m / maxMarking) * width);
   const recommendedValue = new Exact(recommendedMarking || '0').toNumber();
-  const recommendedPosition = (recommendedValue / maxMarking) * syringeWidth;
+  const recommendedPosition = (recommendedValue / maxMarking) * width;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width }]}>
       <View style={styles.syringeBody} />
       <View style={styles.syringeLine} />
       {markings.map((m, index) => (
         <View key={m} style={[styles.marking, { left: markingPositions[index] }]} />
       ))}
-      {markings.map((m, index) => (
+      {markings.map((m, index) => (markings.length <= 12 || index % 5 === 0) && (
         <Text key={`label-${m}`} style={[styles.markingLabel, { left: markingPositions[index] - 10 }]}>
           {m}
         </Text>
@@ -49,9 +50,9 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
         <>
           <View style={[styles.recommendedMark, { left: recommendedPosition - 2 }]} />
           <View style={[styles.precisionIndicator, { left: recommendedPosition - 1 }]} />
-          <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 35) }]}>
+          {showDrawLabel && <Text style={[styles.recommendedText, { left: Math.max(0, recommendedPosition - 35) }]}>
             Draw to {new Exact(recommendedMarking || '0').fixed(2)} {unit}
-          </Text>
+          </Text>}
         </>
       )}
     </View>
@@ -59,12 +60,12 @@ export default function SyringeIllustration({ syringeType, syringeVolume, recomm
 }
 
 const styles = StyleSheet.create({
-  container: { width: 300, height: 100, position: 'relative' },
-  syringeBody: { position: 'absolute', left: 0, top: 40, width: 300, height: 20, backgroundColor: '#E0E0E0', borderRadius: 10 },
-  syringeLine: { position: 'absolute', left: 0, top: 50, width: 300, height: 2, backgroundColor: '#000' },
+  container: { height: 100, position: 'relative' },
+  syringeBody: { position: 'absolute', left: 0, top: 40, width: '100%', height: 20, backgroundColor: '#E0E0E0', borderRadius: 10 },
+  syringeLine: { position: 'absolute', left: 0, top: 50, width: '100%', height: 2, backgroundColor: '#000' },
   marking: { position: 'absolute', top: 40, width: 1, height: 20, backgroundColor: '#000' },
   markingLabel: { position: 'absolute', top: 65, fontSize: 10 },
-  unitLabel: { position: 'absolute', left: 250, top: 20, fontSize: 12, color: '#000', fontWeight: 'bold' },
+  unitLabel: { position: 'absolute', right: 4, top: 20, fontSize: 12, color: '#000', fontWeight: 'bold' },
   recommendedMark: { position: 'absolute', top: 20, width: 4, height: 60, backgroundColor: '#FF0000', zIndex: 1 },
   precisionIndicator: { position: 'absolute', top: 18, width: 2, height: 64, backgroundColor: '#FFD700', zIndex: 2 },
   recommendedText: { position: 'absolute', top: 85, fontSize: 10, color: '#FF0000', fontWeight: 'bold' },
