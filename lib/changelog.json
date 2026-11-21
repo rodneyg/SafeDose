@@ -994,6 +994,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-535",
+    "date": "2026-11-21",
+    "title": "T-1221: Test clearer first-scan copy on the web",
+    "status": "published",
+    "prs": [
+      535
+    ],
+    "sections": {
+      "Improved": [
+        "T-1221: Test clearer first-scan copy on the web"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-534",
     "date": "2026-11-21",
     "title": "Test monthly and annual pricing defaults",
