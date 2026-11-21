@@ -40,6 +40,17 @@ describe('useAuth provider state', () => {
     });
   });
 
+  it('throws when called outside an AuthProvider', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    try {
+      expect(() => renderHook(() => useAuth())).toThrow(
+        'useAuth must be used within an AuthProvider'
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it('exposes a signed-in Firebase user', async () => {
     const hook = await renderUseAuth();
 
