@@ -202,6 +202,16 @@ and page contents are never printed. Browser exception diagnostics are sanitized
 not establish that photo inference or checkout works. Test the smoke runner
 against local HTTP fixtures with `node --test scripts/prod-smoke.test.mjs`.
 
+### Check the deployed ping endpoint
+
+```sh
+curl --fail --silent --show-error -i https://safedose.rodneygainous.com/api/ping
+```
+
+Expect HTTP 200, `Cache-Control: no-store`, and the JSON body
+`{"ok":true,"message":"pong"}`. Use the same path on a preview deployment
+to check whether it responds.
+
 ### Web preview smoke in GitHub Actions
 
 After this workflow is on the default branch, Vercel's successful Preview
