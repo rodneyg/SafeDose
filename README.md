@@ -2,10 +2,8 @@
 
 [![CI](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rodneyg/SafeDose/actions/workflows/ci.yml)
 
-**A verification and calculation tool for administering injectable medications prescribed by your healthcare provider.**  
-Created by **SafeLab**, SafeDose helps you verify medication materials, perform unit conversion calculations, and reduce math errors when executing your provider's prescription.
-
-Whether you're working with mg/ml, reconstituted peptides, or insulin units, SafeDose helps you verify your materials match your prescription and calculate the volume to draw.
+**A verification and calculation tool for injectable medications prescribed by your healthcare provider.**
+Created by **SafeLab**, SafeDose calculates a draw volume from the dose and syringe details you enter or confirm. It uses the medication strength when converting a dose to volume. Compare those inputs and the result with your prescription before use.
 
 ---
 
@@ -166,7 +164,7 @@ Please avoid introducing breaking changes or external dependencies unless necess
 
 🛡 License
 
-MIT License.
+The project declares the MIT License. The full license text is currently absent from this repository.
 By using this project, you agree not to market it as a certified medical device without independent validation and regulatory approval.
 
 ⸻
