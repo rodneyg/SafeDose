@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-500",
+    "date": "2026-11-21",
+    "title": "Fix compatible npm audit findings",
+    "status": "published",
+    "prs": [
+      500
+    ],
+    "sections": {
+      "Improved": [
+        "Fix compatible npm audit findings"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-497",
     "date": "2026-11-21",
     "title": "Add render tests for 4 components",
