@@ -11,6 +11,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/react"
         update-types: ["version-update:semver-major"]
+      # Firebase 11 expects AsyncStorage 1.x. AsyncStorage 3 also requires Kotlin 2.1.
+      - dependency-name: "@react-native-async-storage/async-storage"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
