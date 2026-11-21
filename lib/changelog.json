@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-513",
+    "date": "2026-11-21",
+    "title": "T-1210: Show errors in web dose entry",
+    "status": "published",
+    "prs": [
+      513
+    ],
+    "sections": {
+      "Improved": [
+        "T-1210: Show errors in web dose entry"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-508",
     "date": "2026-11-21",
     "title": "Gate wrong numbers in offline vision replays",
