@@ -1,48 +1,35 @@
 // app/index.tsx
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { startTransition, useEffect, useState } from 'react';
+import { Redirect, type Href } from 'expo-router';
 import AnimatedSplashScreen from '../components/AnimatedSplashScreen';
 import { useAuth } from '../contexts/AuthContext';
-import { loadRemoteUserProfile, resolveLaunchRoute } from '../lib/onboardingState';
+import { loadRemoteUserProfile, ONBOARDING_ROUTE, resolveLaunchRoute } from '../lib/onboardingState';
 
 export default function InitialScreen() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+  const [launchRoute, setLaunchRoute] = useState<Href | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function checkAppState() {
+      let route: Href = ONBOARDING_ROUTE;
       try {
-        const route = await resolveLaunchRoute({
+        route = await resolveLaunchRoute({
           user,
           loadRemoteProfile: loadRemoteUserProfile,
-        });
-        console.log('[InitialScreen] Launch route', {
-          route,
-          uid: user?.uid,
-          isAnonymous: user?.isAnonymous,
-        });
-        router.replace(route as any);
+        }) as Href;
       } catch (e) {
         console.error('[InitialScreen] ERROR checking app state:', e);
-        router.replace('/onboarding');
-      } finally {
-        setIsChecking(false);
+      }
+      if (!cancelled) {
+        // Commit the launch route after the web Suspense boundary can hydrate.
+        startTransition(() => setLaunchRoute(route));
       }
     }
     checkAppState();
-  }, [router, user?.uid, user?.isAnonymous]);
+    return () => { cancelled = true; };
+  }, [user]);
 
-  const handleSplashComplete = () => {
-    if (!isChecking) {
-      setShowSplash(false);
-    }
-  };
-
-  if (isChecking || showSplash) {
-    return <AnimatedSplashScreen onAnimationComplete={handleSplashComplete} />;
-  }
-
-  return null;
+  return launchRoute ? <Redirect href={launchRoute} /> : <AnimatedSplashScreen />;
 }

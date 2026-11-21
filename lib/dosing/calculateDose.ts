@@ -19,7 +19,7 @@ export interface ManualSyringe {
 }
 
 export interface CalculateDoseParams {
-  doseValue: number | null;
+  doseValue: number | Exact | null;
   concentrationExact?: string | null;
   concentration: number | null;
   unit: 'mg' | 'mcg' | 'units' | 'mL';
@@ -106,7 +106,9 @@ export function calculateDose({
   const fail = (calculationError: string): CalculateDoseResult => ({
     calculatedVolume: null, calculatedConcentration: null, recommendedMarking: null, calculationError,
   });
-  if (doseValue === null || !Number.isFinite(doseValue) || doseValue <= 0) {
+  if (doseValue === null || (doseValue instanceof Exact
+    ? doseValue.compare(0) <= 0
+    : !Number.isFinite(doseValue) || doseValue <= 0)) {
     return fail('Dose value is invalid or missing.');
   }
   const compatibility = validateUnitCompatibility(unit, concentrationUnit);

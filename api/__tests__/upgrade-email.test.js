@@ -18,6 +18,7 @@ const handler = require('../upgrade-email');
 const { getFirestore } = require('firebase-admin/firestore');
 const originalEnv = process.env;
 const headers = { authorization: 'Bearer test-token', 'content-type': 'application/json' };
+let testClient = 0;
 
 async function request(options = {}) {
   const res = {
@@ -26,11 +27,13 @@ async function request(options = {}) {
     json: jest.fn(),
     end: jest.fn(),
   };
-  await handler({ method: 'POST', headers, body: { email: 'person@example.test' }, ...options }, res);
+  const socket = { remoteAddress: '192.0.2.' + testClient };
+  await handler({ method: 'POST', headers, body: { email: 'person@example.test' }, socket, ...options }, res);
   return res;
 }
 
 beforeEach(() => {
+  testClient++;
   jest.clearAllMocks();
   process.env = {
     ...originalEnv,
@@ -110,4 +113,17 @@ it('keeps provider error details out of logs and responses', async () => {
   expect(res.status).toHaveBeenCalledWith(503);
   expect(res.json).not.toHaveBeenCalled();
   expect(log).toHaveBeenCalledWith('[upgrade-email] Unable to save consent.');
+});
+
+it('limits repeated POSTs before verifying the token and keeps GET available', async () => {
+  jest.spyOn(Date, 'now').mockReturnValue(100_000);
+  for (let i = 0; i < 10; i++) {
+    expect((await request()).status).toHaveBeenCalledWith(204);
+  }
+  const limited = await request();
+  expect(limited.status).toHaveBeenCalledWith(429);
+  expect(limited.setHeader).toHaveBeenCalledWith('Retry-After', '60');
+  expect(mockVerify).toHaveBeenCalledTimes(10);
+  expect(mockCreate).toHaveBeenCalledTimes(10);
+  expect((await request({ method: 'GET' })).json).toHaveBeenCalledWith({ enabled: true });
 });

@@ -258,14 +258,15 @@ export interface Thresholds {
 }
 export function evaluateThresholds(summary: EvalSummary, thresholds: Thresholds) {
   const violations: string[] = [], unassessed: string[] = [];
-  if (summary.classes['wrong-number-shown'] > 0) violations.push('wrong-number-shown exceeds the zero allowance');
+  const wrong_number_shown_pass = summary.classes['wrong-number-shown'] <= thresholds.wrong_number_shown_allowed;
+  if (!wrong_number_shown_pass) violations.push(`wrong-number-shown exceeds the allowance of ${thresholds.wrong_number_shown_allowed}`);
   if (summary.uncaught_syringe_misses > thresholds.uncaught_syringe_misses_allowed) violations.push('a syringe miss was not caught by refusal/confirmation');
   for (const [field, minimum] of [['syringe.type', thresholds.syringe_type_min_accuracy], ['syringe.capacity_ml', thresholds.syringe_capacity_min_accuracy]] as const) {
     const accuracy = summary.field_accuracy[field]?.accuracy;
     if (accuracy === null || accuracy === undefined) unassessed.push(field);
     else if (accuracy < minimum) violations.push(`${field} accuracy ${accuracy} is below ${minimum}`);
   }
-  return { would_pass: violations.length === 0 && unassessed.length === 0, violations, unassessed, status: thresholds.status };
+  return { would_pass: violations.length === 0 && unassessed.length === 0, wrong_number_shown_pass, violations, unassessed, status: thresholds.status };
 }
 
 export function renderMarkdown(summary: EvalSummary, gate: ReturnType<typeof evaluateThresholds>, context: {
