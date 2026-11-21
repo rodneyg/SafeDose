@@ -798,6 +798,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-519",
+    "date": "2026-11-21",
+    "title": "Fix native build for iOS and Android",
+    "status": "published",
+    "prs": [
+      519
+    ],
+    "sections": {
+      "Improved": [
+        "Fix native build for iOS and Android"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-518",
     "date": "2026-11-21",
     "title": "Add optional dosing protocol setup and preview",
