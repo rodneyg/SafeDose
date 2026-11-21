@@ -166,8 +166,8 @@ it('requires a nonblank name after Edit and passes the corrected substance on co
   const content = JSON.stringify(MODEL_OUTPUT);
   mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
   const screen = render(<PhotoFlow />);
-  fireEvent.press(screen.getByText('Take or Upload Photo'));
-  await waitFor(() => expect(screen.getByText('Unconfirmed vial substance')).toBeTruthy());
+  await uploadPhoto(screen);
+  expect(screen.getByText('Unconfirmed vial substance')).toBeTruthy();
 
   fireEvent.press(screen.getByRole('button', { name: 'Edit vial substance' }));
   const input = screen.getByLabelText('Vial substance');

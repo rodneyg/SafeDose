@@ -110,7 +110,7 @@
     "@playwright/test": "^1.65.1",
     "@testing-library/react-native": "^12.9.0",
     "@types/jest": "^29.5.14",
-    "@types/react": "~18.3.12",
+    "@types/react": "~18.3.31",
     "@types/react-test-renderer": "^18.3.2",
     "ajv": "8.11.0",
     "esbuild": "^0.21.5",

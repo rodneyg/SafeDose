@@ -110,6 +110,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run test:dependabot-config
       - run: npx jest --runInBand
 
   demo-regressions:
