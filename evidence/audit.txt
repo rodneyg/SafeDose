@@ -1,0 +1,18 @@
+T-10682 npm audit evidence
+
+Baseline commit: 29f2cec226a8952b7ff7138f623fc4fa43c3ce7b
+Existing fix commit: 983f0a2a87db5b0ebe949377ae01158724f845cd (Fix compatible npm audit findings, PR #500)
+
+Before counts
+- Production high: unavailable, npm audit endpoint returned HTTP 403
+- Production critical: unavailable, npm audit endpoint returned HTTP 403
+- All dependencies high: unavailable, npm audit endpoint returned HTTP 403
+- All dependencies critical: unavailable, npm audit endpoint returned HTTP 403
+
+After counts
+- Production high: unavailable, npm audit endpoint returned HTTP 403
+- Production critical: unavailable, npm audit endpoint returned HTTP 403
+- All dependencies high: unavailable, npm audit endpoint returned HTTP 403
+- All dependencies critical: unavailable, npm audit endpoint returned HTTP 403
+
+Main already contains the compatible audit remediation and its lockfile regression test. The focused regression test passes: 6 tests passed. No dependency or lockfile change was made for this duplicate task.

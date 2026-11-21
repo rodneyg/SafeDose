@@ -1,0 +1,21 @@
+$ npm audit --omit=dev
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn audit 403 Forbidden - POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+Forbidden
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-21T18_11_15_218Z-debug-0.log
+exit=1
+$ npm audit
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn audit 403 Forbidden - POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+Forbidden
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-21T18_11_17_951Z-debug-0.log
+exit=1
+$ npm audit --omit=dev --registry=https://registry.npmjs.org/
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn audit 403 Forbidden - POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+Forbidden
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-21T18_11_20_491Z-debug-0.log
+exit=1

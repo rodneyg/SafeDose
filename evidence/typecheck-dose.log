@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 typecheck:dose-calculator-props
+> tsc -p tsconfig.dose-calculator-props.json
+
+contexts/AuthContext.tsx(32,36): error TS2694: Namespace 'global.NodeJS' has no exported member 'Timeout'.
+contexts/AuthContext.tsx(33,44): error TS2694: Namespace 'global.NodeJS' has no exported member 'Timeout'.

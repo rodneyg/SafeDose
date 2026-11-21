@@ -1,0 +1,5 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 typecheck:vision
+> tsc --noEmit -p tsconfig.vision.json
+

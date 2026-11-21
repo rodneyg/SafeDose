@@ -1,0 +1,56 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 prebuild:web
+> npm run changelog:build
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 changelog:build
+> node scripts/changelog.js build
+
+
+> safedose@1.0.0 build:web
+> rimraf dist && CI=1 EXPO_NO_TELEMETRY=1 expo export --platform web --output-dir dist && node scripts/generate-service-worker.js
+
+Starting Metro Bundler
+Static rendering is enabled. Learn more: https://docs.expo.dev/router/reference/static-rendering/
+Error: While trying to resolve module `expo-router` from file `/workspace/SafeDose/t-safedose-npm-audit-fix-dup/app/(tabs)/_layout.tsx`, the package `/workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/package.json` was successfully found. However, this package itself specifies a `main` module field that could not be resolved (`/workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index`. Indeed, none of these files exist:
+
+  * /workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index(.web.ts|.ts|.web.tsx|.tsx|.web.js|.js|.web.jsx|.jsx|.web.json|.json|.web.cjs|.cjs|.web.mjs|.mjs|.web.scss|.scss|.web.sass|.sass|.web.css|.css|.web.css|.css)
+  * /workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index/index(.web.ts|.ts|.web.tsx|.tsx|.web.js|.js|.web.jsx|.jsx|.web.json|.json|.web.cjs|.cjs|.web.mjs|.mjs|.web.scss|.scss|.web.sass|.sass|.web.css|.css|.web.css|.css)
+Error: While trying to resolve module `expo-router` from file `/workspace/SafeDose/t-safedose-npm-audit-fix-dup/app/(tabs)/_layout.tsx`, the package `/workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/package.json` was successfully found. However, this package itself specifies a `main` module field that could not be resolved (`/workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index`. Indeed, none of these files exist:
+
+  * /workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index(.web.ts|.ts|.web.tsx|.tsx|.web.js|.js|.web.jsx|.jsx|.web.json|.json|.web.cjs|.cjs|.web.mjs|.mjs|.web.scss|.scss|.web.sass|.sass|.web.css|.css|.web.css|.css)
+  * /workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/expo-router/index/index(.web.ts|.ts|.web.tsx|.tsx|.web.js|.js|.web.jsx|.jsx|.web.json|.json|.web.cjs|.cjs|.web.mjs|.mjs|.web.scss|.scss|.web.sass|.sass|.web.css|.css|.web.css|.css)
+    at DependencyGraph.resolveDependency (/workspace/SafeDose/node_modules/metro/src/node-haste/DependencyGraph.js:260:17)
+    at /workspace/SafeDose/node_modules/metro/src/lib/transformHelpers.js:165:21
+    at resolveDependencies (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:42:25)
+    at visit (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:83:30)
+    at async Promise.all (index 0)
+    at visit (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 0)
+    at visit (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 8)
+    at visit (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 0)
+    at visit (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:92:5)
+    at async Promise.all (index 0)
+    at buildSubgraph (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/buildSubgraph.js:103:3)
+    at Graph._buildDelta (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/Graph.js:157:22)
+    at Graph.initialTraverseDependencies (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/Graph.js:140:19)
+    at DeltaCalculator._getChangedDependencies (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/DeltaCalculator.js:151:25)
+    at DeltaCalculator.getDelta (/workspace/SafeDose/node_modules/metro/src/DeltaBundler/DeltaCalculator.js:68:16)
+    at DeltaBundler.buildGraph (/workspace/SafeDose/node_modules/metro/src/DeltaBundler.js:33:5)
+    at IncrementalBundler.buildGraphForEntries (/workspace/SafeDose/node_modules/metro/src/IncrementalBundler.js:54:19)
+    at IncrementalBundler.buildGraph (/workspace/SafeDose/node_modules/metro/src/IncrementalBundler.js:134:19)
+    at /workspace/SafeDose/node_modules/metro/src/IncrementalBundler.js:172:34
+    at IncrementalBundler.initializeGraph (/workspace/SafeDose/node_modules/metro/src/IncrementalBundler.js:189:24)
+    at MetroBundlerDevServer._bundleDirectAsync (/workspace/SafeDose/node_modules/@expo/cli/src/start/server/metro/MetroBundlerDevServer.ts:1533:23)
+    at MetroBundlerDevServer.metroLoadModuleContents (/workspace/SafeDose/node_modules/@expo/cli/src/start/server/metro/MetroBundlerDevServer.ts:528:21)
+    at MetroBundlerDevServer.ssrLoadModuleContents (/workspace/SafeDose/node_modules/@expo/cli/src/start/server/metro/MetroBundlerDevServer.ts:590:48)
+    at MetroBundlerDevServer.ssrLoadModule (/workspace/SafeDose/node_modules/@expo/cli/src/start/server/metro/MetroBundlerDevServer.ts:418:17)
+    at MetroBundlerDevServer.getStaticRenderFunctionAsync (/workspace/SafeDose/node_modules/@expo/cli/src/start/server/metro/MetroBundlerDevServer.ts:278:7)
+    at async Promise.all (index 1)
+    at exportFromServerAsync (/workspace/SafeDose/node_modules/@expo/cli/src/export/exportStaticAsync.ts:164:66)
+    at exportAppAsync (/workspace/SafeDose/node_modules/@expo/cli/src/export/exportApp.ts:352:9)
+    at exportAsync (/workspace/SafeDose/node_modules/@expo/cli/src/export/exportAsync.ts:21:3)

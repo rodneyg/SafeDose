@@ -1,0 +1,69 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand
+
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/t-safedose-npm-audit-fix-dup/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+
+Test Suites: 167 passed, 167 total
+Tests:       1879 passed, 1879 total
+Snapshots:   0 total
+Time:        128.567 s
+Ran all test suites.
+yringe and vial values
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          124 |   ['fixture-exact-read', 'Insulin', 'U-100', { units: 25, ml: 0.25, plunger_visible: true }],
+          125 |   ['fixture-standard-read', 'Standard', 'mL', { units: null, ml: 0.5, plunger_visible: true }],
+        > 126 | ] as const)('uploads %s through the API and displays the parsed syringe and vial values', async (fixtureId, type, scale, fill) => {
+              |            ^
+          127 |   const content = JSON.stringify(fixtures.find(f => f.label.id === fixtureId)!.model_output);
+          128 |   mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
+          129 |   const screen = render(<PhotoFlow />);
+
+          at eachBind (../node_modules/jest-each/build/index.js:54:13)
+          at Object.<anonymous> (components/PhotoScanSuccess.integration.test.tsx:126:12)
+
+
+Summary of all failing tests
+FAIL components/PhotoScanSuccess.integration.test.tsx (6.991 s)
+  ● uploads fixture-exact-read through the API and displays the parsed syringe and vial values
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          124 |   ['fixture-exact-read', 'Insulin', 'U-100', { units: 25, ml: 0.25, plunger_visible: true }],
+          125 |   ['fixture-standard-read', 'Standard', 'mL', { units: null, ml: 0.5, plunger_visible: true }],
+        > 126 | ] as const)('uploads %s through the API and displays the parsed syringe and vial values', async (fixtureId, type, scale, fill) => {
+              |            ^
+          127 |   const content = JSON.stringify(fixtures.find(f => f.label.id === fixtureId)!.model_output);
+          128 |   mockCreate.mockResolvedValue({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] });
+          129 |   const screen = render(<PhotoFlow />);
+
+          at eachBind (../node_modules/jest-each/build/index.js:54:13)
+          at Object.<anonymous> (components/PhotoScanSuccess.integration.test.tsx:126:12)
+
+
+Test Suites: 1 failed, 166 passed, 167 total
+Tests:       1 failed, 1878 passed, 1879 total
+Snapshots:   0 total
+Time:        141.044 s
+Ran all test suites.

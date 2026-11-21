@@ -1,0 +1,2 @@
+issue	pr_url	status	checks	evidence
+T-10682	https://github.com/rodneyg/SafeDose/pull/500	already-done	focused audit regression 6/6 passed; full tests 1878/1879 passed with one timeout; npm audit unavailable due HTTP 403	existing fix commit 983f0a2a87db5b0ebe949377ae01158724f845cd; evidence/audit.txt; evidence/audit-lockfile-test.log

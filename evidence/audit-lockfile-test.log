@@ -1,0 +1,8 @@
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/t-safedose-npm-audit-fix-dup/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        4.615 s
+Ran all test suites matching scripts/__tests__/audit-lockfile.test.js.

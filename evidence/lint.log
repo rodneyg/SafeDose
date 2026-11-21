@@ -1,0 +1,25 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 lint
+> expo lint
+
+> npx eslint .
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+Oops! Something went wrong! :(
+
+ESLint: 8.57.1
+
+Error: ENOENT: no such file or directory, stat '/workspace/SafeDose/t-safedose-npm-audit-fix-dup/node_modules/@firebase/auth/dist/esm/index-1970027f.js'
+Occurred while linting /workspace/SafeDose/t-safedose-npm-audit-fix-dup/AuthContext.test.tsx:1
+Rule: "import/namespace"
+    at Object.statSync (node:fs:1726:25)
+    at ExportMapBuilder._for (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/exportMap/builder.js:52:37)
+    at Namespace.resolveImport (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/exportMap/namespace.js:19:44)
+    at Object.getImport (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/exportMap/specifier.js:31:131)
+    at ExportMap.get (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/exportMap/index.js:116:36)
+    at ExportMap.get (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/exportMap/index.js:137:41)
+    at /workspace/SafeDose/node_modules/eslint-plugin-import/lib/rules/namespace.js:33:30
+    at Array.forEach (<anonymous>)
+    at processBodyStatement (/workspace/SafeDose/node_modules/eslint-plugin-import/lib/rules/namespace.js:20:26)
+    at /workspace/SafeDose/node_modules/eslint-plugin-import/lib/rules/namespace.js:85:40
