@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { ArrowRight, ArrowLeft, Calendar, Shield, X } from 'lucide-react-native';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { isMobileWeb } from '@/lib/utils';
+import { firstDoseQuickStartEnabled } from '@/lib/firstDoseExperiment';
 import DatePickerSelect from '@/components/ui/DatePickerSelect';
 import {
   calculateAge,
@@ -18,6 +19,7 @@ import {
 
 export default function BirthDateCollection() {
   const router = useRouter();
+  const nextRoute = firstDoseQuickStartEnabled ? '/onboarding/quick-start' : '/onboarding/demo';
   const { setDetails } = useOnboardingDetails();
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
@@ -68,8 +70,8 @@ export default function BirthDateCollection() {
     
     setDetails({ age, birthDate, limitedFunctionality: false });
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_COMPLETED);
-    router.navigate(age < 18 ? '/onboarding/child-safety' : '/onboarding/demo');
-  }, [isComplete, isValid, validation, birthDate, router, setDetails]);
+    router.navigate(age < 18 ? '/onboarding/child-safety' : nextRoute);
+  }, [isComplete, isValid, validation, birthDate, router, setDetails, nextRoute]);
 
   const handleSkip = useCallback(() => {
     // Show safety explanation modal instead of directly skipping
@@ -80,8 +82,8 @@ export default function BirthDateCollection() {
     logAnalyticsEvent(ANALYTICS_EVENTS.BIRTH_DATE_COLLECTION_SKIPPED);
     setShowSafetyModal(false);
     setDetails({ age: null, birthDate: null, limitedFunctionality: true });
-    router.navigate('/onboarding/demo');
-  }, [router, setDetails]);
+    router.navigate(nextRoute);
+  }, [router, setDetails, nextRoute]);
 
   const handleCancelSkip = useCallback(() => {
     setShowSafetyModal(false);

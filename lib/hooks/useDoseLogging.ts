@@ -4,6 +4,7 @@ import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog, InjectionSite } from '../../types/doseLog';
+import { recordFirstDoseLogged } from '../firstDoseExperiment';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 /** Logs completed doses and exposes the current log-limit state. */
@@ -33,16 +34,9 @@ export function useDoseLogging() {
       }
       
       await AsyncStorage.setItem(storageKey, JSON.stringify(logsList));
+      if (logsList.length === 1) await recordFirstDoseLogged(Date.now());
       console.log('[useDoseLogging] Dose log saved locally:', doseLog.id, 'Total logs:', logsList.length);
       
-      // Verify the save worked by immediately reading it back
-      const verification = await AsyncStorage.getItem(storageKey);
-      if (verification) {
-        const verifiedLogs = JSON.parse(verification);
-        console.log('[useDoseLogging] Verification: saved logs count =', verifiedLogs.length);
-      } else {
-        console.warn('[useDoseLogging] Warning: Verification failed - no data found after save');
-      }
       return logsList.length;
     } catch (error) {
       console.error('[useDoseLogging] Error saving dose log locally:', error);
@@ -215,8 +209,9 @@ export function useDoseLogging() {
         doseLog.firestoreId = firestoreId;
       }
       
-      // Save locally (always works, now includes Firestore ID if available)
+      // Save locally, including the Firestore ID when available.
       const localDoseCount = await saveDoseLogLocally(doseLog);
+      if (localDoseCount === undefined && !firestoreId) return { success: false };
       
       // Increment log usage count
       await incrementLogsUsed();

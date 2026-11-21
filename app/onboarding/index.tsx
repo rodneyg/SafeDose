@@ -16,6 +16,7 @@ import {
   recordLandingCtaStart,
 } from '../../lib/landingCtaExperiment';
 import { loadRemoteUserProfile, routeAfterGoogleSignIn } from '../../lib/onboardingState';
+import { startFirstDoseTimer } from '../../lib/firstDoseExperiment';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800';
 
@@ -27,6 +28,7 @@ export default function Welcome() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [signInError, setSignInError] = useState('');
 
+  useEffect(() => { startFirstDoseTimer(); }, []);
   const [ctaArm, setCtaArm] = useState<ReturnType<typeof assignLandingCtaArm>>(null);
   const exposed = useRef(false);
   const ctaLabel = LANDING_CTA_LABELS[ctaArm ?? 'control'];
