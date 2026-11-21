@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-501",
+    "date": "2026-11-21",
+    "title": "T-1141 Fix SafeDose web startup and extend production smoke",
+    "status": "published",
+    "prs": [
+      501
+    ],
+    "sections": {
+      "Improved": [
+        "T-1141 Fix SafeDose web startup and extend production smoke"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-500",
     "date": "2026-11-21",
     "title": "Fix compatible npm audit findings",
