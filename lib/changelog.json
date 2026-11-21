@@ -154,6 +154,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-586",
+    "date": "2026-11-21",
+    "title": "Add unit tests for inputs.ts",
+    "status": "published",
+    "prs": [
+      586
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for inputs.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-583",
     "date": "2026-11-21",
     "title": "Add unit tests for useFeedbackStorage",
