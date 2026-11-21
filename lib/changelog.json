@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-629",
+    "date": "2026-11-21",
+    "title": "Show prescribed protocol schedules and dose history",
+    "status": "published",
+    "prs": [
+      629
+    ],
+    "sections": {
+      "Improved": [
+        "Show prescribed protocol schedules and dose history"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-627",
     "date": "2026-11-21",
     "title": "Expand dose calculator hook JSDoc",
