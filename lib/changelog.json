@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-21-pr-630",
+    "date": "2026-11-21",
+    "title": "Complete the SafeDose pipeline and guardrails report",
+    "status": "published",
+    "prs": [
+      630
+    ],
+    "sections": {
+      "Improved": [
+        "Complete the SafeDose pipeline and guardrails report"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-627",
     "date": "2026-11-21",
     "title": "Expand dose calculator hook JSDoc",
