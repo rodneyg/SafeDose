@@ -1316,6 +1316,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-511",
+    "date": "2026-11-21",
+    "title": "Fix misleading copy regarding photo check",
+    "status": "published",
+    "prs": [
+      511
+    ],
+    "sections": {
+      "Improved": [
+        "Fix misleading copy regarding photo check"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-509",
     "date": "2026-11-21",
     "title": "Guide refused or unclear scans into manual entry",
