@@ -66,6 +66,8 @@ interface DoseFeedback {
 }
 ```
 
+The stored record omits the notes field when the user leaves it blank.
+
 ## Future Enhancements
 
 - Analytics dashboard for healthcare providers
