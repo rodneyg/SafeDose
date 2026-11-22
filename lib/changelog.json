@@ -800,14 +800,14 @@
   {
     "id": "2026-11-21-pr-553",
     "date": "2026-11-21",
-    "title": "Test dose calculator transitions and clear stale scanned medication (T-1636)",
+    "title": "Test dose entry after scanning a different vial",
     "status": "published",
     "prs": [
       553
     ],
     "sections": {
       "Improved": [
-        "Test dose calculator transitions and clear stale scanned medication (T-1636)"
+        "Tests check that a new scan uses the newly verified strength and clears the previous medication name and solution volume."
       ]
     }
   },
@@ -1094,14 +1094,14 @@
   {
     "id": "2026-11-21-pr-529",
     "date": "2026-11-21",
-    "title": "Add optional protocol setup before the first scan",
+    "title": "Test the optional protocol setup before the first scan",
     "status": "published",
     "prs": [
       529
     ],
     "sections": {
       "Improved": [
-        "Add optional protocol setup before the first scan"
+        "Tests cover setup and skipping without changing the onboarding app."
       ]
     }
   },
