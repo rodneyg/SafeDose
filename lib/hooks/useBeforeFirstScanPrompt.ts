@@ -25,14 +25,19 @@ export interface BeforeFirstScanPrompt {
 }
 
 /**
- * Manages the per-user educational prompt shown before scanning.
+ * Loads and updates the current user's pre-scan educational prompt state.
  *
- * The persisted state is loaded for the signed-in user, or for the shared
- * anonymous user when signed out. The prompt is eligible to appear at most
- * twice unless the user opts out sooner.
+ * State is stored under the signed-in user's UID. Signed-out sessions share
+ * the `anonymous` storage key. The prompt is eligible while its state has
+ * loaded, the user has not opted out, and fewer than two displays have been
+ * recorded. Changing users reloads the state for the new storage key.
  *
- * @returns The loading state, display count, eligibility check, and async
- * persistence callbacks for recording a view or opting out.
+ * Storage failures are logged and handled internally. A read failure falls
+ * back to an eligible initial state, while a write failure leaves the current
+ * in-memory state unchanged.
+ *
+ * @returns Controls and state for deciding whether to show the prompt,
+ * recording a display, and permanently opting the current user out.
  */
 export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const { user } = useAuth();
