@@ -24,7 +24,7 @@ function repo() {
   const commit = (paths, message, at = (tick += 60)) => {
     for (const path of [].concat(paths)) {
       mkdirSync(dirname(resolve(cwd, path)), { recursive: true });
-      writeFileSync(resolve(cwd, path), `${message} ${at}`);
+      writeFileSync(resolve(cwd, path), path.endsWith('.json') ? JSON.stringify({ fixture: at }) : `${message} ${at}`);
       git('add', '--', path);
     }
     execFileSync('git', ['commit', ...([].concat(paths).length ? [] : ['--allow-empty']), '-m', message], {

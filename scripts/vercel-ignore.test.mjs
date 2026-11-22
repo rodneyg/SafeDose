@@ -123,7 +123,9 @@ function prodFixture() {
   const commit = (paths, message = 'fixture') => {
     for (const path of [].concat(paths)) {
       mkdirSync(dirname(resolve(cwd, path)), { recursive: true });
-      writeFileSync(resolve(cwd, path), `${message} ${Math.random()}`);
+      // Fixtures stay in .verify/, so .json files must stay valid JSON for tools that scan the tree.
+      writeFileSync(resolve(cwd, path), path.endsWith('.json')
+        ? JSON.stringify({ fixture: `${message} ${Math.random()}` }) : `${message} ${Math.random()}`);
       git('add', '--', path);
     }
     git('commit', '-m', message);
