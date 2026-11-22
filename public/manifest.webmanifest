@@ -2,7 +2,7 @@
   "id": "/",
   "name": "SafeDose",
   "short_name": "SafeDose",
-  "description": "Medication dose calculator with manual entry and online photo checks.",
+  "description": "Medication dose calculator with manual entry and online photo scans.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

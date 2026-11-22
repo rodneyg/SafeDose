@@ -206,6 +206,7 @@ export default function SettingsScreen() {
             <Text style={styles.value}>
               {usageData?.scansUsed || 0} / {(usageData?.limit ?? 0) < 0 || usageData?.limit === Infinity ? '∞' : (usageData?.limit || 3)} scans
             </Text>
+            <Link href="/support" style={styles.billingHelpLink}>Get billing help</Link>
           </View>
         </View>
 
@@ -350,6 +351,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   protocolLink: { paddingVertical: 8, color: '#007AFF', fontSize: 17, fontWeight: '600' },
+  billingHelpLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    color: '#005DBF',
+    fontSize: 16,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
   section: {
     marginBottom: 24,
   },

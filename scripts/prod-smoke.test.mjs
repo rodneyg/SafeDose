@@ -34,7 +34,7 @@ test('checks rendered pages, rejects browser and HTTP errors, and blocks writes'
     }
     const text = {
       '/onboarding': 'Verify Materials Calculate Doses',
-      '/pricing': 'Photo Check /month /year Calculator stays free',
+      '/pricing': 'Photo Scan /month /year Calculator stays free',
       '/login': 'Sign In with Google Cancel',
       '/changelog': 'Changelog New features, improvements, and fixes',
       '/privacy': 'Privacy Policy',

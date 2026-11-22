@@ -213,6 +213,18 @@ describe('get-subscription-status', () => {
     expect(retrieveCustomer).not.toHaveBeenCalled();
   });
 
+  it('returns a failure when the user lookup fails', async () => {
+    const details = 'Fixture Firestore failure';
+    verifyIdToken.mockResolvedValueOnce({ uid: 'fixture-user' });
+    getUser.mockRejectedValueOnce(new Error(details));
+
+    await loadSubscriptionHandler()(request, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to get subscription status', details });
+    expect(retrieveCustomer).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['StripeInvalidRequestError', 400, 'Invalid request to Stripe'],
     ['StripeConnectionError', 500, 'Failed to get subscription status'],
@@ -273,11 +285,19 @@ describe('stripe-webhook', () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
-  it('currently logs and acknowledges a verified subscription update', async () => {
-    // Trial-to-paid conversion is still a TODO in the handler.
-    await loadWebhookHandler()(webhookRequest(payload, sign(payload)), res);
+  it.each([
+    ['checkout.session.completed', ['Received event:', 'checkout.session.completed', 'object_fixture']],
+    ['customer.subscription.trial_will_end', ['Trial ending soon for subscription:', 'object_fixture']],
+    ['customer.subscription.created', ['New subscription created:', 'object_fixture']],
+    ['customer.subscription.updated', ['Subscription updated:', 'object_fixture']],
+    ['customer.subscription.deleted', ['Subscription cancelled:', 'object_fixture']],
+    ['fixture.unknown', ['Unhandled event type: fixture.unknown']],
+  ])('logs and acknowledges a verified %s event', async (type, logArgs) => {
+    const event = JSON.stringify({ type, data: { object: { id: 'object_fixture' } } });
 
-    expect(console.log).toHaveBeenCalledWith('Subscription updated:', 'sub_fixture');
+    await loadWebhookHandler()(webhookRequest(event, sign(event)), res);
+
+    expect(console.log).toHaveBeenCalledWith(...logArgs);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ received: true });
   });

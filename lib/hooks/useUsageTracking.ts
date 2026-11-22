@@ -13,7 +13,7 @@ const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
 
 // Unpaid users (anonymous or signed-in) share a monthly gpt-4o photo-scan cap.
-// Paid photo-check and legacy paid plans are not limited by that cap. Limits live in lib/plans.js.
+// Paid photo-scan and legacy paid plans are not limited by that cap. Limits live in lib/plans.js.
 /** Tracks photo-scan usage, connectivity, and plan capacity for the current user. */
 export function useUsageTracking() {
   const { user } = useAuth();

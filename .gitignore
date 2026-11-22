@@ -66,3 +66,16 @@ safedose-vision-private/
 
 # Opt-in production Playwright evidence
 .prod-e2e-results/
+
+# Agent task artifacts at the repository root
+/.metadata_never_index
+/error.log
+/codex.log
+/pr.tsv
+/merge.tsv
+/fix.tsv
+/pending-*.tsv
+/RESULT.md
+/ATTEMPTS.md
+/CHECKPOINT.md
+/VERIFIED.md

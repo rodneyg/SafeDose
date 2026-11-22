@@ -32,6 +32,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { recordLandingCtaStart } from '../../lib/landingCtaExperiment';
 import { captureAndProcessImage } from '../../lib/cameraUtils';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
+import { recordFirstScanExperimentSuccess } from '../../lib/firstScanExperiment';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
@@ -805,7 +806,7 @@ export default function NewDoseScreen() {
 
   const handleScanAttempt = async () => {
     if (offline) {
-      setScanError('Photo checks need internet. Use manual entry while offline.');
+      setScanError('Photo scans need internet. Use manual entry while offline.');
       return;
     }
     console.log('handleScanAttempt: Called', { isProcessing, scansUsed: usageData.scansUsed, limit: usageData.limit });
@@ -871,6 +872,7 @@ export default function NewDoseScreen() {
         }
         console.log('handleScanAttempt: Applying scan results', result);
         logAnalyticsEvent(ANALYTICS_EVENTS.SCAN_SUCCESS);
+        recordFirstScanExperimentSuccess();
         const firstLocalScan = await recordSuccessfulScan(user.uid);
         if (checked.usage) {
           setScanNudge({ userId: user.uid, kind: photoUpgradeNudge(checked.usage, firstLocalScan) });
@@ -1108,7 +1110,7 @@ export default function NewDoseScreen() {
       <Head><title>New Dose | SafeDose</title></Head>
       {offline && (
         <Text accessibilityRole="alert" style={{ padding: 12, color: '#333333', backgroundColor: '#FFF3CD' }}>
-          Offline. Manual entry is available. Photo checks and account sync need internet.
+          Offline. Manual entry is available. Photo scans and account sync need internet.
         </Text>
       )}
       <View style={styles.header}>

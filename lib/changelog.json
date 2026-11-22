@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026-11-21-pr-638",
+    "date": "2026-11-21",
+    "title": "Ignore agent task artifacts at the repository root (T-10158)",
+    "status": "published",
+    "prs": [
+      638
+    ],
+    "sections": {
+      "Improved": [
+        "Ignore agent task artifacts at the repository root (T-10158)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-637",
+    "date": "2026-11-21",
+    "title": "Link Settings to billing help (T-10481)",
+    "status": "published",
+    "prs": [
+      637
+    ],
+    "sections": {
+      "Improved": [
+        "Link Settings to billing help (T-10481)"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-635",
+    "date": "2026-11-21",
+    "title": "Fix SafeDose onboarding web accessibility",
+    "status": "published",
+    "prs": [
+      635
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose onboarding web accessibility"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-634",
     "date": "2026-11-21",
     "title": "Remove tracked agent queue artifacts",
@@ -434,6 +476,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-584",
+    "date": "2026-11-21",
+    "title": "Test scan retake guidance (T-9124)",
+    "status": "published",
+    "prs": [
+      584
+    ],
+    "sections": {
+      "Improved": [
+        "Test scan retake guidance (T-9124)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-583",
     "date": "2026-11-21",
     "title": "Add unit tests for useFeedbackStorage",
@@ -588,6 +644,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-566",
+    "date": "2026-11-21",
+    "title": "Test SafeDose billing endpoint failures (T-2294)",
+    "status": "published",
+    "prs": [
+      566
+    ],
+    "sections": {
+      "Improved": [
+        "Test SafeDose billing endpoint failures (T-2294)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-565",
     "date": "2026-11-21",
     "title": "Clear stale dates when a protocol start is removed",
@@ -728,6 +798,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-553",
+    "date": "2026-11-21",
+    "title": "Test dose calculator transitions and clear stale scanned medication (T-1636)",
+    "status": "published",
+    "prs": [
+      553
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose calculator transitions and clear stale scanned medication (T-1636)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-551",
     "date": "2026-11-21",
     "title": "Test and harden dose and scan guardrails (T-1502)",
@@ -826,6 +910,20 @@
     }
   },
   {
+    "id": "2026-11-21-pr-543",
+    "date": "2026-11-21",
+    "title": "Add timezone and DST tests for dose logs",
+    "status": "published",
+    "prs": [
+      543
+    ],
+    "sections": {
+      "Improved": [
+        "Add timezone and DST tests for dose logs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-542",
     "date": "2026-11-21",
     "title": "Add unit tests for useAuth",
@@ -920,6 +1018,20 @@
     "sections": {
       "Improved": [
         "Create initial SAFE_DOSE_REPORT.md documentation"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-535",
+    "date": "2026-11-21",
+    "title": "T-1221: Test clearer first-scan copy on the web",
+    "status": "published",
+    "prs": [
+      535
+    ],
+    "sections": {
+      "Improved": [
+        "T-1221: Test clearer first-scan copy on the web"
       ]
     }
   },
@@ -1228,6 +1340,20 @@
     "sections": {
       "Improved": [
         "Add vial and syringe scanner regression tests"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-21-pr-511",
+    "date": "2026-11-21",
+    "title": "Fix misleading copy regarding photo check",
+    "status": "published",
+    "prs": [
+      511
+    ],
+    "sections": {
+      "Improved": [
+        "Fix misleading copy regarding photo check"
       ]
     }
   },
@@ -1681,14 +1807,14 @@
   {
     "id": "2026-11-20-pr-473",
     "date": "2026-11-20",
-    "title": "Add dismissible Photo Check upgrade nudges",
+    "title": "Add dismissible Photo Scan upgrade nudges",
     "status": "published",
     "prs": [
       473
     ],
     "sections": {
       "Improved": [
-        "Add dismissible Photo Check upgrade nudges"
+        "Add dismissible Photo Scan upgrade nudges"
       ]
     }
   },
@@ -1821,14 +1947,14 @@
   {
     "id": "2026-11-15",
     "date": "2026-11-15",
-    "title": "Free calculator and optional Photo Check",
+    "title": "Free calculator and optional Photo Scan",
     "status": "published",
     "prs": [
       424
     ],
     "sections": {
       "Improved": [
-        "Pricing now separates the free calculator from the optional Photo Check subscription.",
+        "Pricing now separates the free calculator from the optional Photo Scan subscription.",
         "Free accounts have the same allowance of three photo scans per month as guests."
       ]
     }

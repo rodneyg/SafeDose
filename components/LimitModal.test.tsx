@@ -48,8 +48,8 @@ it.each([true, false])('lets guests and Google users opt in only on explicit sub
 it('allows upgrade without opting in', async () => {
   render(<LimitModal visible isAnonymous onClose={onClose} getEmailCaptureToken={getEmailCaptureToken} />);
   await screen.findByLabelText('Email address');
-  expect(screen.getByText('You’ve used all 3 free scans this month. Keep using manual entry, or get unlimited scans with Photo Check for $2.99/month.')).toBeTruthy();
-  fireEvent.press(screen.getByText('View Photo Check'));
+  expect(screen.getByText('You’ve used all 3 free scans this month. Keep using manual entry, or get unlimited scans with Photo Scan for $2.99/month.')).toBeTruthy();
+  fireEvent.press(screen.getByText('View Photo Scan'));
   expect(router.push).toHaveBeenCalledWith('/pricing');
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(getEmailCaptureToken).not.toHaveBeenCalled();
