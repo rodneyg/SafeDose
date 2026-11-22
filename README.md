@@ -169,6 +169,9 @@ Built by SafeLab — advancing open tools for human systems.
 - Review the wording, keep user-facing entries, set `status: published`,
   and run `npm run changelog:build` to refresh `lib/changelog.json`. Web
   builds regenerate it as well.
+- Changelog-only changes do not start a separate production build. A
+  scheduled workflow batches pending entries into one deploy commit after a
+  quiet period. A regular production build can ship those entries sooner.
 
 ### Read-only production smoke
 
