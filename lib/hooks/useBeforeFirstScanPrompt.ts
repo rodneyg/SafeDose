@@ -27,17 +27,17 @@ export interface BeforeFirstScanPrompt {
 /**
  * Loads and updates the current user's pre-scan educational prompt state.
  *
- * State is stored under the signed-in user's UID. Signed-out sessions share
- * the `anonymous` storage key. The prompt is eligible while its state has
- * loaded, the user has not opted out, and fewer than two displays have been
- * recorded. Changing users reloads the state for the new storage key.
+ * The display count and opt-out flag use separate storage keys suffixed with
+ * the user's UID, or `anonymous` when no UID is available. The hook rereads
+ * those keys when the auth user changes.
  *
- * Storage failures are logged and handled internally. A read failure falls
- * back to an eligible initial state, while a write failure leaves the current
- * in-memory state unchanged.
+ * Eligibility requires loading to have finished, fewer than two recorded
+ * displays, and no opt-out. A storage read error is logged and resets local
+ * state to zero displays and no opt-out. A storage write error is logged
+ * without applying the attempted update to local state.
  *
- * @returns Controls and state for deciding whether to show the prompt,
- * recording a display, and permanently opting the current user out.
+ * @returns The loading flag, display count, eligibility check, and async
+ * callbacks that attempt to save a display or an opt-out.
  */
 export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const { user } = useAuth();
