@@ -1,0 +1,23 @@
+name: Deploy pending changelog
+# Bot changelog commits skip their own Vercel build. This sends one deploy
+# commit for a batch of pending entries after merges go quiet.
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: deploy-changelog
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 400
+      - name: Push one deploy commit when entries are pending
+        run: node scripts/changelog-deploy.mjs --push --quiet 15 --max 60

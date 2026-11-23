@@ -116,6 +116,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:dependabot-config
+      - run: npm run test:vercel-ignore
       - run: npx jest --runInBand
 
   demo-regressions:
