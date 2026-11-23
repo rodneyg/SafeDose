@@ -48,7 +48,7 @@ export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const stateRef = useRef(state);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load the prompt state on mount
+  // Load the saved prompt state on mount and when the auth user changes.
   useEffect(() => {
     const loadPromptState = async () => {
       try {
