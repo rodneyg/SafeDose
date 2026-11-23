@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-23-pr-645",
+    "date": "2026-11-23",
+    "title": "Keep onboarding tests out of the SafeDose web export",
+    "status": "published",
+    "prs": [
+      645
+    ],
+    "sections": {
+      "Improved": [
+        "Keep onboarding tests out of the SafeDose web export"
+      ]
+    }
+  },
+  {
     "id": "2026-11-21-pr-638",
     "date": "2026-11-21",
     "title": "Ignore agent task artifacts at the repository root (T-10158)",
