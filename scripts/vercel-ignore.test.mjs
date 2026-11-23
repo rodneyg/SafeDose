@@ -105,3 +105,84 @@ test('command is wired into Vercel configuration', async () => {
   assert.equal(JSON.parse(readFileSync('vercel.json', 'utf8')).ignoreCommand,
     'node scripts/vercel-ignore.mjs');
 });
+
+// Production builds: skip only when everything since the last successful
+// production deployment is non-runtime or pending changelog files.
+const RUNTIME = 'lib/scan.ts';
+const CHANGELOG = ['changelog/2026-11-21-pr-1.md', 'lib/changelog.json'];
+function prodFixture() {
+  mkdirSync('.verify', { recursive: true });
+  const cwd = mkdtempSync(resolve('.verify/vercel-ignore-prod-'));
+  const git = (...args) => execFileSync('git', args, {
+    cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+  git('init', '-b', 'main');
+  git('config', 'user.name', 'Fixture');
+  git('config', 'user.email', 'test@example.invalid');
+  git('config', 'commit.gpgsign', 'false');
+  const commit = (paths, message = 'fixture') => {
+    for (const path of [].concat(paths)) {
+      mkdirSync(dirname(resolve(cwd, path)), { recursive: true });
+      // Fixtures stay in .verify/, so .json files must stay valid JSON for tools that scan the tree.
+      writeFileSync(resolve(cwd, path), path.endsWith('.json')
+        ? JSON.stringify({ fixture: `${message} ${Math.random()}` }) : `${message} ${Math.random()}`);
+      git('add', '--', path);
+    }
+    git('commit', '-m', message);
+    return git('rev-parse', 'HEAD');
+  };
+  const base = commit(RUNTIME, 'deployed runtime');
+  const run = (extra = {}) => spawnSync(process.execPath, [script], {
+    cwd, env: { ...process.env, VERCEL_ENV: 'production', VERCEL_TARGET_ENV: 'production',
+      VERCEL_GIT_COMMIT_REF: 'main', VERCEL_GIT_PREVIOUS_SHA: base,
+      VERCEL_GIT_COMMIT_MESSAGE: 'fixture', ...extra },
+    encoding: 'utf8',
+  }).status;
+  return { cwd, git, commit, run, base };
+}
+test('production skips test-only, docs-only and pending changelog commits since the last deployment', () => {
+  const f = prodFixture();
+  f.commit('tests/new-behavior.test.ts', 'test: cover behavior (#1)');
+  f.commit('docs/notes.md', 'docs: notes');
+  f.commit(CHANGELOG, 'docs: publish changelog for PR #1');
+  assert.equal(f.run(), 0);
+});
+test('production builds when any runtime file changed since the last deployment', () => {
+  const f = prodFixture();
+  f.commit(RUNTIME, 'fix: runtime');
+  f.commit(CHANGELOG, 'docs: publish changelog for PR #2');
+  assert.equal(f.run(), 1);
+});
+test('production builds an earlier runtime change hidden under a test-only tip', () => {
+  const f = prodFixture();
+  f.commit(RUNTIME, 'fix: runtime');
+  f.commit('tests/after.test.ts', 'test: after');
+  assert.equal(f.run(), 1);
+});
+test('production deploy commit always builds, so pending changelog entries ship', () => {
+  const f = prodFixture();
+  f.commit(CHANGELOG, 'docs: publish changelog for PR #3');
+  assert.equal(f.run(), 0);
+  f.git('commit', '--allow-empty', '-m', 'deploy: publish 1 pending changelog entry');
+  assert.equal(f.run({ VERCEL_GIT_COMMIT_MESSAGE: 'deploy: publish 1 pending changelog entry' }), 1);
+});
+test('production builds on unknown ancestry, missing previous deployment or empty diff', () => {
+  const f = prodFixture();
+  f.commit('tests/x.test.ts', 'test: x');
+  assert.equal(f.run({ VERCEL_GIT_PREVIOUS_SHA: '' }), 1);
+  assert.equal(f.run({ VERCEL_GIT_PREVIOUS_SHA: 'not-a-sha' }), 1);
+  assert.equal(f.run({ VERCEL_GIT_PREVIOUS_SHA: '0'.repeat(40) }), 1);
+  assert.equal(f.run({ VERCEL_GIT_PREVIOUS_SHA: f.git('rev-parse', 'HEAD') }), 1);
+});
+test('production config and ignore script changes always build', () => {
+  for (const path of ['vercel.json', 'package.json', 'scripts/vercel-ignore.mjs']) {
+    const f = prodFixture();
+    f.commit(path, `change ${path}`);
+    assert.equal(f.run(), 1, path);
+  }
+});
+test('production skip applies only to main, previews keep their own rule', () => {
+  const f = prodFixture();
+  f.commit('tests/y.test.ts', 'test: y');
+  assert.equal(f.run({ VERCEL_GIT_COMMIT_REF: 'feature' }), 1);
+});
