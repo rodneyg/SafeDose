@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-23-pr-647",
+    "date": "2026-11-23",
+    "title": "Add JSDoc to useAuth hook",
+    "status": "published",
+    "prs": [
+      647
+    ],
+    "sections": {
+      "Improved": [
+        "Add JSDoc to useAuth hook"
+      ]
+    }
+  },
+  {
     "id": "2026-11-23-pr-646",
     "date": "2026-11-23",
     "title": "Add JSDoc to scan hook",
