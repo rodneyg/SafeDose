@@ -581,41 +581,13 @@ print(f"Improvement: {results['fine_tuned']['accuracy'] - results['base']['accur
 
 ## Deploying Improved Models
 
-### Update SafeDose Configuration
+### Propose a change to the server-side request
 
-Once you have a fine-tuned model with better performance:
-
-1. **Update Environment Variables**
-
-```bash
-# In .env or app.config.js
-OPENAI_MODEL="ft:gpt-4o-mini-2024-07-18:safedose:safedose-v1:abc123"
-```
-
-2. **Update Code References**
-
-Find where models are called (e.g., `lib/cameraUtils.ts`):
-
-```typescript
-// Before
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini-2024-07-18',
-  // ...
-});
-
-// After
-const response = await openai.chat.completions.create({
-  model: process.env.OPENAI_MODEL || 'gpt-4o-mini-2024-07-18',
-  // ...
-});
-```
-
-3. **Test Thoroughly**
-
-- Run full evaluation suite
-- Test in staging environment
-- Perform user acceptance testing
-- Monitor error rates and user feedback
+The production scan API calls the shared [request builder](../lib/scan/request.js),
+which pins the model in `SCAN_MODEL`. The builder does not read `OPENAI_MODEL`.
+Evaluate any candidate separately using synthetic inputs. A deployment would
+require a reviewed server-side code change, fixture replay, and preview
+verification.
 
 ### Versioning Strategy
 
