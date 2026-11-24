@@ -25,14 +25,19 @@ export interface BeforeFirstScanPrompt {
 }
 
 /**
- * Manages the per-user educational prompt shown before scanning.
+ * Loads and updates the current user's pre-scan educational prompt state.
  *
- * The persisted state is loaded for the signed-in user, or for the shared
- * anonymous user when signed out. The prompt is eligible to appear at most
- * twice unless the user opts out sooner.
+ * The display count and opt-out flag use separate storage keys suffixed with
+ * the user's UID, or `anonymous` when no UID is available. The hook rereads
+ * those keys when the auth user changes.
  *
- * @returns The loading state, display count, eligibility check, and async
- * persistence callbacks for recording a view or opting out.
+ * Eligibility requires loading to have finished, fewer than two recorded
+ * displays, and no opt-out. A storage read error is logged and resets local
+ * state to zero displays and no opt-out. A storage write error is logged
+ * without applying the attempted update to local state.
+ *
+ * @returns The loading flag, display count, eligibility check, and async
+ * callbacks that attempt to save a display or an opt-out.
  */
 export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const { user } = useAuth();
@@ -43,7 +48,7 @@ export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
   const stateRef = useRef(state);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load the prompt state on mount
+  // Load the saved prompt state on mount and when the auth user changes.
   useEffect(() => {
     const loadPromptState = async () => {
       try {
