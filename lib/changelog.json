@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-636",
+    "date": "2026-11-24",
+    "title": "Add unit tests for lib/analytics.ts",
+    "status": "published",
+    "prs": [
+      636
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/analytics.ts"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-479",
     "date": "2026-11-24",
     "title": "Bind SafeDose checkout to verified Stripe fulfillment",
