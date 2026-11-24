@@ -77,6 +77,20 @@ describe('useFeedbackStorage', () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
+  it('omits the notes field from Firestore when feedback has no note', async () => {
+    const { result } = renderHook(() => useFeedbackStorage());
+
+    await act(async () => {
+      await result.current.submitFeedback('great', doseInfo);
+    });
+
+    expect(addDocWithEnv).toHaveBeenCalledWith(
+      { path: 'feedback' },
+      expect.objectContaining({ userId: 'user-123', feedbackType: 'great', doseInfo }),
+    );
+    expect(jest.mocked(addDocWithEnv).mock.calls[0][1]).not.toHaveProperty('notes');
+  });
+
   it('keeps only the newest 50 local feedback entries', async () => {
     const existing = Array.from({ length: 50 }, (_, index) => ({ id: `old-${index}` }));
     (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(JSON.stringify(existing));
