@@ -1,6 +1,6 @@
 # Rollback
 
-SafeDose production lives on Vercel (https://safedose.rodneygainous.com, fallback https://safe-dose.vercel.app/). Every merge to `main` gets a semver tag and a GitHub Release. Use a tag to put that exact build back on production.
+SafeDose production lives on Vercel (https://safedose.rodneygainous.com, fallback https://safe-dose.vercel.app/). A push to `main` is eligible for a semver tag and GitHub Release after CI passes for that commit. Use a tag to put that exact build back on production.
 
 ## Command
 
@@ -24,10 +24,10 @@ npm run rollback -- v1.0.0 --dry-run
 
 ## Version tags
 
-Merges to `main` create the next tag automatically (see `.github/workflows/release.yml`).
+The [release workflow](.github/workflows/release.yml) tags the commit that passed CI. It skips GitHub Actions bot commits and automated changelog publishes.
 
 - Default bump: patch (`v1.0.0` to `v1.0.1`).
-- Minor: add a `minor` or `semver:minor` label on the PR, or start the PR title with `feat:`.
+- Minor: add a `minor` or `semver:minor` label on the PR, or start the commit subject with `feat:` or a scoped equivalent such as `feat(scan):`.
 - Major: add a `major`, `semver:major`, or `breaking` label, or use a breaking conventional-commit subject (`feat!:` or a `BREAKING CHANGE:` footer).
 
 The existing changelog workflow still publishes `changelog/` and `lib/changelog.json` on merge. The tag job skips those changelog commits so you do not get two tags for one merge.

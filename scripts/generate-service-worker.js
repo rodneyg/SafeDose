@@ -16,6 +16,10 @@ function generateServiceWorker(directory) {
   }
   walk(directory);
   files.sort();
+  const testRoute = files.find((file) => /\.(?:test|spec)\.html$/.test(file));
+  if (testRoute) {
+    throw new Error(`Test route found in web export: ${testRoute}`);
+  }
   if (!files.includes('index.html') || !files.includes('manifest.webmanifest')) {
     throw new Error('Export the web app before generating its service worker.');
   }

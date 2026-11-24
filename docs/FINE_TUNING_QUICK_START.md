@@ -50,15 +50,12 @@ openai api fine_tunes.list
 # Example: ft:gpt-4o-mini-2024-07-18:safedose:safedose-v1:abc123
 ```
 
-### 5. Deploy (1 minute)
+### 5. Evaluate before proposing a model change
 
-Update your `.env` or `app.config.js`:
-
-```bash
-OPENAI_MODEL="ft:gpt-4o-mini-2024-07-18:safedose:safedose-v1:abc123"
-```
-
-Done! 🎉
+The scan API uses the model pinned in [the shared request builder](../lib/scan/request.js).
+Changing `OPENAI_MODEL` in an environment file has no effect on this route.
+Use synthetic fixtures to evaluate a candidate before proposing a server
+code change. Keep provider keys on the server.
 
 ---
 
