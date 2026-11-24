@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { ignoreBuild, isPreviewOnly } from './vercel-ignore.mjs';
 
 const script = resolve('scripts/vercel-ignore.mjs');
@@ -146,6 +147,25 @@ test('production skips test-only, docs-only and pending changelog commits since 
   f.commit('docs/notes.md', 'docs: notes');
   f.commit(CHANGELOG, 'docs: publish changelog for PR #1');
   assert.equal(f.run(), 0);
+});
+test('production fetches the last successful deployment in a shallow checkout', () => {
+  const f = prodFixture();
+  f.commit(CHANGELOG, 'docs: publish changelog for PR #1');
+  const shallow = resolve(f.cwd, 'shallow');
+  f.git('clone', '--depth=1', pathToFileURL(f.cwd).href, shallow);
+  const env = {
+    VERCEL_ENV: 'production',
+    VERCEL_GIT_COMMIT_REF: 'main',
+    VERCEL_GIT_PREVIOUS_SHA: f.base,
+  };
+
+  assert.equal(spawnSync('git', ['cat-file', '-e', `${f.base}^{commit}`], {
+    cwd: shallow, stdio: 'ignore',
+  }).status, 128, 'the deployed commit is absent before the ignore step');
+  assert.equal(ignoreBuild({ env, cwd: shallow }), 0);
+  assert.equal(execFileSync('git', ['rev-parse', 'FETCH_HEAD'], {
+    cwd: shallow, encoding: 'utf8',
+  }).trim(), f.base);
 });
 test('production builds when any runtime file changed since the last deployment', () => {
   const f = prodFixture();
