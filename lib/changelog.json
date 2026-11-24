@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-pr-661",
+    "date": "2026-11-24",
+    "title": "Extract shared Stripe mode helper for client and server configs",
+    "status": "published",
+    "prs": [
+      661
+    ],
+    "sections": {
+      "Improved": [
+        "Extract shared Stripe mode helper for client and server configs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-660",
     "date": "2026-11-24",
     "title": "test: cover normalizeUpgradeEmail and getManualProgress",
