@@ -22,8 +22,8 @@ The post-dose feedback feature allows users to optionally log how a dose felt af
 ## Data Storage
 
 - **Local Storage**: AsyncStorage for all users (works offline)
-- **Cloud Storage**: Firestore for authenticated users (backup and sync)
-- **Data Retention**: Last 50 feedback entries per user
+- **Cloud Storage**: The app attempts a Firestore write for signed-in users. Feedback history is read from local storage.
+- **Local Retention**: Last 50 feedback entries per storage identity
 - **Privacy**: Feedback is user-specific and not shared
 
 ## Technical Implementation
@@ -75,7 +75,7 @@ interface DoseFeedback {
 
 ## Privacy & Safety
 
-- Feedback data is stored locally and optionally synced to user's personal cloud storage
+- Feedback data is stored locally, with a Firestore write for signed-in users
 - No feedback data affects future dose calculations
 - Data is used for personal tracking only
 - Users can skip feedback collection entirely
