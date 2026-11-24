@@ -21,6 +21,7 @@ module.exports = {
         'api/**/*.js',
         'scripts/**/*.js',
         'evals/**/*.js',
+        'docs/SAFE_DOSE_REPORT.test.js',
         'validate-*.js',
         'final-integration-test.js',
         'test-scan-again-fix.js',
