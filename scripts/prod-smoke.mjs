@@ -53,9 +53,16 @@ export async function isolateRequest(route, origin) {
     return route.fulfill({ headers: cors, status: 204 });
   }
 
+  // Load inert analytics scripts locally so tracking requests never reach the
+  // network and the browser does not report failures caused by our own guard.
+  const analyticsScript = (target === origin && pathname === '/_vercel/insights/script.js') ||
+    (target === 'https://www.googletagmanager.com' && pathname === '/gtag/js');
+  if (method === 'GET' && request.resourceType() === 'script' && analyticsScript) {
+    return route.fulfill({ contentType: 'application/javascript', body: '' });
+  }
+
   const publicDependency =
     (target === 'https://firebase.googleapis.com' && /^\/v1alpha\/projects\/-\/apps\/[^/]+\/webConfig$/.test(pathname)) ||
-    (target === 'https://www.googletagmanager.com' && pathname === '/gtag/js' && request.resourceType() === 'script') ||
     (target === 'https://images.unsplash.com' && request.resourceType() === 'image');
   if (method === 'GET' && (target === origin || publicDependency)) {
     const headers = await request.allHeaders();
