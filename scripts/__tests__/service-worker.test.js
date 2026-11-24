@@ -52,6 +52,10 @@ describe('production service worker', () => {
     fs.unlinkSync(path.join(directory, 'index.html'));
     expect(generate).toThrow('Export the web app');
   });
+  test.each(['navigation-flow.test.html', 'welcome.spec.html'])('rejects an exported test route %s', (route) => {
+    fs.writeFileSync(path.join(directory, 'onboarding', route), 'test');
+    expect(generate).toThrow(`Test route found in web export: onboarding/${route}`);
+  });
   test('install precaches static files and propagates quota/network failure', async () => {
     const waitUntil = jest.fn();
     handlers.install({ waitUntil });

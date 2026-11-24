@@ -77,7 +77,7 @@ npm ci
 
 - iOS (Xcode required) runs with `npm run ios`.
 - Android (Android Studio required) runs with `npm run android`.
-- Web runs with `npm run web`.
+- Web runs with `npm run web`. Run `npm run changelog:build` first if you have edited the changelog Markdown.
 
 ### Environment setup
 
@@ -85,7 +85,10 @@ See [`.env.example`](.env.example) for the configuration used by the app and
 server. Photo analysis requires the server route `/api/analyze-scan` and a
 server-side `OPENAI_API_KEY`. Keep this key out of Expo config and
 `EXPO_PUBLIC_` variables. On Vercel, configure the key for the environments
-that serve the scan API.
+that serve the scan API. The Expo web server only serves the app. To test
+photo scans on web, serve the API routes on the same origin as the app,
+as the Vercel deployment does. The native app sends scans to the production
+API. The server uses the model pinned in [the scan request](lib/scan/request.js).
 
 ⸻
 
@@ -169,6 +172,9 @@ Built by SafeLab — advancing open tools for human systems.
 - Review the wording, keep user-facing entries, set `status: published`,
   and run `npm run changelog:build` to refresh `lib/changelog.json`. Web
   builds regenerate it as well.
+- Changelog-only changes do not start a separate production build. A
+  scheduled workflow batches pending entries into one deploy commit after a
+  quiet period. A regular production build can ship those entries sooner.
 
 ### Read-only production smoke
 
