@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-479",
+    "date": "2026-11-24",
+    "title": "Bind SafeDose checkout to verified Stripe fulfillment",
+    "status": "published",
+    "prs": [
+      479
+    ],
+    "sections": {
+      "Improved": [
+        "Bind SafeDose checkout to verified Stripe fulfillment"
+      ]
+    }
+  },
+  {
     "id": "2026-11-23-pr-647",
     "date": "2026-11-23",
     "title": "Add JSDoc to useAuth hook",
