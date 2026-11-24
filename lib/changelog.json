@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-pr-658",
+    "date": "2026-11-24",
+    "title": "Add unit tests for stripeFulfillment.server.js",
+    "status": "published",
+    "prs": [
+      658
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for stripeFulfillment.server.js"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-657",
     "date": "2026-11-24",
     "title": "Add unit tests for subscriptionStatus.ts",
