@@ -1,6 +1,7 @@
 # Upgrade email capture
 
 The scan-limit prompt offers email updates after a free user runs out of scans.
+The pricing page also offers the form when a Firebase user session is available.
 The user submits an address explicitly. SafeDose stores a server timestamp,
 whether the Firebase session is a guest or Google session, and the signup source.
 The API uses a hash of the Firebase UID as the document key to make retries safe.
@@ -29,7 +30,7 @@ database and remove it through the existing privacy request process.
    denial of direct client access before using the production form.
 
 When configuration is absent, the scan-limit prompt keeps its existing actions
-and the email form stays hidden.
+and both entry points hide the email form.
 
 [Firebase Admin setup](https://firebase.google.com/docs/admin/setup) and
 [Firestore security rules](https://firebase.google.com/docs/firestore/security/get-started)
