@@ -5,8 +5,8 @@ This document describes the implementation of preview environment handling for a
 ## Overview
 
 When `NEXTPUBLIC_ENVIRONMENT=preview`, the application:
-1. **Disables all analytics tracking** - no events are sent to Firebase Analytics
-2. **Tags Firestore create operations** - adds `env: "preview"` field to new documents
+1. **Skips Firebase event logging and user property updates**
+2. **Tags Firestore writes that use the wrappers** by adding `env: "preview"` to adds and non-merge sets
 3. **Preserves update operations** - merge operations remain unchanged
 
 ## Environment Detection
@@ -47,6 +47,11 @@ export const logAnalyticsEvent = (eventName: string, parameters?: Record<string,
 - `logAnalyticsEvent()` - skips all event logging
 - `setAnalyticsUserProperties()` - skips all user property setting
 - `setPersonalizationUserProperties()` - indirectly disabled via above
+
+[Vercel Web Analytics](../lib/WebAnalytics.tsx) uses a separate web-only
+provider. It tracks route changes and strips query strings and fragments
+from the event URL. The Firebase preview switch does not control Vercel
+Web Analytics.
 
 ## Firestore Environment Tagging
 
@@ -106,11 +111,11 @@ NEXTPUBLIC_ENVIRONMENT=production
 
 ## Acceptance Criteria ✅
 
-- [x] No analytics events are triggered or sent when running in preview
-- [x] All Firestore create operations include "env": "preview" in the data  
+- [x] Firebase event and property helpers skip tracking when running in preview
+- [x] Wrapped Firestore adds and non-merge sets include "env": "preview" in the data
 - [x] Updates (non-creates) do not require modification
 - [x] Other non-analytics operations remain fully functional
-- [x] QA can confirm the absence of analytics events and the presence of env in new Firestore records
+- [x] QA can check for Firebase events and the env field on wrapped Firestore writes
 
 ## Files Modified
 

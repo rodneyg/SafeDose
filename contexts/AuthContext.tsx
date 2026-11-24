@@ -317,12 +317,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Returns the current authentication state and actions from the nearest
+ * Reads the authentication state and actions supplied by the nearest
  * {@link AuthProvider}.
  *
- * @returns The current user, Firebase Auth instance, logout action, and
- * sign-out status fields.
- * @throws {Error} If the hook is used outside an {@link AuthProvider}.
+ * @returns The provider value, including the current Firebase user, the
+ * Firebase Auth instance, the asynchronous logout action, and sign-out state.
+ * @throws {Error} When called outside an {@link AuthProvider}.
  */
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
