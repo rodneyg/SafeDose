@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-pr-662",
+    "date": "2026-11-24",
+    "title": "Fix stale SafeDose production smoke checks",
+    "status": "published",
+    "prs": [
+      662
+    ],
+    "sections": {
+      "Improved": [
+        "Fix stale SafeDose production smoke checks"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-661",
     "date": "2026-11-24",
     "title": "Extract shared Stripe mode helper for client and server configs",
