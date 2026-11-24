@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-pr-660",
+    "date": "2026-11-24",
+    "title": "test: cover normalizeUpgradeEmail and getManualProgress",
+    "status": "published",
+    "prs": [
+      660
+    ],
+    "sections": {
+      "Improved": [
+        "test: cover normalizeUpgradeEmail and getManualProgress"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-659",
     "date": "2026-11-24",
     "title": "Fix billing return URL test lint (T-12013)",
