@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-639",
+    "date": "2026-11-24",
+    "title": "Add scanner regression tests for vials and syringes",
+    "status": "published",
+    "prs": [
+      639
+    ],
+    "sections": {
+      "Improved": [
+        "Add scanner regression tests for vials and syringes"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-636",
     "date": "2026-11-24",
     "title": "Add unit tests for lib/analytics.ts",
