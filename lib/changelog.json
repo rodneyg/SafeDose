@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-644",
+    "date": "2026-11-24",
+    "title": "Fix lint for the SafeDose repository report test",
+    "status": "published",
+    "prs": [
+      644
+    ],
+    "sections": {
+      "Improved": [
+        "Fix lint for the SafeDose repository report test"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-642",
     "date": "2026-11-24",
     "title": "Fix the SafeDose web preview smoke selector",
