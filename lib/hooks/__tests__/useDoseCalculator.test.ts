@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { ANALYTICS_EVENTS, logAnalyticsEvent } from '../../analytics';
 import useDoseCalculator from '../useDoseCalculator';
 
@@ -187,4 +188,38 @@ it('clears the previous dose, scan ownership, review, and error state on start o
   expect(logAnalyticsEvent).not.toHaveBeenCalledWith(
     ANALYTICS_EVENTS.SCANNED_VALUE_EDIT, { field: 'substanceName' },
   );
+});
+
+
+it('restores only the latest confirmed calculation after starting over and remounting', async () => {
+  await AsyncStorage.clear();
+  const { result, unmount } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
+
+  act(() => {
+    result.current.setScreenStep('manualEntry');
+    result.current.setDose('1');
+    result.current.setMedicationInputType('totalAmount');
+    result.current.setTotalAmount('10');
+    result.current.setSolutionVolume('2');
+    result.current.setManualSyringe({ type: 'Insulin', volume: '1 ml', insulinScale: 'U-100' });
+  });
+  act(() => result.current.handleCalculateFinal());
+  expect(result.current.lastCalculation).toBeNull();
+  act(() => result.current.handleNextPreDoseConfirmation());
+  expect(result.current.lastCalculation).toEqual({
+    dose: '1 mg', draw: 'Draw to 20.00 units (U-100 syringe)', vial: '10 mg', solutionVolume: '2 mL',
+  });
+
+  act(() => result.current.setDose('2'));
+  expect(result.current.lastCalculation?.dose).toBe('1 mg');
+  act(() => result.current.handleNextPreDoseConfirmation());
+  act(() => result.current.handleStartOver());
+  expect(result.current).toMatchObject({ screenStep: 'intro', manualStep: 'dose' });
+  unmount();
+
+  const restored = renderHook(() => useDoseCalculator({ checkUsageLimit }));
+  await waitFor(() => expect(restored.result.current.lastCalculation).toEqual({
+    dose: '2 mg', draw: 'Draw to 40.00 units (U-100 syringe)', vial: '10 mg', solutionVolume: '2 mL',
+  }));
+  expect(restored.result.current).toMatchObject({ screenStep: 'intro', dose: '', calculatedVolume: null });
 });
