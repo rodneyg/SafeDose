@@ -121,8 +121,9 @@ export async function runSmoke(base = production, { log = console.log } = {}) {
   await check('/api/analyze-scan empty body', async () => {
     // Validation only: no image, account, key, inference or persisted data.
     const response = await request('/api/analyze-scan', { method: 'POST', body: '{}' });
-    if (response.status < 400 || response.status >= 500) fail(`HTTP ${response.status}; expected 4xx`);
-    return `HTTP ${response.status}`;
+    if (response.status !== 400) fail(`HTTP ${response.status}; expected 400`);
+    if ((await response.json()).error !== 'An image is required.') fail('missing image validation message');
+    return 'HTTP 400 with the missing image validation message';
   });
   await check('health availability on origin/main', async () => {
     // Fail if main cannot be inspected; do not guess or probe an unmerged endpoint.
