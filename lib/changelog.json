@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-653",
+    "date": "2026-11-24",
+    "title": "Document SafeDose production build filtering",
+    "status": "published",
+    "prs": [
+      653
+    ],
+    "sections": {
+      "Improved": [
+        "Document SafeDose production build filtering"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-644",
     "date": "2026-11-24",
     "title": "Fix lint for the SafeDose repository report test",
