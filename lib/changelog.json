@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-642",
+    "date": "2026-11-24",
+    "title": "Fix the SafeDose web preview smoke selector",
+    "status": "published",
+    "prs": [
+      642
+    ],
+    "sections": {
+      "Improved": [
+        "Fix the SafeDose web preview smoke selector"
+      ]
+    }
+  },
+  {
     "id": "2026-11-23-pr-647",
     "date": "2026-11-23",
     "title": "Add JSDoc to useAuth hook",
