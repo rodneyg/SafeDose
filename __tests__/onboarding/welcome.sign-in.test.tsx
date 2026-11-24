@@ -18,7 +18,7 @@ jest.mock('expo-router', () => ({ Link: 'Link', useRouter: () => mockRouter }));
 jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ auth: mockAuth, user: { uid: 'guest', isAnonymous: true } }) }));
 jest.mock('../../lib/utils', () => ({ isMobileWeb: false }));
 jest.mock('../../lib/googleAuth', () => ({ signInWithGoogle: jest.fn() }));
-jest.mock('../../lib/firebase', () => ({ db: {} }));
+jest.mock('../../lib/firebase', () => ({ db: {}, getAnalyticsInstance: () => undefined }));
 jest.mock('firebase/firestore', () => ({ doc: jest.fn(), getDoc: jest.fn() }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: jest.fn(), setItem: jest.fn() }));
 
@@ -35,6 +35,13 @@ beforeEach(() => {
   act(() => { tree = create(<Welcome />); });
 });
 afterEach(() => { act(() => tree.unmount()); });
+
+it('starts onboarding from the button used by the web preview smoke', () => {
+  const button = tree.root.findByProps({ testID: 'onboarding-primary-cta' });
+  act(() => button.props.onPress());
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/onboarding/age');
+  expect(signInWithGoogle).not.toHaveBeenCalled();
+});
 
 it('lets a returning user sign in before the demo and lands on home using their remote profile', async () => {
   expect(mockRouter.navigate).not.toHaveBeenCalled();
