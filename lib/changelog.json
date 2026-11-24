@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-656",
+    "date": "2026-11-24",
+    "title": "Add unit tests for lib/billing.server.js",
+    "status": "published",
+    "prs": [
+      656
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for lib/billing.server.js"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-655",
     "date": "2026-11-24",
     "title": "Test dose history recovery during Firestore outages",
