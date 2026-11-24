@@ -222,10 +222,12 @@ describe('useDoseLogging', () => {
     expect(console.error).toHaveBeenCalledWith('[useDoseLogging] Error caching dose history:', error);
   });
 
-  it('preserves the new dose and existing local history when Firestore save fails', async () => {
-    const error = new Error('Firestore write unavailable');
+  it('retrieves the new dose and prior history after Firestore save and load fail', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-01-03T08:00:00.000Z'));
+    const saveError = new Error('Firestore write unavailable');
+    const loadError = new Error('Firestore read unavailable');
     storage.getItem.mockResolvedValueOnce(JSON.stringify([olderLog]));
-    mockAddDocWithEnv.mockRejectedValueOnce(error);
+    mockAddDocWithEnv.mockRejectedValueOnce(saveError);
     const { result } = renderHook(() => useDoseLogging());
 
     await act(async () => {
@@ -250,7 +252,16 @@ describe('useDoseLogging', () => {
     expect(priorLogs).toEqual([olderLog]);
     expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
     expect(result.current.isLogging).toBe(false);
-    expect(console.error).toHaveBeenCalledWith('Error saving dose log to Firestore:', error);
+    expect(console.error).toHaveBeenCalledWith('Error saving dose log to Firestore:', saveError);
+
+    storage.getItem.mockResolvedValueOnce(savedLogs);
+    mockGetDocs.mockRejectedValueOnce(loadError);
+
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual([savedDose, olderLog]);
+
+    expect(mockGetDocs).toHaveBeenCalledTimes(1);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith('Error loading dose logs from Firestore:', loadError);
   });
 
   it('keeps the local deletion when Firestore delete fails', async () => {
@@ -273,6 +284,22 @@ describe('useDoseLogging', () => {
     expect(mockDeleteDoc).toHaveBeenCalledTimes(1);
     expect(mockDeleteDoc).toHaveBeenCalledWith(docRef);
     expect(console.error).toHaveBeenCalledWith('Error deleting from Firestore:', error);
+  });
+
+  it('reports a local deletion failure without attempting Firestore deletion', async () => {
+    const error = new Error('Local storage write unavailable');
+    storage.getItem.mockResolvedValueOnce(JSON.stringify([
+      { ...newerLog, firestoreId: 'remote-newer-dose' },
+      olderLog,
+    ]));
+    storage.setItem.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.deleteDoseLog(newerLog.id)).rejects.toBe(error);
+
+    expect(storage.setItem).toHaveBeenCalledWith(storageKey, JSON.stringify([olderLog]));
+    expect(mockDoc).not.toHaveBeenCalled();
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
   });
 
   it('flushes all queued doses and skips a subsequent sync when the queue is empty', async () => {
@@ -329,6 +356,35 @@ describe('useDoseLogging', () => {
     expect(storage.setItem).toHaveBeenNthCalledWith(2, storageKey, JSON.stringify([
       { ...newerLog, firestoreId: 'remote-newer-dose' },
       syncedOlderLog,
+    ]));
+  });
+
+  it('keeps all unsynced doses eligible for retry when every Firestore sync upload fails', async () => {
+    const error = new Error('Firestore unavailable for the entire sync');
+    const syncedLog = { ...newerLog, id: 'synced-dose', firestoreId: 'remote-synced-dose' };
+    const localLogs = JSON.stringify([newerLog, olderLog, syncedLog]);
+    storage.getItem.mockResolvedValueOnce(localLogs);
+    mockAddDocWithEnv.mockRejectedValueOnce(error).mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.syncLogsToFirestore()).resolves.toBeUndefined();
+
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(2);
+    expect(storage.setItem).toHaveBeenCalledWith(storageKey, localLogs);
+
+    storage.getItem.mockResolvedValueOnce(storage.setItem.mock.calls[0][1]);
+    mockAddDocWithEnv
+      .mockResolvedValueOnce({ id: 'remote-newer-dose' } as never)
+      .mockResolvedValueOnce({ id: 'remote-older-dose' } as never);
+    await result.current.syncLogsToFirestore();
+
+    expect(mockAddDocWithEnv).toHaveBeenCalledTimes(4);
+    expect(mockAddDocWithEnv).toHaveBeenNthCalledWith(3, expect.anything(), newerLog);
+    expect(mockAddDocWithEnv).toHaveBeenNthCalledWith(4, expect.anything(), olderLog);
+    expect(storage.setItem).toHaveBeenLastCalledWith(storageKey, JSON.stringify([
+      { ...newerLog, firestoreId: 'remote-newer-dose' },
+      { ...olderLog, firestoreId: 'remote-older-dose' },
+      syncedLog,
     ]));
   });
 
