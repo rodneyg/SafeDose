@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-pr-659",
+    "date": "2026-11-24",
+    "title": "Fix billing return URL test lint (T-12013)",
+    "status": "published",
+    "prs": [
+      659
+    ],
+    "sections": {
+      "Improved": [
+        "Fix billing return URL test lint (T-12013)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-658",
     "date": "2026-11-24",
     "title": "Add unit tests for stripeFulfillment.server.js",
