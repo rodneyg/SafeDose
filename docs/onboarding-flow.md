@@ -147,8 +147,10 @@ const finalProfile = {
 ## Navigation Flow
 
 ```
-Personalization → Background → Use Type → Personal Use → New Dose
-                → Skip personalization → Manual dose entry
+Personalization → Background → Use Type → Personal Use → Optional protocol setup
+  → Continue without setup → New Dose with first scan open
+  → Save a protocol → Schedule preview → New Dose with first scan open
+Skip personalization → Manual dose entry
 ```
 
 ## Technical Implementation
