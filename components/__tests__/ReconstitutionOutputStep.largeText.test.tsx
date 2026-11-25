@@ -24,7 +24,9 @@ it('lets summary rows and action labels wrap at large text sizes', () => {
   );
   const label = StyleSheet.flatten(screen.getByText('Target dose:').props.style);
   const value = StyleSheet.flatten(screen.getByText('250 mcg').props.style);
-  const row = StyleSheet.flatten(screen.getByText('Target dose:').parent!.props.style);
+  let node: any = screen.getByText('Target dose:').parent;
+  while (node && StyleSheet.flatten(node.props.style)?.flexDirection !== 'row') node = node.parent;
+  const row = StyleSheet.flatten(node.props.style);
   expect(label.flexShrink).toBe(1);
   expect(value.flexShrink).toBe(1);
   expect(row.flexWrap).toBe('wrap');
