@@ -1156,6 +1156,7 @@ export default function NewDoseScreen() {
           resetFullForm={resetFullForm}
           setNavigatingFromIntro={setNavigatingFromIntro}
           applyLastDose={applyLastDose}
+          lastCalculation={doseCalculator.lastCalculation}
           onScanLimit={openScanLimit}
           onScanPress={handleIntroScanPress}
           offline={offline}

@@ -27,7 +27,7 @@ const sections = [
   },
   {
     title: "Usage and device storage",
-    body: "Browser Firebase Analytics can receive onboarding and feature usage events, scan and calculation activity, profile categories and age ranges. Some events include user IDs. AsyncStorage saves app state and user records on the device. The web service worker caches app assets. Some onboarding screens load images from Unsplash.",
+    body: "Vercel Web Analytics counts page views by route, with query strings and fragments removed, and sets no advertising identifiers. Browser Firebase Analytics can receive onboarding and feature usage events, scan and calculation activity, profile categories and age ranges. Some events include user IDs. AsyncStorage saves app state and user records on the device. The web service worker caches app assets. Some onboarding screens load images from Unsplash.",
   },
   {
     title: "Payments and hosting",

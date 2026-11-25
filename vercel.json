@@ -29,6 +29,7 @@
 
     { "src": "/(?:_expo|assets|icons|workers)/.*", "status": 404 },
 
+    { "src": "/(dosing-problem|pricing|privacy|terms|support|changelog)/?", "dest": "/$1.html" },
     { "src": "/(.*)",      "dest": "/index.html" }
   ]
 }
