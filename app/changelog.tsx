@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import Head from 'expo-router/head';
 import entries from '../lib/changelog.json';
@@ -7,7 +7,7 @@ import entries from '../lib/changelog.json';
 export default function Changelog() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.scroll}>
-      <Head><title>Changelog | SafeDose</title><meta name="description" content="New features, improvements, and fixes in each SafeDose release." /></Head>
+      {Platform.OS === 'ios' && <Head><title>Changelog | SafeDose</title><meta name="description" content="New features, improvements, and fixes in each SafeDose release." /></Head>}
       <View style={styles.content}>
         <Link href="/" style={styles.link}>SafeDose</Link>
         <Text accessibilityRole="header" style={styles.title}>Changelog</Text>

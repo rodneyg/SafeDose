@@ -1,5 +1,117 @@
 [
   {
+    "id": "2026-11-25-pr-671",
+    "date": "2026-11-25",
+    "title": "Test dose logging local read and Firestore failure fallbacks",
+    "status": "published",
+    "prs": [
+      671
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose logging local read and Firestore failure fallbacks"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-25-pr-670",
+    "date": "2026-11-25",
+    "title": "T-14470 Add robots.txt, full sitemap, canonical and og tags",
+    "status": "published",
+    "prs": [
+      670
+    ],
+    "sections": {
+      "Improved": [
+        "T-14470 Add robots.txt, full sitemap, canonical and og tags"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-25-pr-664",
+    "date": "2026-11-25",
+    "title": "Fix large text clipping on reconstitution and result screens",
+    "status": "published",
+    "prs": [
+      664
+    ],
+    "sections": {
+      "Improved": [
+        "Fix large text clipping on reconstitution and result screens"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-25-pr-663",
+    "date": "2026-11-25",
+    "title": "Keep the last completed SafeDose calculation",
+    "status": "published",
+    "prs": [
+      663
+    ],
+    "sections": {
+      "Improved": [
+        "Keep the last completed SafeDose calculation"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-24-pr-662",
+    "date": "2026-11-24",
+    "title": "Fix stale SafeDose production smoke checks",
+    "status": "published",
+    "prs": [
+      662
+    ],
+    "sections": {
+      "Improved": [
+        "Fix stale SafeDose production smoke checks"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-24-pr-661",
+    "date": "2026-11-24",
+    "title": "Extract shared Stripe mode helper for client and server configs",
+    "status": "published",
+    "prs": [
+      661
+    ],
+    "sections": {
+      "Improved": [
+        "Extract shared Stripe mode helper for client and server configs"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-24-pr-660",
+    "date": "2026-11-24",
+    "title": "test: cover normalizeUpgradeEmail and getManualProgress",
+    "status": "published",
+    "prs": [
+      660
+    ],
+    "sections": {
+      "Improved": [
+        "test: cover normalizeUpgradeEmail and getManualProgress"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-24-pr-659",
+    "date": "2026-11-24",
+    "title": "Fix billing return URL test lint (T-12013)",
+    "status": "published",
+    "prs": [
+      659
+    ],
+    "sections": {
+      "Improved": [
+        "Fix billing return URL test lint (T-12013)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-658",
     "date": "2026-11-24",
     "title": "Add unit tests for stripeFulfillment.server.js",

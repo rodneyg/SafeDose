@@ -403,6 +403,70 @@ describe('useDoseLogging', () => {
     expect(console.error).toHaveBeenCalledWith('Error syncing logs to Firestore:', error);
   });
 
+  it('returns an empty history when local storage cannot be read', async () => {
+    const error = new Error('Local storage read unavailable');
+    storage.getItem.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual([]);
+
+    expect(mockGetDocs).not.toHaveBeenCalled();
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith('[useDoseLogging] Error loading dose log history:', error);
+  });
+
+  it('returns an empty history and keeps the stored data when local history is corrupt', async () => {
+    storage.getItem.mockResolvedValueOnce('{not json');
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual([]);
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith(
+      '[useDoseLogging] Error loading dose log history:',
+      expect.any(SyntaxError)
+    );
+  });
+
+  it('does not overwrite the local cache when Firestore load fails with no local history', async () => {
+    const error = new Error('Firestore read unavailable');
+    mockGetDocs.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual([]);
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith('Error loading dose logs from Firestore:', error);
+  });
+
+  it('reports a local read failure on delete without touching storage or Firestore', async () => {
+    const error = new Error('Local storage read unavailable');
+    storage.getItem.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.deleteDoseLog(newerLog.id)).rejects.toBe(error);
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dose in local history when the Firestore save fails for a single log', async () => {
+    const error = new Error('Firestore write unavailable');
+    mockAddDocWithEnv.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    let response!: Awaited<ReturnType<typeof result.current.logDose>>;
+    await act(async () => {
+      response = await result.current.logDose(doseInfo);
+    });
+
+    expect(response).toEqual({ success: true, localDoseCount: 1 });
+    const saved = JSON.parse(storage.setItem.mock.calls[0][1]);
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).not.toHaveProperty('firestoreId');
+    expect(console.error).toHaveBeenCalledWith('Error saving dose log to Firestore:', error);
+  });
+
   it('does not double log while a dose is already being logged', async () => {
     let allowFirstLog!: (allowed: boolean) => void;
     checkLogUsageLimit.mockReturnValueOnce(

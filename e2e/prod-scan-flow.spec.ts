@@ -6,7 +6,6 @@ test.skip(process.env.SAFEDOSE_PROD_E2E !== '1', 'Production requires explicit o
 test.skip(Boolean(process.env.CI), 'Production is never exercised in CI');
 
 test('guest photo scan, manual calculation, and pricing', async ({ page, context }, testInfo) => {
-
   const origin = 'https://safedose.rodneygainous.com';
   const requests: { method: string; path: string; status: number | string }[] = [];
   const requestRows = new Map<Request, (typeof requests)[number]>();
@@ -54,9 +53,11 @@ test('guest photo scan, manual calculation, and pricing', async ({ page, context
   try {
     await test.step('Guest start using only app onboarding', async () => {
       await page.goto('/');
-      await expect(page.getByRole('button', { name: 'Start demo', exact: true })).toBeVisible();
+      const start = page.getByTestId('onboarding-primary-cta').and(page.getByRole('button'));
+      await expect(start).toHaveAccessibleName(/^(Try Now|Scan a vial)$/);
       await screenshot('01-welcome');
-      await page.getByRole('button', { name: 'Start demo', exact: true }).click();
+      await start.click();
+      await expect(page).toHaveURL(/\/onboarding\/age$/);
       await page.getByRole('button', { name: 'Skip birth date entry', exact: true }).click();
       await page.getByRole('button', { name: 'Continue without providing birth date', exact: true }).click();
       await next();
@@ -68,13 +69,12 @@ test('guest photo scan, manual calculation, and pricing', async ({ page, context
       await page.getByRole('button', { name: 'Continue to next step', exact: true }).click();
       await page.getByRole('button', { name: 'For myself', exact: true }).click();
       await page.getByRole('button', { name: 'Complete setup', exact: true }).click();
-      await expect(page.getByText('Manual', { exact: true })).toBeVisible();
-      await expect(page.getByText('Sign in to get more scans', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'No, continue to scan', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Continue to scan', exact: true })).toBeVisible();
       await screenshot('02-guest-start');
     });
 
     await test.step('One synthetic photo scan shows a result or friendly refusal', async () => {
-      await page.getByText('Scan', { exact: true }).click();
       await page.getByRole('button', { name: 'Continue to scan', exact: true }).click();
       // No camera permission is granted in this fresh headless context.
       await expect(page.getByText('Take or Upload Photo', { exact: true })).toBeVisible();
@@ -95,11 +95,7 @@ test('guest photo scan, manual calculation, and pricing', async ({ page, context
       // Store only the user-facing outcome, never response bodies or session data.
       await fs.writeFile(testInfo.outputPath('scan-outcome.txt'),
         await (await refusal.isVisible() ? refusal : result).innerText());
-      if (await refusal.isVisible()) {
-        await page.getByText('Go Back', { exact: true }).click();
-      } else {
-        await page.goto('/new-dose');
-      }
+      await page.goto('/new-dose');
       await page.getByText('Manual', { exact: true }).click();
     });
 
