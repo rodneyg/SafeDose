@@ -45,6 +45,21 @@ it('keeps the first ten presets when saves overlap and frees a slot on deletion'
   ]);
 });
 
+it('keeps earlier presets and allows queued saves after a storage write fails', async () => {
+  await saveDosingPreset(preset);
+  const failedPreset = { ...preset, id: 'failed', name: 'Failed write' };
+  const nextPreset = { ...preset, id: 'next', name: 'Next preset' };
+  const writeError = new Error('Device storage unavailable');
+  (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(writeError);
+
+  const failedSave = saveDosingPreset(failedPreset);
+  const queuedSave = saveDosingPreset(nextPreset);
+
+  await expect(failedSave).rejects.toBe(writeError);
+  await expect(queuedSave).resolves.toEqual([nextPreset, preset]);
+  await expect(getDosingPresets()).resolves.toEqual([nextPreset, preset]);
+});
+
 it('lets users remove legacy entries above the limit without hiding or discarding them', async () => {
   const legacy = Array.from({ length: MAX_DOSING_PRESETS + 2 }, (_, i) => ({ ...preset, id: String(i) }));
   await AsyncStorage.setItem('@safedose/dosing-presets', JSON.stringify(legacy));
