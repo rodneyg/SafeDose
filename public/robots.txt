@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login
+Disallow: /reset-password
+Disallow: /success
+
+Sitemap: https://safedose.rodneygainous.com/sitemap.xml

@@ -8,6 +8,7 @@ import { getAnalyticsInstance } from '../lib/firebase';
 import { startFirstScanExperiment } from '../lib/firstScanExperiment';
 import { AppErrorBoundary } from '../components/AppErrorBoundary';
 import { WebAnalytics } from '../lib/WebAnalytics';
+import SeoHead from '../components/SeoHead';
 import "../global.css";
 
 // Keep the splash screen visible while we fetch resources
@@ -34,6 +35,7 @@ export default function RootLayout() {
   console.log('[RootLayout] Rendering providers and slot');
   return (
     <AppErrorBoundary>
+      <SeoHead />
       <AuthProvider>
         <UserProfileProvider>
           <OnboardingProvider>
