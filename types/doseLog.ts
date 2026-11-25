@@ -55,3 +55,10 @@ export interface DoseLogContext {
   totalAmount?: string;
   solutionVolume?: string;
 }
+/** Fields a user may correct on a saved dose log. */
+export interface DoseLogEdit {
+  timestamp?: string;
+  doseValue?: number;
+  injectionSite?: InjectionSite | null;
+  notes?: string;
+}

@@ -1,7 +1,7 @@
 import { formatDrawToText, formatConcentration } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
-import { Trash2, Calendar, Pill } from 'lucide-react-native';
+import { Trash2, Pencil, Calendar, Pill } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
@@ -12,13 +12,16 @@ import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isFreeScanPlan } from '../../lib/upgradeNudges';
 import UpgradeNudge from '../../components/UpgradeNudge';
+import EditDoseLogModal from '../../components/EditDoseLogModal';
+import { DoseLogEdit } from '../../types/doseLog';
 
 export default function LogsScreen() {
   const { user } = useAuth();
   const isFocused = useIsFocused();
   const offline = useWebOffline();
   const { usageData, hasVerifiedUsage } = useUsageTracking();
-  const { getDoseLogHistory, deleteDoseLog } = useDoseLogging();
+  const { getDoseLogHistory, deleteDoseLog, updateDoseLog } = useDoseLogging();
+  const [editingLog, setEditingLog] = useState<DoseLog | null>(null);
   const [logs, setLogs] = useState<DoseLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,6 +77,13 @@ export default function LogsScreen() {
       { text: 'Delete', style: 'destructive', onPress: confirmDelete },
     ]);
   }, [deleteDoseLog, loadLogs]);
+
+  const handleSaveEdit = useCallback(async (logId: string, edit: DoseLogEdit) => {
+    const updated = await updateDoseLog(logId, edit);
+    if (!updated) throw new Error('Dose log not found');
+    setEditingLog(null);
+    await loadLogs();
+  }, [updateDoseLog, loadLogs]);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -183,6 +193,14 @@ export default function LogsScreen() {
                     </View>
                     <TouchableOpacity
                       accessibilityRole="button"
+                      accessibilityLabel={`Edit log for ${getDisplaySubstanceName(log.substanceName)}, ${formatDate(log.timestamp)} at ${formatTime(log.timestamp)}`}
+                      style={styles.deleteButton}
+                      onPress={() => setEditingLog(log)}
+                    >
+                      <Pencil color="#005DBF" size={20} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityRole="button"
                       accessibilityLabel={`Delete log for ${getDisplaySubstanceName(log.substanceName)}, ${formatDate(log.timestamp)} at ${formatTime(log.timestamp)}`}
                       style={styles.deleteButton}
                       onPress={() => handleDeleteLog(log)}
@@ -217,6 +235,7 @@ export default function LogsScreen() {
           </>
         )}
       </ScrollView>
+      <EditDoseLogModal log={editingLog} onCancel={() => setEditingLog(null)} onSave={handleSaveEdit} />
     </View>
   );
 }

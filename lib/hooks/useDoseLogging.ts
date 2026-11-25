@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
-import { getFirestore, collection, doc, deleteDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, deleteDoc, updateDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { addDocWithEnv } from '../firestoreWithEnv';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DoseLog, DoseLogContext } from '../../types/doseLog';
+import { DoseLog, DoseLogContext, DoseLogEdit } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
 /** Logs completed doses and exposes the current log-limit state. */
@@ -317,6 +317,55 @@ export function useDoseLogging() {
     }
   }, [user, db]);
 
+  // Edit a saved dose log: date, dose value, injection site and notes.
+  const updateDoseLog = useCallback(async (logId: string, edit: DoseLogEdit): Promise<DoseLog | null> => {
+    try {
+      const storageKey = `dose_logs_${user?.uid || 'anonymous'}`;
+      const existingLogs = await AsyncStorage.getItem(storageKey);
+      const logsList: DoseLog[] = existingLogs ? JSON.parse(existingLogs) : [];
+      const index = logsList.findIndex(log => log.id === logId);
+      if (index === -1) return null;
+
+      const current = logsList[index];
+      const updated: DoseLog = { ...current };
+      if (edit.timestamp !== undefined) updated.timestamp = edit.timestamp;
+      if (edit.notes !== undefined) updated.notes = edit.notes.trim() || undefined;
+      if (edit.injectionSite !== undefined) updated.injectionSite = edit.injectionSite ?? undefined;
+      if (edit.doseValue !== undefined && edit.doseValue !== current.doseValue) {
+        if (!(edit.doseValue > 0)) throw new Error('Dose value must be greater than zero');
+        // Keep the same concentration: scale the volume with the dose. The old
+        // syringe marking no longer matches, so drop it instead of showing it.
+        updated.calculatedVolume = current.doseValue > 0
+          ? Number(((current.calculatedVolume * edit.doseValue) / current.doseValue).toFixed(4))
+          : current.calculatedVolume;
+        updated.doseValue = edit.doseValue;
+        updated.recommendedMarking = undefined;
+      }
+
+      logsList[index] = updated;
+      await AsyncStorage.setItem(storageKey, JSON.stringify(logsList));
+
+      if (user && !user.isAnonymous && updated.firestoreId) {
+        try {
+          const changes = JSON.parse(JSON.stringify(updated));
+          delete changes.firestoreId;
+          // Firestore rejects undefined, so cleared fields are removed with null.
+          for (const field of ['notes', 'injectionSite', 'recommendedMarking'] as const) {
+            if (updated[field] === undefined) changes[field] = null;
+          }
+          await updateDoc(doc(db, 'dose_logs', updated.firestoreId), changes);
+        } catch (firestoreError) {
+          console.error('Error updating Firestore dose log:', firestoreError);
+          // Don't throw - the local edit was saved
+        }
+      }
+      return updated;
+    } catch (error) {
+      console.error('Error updating dose log:', error);
+      throw error; // Re-throw so UI can handle the error
+    }
+  }, [user, db]);
+
   // Sync local logs to Firestore (useful when user signs in)
   const syncLogsToFirestore = useCallback(async () => {
     if (!user || user.isAnonymous) {
@@ -360,6 +409,7 @@ export function useDoseLogging() {
     logDose,
     getDoseLogHistory,
     deleteDoseLog,
+    updateDoseLog,
     syncLogsToFirestore,
     isLogging,
     logUsageData,
