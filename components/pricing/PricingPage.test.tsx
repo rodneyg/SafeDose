@@ -5,6 +5,10 @@ import PricingPage from './PricingPage';
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 const mockToast = jest.fn();
 const mockRedirect = jest.fn();
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { isAnonymous: false, getIdToken: async () => 'checkout-test-token' } }),
+}));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
 jest.mock('../../lib/stripeConfig', () => ({ __esModule: true, default: { publishableKey: 'mock-publishable' } }));
 function mockStripeModule() {
@@ -52,9 +56,9 @@ it.each([false, true])('builds the Photo Scan request for annual=%s and redirect
   await select();
   expect(mockFetch).toHaveBeenCalledTimes(1);
   const [url, request] = mockFetch.mock.calls[0];
-  expect(url).toBe('/api/create-checkout-session');
+  expect(url).toBe('https://safedose.example/api/create-checkout-session');
   expect(request.method).toBe('POST');
-  expect(request.headers).toEqual({ 'Content-Type': 'application/json' });
+  expect(request.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer checkout-test-token' });
   expect(JSON.parse(request.body)).toEqual({
     offerKey: annual ? 'photo_check_annual' : 'photo_check_monthly', priceId: null,
     successUrl: 'https://safedose.example/success?session_id={CHECKOUT_SESSION_ID}',

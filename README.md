@@ -46,7 +46,11 @@ A hosted version of SafeDose: https://safedose.rodneygainous.com/ (fallback: htt
 
 ### Versioning and rollback
 
-The release workflow runs on pushes to `main` and skips automated changelog commits. It creates a semver tag and a GitHub Release for the commit. The bump is a patch by default. Use the `minor` or `major` PR label, or a squash commit subject starting with `feat:` or `feat!:`, to request a minor or major bump.
+The release workflow waits for CI to pass on a push to `main`. It creates a
+semver tag and a GitHub Release for the commit that passed CI. It skips GitHub
+Actions bot commits and automated changelog publishes. The bump is a patch by
+default. Use the `minor` or `major` PR label, or a squash commit subject
+starting with `feat:` or `feat!:`, to request a minor or major bump.
 
 To put a previous tagged build back on production:
 
@@ -160,8 +164,9 @@ Built by SafeLab — advancing open tools for human systems.
 ### Changelog updates
 
 - Published entries in `changelog/*.md` feed the public `/changelog` page.
-  Each entry has `date`, `title`, `status`, and `prs` frontmatter and bullets
-  under New, Improved, or Fixed.
+  Each entry has `date`, `title`, and `status` frontmatter and bullets under
+  New, Improved, or Fixed. Set `prs` to the PR numbers covered by the entry
+  so manual backfills can skip them.
 - When a non-bot PR merges into `main`, the Publish changelog Action uses
   the PR title for its entry, rebuilds `lib/changelog.json`, and commits both
   to `main`. The `skip-changelog` label skips this step.
@@ -222,9 +227,10 @@ to check whether it responds.
 
 After this workflow is on the default branch, Vercel's successful Preview
 deployment event starts one headless Chromium check. It checks `/api/health`
-against the deployed commit, opens the app, and clicks **Try Now** to reach
-the age step. The browser allows only same-origin reads and stops before
-entering any data. The job uses no model calls or application credentials.
+against the deployed commit, opens the app, and clicks the primary welcome
+button to reach the age step. The browser allows only same-origin reads and
+stops before entering any data. The job uses no model calls or application
+credentials.
 
 To run it on protected previews, create a Protection Bypass for Automation
 secret in the SafeDose Vercel project and add it to GitHub Actions as

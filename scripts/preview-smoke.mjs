@@ -50,7 +50,8 @@ try {
   await context.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
-    if (request.method() !== 'GET' || url.origin !== origin || url.pathname.startsWith('/api/')) {
+    if (request.method() !== 'GET' || url.origin !== origin ||
+        url.pathname.startsWith('/api/') || url.pathname.startsWith('/_vercel/insights/')) {
       return route.abort();
     }
     let response;
@@ -80,7 +81,11 @@ try {
   const pageResponse = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout });
   if (pageResponse?.status() !== 200) throw new Error();
   await page.waitForURL(`${origin}/onboarding`, { timeout });
-  await page.getByRole('button', { name: 'Start demo', exact: true }).click();
+  stage = 'click the primary onboarding button';
+  // Previews built from older branches may lack the test ID.
+  await page.getByTestId('onboarding-primary-cta')
+    .or(page.getByRole('button', { name: /^(Start demo|Try Now|Scan a vial)$/ }))
+    .click();
 
   stage = 'show the age step after starting the demo';
   await page.waitForURL(`${origin}/onboarding/age`, { timeout });
@@ -88,7 +93,7 @@ try {
 
   stage = 'check for script and browser errors';
   if (pageErrors || badScripts) throw new Error();
-  console.log('PASS web onboarding: welcome page loaded and Start demo opened the age step');
+  console.log('PASS web onboarding: welcome page loaded and the primary button opened the age step');
 } catch {
   // Error objects can contain request headers or application data.
   console.error(`FAIL preview smoke: could not ${stage}.`);

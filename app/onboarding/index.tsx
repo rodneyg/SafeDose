@@ -106,6 +106,7 @@ export default function Welcome() {
               logAnalyticsEvent(ANALYTICS_EVENTS.WELCOME_PRIMARY_CTA_CLICK);
               handleStart();
             }}
+            testID="onboarding-primary-cta"
             accessibilityRole="button"
             accessibilityLabel={isWeb ? ctaLabel : 'Start demo'}
             accessibilityHint={ctaArm === 'variant' ? 'Opens onboarding before you can scan a vial' : 'Begins the SafeDose app demonstration'}>

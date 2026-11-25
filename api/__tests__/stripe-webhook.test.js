@@ -3,27 +3,32 @@
 const mockConstructEvent = jest.fn();
 const mockBuffer = jest.fn();
 
-jest.mock('stripe', () => jest.fn(() => ({
+jest.mock('stripe', () => Object.assign(jest.fn(() => ({})), {
   webhooks: { constructEvent: mockConstructEvent },
-})));
+}));
+jest.mock('../../lib/firebaseAdmin.server', () => ({ getBillingFirebase: jest.fn(() => ({ db: {} })) }));
+jest.mock('../../lib/stripeFulfillment.server', () => ({ fulfillStripeEvent: jest.fn() }));
 jest.mock('micro', () => ({ buffer: mockBuffer }));
 jest.mock('../../lib/stripeConfig.server.js', () => ({
-  secretKey: 'sk_mock_not_a_key',
+  secretKey: 'sk_test_fixture',
   mode: 'test',
 }));
 
+const { fulfillStripeEvent } = require('../../lib/stripeFulfillment.server');
 const handler = require('../stripe-webhook');
 
 const requestBody = Buffer.from('{"mock":"payload"}');
+const secret = 'whsec_webhook_fixture';
+const request = { method: 'POST', headers: { 'stripe-signature': 'fixture_signature' } };
 let res;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.replaceProperty(process, 'env', { ...process.env, STRIPE_WEBHOOK_SECRET: secret });
+  jest.spyOn(console, 'error').mockImplementation(() => {});
   mockBuffer.mockResolvedValue(requestBody);
   res = {
     status: jest.fn().mockReturnThis(),
-    send: jest.fn(),
     json: jest.fn(),
   };
 });
@@ -35,81 +40,37 @@ it('rejects a webhook when Stripe signature verification fails', async () => {
     throw new Error('No signatures found');
   });
 
-  await handler({ headers: { 'stripe-signature': 'invalid_signature' } }, res);
+  await handler(request, res);
 
   expect(mockBuffer).toHaveBeenCalledTimes(1);
-  expect(mockConstructEvent.mock.calls[0].slice(0, 2)).toEqual([
-    requestBody,
-    'invalid_signature',
-  ]);
+  expect(mockConstructEvent).toHaveBeenCalledWith(requestBody, 'fixture_signature', secret);
   expect(res.status).toHaveBeenCalledWith(400);
-  expect(res.send).toHaveBeenCalledWith('Webhook Error: No signatures found');
-  expect(res.json).not.toHaveBeenCalled();
+  expect(res.json).toHaveBeenCalledWith({ error: 'Invalid Stripe signature.' });
+  expect(fulfillStripeEvent).not.toHaveBeenCalled();
 });
 
 it.each([
-  ['checkout.session.completed', { id: 'cs_mock', metadata: { source: 'pricing' } }, [
-    ['Received event:', 'checkout.session.completed', 'cs_mock'],
-    ['Session metadata:', { source: 'pricing' }],
-  ]],
-  ['customer.subscription.trial_will_end', { id: 'sub_trial' }, [
-    ['Trial ending soon for subscription:', 'sub_trial'],
-  ]],
-  ['customer.subscription.updated', { id: 'sub_updated' }, [
-    ['Subscription updated:', 'sub_updated'],
-  ]],
-  ['customer.subscription.deleted', { id: 'sub_deleted' }, [
-    ['Subscription cancelled:', 'sub_deleted'],
-  ]],
-])('acknowledges and handles %s', async (type, object, expectedLogs) => {
-  mockConstructEvent.mockReturnValue({ type, data: { object } });
+  'checkout.session.completed',
+  'customer.subscription.trial_will_end',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+  'invoice.paid',
+])('acknowledges verified %s after passing it to fulfillment', async type => {
+  const event = { type, livemode: false, data: { object: { id: 'object_fixture' } } };
+  mockConstructEvent.mockReturnValue(event);
 
-  await handler({ headers: { 'stripe-signature': 'valid_signature' } }, res);
+  await handler(request, res);
 
-  expectedLogs.forEach(args => expect(console.log).toHaveBeenCalledWith(...args));
+  expect(fulfillStripeEvent).toHaveBeenCalledWith(expect.any(Object), expect.any(Object), 'test', event);
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.json).toHaveBeenCalledWith({ received: true });
 });
 
-it('logs the trial end when a new subscription includes one', async () => {
-  const trialEnd = 1_800_000_000;
-  mockConstructEvent.mockReturnValue({
-    type: 'customer.subscription.created',
-    data: { object: { id: 'sub_new', trial_end: trialEnd } },
-  });
-
-  await handler({ headers: { 'stripe-signature': 'valid_signature' } }, res);
-
-  expect(console.log).toHaveBeenCalledWith('New subscription created:', 'sub_new');
-  expect(console.log).toHaveBeenCalledWith(
-    'Subscription has trial ending at:',
-    new Date(trialEnd * 1000)
-  );
-  expect(res.status).toHaveBeenCalledWith(200);
-});
-
-it('handles a new subscription without logging a trial end', async () => {
-  mockConstructEvent.mockReturnValue({
-    type: 'customer.subscription.created',
-    data: { object: { id: 'sub_without_trial' } },
-  });
-
-  await handler({ headers: { 'stripe-signature': 'valid_signature' } }, res);
-
-  expect(console.log).toHaveBeenCalledTimes(1);
-  expect(console.log).toHaveBeenCalledWith('New subscription created:', 'sub_without_trial');
-  expect(res.json).toHaveBeenCalledWith({ received: true });
-});
-
-it('acknowledges and reports an unhandled event type', async () => {
-  mockConstructEvent.mockReturnValue({
-    type: 'invoice.paid',
-    data: { object: { id: 'in_mock' } },
-  });
-
-  await handler({ headers: { 'stripe-signature': 'valid_signature' } }, res);
-
-  expect(console.log).toHaveBeenCalledWith('Unhandled event type: invoice.paid');
-  expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.json).toHaveBeenCalledWith({ received: true });
+it('returns a retryable response when processing a verified event fails', async () => {
+  mockConstructEvent.mockReturnValue({ id: 'evt_fixture', type: 'invoice.paid', livemode: false });
+  fulfillStripeEvent.mockRejectedValueOnce(new Error('Fixture backend failure'));
+  await handler(request, res);
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Webhook is temporarily unavailable.' });
 });

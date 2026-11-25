@@ -78,7 +78,7 @@ export function useFeedbackStorage() {
         id: `feedback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: user?.uid,
         feedbackType,
-        notes,
+        ...(notes !== undefined ? { notes } : {}),
         timestamp: new Date().toISOString(),
         doseInfo: {
           substanceName: doseInfo.substanceName,
