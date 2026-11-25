@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-pr-676",
+    "date": "2026-11-25",
+    "title": "test: cover Stripe client and server config key rules (T-17085)",
+    "status": "published",
+    "prs": [
+      676
+    ],
+    "sections": {
+      "Improved": [
+        "test: cover Stripe client and server config key rules (T-17085)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-675",
     "date": "2026-11-25",
     "title": "Test recovery after a failed preset write",
