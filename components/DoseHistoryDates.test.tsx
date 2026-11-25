@@ -10,7 +10,7 @@ jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: null }) })
 jest.mock('../lib/hooks/useUsageTracking', () => ({ useUsageTracking: () => ({}) }));
 jest.mock('../lib/hooks/useWebOffline', () => ({ useWebOffline: () => false }));
 jest.mock('../lib/hooks/useDoseLogging', () => ({ useDoseLogging: jest.fn() }));
-jest.mock('lucide-react-native', () => ({ Trash2: 'Trash2', Calendar: 'Calendar', Pill: 'Pill' }));
+jest.mock('lucide-react-native', () => ({ Trash2: 'Trash2', Calendar: 'Calendar', Pill: 'Pill', Download: 'Download' }));
 jest.mock('../components/UpgradeNudge', () => () => null);
 
 describe('dose history dates', () => {
