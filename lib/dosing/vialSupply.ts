@@ -43,10 +43,10 @@ function parsePositive(text: string | undefined): Exact | null {
 
 /** Two logs share a vial when the vial label inputs and substance match. */
 function sameVial(a: VialSupplyLog, b: VialSupplyLog): boolean {
+  const totalB = parsePositive(b.totalAmount);
   return (a.substanceName || '').trim().toLowerCase() === (b.substanceName || '').trim().toLowerCase()
     && a.totalAmountUnit === b.totalAmountUnit
-    && !!parsePositive(a.totalAmount) && !!parsePositive(b.totalAmount)
-    && parsePositive(a.totalAmount)!.compare(parsePositive(b.totalAmount)!) === 0;
+    && !!totalB && parsePositive(a.totalAmount)!.compare(totalB) === 0;
 }
 
 /**
@@ -72,8 +72,8 @@ export function estimateVialSupply(logs: VialSupplyLog[]): VialSupplyEstimate | 
     count++;
   }
 
-  const latestDose = toVialUnit(latest.doseValue, latest.unit, vialUnit);
-  if (!latestDose || latestDose.compare(0) <= 0) return null;
+  // The newest log is part of the loop above, so its dose is already known to be valid.
+  const latestDose = toVialUnit(latest.doseValue, latest.unit, vialUnit)!;
 
   const diff = new Exact(String(total.n * used.d - used.n * total.d), total.d * used.d);
   const left = diff.compare(0) < 0 ? new Exact(0) : diff;

@@ -35,6 +35,14 @@ describe('estimateVialSupply', () => {
     expect(r.dosesLeft).toBe(19);
   });
 
+  it('converts mg doses against an mcg vial and handles units vials', () => {
+    const r = estimateVialSupply([log({ totalAmount: '5000', totalAmountUnit: 'mcg', doseValue: 0.25, unit: 'mg' })])!;
+    expect(r.amountLeftExact).toBe('4750');
+    expect(r.dosesLeft).toBe(19);
+    const u = estimateVialSupply([log({ totalAmount: '100', totalAmountUnit: 'units', doseValue: 10, unit: 'units' })])!;
+    expect(u.dosesLeft).toBe(9);
+  });
+
   it('floors partial doses and never goes below zero', () => {
     expect(estimateVialSupply([log({ doseValue: 2 })])!.dosesLeft).toBe(1);
     const over = estimateVialSupply([log({ doseValue: 3 }), log({ doseValue: 3 })])!;
@@ -50,5 +58,17 @@ describe('estimateVialSupply', () => {
 
   it('returns null when dose and vial units cannot be compared', () => {
     expect(estimateVialSupply([log({ unit: 'mL' })])).toBeNull();
+  });
+
+  it('treats unreadable totals and zero doses as no vial context', () => {
+    expect(estimateVialSupply([log({ totalAmount: 'abc' })])).toBeNull();
+    expect(estimateVialSupply([log({ doseValue: 0 })])).toBeNull();
+  });
+
+  it('matches vials with no substance name and skips logs without a total', () => {
+    const noName = (over: Partial<VialSupplyLog> = {}) => log({ substanceName: undefined, ...over });
+    const r = estimateVialSupply([noName(), noName({ totalAmount: undefined }), noName({ medicationInputType: 'concentration' })])!;
+    expect(r.loggedDoseCount).toBe(1);
+    expect(estimateVialSupply([noName(), noName({ substanceName: '  ' })])!.loggedDoseCount).toBe(2);
   });
 });
