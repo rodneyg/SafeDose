@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-pr-664",
+    "date": "2026-11-25",
+    "title": "Fix large text clipping on reconstitution and result screens",
+    "status": "published",
+    "prs": [
+      664
+    ],
+    "sections": {
+      "Improved": [
+        "Fix large text clipping on reconstitution and result screens"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-663",
     "date": "2026-11-25",
     "title": "Keep the last completed SafeDose calculation",
