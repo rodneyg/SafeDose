@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useReconstitutionPlanner } from '../useReconstitutionPlanner';
 
 it('keeps an incomplete manual entry on the input step and clears its error when edited', () => {
@@ -46,4 +47,23 @@ it('uses the scanned amount, recomputes on a manual override, and resets the flo
     result: null,
     error: null,
   });
+});
+
+it('restores the finished plan on return without pre-filling a new plan', async () => {
+  await AsyncStorage.clear();
+  const planner = renderHook(useReconstitutionPlanner);
+  act(() => {
+    planner.result.current.setInputMethod('manual');
+    planner.result.current.setPeptideAmount('5');
+    planner.result.current.setTargetDose('250');
+  });
+  expect(planner.result.current.lastCalculation).toBeNull();
+  act(() => planner.result.current.proceedToOutput());
+  planner.unmount();
+
+  const restored = renderHook(useReconstitutionPlanner);
+  await waitFor(() => expect(restored.result.current.lastCalculation).toEqual({
+    vial: '5 mg', solutionVolume: '2.00 mL', dose: '250 mcg', draw: 'Draw 0.100 mL',
+  }));
+  expect(restored.result.current).toMatchObject({ targetDose: '', peptideAmount: '', result: null });
 });

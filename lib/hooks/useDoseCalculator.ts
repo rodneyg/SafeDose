@@ -1,5 +1,5 @@
 import { SyringeSelection } from '../dosing';
-import { AmountUnit, calculateDose, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
+import { AmountUnit, calculateDose, formatDrawToText, parseDoseInput, validateUnitCompatibility, getCompatibleConcentrationUnits } from '../dosing';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { FeedbackContextType } from '../../types/feedback';
@@ -13,6 +13,7 @@ import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { usePowerUserPromotion } from './usePowerUserPromotion';
 import { useBeforeFirstScanPrompt } from './useBeforeFirstScanPrompt';
 import { useEvaluationDataCapture } from './useEvaluationDataCapture';
+import { useLastCalculation } from './useLastCalculation';
 
 // Import the minimum dose constant for safety checks
 const MIN_DOSES_FOR_PROMOTION = 4;
@@ -54,6 +55,7 @@ const isValidValue = (value: any): boolean => {
  */
 export default function useDoseCalculator({ checkUsageLimit, trackInteraction }: UseDoseCalculatorProps) {
   const { user } = useAuth();
+  const { lastCalculation, rememberCalculation } = useLastCalculation(user?.isAnonymous ? undefined : user?.uid);
   const scheduledDose = useRef<{ uid?: string; occurrence: string } | null>(null);
   const startScheduledDose = useCallback((occurrence: string) => {
     scheduledDose.current = { uid: user?.uid, occurrence };
@@ -568,13 +570,28 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
       console.log('[useDoseCalculator] handleNextPreDoseConfirmation called');
       if (manualStep !== 'preDoseConfirmation' || pendingInputs.current !== inputKey || calculationError || !recommendedMarking) return;
       setManualStep('finalResult');
+      const draw = formatDrawToText({ recommendedMarking, syringeType: manualSyringe.type });
+      if (draw && doseValue !== null) {
+        const isReconstituted = medicationInputType === 'totalAmount';
+        const vial = isReconstituted
+          ? (totalAmount && totalAmountUnit ? `${totalAmount.trim()} ${totalAmountUnit}` : null)
+          : (concentrationAmount ? `${concentrationAmount.trim()} ${concentrationUnit}` : null);
+        rememberCalculation({
+          dose: `${doseValue} ${unit}`,
+          draw: manualSyringe.type === 'Insulin' ? `${draw} (${manualSyringe.insulinScale || 'U-100'} syringe)` : draw,
+          vial,
+          solutionVolume: isReconstituted && solutionVolume ? `${solutionVolume.trim()} mL` : null,
+        });
+      }
       console.log('[useDoseCalculator] Set manualStep to finalResult');
       lastActionTimestamp.current = Date.now();
     } catch (error) {
       console.error('[useDoseCalculator] Error in handleNextPreDoseConfirmation:', error);
       setFormError('An unexpected error occurred. Please try again.');
     }
-  }, [manualStep, inputKey, calculationError, recommendedMarking]);
+  }, [manualStep, inputKey, calculationError, recommendedMarking, manualSyringe, doseValue, unit,
+    medicationInputType, totalAmount, totalAmountUnit, concentrationAmount, concentrationUnit,
+    solutionVolume, rememberCalculation]);
 
   const handleCloseVolumeErrorModal = useCallback(() => {
     setShowVolumeErrorModal(false);
@@ -1061,6 +1078,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     handleNextReconstitution,
     handleCalculateFinal,
     handleNextPreDoseConfirmation,
+    lastCalculation,
     handleBack,
     handleStartOver,
     handleGoHome,
