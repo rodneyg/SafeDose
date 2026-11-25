@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-pr-671",
+    "date": "2026-11-25",
+    "title": "Test dose logging local read and Firestore failure fallbacks",
+    "status": "published",
+    "prs": [
+      671
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose logging local read and Firestore failure fallbacks"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-664",
     "date": "2026-11-25",
     "title": "Fix large text clipping on reconstitution and result screens",
