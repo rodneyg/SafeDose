@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-pr-663",
+    "date": "2026-11-25",
+    "title": "Keep the last completed SafeDose calculation",
+    "status": "published",
+    "prs": [
+      663
+    ],
+    "sections": {
+      "Improved": [
+        "Keep the last completed SafeDose calculation"
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-662",
     "date": "2026-11-24",
     "title": "Fix stale SafeDose production smoke checks",
