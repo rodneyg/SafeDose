@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import SeoHead from '../components/SeoHead';
 import { getCheckoutStripe } from "../lib/checkoutStripe";
 import { useAuth } from "../contexts/AuthContext";
 import { billingRequest } from "../lib/subscriptionStatus";
@@ -215,6 +216,7 @@ export default function PricingPage() {
         },
       ]}
     >
+      <SeoHead path="/pricing" title="Pricing | SafeDose" description="SafeDose pricing. The calculator stays free; web checkout, cancel anytime." />
       {/* App Icon with Pulse Animation */}
       <Animated.View style={[styles.iconContainer, { transform: [{ scale: pulseAnim }] }]}>
         <View style={styles.iconBackground}>

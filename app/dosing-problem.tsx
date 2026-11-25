@@ -1,4 +1,4 @@
-import Head from 'expo-router/head';
+import SeoHead from '../components/SeoHead';
 import { Link } from 'expo-router';
 import { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -25,10 +25,7 @@ function Note() {
 export default function DosingProblemPage() {
   return (
     <SafeAreaView style={styles.screen}>
-      <Head>
-        <title>The dosing problem | SafeDose</title>
-        <meta name="description" content="Why units, mL and mg get mixed up, how syringe sizes differ, and one worked reconstitution example. Education only, not medical advice." />
-      </Head>
+      <SeoHead path="/dosing-problem" title="The dosing problem | SafeDose" description="Why units, mL and mg get mixed up, how syringe sizes differ, and one worked reconstitution example. Education only, not medical advice." />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Link href="/" style={styles.link}>SafeDose</Link>
