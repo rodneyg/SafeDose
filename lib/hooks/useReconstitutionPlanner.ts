@@ -1,6 +1,7 @@
-import { calculateReconstitution, getReconstitutionResult, getReconstitutionInputError } from '../dosing';
+import { calculateReconstitution, getReconstitutionResult, getReconstitutionInputError, formatDoseNumber } from '../dosing';
 export type { ReconstitutionPlannerParams, ReconstitutionPlannerResult } from '../dosing';
 import { useState, useCallback, useMemo } from 'react';
+import { useLastCalculation } from './useLastCalculation';
 
 export interface ReconstitutionState {
   step: 'inputMethod' | 'manualInput' | 'scanLabel' | 'output';
@@ -16,7 +17,8 @@ export interface ReconstitutionState {
 }
 
 /** Manages reconstitution inputs, validation, navigation, and calculated results. */
-export function useReconstitutionPlanner() {
+export function useReconstitutionPlanner(accountId?: string) {
+  const { lastCalculation, rememberCalculation } = useLastCalculation(accountId, 'reconstitution');
   const [state, setState] = useState<ReconstitutionState>({
     step: 'inputMethod',
     inputMethod: null,
@@ -91,10 +93,16 @@ export function useReconstitutionPlanner() {
   }, [state.peptideAmount, state.scannedPeptideAmount, state.targetDose, state.preferredVolume, result, setError]);
 
   const proceedToOutput = useCallback(() => {
-    if (validateInputs()) {
-      setStep('output');
-    }
-  }, [validateInputs, setStep]);
+    if (!validateInputs() || !result) return;
+    rememberCalculation({
+      vial: `${(state.peptideAmount || state.scannedPeptideAmount || '').trim()} ${state.peptideUnit}`,
+      solutionVolume: `${formatDoseNumber(result.bacWaterToAdd, 2)} mL`,
+      dose: `${state.targetDose.trim()} ${state.targetDoseUnit}`,
+      draw: `Draw ${formatDoseNumber(result.injectionVolume, 3)} mL`,
+    });
+    setStep('output');
+  }, [validateInputs, setStep, result, state.peptideAmount, state.scannedPeptideAmount, state.peptideUnit,
+    state.targetDose, state.targetDoseUnit, rememberCalculation]);
 
   const reset = useCallback(() => {
     setState({
@@ -114,6 +122,7 @@ export function useReconstitutionPlanner() {
   return {
     ...state,
     result,
+    lastCalculation,
     setStep,
     setInputMethod,
     setPeptideAmount,

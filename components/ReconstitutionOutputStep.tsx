@@ -144,18 +144,22 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 4,
+    columnGap: 8,
   },
   summaryLabel: {
     fontSize: 14,
     color: '#666',
+    flexShrink: 1,
   },
   summaryValue: {
     fontSize: 14,
     fontWeight: '500',
     color: '#000',
+    flexShrink: 1,
   },
   resultItem: {
     marginBottom: 16,
@@ -208,6 +212,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   secondaryAction: {
     flexDirection: 'row',
@@ -225,6 +231,8 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
     fontWeight: '500',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   safetyNote: {
     backgroundColor: '#FFF3CD',

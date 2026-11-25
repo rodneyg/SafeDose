@@ -11,13 +11,15 @@ import ReconstitutionInputMethodStep from './ReconstitutionInputMethodStep';
 import ReconstitutionManualInputStep from './ReconstitutionManualInputStep';
 import ReconstitutionScanStep from './ReconstitutionScanStep';
 import ReconstitutionOutputStep from './ReconstitutionOutputStep';
+import LastCalculationCard from './LastCalculationCard';
 import { isMobileWeb } from '../lib/utils';
 
 interface ReconstitutionPlannerProps {
   scanDisabled?: boolean;
+  accountId?: string;
 }
 
-export default function ReconstitutionPlanner({ scanDisabled = false }: ReconstitutionPlannerProps) {
+export default function ReconstitutionPlanner({ scanDisabled = false, accountId }: ReconstitutionPlannerProps) {
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -35,6 +37,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     isProcessing,
     error,
     result,
+    lastCalculation,
     setStep,
     setInputMethod,
     setPeptideAmount,
@@ -47,7 +50,7 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
     setError,
     proceedToOutput,
     reset,
-  } = useReconstitutionPlanner();
+  } = useReconstitutionPlanner(accountId);
 
   const handleBack = () => {
     switch (step) {
@@ -175,6 +178,10 @@ export default function ReconstitutionPlanner({ scanDisabled = false }: Reconsti
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {(step === 'inputMethod' || step === 'manualInput') && lastCalculation && (
+          <LastCalculationCard calculation={lastCalculation} />
+        )}
+
         {step === 'inputMethod' && (
           <ReconstitutionInputMethodStep
             selectedMethod={inputMethod}

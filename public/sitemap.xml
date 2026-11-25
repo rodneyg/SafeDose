@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://safedose.rodneygainous.com/</loc>
+  </url>
+  <url>
     <loc>https://safedose.rodneygainous.com/dosing-problem</loc>
+  </url>
+  <url>
+    <loc>https://safedose.rodneygainous.com/pricing</loc>
+  </url>
+  <url>
+    <loc>https://safedose.rodneygainous.com/privacy</loc>
+  </url>
+  <url>
+    <loc>https://safedose.rodneygainous.com/terms</loc>
+  </url>
+  <url>
+    <loc>https://safedose.rodneygainous.com/support</loc>
+  </url>
+  <url>
+    <loc>https://safedose.rodneygainous.com/changelog</loc>
   </url>
 </urlset>

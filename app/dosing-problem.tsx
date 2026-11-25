@@ -1,7 +1,7 @@
 import Head from 'expo-router/head';
 import { Link } from 'expo-router';
 import { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const educationNote = 'This page is general education, not medical advice. Always check against your prescription label and talk with your clinician or pharmacist about your dose.';
@@ -25,10 +25,12 @@ function Note() {
 export default function DosingProblemPage() {
   return (
     <SafeAreaView style={styles.screen}>
-      <Head>
-        <title>The dosing problem | SafeDose</title>
-        <meta name="description" content="Why units, mL and mg get mixed up, how syringe sizes differ, and one worked reconstitution example. Education only, not medical advice." />
-      </Head>
+      {Platform.OS === 'ios' && (
+        <Head>
+          <title>The dosing problem | SafeDose</title>
+          <meta name="description" content="Why units, mL and mg get mixed up, how syringe sizes differ, and one worked reconstitution example. Education only, not medical advice." />
+        </Head>
+      )}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Link href="/" style={styles.link}>SafeDose</Link>
