@@ -1,6 +1,6 @@
 import SignInError from './SignInError';
 import React, { useRef, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -20,11 +20,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useUsageTracking } from '../lib/hooks/useUsageTracking';
 import { useDoseLogging } from '../lib/hooks/useDoseLogging';
+import type { LastCalculation } from '../lib/hooks/useLastCalculation';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { signInWithGoogle } from '../lib/googleAuth';
 import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
 import Constants from 'expo-constants'; // env variables from app.config.js
 import ConfirmationModal from './ConfirmationModal';
+import LastCalculationCard from './LastCalculationCard';
 import { FREE_SCAN_LIMIT, hasScanCapacity } from '../lib/plans';
 import { useFirstScanCopy } from '../lib/firstScanExperiment';
 import { logAnalyticsEvent } from '../lib/analytics';
@@ -46,6 +48,7 @@ interface IntroScreenProps {
   ) => void;
   setNavigatingFromIntro?: (value: boolean) => void;
   applyLastDose?: () => Promise<boolean>;
+  lastCalculation?: LastCalculation | null;
   onScanPress?: (arm?: MobileScanCtaArm) => void;
   offline?: boolean;
   onScanLimit?: () => void;
@@ -56,6 +59,7 @@ export default function IntroScreen({
   resetFullForm,
   setNavigatingFromIntro,
   applyLastDose,
+  lastCalculation,
   onScanPress,
   onScanLimit,
   offline = false,
@@ -453,7 +457,10 @@ export default function IntroScreen({
         {!isLoading && !isSigningOut && (
           <>
             {/* ===================== MAIN CONTENT ===================== */}
-            <View style={[styles.content, isMobileWeb && styles.contentMobile]}>
+            <ScrollView
+              style={styles.contentScroll}
+              contentContainerStyle={[styles.content, isMobileWeb && styles.contentMobile]}
+            >
               {prominentScan && scanButton}
               <View style={[styles.welcomeContainer, isMobileWeb && styles.welcomeContainerMobile]}>
                 <Syringe color="#6ee7b7" size={64} style={[styles.icon, isMobileWeb && styles.iconMobile]} />
@@ -517,6 +524,8 @@ export default function IntroScreen({
                 </View>
               )}
 
+              {lastCalculation && <LastCalculationCard calculation={lastCalculation} />}
+
               {/* Plan Reconstitution Link */}
               <TouchableOpacity 
                 style={styles.reconstitutionLinkContainer}
@@ -554,7 +563,7 @@ export default function IntroScreen({
                   </Text>
                 </View>
               </View>
-            </View>
+            </ScrollView>
 
             {/* ===================== AUTH / PROFILE ===================== */}
             <View style={styles.bottomSection}>
@@ -713,8 +722,10 @@ const styles = StyleSheet.create({
   },
 
   /* Main content */
-  content: {
+  contentScroll: {
     flex: 1,
+  },
+  content: {
     alignItems: 'center',
     paddingTop: 20,
     padding: 16,

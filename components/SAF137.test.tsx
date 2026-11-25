@@ -6,6 +6,7 @@ import useDoseCalculator from '../lib/hooks/useDoseCalculator';
 import ManualEntryScreen from './ManualEntryScreen';
 import FinalResultDisplay from './FinalResultDisplay';
 import { calculateDose } from '../lib/dosing';
+import { savePrescribedProtocol } from '../lib/prescribedProtocol';
 import { getManualProgress } from '../lib/manualProgress';
 import CustomProgressBar from './CustomProgressBar';
 
@@ -39,7 +40,7 @@ jest.mock('./SyringeIllustration', () => 'SyringeIllustration');
 
 let renderer: ReactTestRenderer;
 beforeEach(() => { jest.spyOn(console, 'log').mockImplementation(() => {}); });
-afterEach(() => { act(() => renderer?.unmount()); jest.restoreAllMocks(); });
+afterEach(async () => { act(() => renderer?.unmount()); jest.restoreAllMocks(); await AsyncStorage.clear(); });
 function hook() {
   let result: ReturnType<typeof useDoseCalculator>;
   function Probe() { result = useDoseCalculator({ checkUsageLimit: async () => true }); return null; }
@@ -92,10 +93,10 @@ it('keeps the feedback flow in place and offers the survey only after a successf
 });
 
 it('logs the occurrence only for the confirmed scheduled dose and clears it for the next dose', async () => {
-  jest.mocked(AsyncStorage.getItem).mockResolvedValueOnce(JSON.stringify({
+  await savePrescribedProtocol(undefined, {
     type: 'custom', medication: 'Example', dose: '1', unit: 'mg', cadenceDays: 7,
     firstDate: '2026-11-20', savedAt: 12345,
-  }));
+  });
   const h = hook();
   mockLogDose.mockReset().mockResolvedValue({ success: true });
   const occurrence = '12345:2026-11-20';

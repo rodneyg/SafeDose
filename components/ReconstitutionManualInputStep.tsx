@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
   },
   inputWithUnit: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -216,6 +217,7 @@ const styles = StyleSheet.create({
   },
   inputWithUnitInput: {
     flex: 1,
+    minWidth: 120,
     borderWidth: 0,
     borderRadius: 0,
   },

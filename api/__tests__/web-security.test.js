@@ -3,10 +3,10 @@ const { routes } = require('../../vercel.json');
 const { createRateLimit } = require('../../lib/apiRateLimit');
 
 describe('Vercel response headers', () => {
-  it('applies security headers before the ping, API, filesystem, and SPA routes', () => {
-    const [security, ping, api, filesystem, staticAssets, spa] = routes;
+  it('applies security headers before the ping, API, filesystem, public pages, and SPA routes', () => {
+    const [security, ping, api, filesystem, staticAssets, publicPages, spa] = routes;
     const matcher = new RegExp('^' + security.src + '$');
-    for (const path of ['/', '/ping', '/settings', '/assets/app.js', '/api/health']) {
+    for (const path of ['/', '/ping', '/support', '/settings', '/assets/app.js', '/api/health']) {
       expect(matcher.test(path)).toBe(true);
     }
     expect(security.continue).toBe(true);
@@ -22,6 +22,12 @@ describe('Vercel response headers', () => {
     expect(filesystem.handle).toBe('filesystem');
     expect(staticAssets).toEqual({ src: '/(?:_expo|assets|icons|workers)/.*', status: 404 });
     expect(new RegExp('^' + staticAssets.src + '$').test('/assets/missing.js')).toBe(true);
+    const publicPageMatcher = new RegExp('^' + publicPages.src + '$');
+    for (const path of ['/dosing-problem', '/pricing', '/privacy', '/terms', '/support', '/changelog']) {
+      expect(path.replace(publicPageMatcher, publicPages.dest)).toBe(path + '.html');
+    }
+    expect('/support/'.replace(publicPageMatcher, publicPages.dest)).toBe('/support.html');
+    expect(publicPageMatcher.test('/reset-password')).toBe(false);
     expect(spa.dest).toBe('/index.html');
   });
 });
