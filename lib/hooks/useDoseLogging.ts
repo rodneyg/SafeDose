@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog, DoseLogContext } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
+import { resolveDoseTimestamp, sortLogsNewestFirst } from '../doseLogTimestamp';
 
 /** Logs completed doses and exposes the current log-limit state. */
 export function useDoseLogging() {
@@ -25,12 +26,14 @@ export function useDoseLogging() {
       
       console.log('[useDoseLogging] Existing logs count:', logsList.length);
       
-      logsList.unshift(doseLog); // Add to beginning for recent-first order
+      // Keep the list sorted newest first by the log timestamp (a backdated dose
+      // lands in its place, not at the top).
+      logsList.push(doseLog);
+      const sortedLogs = sortLogsNewestFirst(logsList);
       
       // Keep only the last 100 log entries to prevent storage bloat
-      if (logsList.length > 100) {
-        logsList.splice(100);
-      }
+      logsList.length = 0;
+      logsList.push(...sortedLogs.slice(0, 100));
       
       await AsyncStorage.setItem(storageKey, JSON.stringify(logsList));
       console.log('[useDoseLogging] Dose log saved locally:', doseLog.id, 'Total logs:', logsList.length);
@@ -157,6 +160,13 @@ export function useDoseLogging() {
         return { success: false };
       }
 
+      // Use the time the user picked, or now. Reject future or older than 30 days.
+      const stamp = resolveDoseTimestamp(doseInfo.loggedAt);
+      if (!stamp.ok) {
+        console.warn('[useDoseLogging] Invalid dose time:', stamp.reason);
+        return { success: false };
+      }
+
       // Check if user has reached log limit
       const canLog = await checkLogUsageLimit();
       if (!canLog) {
@@ -177,7 +187,7 @@ export function useDoseLogging() {
         totalAmountUnit: doseInfo.totalAmountUnit,
         concentrationExact: doseInfo.concentrationExact,
         injectionSite: doseInfo.injectionSite || undefined,
-        timestamp: new Date().toISOString(),
+        timestamp: stamp.iso,
         notes,
         ...(doseInfo.protocolOccurrence && { protocolOccurrence: doseInfo.protocolOccurrence }),
         
