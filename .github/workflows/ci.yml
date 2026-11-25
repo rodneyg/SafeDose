@@ -53,6 +53,7 @@ jobs:
           EXPO_NO_TELEMETRY: '1'
         run: npx expo export --platform ios --platform android --max-workers 2 --output-dir "$RUNNER_TEMP/native-export"
       - run: npm run build:web
+      - run: node --test scripts/seo-export.test.mjs
       - name: Bundle iOS with Expo Metro
         env:
           EXPO_NO_TELEMETRY: '1'

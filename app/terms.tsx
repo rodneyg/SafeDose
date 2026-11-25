@@ -40,5 +40,5 @@ const sections = [
 ];
 
 export default function TermsPage() {
-  return <LegalDocument path="/terms" title="Terms of Service for SafeDose" sections={sections} />;
+  return <LegalDocument title="Terms of Service for SafeDose" sections={sections} />;
 }

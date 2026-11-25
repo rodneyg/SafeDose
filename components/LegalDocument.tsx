@@ -1,18 +1,15 @@
 import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SeoHead from './SeoHead';
 
 type LegalDocumentProps = {
   title: string;
-  path: string;
   sections: readonly { title: string; body: string }[];
 };
 
-export default function LegalDocument({ title, path, sections }: LegalDocumentProps) {
+export default function LegalDocument({ title, sections }: LegalDocumentProps) {
   return (
     <SafeAreaView style={styles.screen}>
-      <SeoHead path={path} title={`${title}`} description={`${title}. Effective November 18, 2026.`} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.document}>
           <Link href="/pricing" style={styles.link}>Back to pricing</Link>

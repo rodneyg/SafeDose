@@ -11,9 +11,6 @@ export default function RootHtml({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="SafeDose" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="description" content="SafeDose helps you work out syringe units and reconstitution doses. Education only, not medical advice." />
-        <meta property="og:site_name" content="SafeDose" />
-        <meta property="og:image" content="https://safedose.rodneygainous.com/icons/icon-512.png" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <ScrollViewStyleReset />

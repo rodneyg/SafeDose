@@ -1,7 +1,6 @@
 // app/index.tsx
 import { startTransition, useEffect, useState } from 'react';
 import { Redirect, type Href } from 'expo-router';
-import SeoHead from '../components/SeoHead';
 import AnimatedSplashScreen from '../components/AnimatedSplashScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { loadRemoteUserProfile, ONBOARDING_ROUTE, resolveLaunchRoute } from '../lib/onboardingState';
@@ -32,10 +31,5 @@ export default function InitialScreen() {
     return () => { cancelled = true; };
   }, [user]);
 
-  return (
-    <>
-      <SeoHead path="/" title="SafeDose | Syringe unit and reconstitution calculator" description="SafeDose helps you work out syringe units and reconstitution doses. Education only, not medical advice." />
-      {launchRoute ? <Redirect href={launchRoute} /> : <AnimatedSplashScreen />}
-    </>
-  );
+  return launchRoute ? <Redirect href={launchRoute} /> : <AnimatedSplashScreen />;
 }

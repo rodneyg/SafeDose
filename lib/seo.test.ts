@@ -17,7 +17,7 @@ it('ships a text robots.txt that points at the sitemap', () => {
 
 it('lists the public routes in the sitemap', () => {
   const xml = fs.readFileSync(path.join(publicDir, 'sitemap.xml'), 'utf8');
-  for (const route of ['/', '/dosing-problem', '/pricing', '/privacy', '/terms']) {
+  for (const route of ['/', '/dosing-problem', '/pricing', '/privacy', '/terms', '/support', '/changelog']) {
     expect(xml).toContain(`<loc>${SITE_URL}${route}</loc>`);
   }
 });

@@ -1,10 +1,17 @@
+import { usePathname } from 'expo-router';
 import Head from 'expo-router/head';
-import { canonicalUrl, OG_IMAGE_URL } from '../lib/seo';
+import { Platform } from 'react-native';
+import { canonicalUrl, getSeoMetadata, OG_IMAGE_URL } from '../lib/seo';
 
-type SeoHeadProps = { path: string; title: string; description: string };
+export default function SeoHead() {
+  // The auth provider only mounts screens after initialization in the browser.
+  // Keep metadata in the root layout so it is also present in the static export.
+  const pathname = usePathname().replace(/\/$/, '') || '/';
+  const metadata = getSeoMetadata(pathname);
+  if (Platform.OS !== 'web' || !metadata) return null;
 
-export default function SeoHead({ path, title, description }: SeoHeadProps) {
-  const url = canonicalUrl(path);
+  const { title, description } = metadata;
+  const url = canonicalUrl(pathname);
   return (
     <Head>
       <title>{title}</title>

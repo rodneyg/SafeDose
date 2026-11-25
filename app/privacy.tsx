@@ -52,5 +52,5 @@ const sections = [
 ];
 
 export default function PrivacyPage() {
-  return <LegalDocument path="/privacy" title="Privacy Policy for SafeDose" sections={sections} />;
+  return <LegalDocument title="Privacy Policy for SafeDose" sections={sections} />;
 }
