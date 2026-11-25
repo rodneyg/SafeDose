@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-pr-675",
+    "date": "2026-11-25",
+    "title": "Test recovery after a failed preset write",
+    "status": "published",
+    "prs": [
+      675
+    ],
+    "sections": {
+      "Improved": [
+        "Test recovery after a failed preset write"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-671",
     "date": "2026-11-25",
     "title": "Test dose logging local read and Firestore failure fallbacks",
