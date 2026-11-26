@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-698",
+    "date": "2026-11-26",
+    "title": "Test Stripe webhook when Firebase initialization fails",
+    "status": "published",
+    "prs": [
+      698
+    ],
+    "sections": {
+      "Improved": [
+        "Test Stripe webhook when Firebase initialization fails"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-697",
     "date": "2026-11-26",
     "title": "Reject missing operands in exact fractions",
