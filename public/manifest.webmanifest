@@ -3,6 +3,8 @@
   "name": "SafeDose",
   "short_name": "SafeDose",
   "description": "Medication dose calculator with manual entry and online photo scans.",
+  "lang": "en",
+  "categories": ["health", "utilities"],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,6 +12,23 @@
   "theme_color": "#ffffff",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SafeDose home screen"
+    },
+    {
+      "src": "/screenshots/calculator.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Start a new calculation with a photo scan or manual entry"
+    }
   ]
 }
