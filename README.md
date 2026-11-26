@@ -5,6 +5,16 @@
 **A verification and calculation tool for injectable medications prescribed by your healthcare provider.**
 Created by **SafeLab**, SafeDose calculates a draw volume from the dose and syringe details you enter or confirm. It uses the medication strength when converting a dose to volume. Compare those inputs and the result with your prescription before use.
 
+## Screenshots
+
+The hosted web app currently shows the welcome screen, an age-appropriate onboarding step, and public pricing. The calculator stays free; photo scans are optional.
+
+![SafeDose welcome screen with the Try Now action](docs/screenshots/welcome.png)
+
+![SafeDose onboarding asking for a birth date, with no information entered](docs/screenshots/onboarding-age.png)
+
+![SafeDose public pricing for the optional Photo Scan plan](docs/screenshots/pricing.png)
+
 ---
 
 ## 🔮 VisionOS Vision
