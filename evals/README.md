@@ -31,19 +31,17 @@ evals/
 
 ### Automatic Data Collection
 
-SafeDose now automatically captures user interactions to build evaluation datasets:
+SafeDose can record manual calculations and mappable scan results. Records can
+include inputs, results and quality scores. The app saves records locally and
+can also send signed-in users’ records to Firestore with image metadata in
+place of the image. Photo analysis itself sends the image to SafeDose’s server
+and then to OpenAI. See [data handling in the evaluation guide](../Evals.md#privacy-and-security).
 
-- Each dose calculation and AI scan is automatically saved
-- Data includes input parameters, results, and quality scores
-- High-quality interactions (score >= 0.6) can be exported for model training
-- Privacy-focused: images stored locally, no personal data transmitted
+#### Export synthetic examples
 
-**For complete instructions on using captured data to fine-tune models**, see the **[Model Fine-Tuning Guide](../docs/MODEL_FINE_TUNING_GUIDE.md)**.
-
-#### Quick Export
+Run this command from the repository root. It exports bundled examples.
 
 ```bash
-# Export captured user interaction data
 node scripts/export-evaluation-data.js
 
 # Output files in evals/exported-data/:

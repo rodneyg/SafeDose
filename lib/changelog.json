@@ -58,14 +58,14 @@
   {
     "id": "2026-11-26-pr-689",
     "date": "2026-11-26",
-    "title": "Use Photo Scan wording throughout checkout",
+    "title": "Use Photo Scan wording on pricing and receipt screens",
     "status": "published",
     "prs": [
       689
     ],
     "sections": {
       "Improved": [
-        "Use Photo Scan wording throughout checkout"
+        "The pricing screen and the return page after checkout use the Photo Scan name."
       ]
     }
   },
@@ -205,7 +205,7 @@
     ],
     "sections": {
       "Improved": [
-        "Log a dose for an earlier date or time"
+        "When saving a dose, choose an earlier date and time within the last 30 days."
       ]
     }
   },
@@ -219,7 +219,7 @@
     ],
     "sections": {
       "Improved": [
-        "Add Export CSV button to the dose log"
+        "Export dose history from Logs. The web app downloads a CSV file and the native app opens the share sheet."
       ]
     }
   },
@@ -232,8 +232,8 @@
       665
     ],
     "sections": {
-      "Improved": [
-        "Show estimated doses left in the most recent vial"
+      "New": [
+        "Logs estimates doses left when the latest dose includes a vial total. The estimate uses entries with matching labels and cannot distinguish separate vials with identical labels."
       ]
     }
   },
@@ -332,20 +332,6 @@
     "sections": {
       "Improved": [
         "Keep the last completed SafeDose calculation"
-      ]
-    }
-  },
-  {
-    "id": "2026-11-24-pr-665",
-    "date": "2026-11-24",
-    "title": "Show estimated doses left in the most recent vial",
-    "status": "published",
-    "prs": [
-      665
-    ],
-    "sections": {
-      "New": [
-        "Logs screen shows an estimate of doses left in your most recent vial."
       ]
     }
   },
@@ -2152,7 +2138,7 @@
     "sections": {
       "Improved": [
         "After a photo scan, the review screen lists the syringe and vial details SafeDose detected alongside your photo.",
-        "Check those details against your syringe and vial label. Read the syringe fill line yourself, then choose I checked both. You can retake the photo from the same screen.",
+        "Check those details against your syringe and vial label. Read the syringe fill line yourself, then follow the on-screen prompt to confirm or enter details manually. You can retake the photo from the same screen.",
         "Open the Changelog from the welcome screen to read product updates."
       ]
     }

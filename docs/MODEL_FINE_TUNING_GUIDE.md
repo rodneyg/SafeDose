@@ -28,14 +28,12 @@ For **Manual Dose Calculations**:
 - Input parameters (dose value, unit, concentration, syringe type)
 - Calculation results (volume, recommended marking, errors)
 - User context (substance name, medication type)
-- Quality score based on data completeness and accuracy
+- Quality score based on the recorded inputs and result
 
-For **AI Scans**:
-- Captured image metadata (stored locally for privacy)
-- Prompt sent to AI model
-- Extracted information (syringe type, volume, vial details)
-- Success/failure indicators
-- Quality score based on completeness
+For **scans that supply mappable inputs**:
+- Image data in the local record and image metadata in the Firestore record
+- A scan description and extracted information such as syringe and vial details
+- A quality score based on the recorded result
 
 ---
 
@@ -106,18 +104,12 @@ evaluationDataCapture.captureUserInteraction({
 
 ### Quality Scoring
 
-Each captured interaction receives a quality score (0-1) based on:
+The capture hook starts each record at 0.5. It adds points for populated
+input and result fields and for an image URI. It subtracts points for an error
+or missing substance name and clamps the result to 0 through 1. The score
+measures record completeness. Accuracy and verification require separate review.
 
-- **Completeness** (+0.2): All required input parameters present
-- **Specificity** (+0.1): Substance name and detailed parameters provided
-- **Success** (+0.2): Calculation/scan completed without errors
-- **Context** (+0.1): Additional helpful information included
-- **Image Quality** (+0.1): For scans, presence of clear image data
-
-**Quality Thresholds**:
-- **High Quality** (≥0.8): Ideal for training, complete and verified
-- **Medium Quality** (0.6-0.8): Useful for training with review
-- **Low Quality** (<0.6): Excluded from training datasets
+The local export helper uses a minimum score of 0.6 by default.
 
 ---
 
@@ -428,15 +420,10 @@ Once training completes, note the model ID (e.g., `ft:gpt-4o-mini-2024-07-18:saf
 
 ### Model Selection
 
-For SafeDose use cases:
-
-| Model | Use Case | Pros | Cons |
-|-------|----------|------|------|
-| `gpt-4o-mini` | Dose calculations | Fast, cost-effective, accurate for structured tasks | Limited vision capabilities |
-| `gpt-4o` | Vision + calculations | Full vision support, highest accuracy | Higher cost |
-| `gpt-4` | Legacy calculations | Reliable, well-tested | Slower, more expensive |
-
-**Recommendation**: Start with `gpt-4o-mini` for dose calculations, use `gpt-4o` for vision-based scanning.
+The [deterministic calculator](../lib/dosing/calculateDose.ts) handles dose
+calculations. Model experiments apply to photo reading. See [the current scan
+request](../lib/scan/request.js) for the server model and [the vision evaluation
+guide](../evals/vision/README.md) for the evaluation harness.
 
 ### Hyperparameters
 
@@ -494,16 +481,9 @@ Cost = (Number of tokens in training file) × (Number of epochs) × (Cost per to
 
 ### Using the Evaluation Framework
 
-SafeDose includes built-in evaluation test sets:
-
-```bash
-# Use your fine-tuned model
-export OPENAI_MODEL="ft:gpt-4o-mini-2024-07-18:safedose:safedose-v1:abc123"
-
-# Run evaluations (manual for now)
-cat evals/test-sets/basic-dose-calculations.json
-# Test each evaluation manually and record results
-```
+Use `npm run test:dosing` for deterministic calculation checks. For photo
+reading, use the [vision evaluation harness](../evals/vision/README.md).
+Run fine-tuned model experiments separately from the deployed scan route.
 
 ### Programmatic Testing
 
