@@ -10,5 +10,5 @@ ts-jest[config] (WARN)
 Test Suites: 186 passed, 186 total
 Tests:       2138 passed, 2138 total
 Snapshots:   0 total
-Time:        104.267 s
+Time:        140.581 s
 Ran all test suites.

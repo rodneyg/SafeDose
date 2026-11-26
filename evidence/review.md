@@ -1,35 +1,34 @@
-# T-19650 review of SafeDose PR 663
+# T-19647 review of SafeDose PR 668
 
-PR: https://github.com/rodneyg/SafeDose/pull/663
+PR: https://github.com/rodneyg/SafeDose/pull/668
 
 ## Reviewed revision and scope
 
-- Draft head SHA: `101f34e14c87f81eba9893526c3e9e3cfe8ad280`.
-- The public PR page identified that revision and described the intended scope: keep one confirmed dose-calculator result and one completed reconstitution result on the device, isolate them by calculator and signed-in account or guest, and never prefill a new form or write a dose-log entry.
-- The fetched `main` history contains squash commit `cb168fa3001fc9c9f00f8ec24da4964629fb1ad6`, `Keep the last completed calculation on this device (#663)`, followed by PR 663 changelog commit `66e835c8232d0f8c7445774fb4299070d2a22019`.
+- PR head SHA: unavailable from `gh pr view` because this environment is not signed in. The merged PR revision in repository history is squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
+- The commit adds an optional local date and time field to the dose save step, validates that the selected time is no more than 30 days old and not in the future, stores the selected ISO timestamp, and keeps local history sorted newest first.
+- The follow-up PR 668 changelog commit is `5165261356bd69837270e5d9c883c03aee3ef4e6`.
 
 ## Findings
 
-- No correctness issue found in the merged diff.
-- Persistence occurs only after dose confirmation or completion of a valid reconstitution plan.
-- The stored summary is read-only and is not used to populate calculator inputs or dose history.
-- Storage keys separate dose and reconstitution calculations and separate each signed-in account from the guest session.
-- Storage reads tolerate missing, invalid, or unavailable data. Writes keep the current-session result if device storage is unavailable. The revision guard prevents a late startup read from replacing a newer calculation.
-- The UI labels the value as the last calculation and tells the user to check the current vial and syringe before reuse.
-- Focused tests cover restoration, account isolation, invalid storage, failed writes, late reads, and non-prefilling behavior. The full repository suite also passes.
+- No correctness issue was found in the merged diff.
+- Blank input preserves existing behavior by resolving to the current time.
+- The parser strictly accepts a real local `YYYY-MM-DD HH:MM` value and rejects impossible dates and times.
+- Timestamp validation rejects dates more than 30 days old and dates beyond a one-minute clock-skew allowance. A value within that allowance is clamped to the current time, so a future timestamp is never stored.
+- The timestamp is validated again inside `useDoseLogging`, so callers cannot bypass the UI validation.
+- Backdated entries are inserted according to their timestamps, and the 100-entry local limit retains the newest entries.
+- Firestore ordering continues to use the saved `timestamp` field, so remote and local history share the same ordering basis.
+- The change is limited to the final save UI, timestamp helpers, dose logging, the context type, and helper tests.
 
 ## Test command output
 
-- `npm test -- --runInBand lib/hooks/__tests__/useLastCalculation.test.ts lib/hooks/__tests__/useDoseCalculator.test.ts lib/hooks/__tests__/useReconstitutionPlanner.test.ts components/SAF137.test.tsx`: 4 suites passed, 56 tests passed. Full output: `evidence/test-output.txt`.
+- `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed, 10 tests passed. Jest only selected the matching existing timestamp suite. Full output: `evidence/test-output.txt`.
 - `npm test -- --runInBand`: 186 suites passed, 2,138 tests passed. Full output: `evidence/full-test-output.txt`.
 - `npm run typecheck:dosing`: passed. Full output: `evidence/typecheck-dosing-output.txt`.
-- `npm run typecheck:dose-calculator-props`: passed. Full output: `evidence/typecheck-props-output.txt`.
 - `npm run lint`: passed with 132 existing warnings and 0 errors. Full output: `evidence/lint-output.txt`.
-- `npm run build:web`: passed and exported 34 static routes. Full output: `evidence/build-output.txt`.
-- `git diff --check 4b73e1418e9122ba32b0396dddb70af97cade234 cb168fa3001fc9c9f00f8ec24da4964629fb1ad6`: passed with no whitespace errors.
+- `git diff --check 36d3387^ 36d3387`: passed with no whitespace errors. Result is appended to `evidence/test-output.txt`.
 
 ## Final PR state
 
-Closed because it was already squash-merged before this task run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The repository's fetched `main` independently confirms the PR-numbered squash commit and its follow-up changelog commit; see `evidence/merged-commit.txt`.
+Closed because PR 668 was already squash-merged before this task run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The repository history independently confirms the PR-numbered squash commit and its follow-up changelog commit, and `git merge-base --is-ancestor 36d3387 HEAD` confirms that the change is in the current mainline history.
 
-The required `gh pr view` confirmation could not be obtained because `gh auth status` reports that this environment is not signed in. Its exact output and exit status are in `evidence/gh-pr-view.txt`. The public PR page is https://github.com/rodneyg/SafeDose/pull/663, and its cached content identifies the pre-merge draft revision and successful deployment. This limitation did not justify a state-changing retry because the target change is already present on fetched `main`.
+The required `gh pr view` confirmation could not be obtained because `gh auth status` reports that this environment is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Public API, public HTML, and read-only Git fetch fallbacks were also denied with HTTP 403 by the network proxy. Repeating a state-changing action would be unsafe and unnecessary because the PR-numbered change is already merged.
