@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-687",
+    "date": "2026-11-26",
+    "title": "Add unit tests for exportDoseLogCsv",
+    "status": "published",
+    "prs": [
+      687
+    ],
+    "sections": {
+      "Improved": [
+        "Add unit tests for exportDoseLogCsv"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-685",
     "date": "2026-11-26",
     "title": "Review SafeDose PR 663 draft",
