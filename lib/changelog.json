@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-688",
+    "date": "2026-11-26",
+    "title": "Migrate Photo Check to GPT-6 Luna",
+    "status": "published",
+    "prs": [
+      688
+    ],
+    "sections": {
+      "Improved": [
+        "Migrate Photo Check to GPT-6 Luna"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-687",
     "date": "2026-11-26",
     "title": "Add unit tests for exportDoseLogCsv",
