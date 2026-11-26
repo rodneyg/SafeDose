@@ -135,7 +135,7 @@ it.each([
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledTimes(1);
   expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-    model: 'gpt-4o-2024-08-06', temperature: 0, response_format: { type: 'json_object' },
+    model: 'gpt-6-luna', reasoning_effort: 'none', temperature: 0, response_format: { type: 'json_object' },
     messages: [{ role: 'user', content: [expect.objectContaining({ type: 'text' }), { type: 'image_url', image_url: { url: PHOTO } }] }],
   }));
   expect(routeStatus).toBe(200);

@@ -199,7 +199,8 @@ describe('POST /api/analyze-scan', () => {
     expect(res.body).toEqual({ content: '{"refuse":true}' });
     expect(create).toHaveBeenCalledTimes(1);
     const request = create.mock.calls[0][0];
-    expect(request.model).toBe('gpt-4o-2024-08-06');
+    expect(request.model).toBe('gpt-6-luna');
+    expect(request.reasoning_effort).toBe('none');
     expect(request.temperature).toBe(0);
     expect(request.response_format).toEqual({ type: 'json_object' });
     expect(request.messages[0].content[1].image_url.url).toBe(SMALL_JPEG);

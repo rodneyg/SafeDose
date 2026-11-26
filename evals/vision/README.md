@@ -101,29 +101,34 @@ Shared render templates also limit statistical independence across sessions.
 
 A live call is always explicit. The runner reads a key only from the process
 environment, never from `.env` or `.env.local`. Export an existing key externally.
-The SAF-104 attempt returned HTTP 401 `invalid_api_key`, so there is no live
-accuracy baseline from this run. No replacement key was provisioned.
+The historical SAF-104 attempt returned HTTP 401 `invalid_api_key`. Live
+accuracy for GPT-6 Luna is pending.
 
 ```sh
 SAFEDOSE_EVAL_IMAGES_DIR=/path/to/private/store \
-SAFEDOSE_EVAL_INPUT_USD_PER_MILLION=2.5 \
-SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION=10 \
+SAFEDOSE_EVAL_INPUT_USD_PER_MILLION=0.10 \
+SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION=0.50 \
 npm run eval:vision -- --live --limit=12
 ```
 
-Verify rates before future calls. The [official OpenAI model page](https://developers.openai.com/api/docs/models/gpt-4o?snapshot=gpt-4o-2024-08-06)
-lists $2.50 input and $10 output per million tokens on 2026-11-16. The pinned
-`gpt-4o-2024-08-06` model, temperature 0 and JSON response format remain unchanged.
+Verify rates before future calls. [OpenAI's GPT-6 Luna model page](https://developers.openai.com/api/docs/models/gpt-6-luna)
+lists standard rates of $0.10 input and $0.50 output per million tokens for
+prompts up to 272K tokens. The runner uses the shared scan request with
+`gpt-6-luna`, `reasoning_effort: 'none'`, temperature 0 and JSON-object output.
 Responses are capped at 1,200 tokens. The default is 12 development images,
 with a hard maximum of 20; selection cycles configurations and includes refusal
-cases. A full 128,000-token input-context cost plus capped output is reserved
-before each request, and calls stop before the $3 per-run cap. Actual token-priced
+cases. At an assumed 3,000 input tokens and 600 output tokens per request, one
+12-image run costs an estimated $0.0072. A full 1,050,000-token input context
+plus capped output, both at long-context rates, is reserved before each request.
+Calls stop before the $3 per-run cap. Actual token-priced
 cost and usage are checkpointed after each completion. No retries are enabled.
 A timeout can leave invoice cost unknown; inspect provider billing before retrying.
 The cap is per invocation; operators must track cumulative job spend.
 
-Replay authentic output with `SAFEDOSE_EVAL_RECORDINGS=/path/to/recording.json`.
-Recordings must match model, temperature, prompt hash, image ID and pixel hash:
+Replay output offline with `SAFEDOSE_EVAL_RECORDINGS=/path/to/recording.json`.
+The runner accepts GPT-6 Luna and historical GPT-4o recordings with temperature
+0 and matching prompt, image ID and pixel hash. Replay reports use the model ID
+from the recording. The example below uses the historical snapshot:
 
 ```json
 {
