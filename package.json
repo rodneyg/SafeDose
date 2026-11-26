@@ -41,7 +41,8 @@
     "predev": "npm run changelog:build",
     "e2e:prod-scan": "playwright test --config playwright.prod.config.ts",
     "smoke:prod": "node scripts/prod-smoke.mjs",
-    "test:dependabot-config": "node --test scripts/dependabot-config.test.mjs"
+    "test:dependabot-config": "node --test scripts/dependabot-config.test.mjs",
+    "test:tar-override": "node scripts/test-tar-override.cjs"
   },
   "vercel": {
     "projectRoot": "."
@@ -145,7 +146,8 @@
     "semver@7": "^7.5.2",
     "@expo/metro-config": {
       "postcss": "^8.5.23"
-    }
+    },
+    "tar": "^7.5.21"
   },
   "@vercel/node": {
     "ts-node": "10.9.1",
