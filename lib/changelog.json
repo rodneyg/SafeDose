@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-677",
+    "date": "2026-11-26",
+    "title": "Test service worker cache-miss recovery (T-17427)",
+    "status": "published",
+    "prs": [
+      677
+    ],
+    "sections": {
+      "Improved": [
+        "Test service worker cache-miss recovery (T-17427)"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-669",
     "date": "2026-11-26",
     "title": "test: cover large vials and quarter mg doses",
