@@ -10,7 +10,7 @@ describe('shared scan boundary', () => {
     const scan = await readScan('data:image/jpeg;base64,example', { complete });
     expect(complete).toHaveBeenCalledWith(buildScanRequest('data:image/jpeg;base64,example'));
     expect(complete.mock.calls).toHaveLength(1);
-    expect(buildScanRequest('image')).toMatchObject({ model: SCAN_MODEL, temperature: 0, response_format: { type: 'json_object' } });
+    expect(buildScanRequest('image')).toMatchObject({ model: SCAN_MODEL, reasoning_effort: 'none', temperature: 0, response_format: { type: 'json_object' } });
     expect(scan.refuse).toBe(false);
   });
   it('replays offline without touching a provided network transport', async () => {

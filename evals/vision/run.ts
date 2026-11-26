@@ -36,6 +36,7 @@ async function main(): Promise<void> {
   const imageRoot = process.env.SAFEDOSE_EVAL_IMAGES_DIR;
   const recordingsPath = process.env.SAFEDOSE_EVAL_RECORDINGS;
   const wrongNumberGate = args.includes('--gate-wrong-number');
+  if (live && recordingsPath) throw new Error('Recordings can only be used offline.');
   if (live && !imageRoot) throw new Error('SAFEDOSE_EVAL_IMAGES_DIR is required for --live.');
   if (live && !process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required for --live.');
   const directory = resolve('evals/vision');
@@ -62,10 +63,16 @@ async function main(): Promise<void> {
   if (fixtures.some(f => f.verified_by !== 'pending-rodney' || f.label.verified_by !== 'pending-rodney' || f.label.review.status !== 'pending')) throw new Error('Synthetic fixtures must remain pending Rodney verification.');
   const thresholds = await readJson(resolve(directory, 'thresholds.json')) as Thresholds;
   const recordings = new Map<string, Recording>();
+  let recordingModel: string | undefined;
   let recordingProvenance: string | undefined;
   if (recordingsPath) {
     const file = await readJson(resolve(recordingsPath)) as Recordings;
-    if (file.model !== SCAN_MODEL || file.temperature !== 0 || file.prompt_sha256 !== sha256(SCAN_PROMPT) || !Array.isArray(file.outputs)) throw new Error('Recording model, temperature, or prompt hash does not match the current scan path.');
+    // The offline gate still uses the historical GPT-4o fixture.
+    if ((file.model !== SCAN_MODEL && file.model !== 'gpt-4o-2024-08-06') || file.temperature !== 0 ||
+        file.prompt_sha256 !== sha256(SCAN_PROMPT) || !Array.isArray(file.outputs)) {
+      throw new Error('Unsupported recording model or mismatched temperature or prompt hash.');
+    }
+    recordingModel = file.model;
     recordingProvenance = file.provenance;
     for (const output of file.outputs) {
       if (recordings.has(output.id) || !eligibleLabels.some(label => label.id === output.id && label.sha256 === output.sha256)) throw new Error('Recording id/sha256 must match exactly one eligible label.');
@@ -78,7 +85,12 @@ async function main(): Promise<void> {
   }
   if (wrongNumberGate && !recordings.size) throw new Error('The wrong-number gate requires at least one development recording.');
   const labels = wrongNumberGate ? eligibleLabels.filter(label => recordings.has(label.id)) : eligibleLabels;
-  if (live && ![process.env.SAFEDOSE_EVAL_INPUT_USD_PER_MILLION, process.env.SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION].every(rate => rate && Number.isFinite(Number(rate)) && Number(rate) > 0)) throw new Error('Live calls require positive token rates for cost accounting');
+  const inputRate = Number(process.env.SAFEDOSE_EVAL_INPUT_USD_PER_MILLION);
+  const outputRate = Number(process.env.SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION);
+  if (live && ![inputRate, outputRate].every(rate => Number.isFinite(rate) && rate > 0)) throw new Error('Live calls require positive token rates for cost accounting');
+  const maxCompletionTokens = 1200;
+  // Reserve Luna's full context at long-context rates before each request.
+  const requestCeiling = (1_050_000 * inputRate * 2 + maxCompletionTokens * outputRate * 1.5) / 1_000_000;
   const client = live ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 45000, maxRetries: 0 }) : null;
   const rows: EvalResult[] = [];
   let spent = 0;
@@ -88,9 +100,6 @@ async function main(): Promise<void> {
   if (live) await mkdir(resolve('evals/vision/.cache'), { recursive: true });
   const recordedOutputs: Recording[] = [];
   for (const label of labels) {
-    // Reserve the entire model input context plus capped output before each request.
-    // This intentionally overestimates these 1500x1000 scenes and stays below $3/run.
-    const requestCeiling = (128000 * Number(process.env.SAFEDOSE_EVAL_INPUT_USD_PER_MILLION) + 1200 * Number(process.env.SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION)) / 1_000_000;
     if (live && spent + requestCeiling > 3) { stoppedForBudget = true; break; }
     const start = performance.now();
     const image = imageRoot ? await loadImage(imageRoot, label) : { status: 'no-image-store', bytes: null };
@@ -107,7 +116,7 @@ async function main(): Promise<void> {
       const mime = extname(label.file ?? '').toLowerCase() === '.png' ? 'image/png' : extname(label.file ?? '').toLowerCase() === '.webp' ? 'image/webp' : 'image/jpeg';
       scan = await readScan(`data:${mime};base64,${image.bytes.toString('base64')}`, {
         complete: async request => {
-          const response = await client.chat.completions.create({ ...request, max_tokens: 1200 });
+          const response = await client.chat.completions.create({ ...request, max_completion_tokens: maxCompletionTokens });
           modelOutput = response.choices[0]?.message.content ?? '';
           if (response.usage) usage = { prompt_tokens: response.usage.prompt_tokens, completion_tokens: response.usage.completion_tokens };
           return modelOutput;
@@ -116,11 +125,11 @@ async function main(): Promise<void> {
       source = 'live';
       recordedOutputs.push({ id: label.id, sha256: label.sha256, model_output: modelOutput });
       // Explicit current rates were required before any call. Usage is token-priced, not an invoice.
-      const inputRate = process.env.SAFEDOSE_EVAL_INPUT_USD_PER_MILLION;
-      const outputRate = process.env.SAFEDOSE_EVAL_OUTPUT_USD_PER_MILLION;
       const tokens = usage as EvalResult['usage'];
-      if (tokens && inputRate && outputRate && Number.isFinite(Number(inputRate)) && Number.isFinite(Number(outputRate)) && Number(inputRate) >= 0 && Number(outputRate) >= 0) {
-        cost = (tokens.prompt_tokens * Number(inputRate) + tokens.completion_tokens * Number(outputRate)) / 1_000_000;
+      if (tokens) {
+        const longContext = tokens.prompt_tokens > 272_000;
+        cost = (tokens.prompt_tokens * inputRate * (longContext ? 2 : 1) +
+          tokens.completion_tokens * outputRate * (longContext ? 1.5 : 1)) / 1_000_000;
       }
     } else {
       if (recording && allowed) {
@@ -166,11 +175,12 @@ async function main(): Promise<void> {
     `\n## Prediction provenance\n\nImage predictions: ${realSummary.observed}/${labels.length}. ` +
     `Image wrong-number-shown: ${realSummary.classes['wrong-number-shown']}. ` +
     `Image unconfirmed fills: ${realSummary.classes['unconfirmed-fill']}. ` +
-    `Synthetic fixtures: ${syntheticSummary.observed}. The adjacent JSON reports accuracy separately for image predictions and authored fixtures.\n`);
+    `Synthetic fixtures: ${syntheticSummary.observed}. The adjacent JSON reports accuracy separately for image predictions and authored fixtures.\n`) +
+    (recordingModel ? `\nReplay model metadata: \`${recordingModel}\`.\n` : '');
   await mkdir(resolve('evals/results'), { recursive: true });
   await writeFile(`${base}.json`, JSON.stringify({
     notice: 'LABELS PENDING RODNEY VERIFICATION: scores are not an official accuracy gate.',
-    ...context, total_cost_usd: spent, stopped_for_budget: stoppedForBudget, corpus: legacy ? 'legacy-source-inventory' : 'synthetic-v1', split: live || wrongNumberGate ? 'development-only' : 'all, integrity only without recordings', pending_labels: pending, timestamp, model: SCAN_MODEL, temperature: 0, prompt_sha256: sha256(SCAN_PROMPT),
+    ...context, total_cost_usd: spent, stopped_for_budget: stoppedForBudget, corpus: legacy ? 'legacy-source-inventory' : 'synthetic-v1', split: live || wrongNumberGate ? 'development-only' : 'all, integrity only without recordings', pending_labels: pending, timestamp, model: recordingModel ?? SCAN_MODEL, temperature: 0, prompt_sha256: sha256(SCAN_PROMPT),
     wrong_number_gate_enforced: wrongNumberGate, recording_provenance: recordingProvenance,
     live_baseline: live ? 'this run; labels still pending verification' : 'not yet run',
     thresholds, gate, summary, image_summary: realSummary, synthetic_summary: syntheticSummary, results: rows,
