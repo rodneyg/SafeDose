@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-691",
+    "date": "2026-11-26",
+    "title": "Test dose history recovery after a Firestore outage",
+    "status": "published",
+    "prs": [
+      691
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose history recovery after a Firestore outage"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-690",
     "date": "2026-11-26",
     "title": "Expose the primary pricing action as a button",
