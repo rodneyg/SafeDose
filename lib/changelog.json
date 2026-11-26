@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-696",
+    "date": "2026-11-26",
+    "title": "Test concentration unit accessibility state",
+    "status": "published",
+    "prs": [
+      696
+    ],
+    "sections": {
+      "Improved": [
+        "Test concentration unit accessibility state"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-695",
     "date": "2026-11-26",
     "title": "Clarify guest scan and dose log limits",
