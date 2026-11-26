@@ -33,7 +33,7 @@ const pricingPlansData = [
     name: "Photo Scan",
     price: PHOTO_CHECK_MONTHLY_AMOUNT,
     priceSuffix: "/month",
-    subtext: `${FREE_SCAN_LIMIT} free scans, then unlimited photo scans`,
+    subtext: "Unlimited photo scans",
     offerKey: 'photo_check_monthly',
     badgeText: "Web",
     planType: 'photo_check',
@@ -76,7 +76,7 @@ export default function PricingPage() {
       return [
         { icon: Zap, text: "Unlimited photo scans", color: "#FF6B6B" },
         { icon: CheckCircle, text: "Calculator stays free", color: "#4ECDC4" },
-        { icon: Clock, text: `${FREE_SCAN_LIMIT} free scans/month included`, color: "#45B7D1" },
+        { icon: Clock, text: `${FREE_SCAN_LIMIT} photo scans/month on Free`, color: "#45B7D1" },
         { icon: Shield, text: "Web checkout, cancel anytime", color: "#96CEB4" },
       ];
     }
@@ -84,7 +84,7 @@ export default function PricingPage() {
       { icon: Zap, text: `${FREE_SCAN_LIMIT} AI scans/month`, color: "#FF6B6B" },
       { icon: CheckCircle, text: "Calculator stays free", color: "#4ECDC4" },
       { icon: Clock, text: "Manual calculations", color: "#45B7D1" },
-      { icon: Shield, text: "On-device logs", color: "#96CEB4" },
+      { icon: Shield, text: "On-device dose logs with a monthly limit", color: "#96CEB4" },
     ];
   };
 
@@ -228,7 +228,10 @@ export default function PricingPage() {
 
       {/* Personalized Headline */}
       <Text style={styles.headline}>{getPersonalizedHeadline()}</Text>
-      <Text style={styles.subheadline}>The calculator stays free. Optional photo scans are $2.99/month after 3 free scans.</Text>
+      <Text style={styles.subheadline}>
+        The calculator stays free. Guests get {FREE_SCAN_LIMIT} free photo scans each month.
+        {' '}Saved dose logs have a separate monthly limit on Free and Photo Scan.
+      </Text>
 
       {/* Key Features Grid */}
       <View style={styles.featuresContainer}>

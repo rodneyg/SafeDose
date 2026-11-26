@@ -66,7 +66,7 @@ export default function LogLimitModal({
     if (isPowerUserPromotion) {
       return `Great job on completing multiple doses. Your calculator stays free. Photo Scan adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
     }
-    return `You've reached your monthly dose logging limit. You can continue without saving. Photo Scan adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month.`;
+    return `You've reached your monthly dose logging limit. You can continue without saving. Photo Scan adds unlimited AI scans for $${PHOTO_CHECK_MONTHLY_AMOUNT}/month. The Photo Scan plan also has a monthly dose log limit.`;
   };
 
   return (

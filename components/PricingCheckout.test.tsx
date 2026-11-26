@@ -86,6 +86,11 @@ it('does not load Stripe while browsing pricing', () => {
   expect(text()).not.toMatch(/photo checks?/i);
 });
 
+it('states the guest scan allowance and the separate log limit', () => {
+  expect(text()).toContain('Guests get 3 free photo scans each month.');
+  expect(text()).toContain('Saved dose logs have a separate monthly limit on Free and Photo Scan.');
+});
+
 it('offers the existing email capture on the upgrade screen', async () => {
   const form = renderer.root.findByType('UpgradeEmailForm' as any);
   await expect(form.props.getIdToken()).resolves.toBe('checkout-test-token');

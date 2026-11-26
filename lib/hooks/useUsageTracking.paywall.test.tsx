@@ -30,7 +30,7 @@ afterEach(() => { act(() => tree?.unmount()); jest.restoreAllMocks(); });
 it.each([
   ['free', false, 2, true], ['free', false, 3, false], ['free', false, 4, false],
   ['photo_check', false, 300, true], ['full-pro', false, 300, true],
-  ['photo_check', true, 3, false],
+  ['free', true, 2, true], ['free', true, 3, false], ['photo_check', true, 3, false],
 ])('gates a webhook plan of %s for anonymous=%s at %s scans', async (plan, isAnonymous, scansUsed, allowed) => {
   mockUser = { uid: 'member', isAnonymous };
   const lastReset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();

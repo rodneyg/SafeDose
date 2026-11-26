@@ -25,6 +25,7 @@ it('offers the existing Photo Scan plan and keeps a no-purchase path', () => {
   );
 
   expect(screen.getByText(/Photo Scan adds unlimited AI scans for \$2\.99\/month/)).toBeTruthy();
+  expect(screen.getByText(/The Photo Scan plan also has a monthly dose log limit/)).toBeTruthy();
   fireEvent.press(screen.getByText('Continue without saving'));
   expect(onContinueWithoutSaving).toHaveBeenCalledTimes(1);
   expect(onClose).toHaveBeenCalledTimes(1);
