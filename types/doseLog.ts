@@ -47,6 +47,8 @@ export interface DoseLogContext {
   concentrationExact?: string;
   recommendedMarking?: string | null;
   injectionSite?: InjectionSite | null;
+  /** Optional ISO time the dose was taken. Missing means now. */
+  loggedAt?: string;
   
   // Original user inputs for "Use Last Dose" feature
   medicationInputType?: 'concentration' | 'totalAmount' | null;
