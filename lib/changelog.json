@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-693",
+    "date": "2026-11-26",
+    "title": "Prepare SafeDose PWA assets for Microsoft Store",
+    "status": "published",
+    "prs": [
+      693
+    ],
+    "sections": {
+      "Improved": [
+        "Prepare SafeDose PWA assets for Microsoft Store"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-692",
     "date": "2026-11-26",
     "title": "Reject invalid syringe labels in dose calculations",
