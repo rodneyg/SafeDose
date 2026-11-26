@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-685",
+    "date": "2026-11-26",
+    "title": "Review SafeDose PR 663 draft",
+    "status": "published",
+    "prs": [
+      685
+    ],
+    "sections": {
+      "Improved": [
+        "Review SafeDose PR 663 draft"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-678",
     "date": "2026-11-26",
     "title": "Test saved calculation isolation (T-18489)",
