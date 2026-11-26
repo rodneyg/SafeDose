@@ -19,11 +19,11 @@ const pricingPlans: PricingPlan[] = [
   {
     name: "Free",
     price: { monthly: 0, annual: 0 },
-    description: "The calculator, reconstitution, and on-device logs stay free",
+    description: "The calculator and reconstitution stay free",
     features: [
       { name: `${FREE_SCAN_LIMIT} AI photo scans/month`, available: true },
       { name: "Manual calculator", available: true },
-      { name: "On-device dose logs", available: true },
+      { name: "On-device dose logs with a monthly limit", available: true },
       { name: "Unlimited photo scans", available: false },
     ],
     cta: "Start Free",
@@ -36,7 +36,7 @@ const pricingPlans: PricingPlan[] = [
     features: [
       { name: "Unlimited AI photo scans", available: true },
       { name: "Manual calculator", available: true },
-      { name: "On-device dose logs", available: true },
+      { name: "On-device dose logs with a monthly limit", available: true },
       { name: "Web checkout, cancel anytime", available: true },
     ],
     cta: "Get Photo Scan",
@@ -124,7 +124,7 @@ export default function PricingPage() {
       <h2 className="text-3xl font-bold text-center mb-4">SafeDose Pricing</h2>
       <p className="text-center text-muted-foreground mb-8">
         The calculator stays free. Optional photo scans are ${PHOTO_CHECK_MONTHLY_AMOUNT}/month
-        after {FREE_SCAN_LIMIT} free scans, or ${PHOTO_CHECK_ANNUAL_AMOUNT}/year.
+        after {FREE_SCAN_LIMIT} free scans per month, or ${PHOTO_CHECK_ANNUAL_AMOUNT}/year.
       </p>
       <div className="mb-8">
         <PaymentProviders

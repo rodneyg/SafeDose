@@ -1,92 +1,74 @@
-/**
- * Test for anonymous user log usage tracking in Firestore
- * Validates that anonymous users can store log usage data in the database
- */
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDoc, updateDoc } from 'firebase/firestore';
+import { addDocWithEnv } from '../firestoreWithEnv';
+import { useDoseLogging } from './useDoseLogging';
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(() => Promise.resolve(null)),
-  setItem: jest.fn(() => Promise.resolve()),
+const mockUser = { uid: 'test-user', isAnonymous: true };
+
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: mockUser }),
 }));
-
-// Mock Firebase
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+}));
 jest.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(() => ({})),
+  getFirestore: jest.fn(),
+  collection: jest.fn(),
   doc: jest.fn(),
   getDoc: jest.fn(),
-  setDoc: jest.fn(),
   updateDoc: jest.fn(),
-  increment: jest.fn(),
+  increment: (amount: number) => amount,
 }));
-
-// Mock expo-network
 jest.mock('expo-network', () => ({
-  getNetworkStateAsync: jest.fn(() => Promise.resolve({ isConnected: true })),
+  getNetworkStateAsync: async () => ({ isConnected: true }),
 }));
+jest.mock('../firestoreWithEnv', () => ({ addDocWithEnv: jest.fn() }));
 
-describe('useLogUsageTracking - Anonymous User Support', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+afterEach(() => {
+  jest.clearAllMocks();
+  jest.restoreAllMocks();
+});
+
+it.each([
+  ['a guest', true, 'free'],
+  ['a Photo Scan subscriber', false, 'photo_check'],
+])('saves dose 11 and refuses dose 12 in the same month for %s', async (_label, isAnonymous, plan) => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  mockUser.isAnonymous = isAnonymous;
+  const lastLogReset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  let logsUsed = 10;
+  jest.mocked(getDoc).mockImplementation(async () => ({
+    exists: () => true,
+    data: () => ({ logsUsed, plan, lastLogReset }),
+  }) as Awaited<ReturnType<typeof getDoc>>);
+  jest.mocked(updateDoc).mockImplementation(async () => {
+    logsUsed += 1;
+  });
+  jest.mocked(addDocWithEnv).mockResolvedValue({ id: 'test-log' } as Awaited<ReturnType<typeof addDocWithEnv>>);
+
+  const storage = new Map<string, string>();
+  jest.mocked(AsyncStorage.getItem).mockImplementation(async key => storage.get(key) ?? null);
+  jest.mocked(AsyncStorage.setItem).mockImplementation(async (key, value) => {
+    storage.set(key, value);
   });
 
-  it('should have proper log limit calculation for anonymous users', () => {
-    // Test the getLogLimitForPlan function behavior for anonymous users
-    const getLogLimitForPlan = (plan: string, isAnonymous: boolean) => {
-      if (isAnonymous) return 10; // Anonymous users get 10 free logs
-      if (plan === 'plus') return 100; // Plus plan gets 100 logs
-      if (plan === 'pro') return -1; // Pro plan gets unlimited logs (-1 = unlimited)
-      return 10; // Signed-in free users get 10 logs
-    };
+  const { result } = renderHook(() => useDoseLogging());
+  await waitFor(() => expect(JSON.parse(storage.get('log_usage_test-user') ?? '{}').logsUsed).toBe(10));
 
-    expect(getLogLimitForPlan('free', true)).toBe(10);
-    expect(getLogLimitForPlan('plus', true)).toBe(10); // Anonymous users always get 10
-    expect(getLogLimitForPlan('pro', true)).toBe(10); // Anonymous users always get 10
-    expect(getLogLimitForPlan('free', false)).toBe(10);
-    expect(getLogLimitForPlan('plus', false)).toBe(100);
-    expect(getLogLimitForPlan('pro', false)).toBe(-1); // Unlimited
+  const dose = { doseValue: 1, unit: 'mg', calculatedVolume: 0.2, substanceName: 'Test medication' };
+  await act(async () => {
+    await expect(result.current.logDose(dose)).resolves.toEqual({ success: true, localDoseCount: 1 });
   });
+  const saved = storage.get('dose_logs_test-user');
+  expect(JSON.parse(saved ?? '[]')).toEqual([expect.objectContaining(dose)]);
+  expect(logsUsed).toBe(11);
 
-  it('should validate logic conditions for anonymous user log support', () => {
-    // Test the condition logic we modified
-    const mockAnonymousUser = {
-      uid: 'anonymous-user-123',
-      isAnonymous: true,
-      email: null,
-      displayName: null,
-    };
-
-    const mockAuthenticatedUser = {
-      uid: 'auth-user-456',
-      isAnonymous: false,
-      email: 'user@example.com',
-      displayName: 'Test User',
-    };
-
-    // Test the condition: !user?.uid should be false for both types of users
-    expect(!mockAnonymousUser?.uid).toBe(false); // Anonymous user with UID should pass
-    expect(!mockAuthenticatedUser?.uid).toBe(false); // Authenticated user should pass
-    expect(!null?.uid).toBe(true); // Null user should be blocked
-    expect(!{ uid: '' }?.uid).toBe(true); // Empty UID should be blocked
+  await act(async () => {
+    await expect(result.current.logDose(dose)).resolves.toEqual({ success: false, limitReached: true });
   });
-
-  it('should handle unlimited logs correctly', () => {
-    // Test unlimited log logic for pro users
-    const getLogLimitForPlan = (plan: string, isAnonymous: boolean) => {
-      if (isAnonymous) return 10; // Anonymous users get 10 free logs
-      if (plan === 'plus') return 100; // Plus plan gets 100 logs
-      if (plan === 'pro') return -1; // Pro plan gets unlimited logs (-1 = unlimited)
-      return 10; // Signed-in free users get 10 logs
-    };
-
-    const proLimit = getLogLimitForPlan('pro', false);
-    expect(proLimit).toBe(-1);
-    
-    // Test the unlimited check logic
-    const isUnlimited = proLimit === -1;
-    expect(isUnlimited).toBe(true);
-    
-    // Anonymous users should never get unlimited
-    const anonymousProLimit = getLogLimitForPlan('pro', true);
-    expect(anonymousProLimit).toBe(10); // Still capped at 10
-  });
+  expect(storage.get('dose_logs_test-user')).toBe(saved);
+  expect(updateDoc).toHaveBeenCalledTimes(1);
+  expect(addDocWithEnv).toHaveBeenCalledTimes(isAnonymous ? 0 : 1);
 });

@@ -51,6 +51,17 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+it('shows the monthly limit on saved logs for both plans', () => {
+  const cards = tree.root.findAllByType('PricingCard' as any);
+  expect(cards.map(card => card.props.plan.name)).toEqual(['Free', 'Photo Scan']);
+  for (const card of cards) {
+    expect(card.props.plan.features).toContainEqual({
+      name: 'On-device dose logs with a monthly limit',
+      available: true,
+    });
+  }
+});
+
 it.each([false, true])('builds the Photo Scan request for annual=%s and redirects', async annual => {
   act(() => tree.root.findByType('PriceToggle' as any).props.onToggle(annual));
   await select();
