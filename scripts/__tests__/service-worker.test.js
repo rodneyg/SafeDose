@@ -96,6 +96,23 @@ describe('production service worker', () => {
     handlers.fetch({ request: { url: 'https://example.com/app.js', method: 'GET', mode: 'cors' }, respondWith });
     expect(await respondWith.mock.calls[0][0]).toBe('static response');
   });
+  test.each([
+    ['navigate', '/new-dose?source=shortcut', '/new-dose.html'],
+    ['cors', '/app.js', '/app.js'],
+  ])('fetches the original %s request when the build cache misses', async (mode, route, cachePath) => {
+    const request = { url: `https://example.com${route}`, method: 'GET', mode };
+    const networkResponse = { status: 200 };
+    const respondWith = jest.fn();
+    cache.match.mockResolvedValueOnce(undefined);
+    network.mockResolvedValueOnce(networkResponse);
+
+    handlers.fetch({ request, respondWith });
+
+    expect(await respondWith.mock.calls[0][0]).toBe(networkResponse);
+    expect(cache.match).toHaveBeenCalledWith(cachePath);
+    expect(network).toHaveBeenCalledTimes(1);
+    expect(network.mock.calls[0][0]).toBe(request);
+  });
   test('directory index routes work offline', async () => {
     const respondWith = jest.fn();
     handlers.fetch({ request: { url: 'https://example.com/onboarding', method: 'GET', mode: 'navigate' }, respondWith });
