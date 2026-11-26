@@ -304,6 +304,7 @@ export default function PricingPage() {
       <TouchableOpacity 
         style={styles.ctaButton} 
         onPress={initiateStripeCheckout}
+        accessibilityRole="button"
         disabled={isLoading || pricingDefault === undefined}
         activeOpacity={0.9}
       >

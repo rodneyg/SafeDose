@@ -170,6 +170,11 @@ describe('web pricing default experiment', () => {
     expect(selectionState()).toEqual(selection);
   });
 
+  it('exposes the primary pricing action as a button on web', () => {
+    mountPricing();
+    expect(button().props.accessibilityRole).toBe('button');
+  });
+
   it('restores the selected offer after sign-in even when the experiment defaults to monthly', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.25);
     mockOffer = 'photo_check_annual';
