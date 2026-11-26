@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-686",
+    "date": "2026-11-26",
+    "title": "Review and prepare SafeDose PR 668",
+    "status": "published",
+    "prs": [
+      686
+    ],
+    "sections": {
+      "Improved": [
+        "Review and prepare SafeDose PR 668"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-685",
     "date": "2026-11-26",
     "title": "Review SafeDose PR 663 draft",
