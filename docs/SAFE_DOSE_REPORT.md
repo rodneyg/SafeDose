@@ -1,6 +1,6 @@
 # SafeDose repository report
 
-Source review at commit `4e0d02db9d90fde2203022650c8412988e582de3`. The test vectors below describe software behavior using synthetic inputs. Packaging and release controls are proposals.
+Source review at commit `4e0d02db9d90fde2203022650c8412988e582de3`. The test vectors below describe software behavior using synthetic inputs. Packaging and release controls are proposals. For the current scan model, see [the server request](../lib/scan/request.js).
 
 ## What the app does
 

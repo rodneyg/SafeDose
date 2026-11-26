@@ -243,21 +243,18 @@ All participants must provide written informed consent acknowledging:
 - Input range validation
 
 **Calculation Safety:**
-- Volume threshold enforcement (0.005 mL - 2 mL safe range)
-- Syringe capacity checks
-- Cross-validation of unit conversions
-- Flagging of unusual dose calculations
+- Configured volume limits, including a separate cap for insulin syringes
+- Syringe capacity and unit compatibility checks
 
 **Pre-Administration Safety:**
 - Mandatory pre-dose confirmation screen
 - Summary of all calculation inputs
-- Volume warning for doses >1 mL
 - Safety reminder to verify with healthcare professional
 - Clear error messages for invalid scenarios
 
 **Post-Dose Safety:**
 - Optional feedback collection on dose experience
-- Adverse event reporting mechanism
+- General email support. The pilot proposal below describes separate adverse event reporting.
 - Dose logging for tracking patterns
 
 ### 4.2 Pilot-Specific Safety Protocols

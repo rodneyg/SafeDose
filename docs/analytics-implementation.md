@@ -8,10 +8,10 @@ Firebase Analytics has been integrated to track key user interactions and behavi
 
 ## Analytics Events
 
-The following custom events are tracked:
+These are selected custom events. See [the event constants](../lib/analytics.ts) for the full list.
 
 ### Authentication Events
-- **sign_in_attempt**: Logged when user attempts to sign in (email or Google)
+- **sign_in_attempt**: Logged when user attempts to sign in with Google
 - **sign_in_success**: Logged on successful sign-in
 - **sign_in_failure**: Logged on failed sign-in with error details
 - **sign_up_success**: Logged when anonymous user links to authenticated account
@@ -20,10 +20,10 @@ The following custom events are tracked:
 ### Pricing & Upgrade Events
 - **view_pricing_page**: Logged when pricing page is viewed
 - **initiate_upgrade**: Logged when user starts upgrade process
-- **upgrade_success**: Logged on successful plan upgrade
 - **upgrade_failure**: Logged on upgrade failure with error details
-- **cancel_subscription**: Logged when a user cancels their plan
-- **downgrade_plan**: Logged when a user downgrades to a lower tier
+- **cancel_subscription**: Logged when the user opens the billing portal to manage their subscription
+
+The client defines `upgrade_success` and `downgrade_plan` without emitting them.
 
 ### Scan Usage Events
 - **scan_attempt**: Logged when user attempts a scan
@@ -32,8 +32,8 @@ The following custom events are tracked:
 - **reach_scan_limit**: Logged when user hits scan limit
 
 ### Manual Entry Events
-- **MANUAL_ENTRY_STARTED**: Logged when the user starts the manual entry flow.
-- **MANUAL_ENTRY_COMPLETED**: Logged when the user completes the manual entry flow and proceeds to the feedback screen.
+- **manual_entry_started**: Logged when the user starts the manual entry flow.
+- **manual_entry_completed**: Logged when the result action opens injection-site selection, before feedback.
 
 ### User Interaction Events
 - **limit_modal_view**: Logged when the limit modal is displayed
@@ -60,7 +60,8 @@ The following user properties are set and maintained:
 - **is_licensed_professional**: true/false (from user profile personalization)
 - **is_personal_use**: true/false (from user profile personalization)
 - **is_cosmetic_use**: true/false (from user profile personalization)
-- **user_segment**: "healthcare_professional", "cosmetic_user", "personal_medical_user", or "general_user" (derived from profile settings)
+- **is_professional_athlete** and **is_performance_use**: true/false (from user profile personalization)
+- **user_segment**: "healthcare_professional", "professional_athlete", "performance_user", "cosmetic_user", "personal_medical_user", or "general_user" (derived from profile settings)
 
 ## Implementation Details
 
@@ -72,7 +73,7 @@ The following user properties are set and maintained:
 4. **contexts/UserProfileContext.tsx**: Personalization user properties and profile storage events
 5. **app/login.tsx**: Authentication events
 6. **app/pricing.tsx**: Pricing and upgrade initiation events
-7. **app/success.tsx**: Upgrade completion events
+7. **app/(tabs)/settings.tsx**: Billing portal opening and authentication events
 8. **app/(tabs)/new-dose.tsx**: Scan events and error tracking
 9. **app/onboarding/userType.tsx**: Detailed onboarding step tracking and completion events
 10. **components/LimitModal.tsx**: Limit modal interaction events
@@ -81,7 +82,7 @@ The following user properties are set and maintained:
 ### Event Parameters
 
 Events include relevant parameters for analysis:
-- Method (email, google) for authentication events
+- Method (Google) for authentication events
 - Plan type (plus) for upgrade events
 - Error messages for failure events
 - Action type (sign_in, upgrade, cancel) for modal events
@@ -139,10 +140,8 @@ setPersonalizationUserProperties(profile);
 
 Using the implemented events, you can track:
 
-1. **Conversion Rates**:
-   - reach_scan_limit → upgrade_success
+1. **Upgrade intent**:
    - view_pricing_page → initiate_upgrade
-   - initiate_upgrade → upgrade_success
 
 2. **User Engagement**:
    - Scan success/failure rates
@@ -151,7 +150,7 @@ Using the implemented events, you can track:
 
 3. **Drop-off Points**:
    - Authentication funnel (attempt → success/failure)
-   - Upgrade funnel (view → initiate → success)
+   - Checkout starts from the pricing page
 
 4. **Error Monitoring**:
    - Scan failure reasons
@@ -169,9 +168,6 @@ To verify the implementation:
 
 ## Platform Support
 
-The implementation works across:
-- Web (Firebase Analytics fully supported)
-- iOS (Firebase Analytics SDK)
-- Android (Firebase Analytics SDK)
-
-Analytics will only be active on web platforms where `window` is available. On mobile platforms, events will be logged to console for debugging but won't be sent to Firebase unless the platform-specific Firebase Analytics SDK is properly configured.
+SafeDose sends Firebase Analytics events from supported browsers. Preview
+environments skip Firebase events and user property updates. When the Firebase
+Analytics instance is unavailable, the helpers write diagnostic console messages.

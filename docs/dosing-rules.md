@@ -60,7 +60,7 @@ Syringe scale units describe barrel positions. They do not convert arbitrary med
 
 U-100 is the unchanged default for manual selections. U-40 uses 40 scale units/mL: 1 unit = 0.025 mL. The 1 mL U-40 option uses one-unit increments. U-40 0.3 mL syringes and other scales, including U-500, are refused. The scale selector and illustration use the selected scale. Saved logs retain the scale.
 
-Scans must report a supported type, volume, and explicit insulin scale. No insulin scale is inferred from the dose or medication. An unreadable type/volume or missing, unsupported, or conflicting insulin scale requires selection. After an unreadable scan, type and volume must each be selected; an insulin scale must also be confirmed. The syringe step never silently replaces a scanned or user-selected syringe with a suggestion.
+Automatic syringe prefill supports standard mL syringes and U-100 insulin syringes. Choose U-40 manually. Scans must report a supported type, volume, and explicit insulin scale where applicable. No insulin scale is inferred from the dose or medication. An unreadable type/volume or missing, unsupported, or conflicting insulin scale requires selection. After an unreadable scan, type and volume must each be selected; an insulin scale must also be confirmed. The syringe step never silently replaces a scanned or user-selected syringe with a suggestion.
 
 Standard marking = volume mL. Insulin marking = volume mL × selected units/mL. No result is snapped to a barrel marking. Guidance is emitted when the exact distance from the nearest mark exceeds 0.01 scale units. Ties select the earlier listed mark. Guidance describes between-marks, below-first, or above-last positions; built-in lists end at capacity, so the above-last helper is tested directly.
 
@@ -84,7 +84,7 @@ Run `python3 tests/fixtures/generate_dosing_cases.py`, `npm run test:dosing`, an
 
 ## SAF-103 property tests
 
-`lib/dosing/__tests__/properties.test.ts` runs 26 properties with 1,000 cases each through both `npm test` and `npm run test:dosing`. The default seed is `1032026`; set `FC_SEED` to a signed 32-bit integer to use another seed. The runner reports the completed property run count. Failures include the seed, shrunk counterexample, shrink path, and a replay command using `FC_SEED`, `FC_PROPERTY`, and `FC_PATH`. An unknown property name or a path without a property name is an explicit error.
+`lib/dosing/__tests__/properties.test.ts` runs 36 properties with 1,000 cases each through both `npm test` and `npm run test:dosing`. The default seed is `1032026`; set `FC_SEED` to a signed 32-bit integer to use another seed. The runner reports the completed property run count. Failures include the seed, shrunk counterexample, shrink path, and a replay command using `FC_SEED`, `FC_PROPERTY`, and `FC_PATH`. An unknown property name or a path without a property name is an explicit error.
 
 Generators use short entered decimals, doses from 1 mcg through 2,000 mg, solution volumes from 0.1 through 10 mL, all eight supported syringe selections, and safety/numeric edge values. Expected ratios and display rounding use independent BigInt cross-products rather than the production arithmetic. Properties cover exact conversions, linearity, mass-unit invariance, supplied/derived concentrations, planner handoff, monotonicity, rejection, numeric overflow/underflow, and display rounding/gradations.
 

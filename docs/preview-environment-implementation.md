@@ -76,7 +76,10 @@ The following files were updated to use the wrapper functions:
 4. **lib/hooks/useOnboardingSurvey.ts** - PMF survey responses
 5. **lib/hooks/useOnboardingIntentStorage.ts** - Onboarding intent data
 6. **lib/hooks/useFeedbackStorage.ts** - User feedback
-7. **lib/hooks/useUsageTracking.ts** - User usage tracking documents (create only)
+7. **lib/hooks/useEvaluationDataCapture.ts** - Evaluation record creation
+
+Usage tracking resets counts through a merge write and increments them through
+an update. Neither operation adds the preview tag.
 
 ### Unchanged Operations
 These operations continue using standard Firestore functions:

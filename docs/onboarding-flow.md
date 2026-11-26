@@ -148,10 +148,13 @@ const finalProfile = {
 
 ```
 Personalization → Background → Use Type → Personal Use → Optional protocol setup
-  → Continue without setup → New Dose with first scan open
-  → Save a protocol → Schedule preview → New Dose with first scan open
+  → Continue without setup → first-scan flow
+  → Save a protocol → Protocol saved → view schedule or continue to first-scan flow
 Skip personalization → Manual dose entry
 ```
+
+The first-scan flow can show the pre-scan prompt or a scan limit. Offline,
+it can open manual entry instead.
 
 ## Technical Implementation
 

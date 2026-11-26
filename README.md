@@ -12,7 +12,8 @@ Created by **SafeLab**, SafeDose calculates a draw volume from the dose and syri
 SafeDose's current dose workflow offers Manual entry and a Scan option. Manual
 entry starts with the prescribed dose. Scan can start with photos of the vial
 and syringe. Users review the scan results and confirm the fields in the manual
-form before calculating the volume to draw.
+form before calculating the volume to draw. The Logs tab can export dose
+history as CSV and show an estimate of doses left in the most recent vial.
 
 **The longer-term vision is a glasses-native workflow:**
 
@@ -65,7 +66,7 @@ Use `--dry-run` to print the Vercel promotion command without changing productio
 
 ## 💻 Local Development
 
-To run the open-source version locally:
+To run the repository locally:
 
 ### 1. Clone the repo and install dependencies
 
@@ -126,7 +127,7 @@ SafeDose/
 ## Model evaluation and scan data
 
 SafeDose can save scan and calculation evaluation records locally. These
-records can include inputs, results, and quality metadata. For signed-in
+records can include inputs, results, quality metadata, and the scan image. For signed-in
 users, SafeDose can also send evaluation records to Firestore with image
 metadata in place of the image itself.
 
@@ -171,7 +172,8 @@ Built by SafeLab — advancing open tools for human systems.
   changelog Action uses the PR title for its entry, rebuilds
   `lib/changelog.json`, and commits both to `main`. The `skip-changelog`
   label skips this step. Fork PRs have read-only workflow tokens, so use the
-  manual backfill steps below for fork merges that need an entry.
+  manual backfill steps below for recent fork merges. Author an entry directly
+  if the merge predates the latest published UTC date.
 - For manual backfills, run `npm run changelog:add` with an authenticated
   GitHub CLI. It drafts missing entries from the latest published UTC date
   onward, including that date, and deduplicates by PR number. It uses
@@ -182,7 +184,8 @@ Built by SafeLab — advancing open tools for human systems.
 - Vercel can skip a production build when the diff from the last successful
   deployment contains only changelog entries or other non-runtime files. The
   scheduled workflow batches pending entries into a deploy commit after a
-  quiet period. A regular production build can ship those entries sooner.
+  15-minute quiet period or when the oldest pending entry reaches 60 minutes.
+  A regular production build can ship those entries sooner.
 
 ### Read-only production smoke
 
@@ -202,11 +205,13 @@ plans), login, changelog, privacy, terms and support. Each route must render its
 expected text without console errors, uncaught exceptions or HTTP 4xx/5xx
 responses or HTML returned for scripts or styles. Each route uses fresh headless Chromium state with service workers
 blocked. The browser loads public assets and Firebase configuration. Guest auth,
-Firebase installation and analytics requests receive local fixture responses, so
-the smoke creates no guest accounts and sends no analytics events.
+Firebase installation and supported analytics requests receive local fixture
+responses. The Vercel analytics script is also stubbed. The smoke creates no
+guest accounts and sends no analytics events.
 
 The only live POST sends `{}` to `/api/analyze-scan` and expects a 4xx validation
-response. No images, keys, sign-in, checkout or authenticated features are used.
+response (HTTP 400). No images, keys, sign-in, checkout or authenticated
+features are used.
 The smoke runner checks `/api/health` for HTTP 200 and `ok: true` when
 `api/health.js` exists on the locally fetched `origin/main`. It reports a
 skip if the file is absent and a failure if the main ref is missing.

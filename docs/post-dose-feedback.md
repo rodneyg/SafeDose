@@ -7,10 +7,10 @@ The post-dose feedback feature allows users to optionally log how a dose felt af
 ## User Flow
 
 1. User completes dose calculation and sees the final result
-2. User clicks "New Dose" or "Scan Again" 
-3. App routes to **PostDoseFeedbackScreen** (optional step)
-4. User can provide feedback or skip
-5. App continues to the intended destination (intro screen or scan screen)
+2. User selects "New Dose" or "Scan Again"
+3. App opens injection-site selection
+4. User continues to optional feedback or cancels back to the result
+5. User can provide feedback or skip, then continue to the intro or scan screen
 
 ## Feedback Options
 
@@ -34,7 +34,7 @@ The post-dose feedback feature allows users to optionally log how a dose felt af
 - `types/feedback.ts` - TypeScript type definitions
 
 ### Modified Components
-- `FinalResultDisplay` - Routes to feedback screen instead of direct navigation
+- `FinalResultDisplay` - Starts the injection-site and feedback flow
 - `useDoseCalculator` - Added feedback context and navigation handlers
 - `ManualEntryScreen` - Passes feedback handlers to child components
 - `new-dose.tsx` - Includes feedback screen in routing logic

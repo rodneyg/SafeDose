@@ -1,29 +1,25 @@
 # Authentication Configuration
 
-## Google Sign-In Redirect URIs
+## Google sign-in callback
 
-When setting up Google Sign-In in the Google Cloud Console, you need to configure the following redirect URIs:
+SafeDose uses the Firebase JavaScript SDK for web sign-in. The OAuth callback
+uses the Firebase `authDomain` configured in [app.config.js](../app.config.js).
+In the default configuration, the callback is
 
-### Local Development
 ```
-http://localhost:8081/__/auth/handler
-```
-
-### Production
-```
-https://safedose.rodneygainous.com/__/auth/handler
-https://safe-dose.vercel.app/__/auth/handler   (fallback)
+https://safedose-e320d.firebaseapp.com/__/auth/handler
 ```
 
-## Setting up Google Sign-In in Google Cloud Console
+If a deployment sets `FIREBASE_AUTH_DOMAIN`, register
+`https://<auth-domain>/__/auth/handler` in the Google OAuth client's authorized
+redirect URIs and make sure that host serves the Firebase auth helper.
+See [Firebase's redirect setup guide](https://firebase.google.com/docs/auth/web/redirect-best-practices).
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Select your project or create a new one
-3. Navigate to "APIs & Services" > "Credentials"
-4. Create or edit an OAuth 2.0 Client ID
-5. Add the redirect URIs mentioned above to the "Authorized redirect URIs" section
-6. Save your changes
+## Authorized app hosts
 
-These URIs are essential for the OAuth flow to properly redirect back to the application after authentication is complete.
-
-Authorized JavaScript origins: `https://safedose.rodneygainous.com`, `https://safe-dose.vercel.app` (fallback) and `http://localhost:8081`. Firebase Auth must authorize `safedose.rodneygainous.com`, `safe-dose.vercel.app` and `localhost`. Preview deployments require their exact hostnames and OAuth origins/redirect URIs; wildcard authorization is not assumed.
+In Firebase Authentication, authorize the app hosts that should allow sign-in.
+These include `safedose.rodneygainous.com` and `safe-dose.vercel.app`.
+Authorize `localhost` in a development project if using local sign-in.
+For sign-in on a preview, authorize the exact preview hostname. If your OAuth
+client requires JavaScript origins, use each app's origin, including its
+scheme and local port where applicable.

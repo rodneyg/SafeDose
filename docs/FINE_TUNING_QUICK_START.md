@@ -100,7 +100,8 @@ import openai
 openai.api_key = "your-key-here"
 
 # Upload
-with open("evals/exported-data/training-data-latest.jsonl", "rb") as f:
+# Replace TIMESTAMP with the name printed by the exporter.
+with open("evals/exported-data/training-data-TIMESTAMP.jsonl", "rb") as f:
     file = openai.File.create(file=f, purpose='fine-tune')
     
 print(f"File ID: {file.id}")
