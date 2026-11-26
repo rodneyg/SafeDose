@@ -12,6 +12,9 @@ export class Exact {
     } else {
       const parts = String(value).split('/');
       if (parts.length === 2) {
+        if (!parts.every((part) => part.trim().length > 0)) {
+          throw new Error('Invalid exact number');
+        }
         n = BigInt(parts[0]);
         d = BigInt(parts[1]);
       } else {
