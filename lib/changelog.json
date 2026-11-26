@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-690",
+    "date": "2026-11-26",
+    "title": "Expose the primary pricing action as a button",
+    "status": "published",
+    "prs": [
+      690
+    ],
+    "sections": {
+      "Improved": [
+        "Expose the primary pricing action as a button"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-688",
     "date": "2026-11-26",
     "title": "Migrate Photo Check to GPT-6 Luna",
