@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-697",
+    "date": "2026-11-26",
+    "title": "Reject missing operands in exact fractions",
+    "status": "published",
+    "prs": [
+      697
+    ],
+    "sections": {
+      "Improved": [
+        "Reject missing operands in exact fractions"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-695",
     "date": "2026-11-26",
     "title": "Clarify guest scan and dose log limits",
