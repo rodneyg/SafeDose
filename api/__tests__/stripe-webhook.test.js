@@ -14,6 +14,7 @@ jest.mock('../../lib/stripeConfig.server.js', () => ({
   mode: 'test',
 }));
 
+const { getBillingFirebase } = require('../../lib/firebaseAdmin.server');
 const { fulfillStripeEvent } = require('../../lib/stripeFulfillment.server');
 const handler = require('../stripe-webhook');
 
@@ -71,6 +72,22 @@ it('returns a retryable response when processing a verified event fails', async 
   mockConstructEvent.mockReturnValue({ id: 'evt_fixture', type: 'invoice.paid', livemode: false });
   fulfillStripeEvent.mockRejectedValueOnce(new Error('Fixture backend failure'));
   await handler(request, res);
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Webhook is temporarily unavailable.' });
+});
+
+it('returns a retryable response when Firebase initialization fails after verification', async () => {
+  const event = { id: 'evt_fixture', type: 'customer.subscription.updated', livemode: false };
+  mockConstructEvent.mockReturnValue(event);
+  getBillingFirebase.mockImplementationOnce(() => {
+    throw new Error('Fixture Firebase initialization failure');
+  });
+
+  await handler(request, res);
+
+  expect(mockConstructEvent).toHaveBeenCalledWith(requestBody, 'fixture_signature', secret);
+  expect(getBillingFirebase).toHaveBeenCalledTimes(1);
+  expect(fulfillStripeEvent).not.toHaveBeenCalled();
   expect(res.status).toHaveBeenCalledWith(503);
   expect(res.json).toHaveBeenCalledWith({ error: 'Webhook is temporarily unavailable.' });
 });
