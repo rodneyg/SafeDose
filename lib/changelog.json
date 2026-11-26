@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-669",
+    "date": "2026-11-26",
+    "title": "test: cover large vials and quarter mg doses",
+    "status": "published",
+    "prs": [
+      669
+    ],
+    "sections": {
+      "Improved": [
+        "test: cover large vials and quarter mg doses"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-676",
     "date": "2026-11-25",
     "title": "test: cover Stripe client and server config key rules (T-17085)",
