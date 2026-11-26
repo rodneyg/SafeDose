@@ -48,7 +48,7 @@ it('finds the prescribed dose by label and exposes the selected unit', () => {
   expect(setUnit).toHaveBeenCalledWith('mcg');
 });
 
-it('labels concentration and marks incompatible units unavailable', () => {
+it('labels concentration, exposes the selected unit, and marks incompatible units unavailable', () => {
   const setConcentrationAmount = jest.fn();
   render(<ConcentrationInputStep
     concentrationAmount=""
@@ -63,6 +63,16 @@ it('labels concentration and marks incompatible units unavailable', () => {
 
   act(() => byLabel('Concentration amount').props.onChangeText('10'));
   expect(setConcentrationAmount).toHaveBeenCalledWith('10');
+  expect(byLabel('mg/ml').props).toMatchObject({
+    accessibilityRole: 'button',
+    accessibilityState: { selected: true },
+    'aria-pressed': true,
+  });
+  expect(byLabel('mcg/ml').props).toMatchObject({
+    accessibilityRole: 'button',
+    accessibilityState: { selected: false },
+    'aria-pressed': false,
+  });
   expect(byLabel('units/ml').props).toMatchObject({
     disabled: true,
     accessibilityState: { disabled: true },
