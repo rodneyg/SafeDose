@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-699",
+    "date": "2026-11-26",
+    "title": "Reject leading-zero comma groups in dosing input",
+    "status": "published",
+    "prs": [
+      699
+    ],
+    "sections": {
+      "Improved": [
+        "Reject leading-zero comma groups in dosing input"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-698",
     "date": "2026-11-26",
     "title": "Test Stripe webhook when Firebase initialization fails",
