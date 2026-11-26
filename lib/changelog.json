@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-703",
+    "date": "2026-11-26",
+    "title": "Add current product screenshots to README",
+    "status": "published",
+    "prs": [
+      703
+    ],
+    "sections": {
+      "Improved": [
+        "Add current product screenshots to README"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-701",
     "date": "2026-11-26",
     "title": "fix(deps): patch node-tar advisories",
