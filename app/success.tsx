@@ -6,12 +6,12 @@ import { billingRequest } from '../lib/subscriptionStatus';
 
 type CheckoutStatus = 'pending' | 'active' | 'failed' | 'inactive';
 const messages = {
-  loading: ['Checking your subscription', 'We are checking your account for Photo Check access.'],
-  pending: ['Waiting for payment confirmation', 'Photo Check will activate when Stripe confirms payment.'],
-  active: ['Photo Check is active', 'Your SafeDose account now has unlimited photo checks.'],
+  loading: ['Checking your subscription', 'We are checking your account for Photo Scan access.'],
+  pending: ['Waiting for payment confirmation', 'Photo Scan will activate when Stripe confirms payment.'],
+  active: ['Photo Scan is active', 'Your SafeDose account now has unlimited photo scans.'],
   failed: ['Payment was not completed', 'You can return to pricing to try again.'],
-  inactive: ['Photo Check is inactive', 'Check your subscription in Settings.'],
-  unavailable: ['Photo Check status unavailable', 'Use the SafeDose account you checked out with to check your subscription.'],
+  inactive: ['Photo Scan is inactive', 'Check your subscription in Settings.'],
+  unavailable: ['Photo Scan status unavailable', 'Use the SafeDose account you checked out with to check your subscription.'],
 };
 
 export default function SuccessScreen() {
