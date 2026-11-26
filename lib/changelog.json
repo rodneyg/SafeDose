@@ -70,6 +70,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-667",
+    "date": "2026-11-26",
+    "title": "Add Export CSV button to the dose log",
+    "status": "published",
+    "prs": [
+      667
+    ],
+    "sections": {
+      "Improved": [
+        "Add Export CSV button to the dose log"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-676",
     "date": "2026-11-25",
     "title": "test: cover Stripe client and server config key rules (T-17085)",
