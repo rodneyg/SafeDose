@@ -28,12 +28,17 @@ export const u40Markings: Record<string, string> = {
 };
 
 export function getSyringeMarkings(syringe: SyringeSelection): string | undefined {
+  let markings: Record<string, string>;
   if (syringe.type === 'Insulin') {
     const scale = syringe.insulinScale || 'U-100';
-    if (scale === 'U-40') return u40Markings[syringe.volume];
-    if (scale !== 'U-100') return undefined;
-    return (syringeOptions.Insulin as Record<string, string>)[syringe.volume];
+    if (scale !== 'U-100' && scale !== 'U-40') return undefined;
+    markings = scale === 'U-40' ? u40Markings : syringeOptions.Insulin;
+  } else if (syringe.type === 'Standard') {
+    markings = syringeOptions.Standard;
+  } else {
+    return undefined;
   }
-  if (syringe.type === 'Standard') return (syringeOptions.Standard as Record<string, string>)[syringe.volume];
-  return undefined;
+  return Object.prototype.hasOwnProperty.call(markings, syringe.volume)
+    ? markings[syringe.volume]
+    : undefined;
 }

@@ -57,6 +57,19 @@ describe('input validation and order', () => {
   it.each(['Insulin', 'Standard', 'Unknown'])('unknown %s syringe volume', type => {
     expect(dose({ manualSyringe: { type, volume: '9 ml' } as CalculateDoseParams['manualSyringe'] }).calculationError).toBe(`Markings unavailable for ${type} 9 ml syringe.`);
   });
+  const inheritedVolumes: [NonNullable<CalculateDoseParams['manualSyringe']>][] = [
+    [{ type: 'Standard', volume: 'constructor' }],
+    [{ type: 'Insulin', volume: 'toString', insulinScale: 'U-100' }],
+    [{ type: 'Insulin', volume: '__proto__', insulinScale: 'U-40' }],
+  ];
+  it.each(inheritedVolumes)('rejects inherited syringe volume keys (%o)', manualSyringe => {
+    expect(dose({ manualSyringe })).toEqual({
+      calculatedVolume: null,
+      calculatedConcentration: null,
+      recommendedMarking: null,
+      calculationError: `Markings unavailable for ${manualSyringe.type} ${manualSyringe.volume} syringe.`,
+    });
+  });
   it('derives concentration when NaN or nonpositive', () => {
     for (const concentration of [NaN, 0, -1]) {
       expect(dose({ concentration, totalAmount: 5, solutionVolume: '2' }).calculatedConcentration).toBe(2.5);
