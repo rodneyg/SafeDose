@@ -84,6 +84,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-665",
+    "date": "2026-11-26",
+    "title": "Show estimated doses left in the most recent vial",
+    "status": "published",
+    "prs": [
+      665
+    ],
+    "sections": {
+      "Improved": [
+        "Show estimated doses left in the most recent vial"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-676",
     "date": "2026-11-25",
     "title": "test: cover Stripe client and server config key rules (T-17085)",
