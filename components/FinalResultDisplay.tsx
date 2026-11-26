@@ -4,13 +4,14 @@ import { formatDoseNumber } from '../lib/dosing';
 import { Exact } from '../lib/dosing/exact';
 import { SyringeSelection, getSyringeMarkings } from '../lib/dosing';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Plus, X, Info, ChevronDown, ChevronUp, RotateCcw, Save, Camera as CameraIcon, Check } from 'lucide-react-native';
 import { signInWithGoogle } from '../lib/googleAuth';
 import SyringeIllustration from './SyringeIllustration';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDoseLogging } from '@/lib/hooks/useDoseLogging';
+import { parseLocalDateTimeInput, resolveDoseTimestamp, timestampErrorMessage } from '../lib/doseLogTimestamp';
 
 type Props = {
   calculationError: string | null;
@@ -66,6 +67,19 @@ export default function FinalResultDisplay({
   const saveInFlight = useRef(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [pendingSave, setPendingSave] = useState(false); // Track if we're waiting for auth to complete save
+  const [takenAtText, setTakenAtText] = useState(''); // Optional time taken, blank means now
+  const [takenAtError, setTakenAtError] = useState<string | null>(null);
+
+  // Returns the ISO time to log, undefined for now, or null when the text is not valid.
+  const readTakenAt = useCallback((): string | undefined | null => {
+    const parsed = parseLocalDateTimeInput(takenAtText);
+    if (parsed === null) { setTakenAtError(timestampErrorMessage('invalid')); return null; }
+    if (parsed === undefined) { setTakenAtError(null); return undefined; }
+    const check = resolveDoseTimestamp(parsed);
+    if (!check.ok) { setTakenAtError(timestampErrorMessage(check.reason)); return null; }
+    setTakenAtError(null);
+    return parsed;
+  }, [takenAtText]);
   
   // Effect to handle automatic saving after successful authentication
   useEffect(() => {
@@ -75,7 +89,10 @@ export default function FinalResultDisplay({
         setIsSaving(true);
         
         try {
+          const loggedAt = readTakenAt();
+          if (loggedAt === null) return;
           const doseInfo = {
+            ...(loggedAt && { loggedAt }),
             substanceName,
             doseValue,
             unit,
@@ -107,7 +124,7 @@ export default function FinalResultDisplay({
 
     handleAuthenticatedSave();
   }, [
-    pendingSave, user, isSaving, isLogging, logDose, resolveScheduledDose, onDoseSaved,
+    pendingSave, user, isSaving, isLogging, logDose, resolveScheduledDose, onDoseSaved, readTakenAt,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);
@@ -139,6 +156,9 @@ export default function FinalResultDisplay({
     setIsSaving(true);
     
     try {
+      // Do not start sign-in with a time that would be rejected later
+      if (readTakenAt() === null) return;
+
       // Check if user is authenticated
       if (!user || user.isAnonymous) {
         // Start sign-in without queuing a save until the popup succeeds
@@ -155,7 +175,10 @@ export default function FinalResultDisplay({
       }
 
       // User is already authenticated, proceed with saving immediately
+      const loggedAt = readTakenAt();
+      if (loggedAt === null) return;
       const doseInfo = {
+        ...(loggedAt && { loggedAt }),
         substanceName,
         doseValue,
         unit,
@@ -185,7 +208,7 @@ export default function FinalResultDisplay({
       setIsSaving(false);
     }
   }, [
-    pendingSave, isSaving, isLogging, user, handleSignIn, logDose, resolveScheduledDose, onDoseSaved,
+    pendingSave, isSaving, isLogging, user, handleSignIn, logDose, resolveScheduledDose, onDoseSaved, readTakenAt,
     substanceName, doseValue, unit, calculatedVolume, 
     manualSyringe, recommendedMarking, calculationError
   ]);
@@ -404,6 +427,22 @@ export default function FinalResultDisplay({
         </View>
       )}
       
+      <View style={styles.takenAtContainer}>
+        <Text style={styles.takenAtLabel}>Time taken (optional)</Text>
+        <TextInput
+          style={styles.takenAtInput}
+          value={takenAtText}
+          onChangeText={(t) => { setTakenAtText(t); setTakenAtError(null); }}
+          placeholder="Now. Or type YYYY-MM-DD HH:MM"
+          placeholderTextColor="#9CA3AF"
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Time the dose was taken, optional. Leave blank for now."
+        />
+        <Text style={styles.takenAtHint}>Leave blank for now. Up to 30 days back, not in the future.</Text>
+        {takenAtError ? <Text style={styles.takenAtError}>{takenAtError}</Text> : null}
+      </View>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: '#007AFF' }, isMobileWeb && styles.actionButtonMobile]} 
@@ -440,6 +479,11 @@ export default function FinalResultDisplay({
 }
 
 const styles = StyleSheet.create({
+  takenAtContainer: { marginTop: 16, width: '100%' },
+  takenAtLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  takenAtInput: { borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, color: '#111827', backgroundColor: '#fff' },
+  takenAtHint: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+  takenAtError: { fontSize: 13, color: '#DC2626', marginTop: 4 },
   container: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, width: '100%', maxWidth: 600, marginBottom: 20 },
   instructionCard: { padding: 16, borderRadius: 12, borderWidth: 2, marginBottom: 16, width: '100%' },
   instructionTitle: { fontSize: 18, fontWeight: 'bold', color: '#065F46', textAlign: 'center', marginBottom: 12 },

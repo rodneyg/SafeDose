@@ -24,9 +24,14 @@ Browser Origins must be HTTPS `safedose.rodneygainous.com` (canonical), `safe-do
 `safe-dose-<hash>-rodneygs-projects.vercel.app` or a branch preview `safe-dose-git-<branch>-rodneygs-projects.vercel.app`. HTTP/HTTPS localhost with optional ports is also allowed. Native requests without Origin are allowed. Origin filtering is
 browser protection: non-browser callers can omit or forge Origin.
 
-The scan request ignores caller model/prompt/temperature settings. The shared
-`lib/scan/request.js` pins `gpt-4o-2024-08-06`, temperature 0, JSON-object output,
-and the existing syringe/vial extraction and safety/refusal prompt.
+The scan request ignores caller model, prompt, and sampling settings. The shared
+`lib/scan/request.js` uses `gpt-6-luna` with Chat Completions and image input,
+JSON-object output, and the existing syringe/vial extraction and safety/refusal
+prompt. GPT-6 Luna requires `reasoning_effort: 'none'` to use `temperature: 0`.
+Standard pricing is $0.10 per million input tokens and $0.50 per million output
+tokens for prompts up to 272K tokens. For example, a scan using 3,000 input tokens
+(including the image) and 600 output tokens would cost about $0.0006. Actual
+cost depends on the image and token usage. [Model and pricing details](https://developers.openai.com/api/docs/models/gpt-6-luna).
 
 CI exports the web app, then scans exported text assets and resolved Expo
 `extra` for secret patterns and the exact server OpenAI key when available.

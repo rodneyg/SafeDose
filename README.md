@@ -167,9 +167,11 @@ Built by SafeLab — advancing open tools for human systems.
   Each entry has `date`, `title`, and `status` frontmatter and bullets under
   New, Improved, or Fixed. Set `prs` to the PR numbers covered by the entry
   so manual backfills can skip them.
-- When a non-bot PR merges into `main`, the Publish changelog Action uses
-  the PR title for its entry, rebuilds `lib/changelog.json`, and commits both
-  to `main`. The `skip-changelog` label skips this step.
+- When a non-bot PR from this repository merges into `main`, the Publish
+  changelog Action uses the PR title for its entry, rebuilds
+  `lib/changelog.json`, and commits both to `main`. The `skip-changelog`
+  label skips this step. Fork PRs have read-only workflow tokens, so use the
+  manual backfill steps below for fork merges that need an entry.
 - For manual backfills, run `npm run changelog:add` with an authenticated
   GitHub CLI. It drafts missing entries from the latest published UTC date
   onward, including that date, and deduplicates by PR number. It uses
@@ -177,8 +179,9 @@ Built by SafeLab — advancing open tools for human systems.
 - Review the wording, keep user-facing entries, set `status: published`,
   and run `npm run changelog:build` to refresh `lib/changelog.json`. Web
   builds regenerate it as well.
-- Changelog-only changes do not start a separate production build. A
-  scheduled workflow batches pending entries into one deploy commit after a
+- Vercel can skip a production build when the diff from the last successful
+  deployment contains only changelog entries or other non-runtime files. The
+  scheduled workflow batches pending entries into a deploy commit after a
   quiet period. A regular production build can ship those entries sooner.
 
 ### Read-only production smoke
@@ -225,12 +228,12 @@ to check whether it responds.
 
 ### Web preview smoke in GitHub Actions
 
-After this workflow is on the default branch, Vercel's successful Preview
-deployment event starts one headless Chromium check. It checks `/api/health`
-against the deployed commit, opens the app, and clicks the primary welcome
-button to reach the age step. The browser allows only same-origin reads and
-stops before entering any data. The job uses no model calls or application
-credentials.
+When Vercel reports a successful preview deployment, the workflow verifies
+that the URL and commit match a successful GitHub deployment before starting
+headless Chromium. The check verifies the commit reported by `/api/health`,
+waits for the app to reach `/onboarding`, and clicks the primary button to
+reach `/onboarding/age`. The browser allows only same-origin reads and stops
+before entering any data. The job uses no model calls or application credentials.
 
 To run it on protected previews, create a Protection Bypass for Automation
 secret in the SafeDose Vercel project and add it to GitHub Actions as

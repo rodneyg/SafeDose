@@ -1,0 +1,9 @@
+commit=cb168fa3001fc9c9f00f8ec24da4964629fb1ad6
+parent=4b73e1418e9122ba32b0396dddb70af97cade234
+subject=Keep the last completed calculation on this device (#663)
+committer=GitHub <noreply@github.com>
+committed=2026-11-24T21:22:15-05:00
+commit=66e835c8232d0f8c7445774fb4299070d2a22019
+parent=cb168fa3001fc9c9f00f8ec24da4964629fb1ad6
+subject=docs: publish changelog for PR #663
+committed=2026-11-25T02:23:00+00:00

@@ -61,6 +61,7 @@ describe.each(endpoints)('%s rate limit', (_name, handler) => {
     expect(res.status).toHaveBeenLastCalledWith(401);
     await handler(req, res);
     expect(res.status).toHaveBeenLastCalledWith(429);
+    expect(res.json).toHaveBeenLastCalledWith({ error: 'Too many requests. Please try again later.' });
     expect(res.setHeader).toHaveBeenCalledWith('Retry-After', '60');
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(Stripe).not.toHaveBeenCalled();
@@ -98,6 +99,27 @@ describe.each([['portal', portal], ['subscription status', status]])('%s failure
   });
 });
 
+it.each(['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'])(
+  'returns a sanitized portal error when %s is missing',
+  async credential => {
+    Object.assign(process.env, {
+      FIREBASE_PROJECT_ID: 'fixture-project',
+      FIREBASE_CLIENT_EMAIL: 'service@example.test',
+      FIREBASE_PRIVATE_KEY: 'fixture-private-key',
+    });
+    delete process.env[credential];
+    const firebase = jest.requireActual('../../lib/firebaseAdmin.server');
+    getBillingFirebase.mockImplementationOnce(firebase.getBillingFirebase);
+
+    await portal({ method: 'POST', body: { idToken: 'fixture-token' } }, res);
+
+    expect(getBillingFirebase).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Payments are temporarily unavailable.' });
+    expect(Stripe).not.toHaveBeenCalled();
+  }
+);
+
 it.each([null, 'bad_fixture'])('rejects unusable portal Stripe configuration before construction (%s)', async key => {
   stripeConfig.secretKey = key;
   const verifyIdToken = async () => ({ uid: 'buyer', firebase: { sign_in_provider: 'google.com' } });
@@ -121,6 +143,10 @@ function webhookRequest(body, stripeSignature) {
 describe('stripe-webhook', () => {
   it.each([
     ['missing signature', payload, undefined],
+    ['signature from another endpoint', payload, Stripe.webhooks.generateTestHeaderString({
+      payload,
+      secret: 'whsec_other_fixture',
+    })],
     ['body changed after signing', payload + '\n', signature],
   ])('rejects a %s before initializing Stripe or Firebase', async (_name, body, stripeSignature) => {
     await webhook(webhookRequest(body, stripeSignature), res);

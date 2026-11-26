@@ -25,6 +25,46 @@ it('keeps each account and the guest session separate', async () => {
   await waitFor(() => expect(result.current.lastCalculation?.dose).toBe('2 mg'));
 });
 
+it('restores separate dose and reconstitution results for the same account', async () => {
+  const reconstitution = { ...calculation, draw: 'Draw to 0.40 ml', solutionVolume: '2 ml' };
+  const { result, unmount } = renderHook(() => ({
+    dose: useLastCalculation('first', 'dose'),
+    reconstitution: useLastCalculation('first', 'reconstitution'),
+  }));
+
+  await act(async () => {
+    result.current.dose.rememberCalculation(calculation);
+    result.current.reconstitution.rememberCalculation(reconstitution);
+  });
+  unmount();
+
+  const restored = renderHook(() => ({
+    dose: useLastCalculation('first', 'dose'),
+    reconstitution: useLastCalculation('first', 'reconstitution'),
+  }));
+  await waitFor(() => {
+    expect(restored.result.current.dose.lastCalculation).toEqual(calculation);
+    expect(restored.result.current.reconstitution.lastCalculation).toEqual(reconstitution);
+  });
+});
+
+it('keeps the active account result when a previous account read finishes late', async () => {
+  const secondCalculation = { ...calculation, dose: '2 mg' };
+  let resolveFirstRead!: (raw: string) => void;
+  jest.spyOn(AsyncStorage, 'getItem')
+    .mockReturnValueOnce(new Promise(resolve => { resolveFirstRead = resolve; }))
+    .mockResolvedValueOnce(JSON.stringify(secondCalculation));
+  const { result, rerender } = renderHook(({ id }) => useLastCalculation(id), {
+    initialProps: { id: 'first' },
+  });
+
+  rerender({ id: 'second' });
+  await waitFor(() => expect(result.current.lastCalculation).toEqual(secondCalculation));
+  await act(async () => resolveFirstRead(JSON.stringify(calculation)));
+
+  expect(result.current.lastCalculation).toEqual(secondCalculation);
+});
+
 it('keeps a newer result when a startup read finishes late', async () => {
   let resolveRead!: (raw: string) => void;
   jest.spyOn(AsyncStorage, 'getItem').mockReturnValueOnce(new Promise(resolve => { resolveRead = resolve; }));
