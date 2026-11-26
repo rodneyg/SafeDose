@@ -37,6 +37,8 @@ beforeEach(() => {
 afterEach(() => { act(() => tree.unmount()); });
 
 it('starts onboarding from the button used by the web preview smoke', () => {
+  const heading = tree.root.findByProps({ accessibilityRole: 'header' });
+  expect(heading.props.children).toContain('Verify Materials');
   const button = tree.root.findByProps({ testID: 'onboarding-primary-cta' });
   act(() => button.props.onPress());
   expect(mockRouter.navigate).toHaveBeenCalledWith('/onboarding/age');
