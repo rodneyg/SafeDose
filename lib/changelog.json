@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-701",
+    "date": "2026-11-26",
+    "title": "fix(deps): patch node-tar advisories",
+    "status": "published",
+    "prs": [
+      701
+    ],
+    "sections": {
+      "Improved": [
+        "fix(deps): patch node-tar advisories"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-699",
     "date": "2026-11-26",
     "title": "Reject leading-zero comma groups in dosing input",
