@@ -13,6 +13,8 @@ describe('dosing inputs', () => {
     it.each([
       [' 12.5 ', 12.5],
       ['.25', 0.25],
+      ['0.125', 0.125],
+      ['1,000', 1000],
       ['+1,234.5', 1234.5],
       ['-0.5', -0.5],
     ])('parses %p without accepting a numeric prefix', (text, expected) => {
@@ -20,6 +22,10 @@ describe('dosing inputs', () => {
     });
 
     it.each(['', '1mg', '1,23', '1.', 'NaN', 'Infinity', '1e3'])('rejects malformed input %p', text => {
+      expect(parseInputNumber(text)).toBeNaN();
+    });
+
+    it.each(['0,125', '000,500', '+00,125', '-01,250.5', '0,125,000'])('rejects leading zeros in a comma group in %p', text => {
       expect(parseInputNumber(text)).toBeNaN();
     });
 
@@ -55,7 +61,7 @@ describe('dosing inputs', () => {
       });
     });
 
-    it.each(['missing', '0 mg', '-1 mg', '1 tablets'])('rejects invalid scanned amount %p', text => {
+    it.each(['missing', '0 mg', '-1 mg', '1 tablets', '0,125 mg'])('rejects invalid scanned amount %p', text => {
       expect(parseScannedAmount(text)).toEqual({
         ok: false,
         error: 'Needs input: enter a valid total amount and select its unit (mg, mcg, or units).',
@@ -117,7 +123,7 @@ describe('dosing inputs', () => {
       expect(parseScannedConcentration(text)).toEqual({ ok: true, value });
     });
 
-    it.each(['missing', '0 mg/ml', '-1 mg/ml', '2 tablets/ml', '2 mg/l'])('rejects %p', text => {
+    it.each(['missing', '0 mg/ml', '-1 mg/ml', '2 tablets/ml', '2 mg/l', '0,125 mg/ml'])('rejects %p', text => {
       expect(parseScannedConcentration(text)).toEqual({
         ok: false,
         error: 'Needs input: enter a valid concentration and select mg/mL, mcg/mL, or units/mL. Unknown units are not supported.',

@@ -4,10 +4,10 @@ export type AmountUnit = 'mg' | 'mcg' | 'units';
 export type ConcentrationUnit = 'mg/ml' | 'mcg/ml' | 'units/ml';
 export type InputResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
-/** Accept plain decimals or unambiguous groups of three. Never parse numeric prefixes. */
+/** Accept dot decimals and US thousands groups whose first group does not start with zero. */
 export function parseInputNumber(text: string): number {
   const value = text.trim();
-  if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d+)?)$/.test(value)) return NaN;
+  if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+|[1-9]\d{0,2}(?:,\d{3})+(?:\.\d+)?)$/.test(value)) return NaN;
   const number = Number(value.replace(/,/g, ''));
   if (!Number.isFinite(number)) return NaN;
   // Refuse a decimal that would lose digits when crossing the numeric API boundary.
