@@ -314,7 +314,7 @@ export default function PricingPage() {
 
       {/* Trial Info */}
       <Text style={styles.trialInfo}>
-        {user && !user.isAnonymous ? "Web checkout · Cancel anytime" : "Sign in to link Photo Check to your account."}
+        {user && !user.isAnonymous ? "Web checkout · Cancel anytime" : "Sign in to link Photo Scan to your account."}
       </Text>
 
       {/* Error Message */}

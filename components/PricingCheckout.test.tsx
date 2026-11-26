@@ -126,7 +126,10 @@ it.each(['reject', 'null', 'throw'])('handles a %s loader failure and allows ret
 });
 
 it('takes a guest to sign in before loading Stripe', async () => {
+  act(() => renderer.unmount());
   mockUser.isAnonymous = true;
+  mountPricing();
+  expect(text()).toContain('Sign in to link Photo Scan to your account.');
   await act(async () => { await button().props.onPress(); });
   expect(mockNavigate).toHaveBeenCalledWith({
     pathname: '/login', params: { from: 'pricing', offer: 'photo_check_monthly' },
