@@ -98,6 +98,20 @@
     }
   },
   {
+    "id": "2026-11-24-pr-665",
+    "date": "2026-11-24",
+    "title": "Show estimated doses left in the most recent vial",
+    "status": "published",
+    "prs": [
+      665
+    ],
+    "sections": {
+      "New": [
+        "Logs screen shows an estimate of doses left in your most recent vial."
+      ]
+    }
+  },
+  {
     "id": "2026-11-24-pr-662",
     "date": "2026-11-24",
     "title": "Fix stale SafeDose production smoke checks",

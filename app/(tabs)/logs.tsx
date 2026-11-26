@@ -1,4 +1,4 @@
-import { formatDrawToText, formatConcentration } from '../../lib/dosing';
+import { formatDrawToText, formatConcentration, estimateVialSupply } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Trash2, Calendar, Pill, Download } from 'lucide-react-native';
@@ -124,6 +124,8 @@ export default function LogsScreen() {
     }
   };
 
+  const vialSupply = estimateVialSupply(logs);
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -203,6 +205,12 @@ export default function LogsScreen() {
                             {drawToText}
                           </Text>
                         </View>
+                      )}
+                      {index === 0 && vialSupply && (
+                        <Text testID="vial-supply-estimate" style={styles.concentrationText}>
+                          Estimate: about {vialSupply.dosesLeft} dose{vialSupply.dosesLeft === 1 ? '' : 's'} left at this size
+                          ({vialSupply.amountLeftExact} {vialSupply.vialUnit} left). Check against your vial.
+                        </Text>
                       )}
                       {concentration && (
                         <View style={styles.concentrationInfo}>
