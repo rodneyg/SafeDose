@@ -200,6 +200,37 @@ describe('useDoseLogging', () => {
     expect(console.error).toHaveBeenCalledWith('Error loading dose logs from Firestore:', error);
   });
 
+  it('keeps local doses and restores cloud-only doses after a Firestore load failure', async () => {
+    const cachedDose = { ...olderLog, firestoreId: 'remote-older-dose', notes: 'local note' };
+    const cloudCopy = { ...olderLog, notes: 'older cloud note' };
+    const cloudOnlyDose = {
+      ...doseLogAt('cloud-only-dose', '2026-01-01T20:00:00.000Z'),
+      firestoreId: 'remote-cloud-only-dose',
+    };
+    storage.getItem.mockResolvedValue(JSON.stringify([cachedDose, newerLog]));
+    mockGetDocs
+      .mockRejectedValueOnce(new Error('Firestore read unavailable'))
+      .mockResolvedValueOnce({
+        forEach: (visit: (entry: { id: string; data: () => DoseLog }) => void) => {
+          visit({ id: cloudOnlyDose.firestoreId, data: () => cloudOnlyDose });
+          visit({ id: cachedDose.firestoreId, data: () => cloudCopy });
+        },
+      } as Awaited<ReturnType<typeof getDocs>>);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual([newerLog, cachedDose]);
+    expect(storage.setItem).not.toHaveBeenCalled();
+
+    const restoredHistory = [newerLog, cloudOnlyDose, cachedDose];
+    await expect(result.current.getDoseLogHistory()).resolves.toEqual(restoredHistory);
+
+    expect(mockGetDocs).toHaveBeenCalledTimes(2);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    const [key, cachedHistory] = storage.setItem.mock.calls[0];
+    expect(key).toBe(storageKey);
+    expect(JSON.parse(cachedHistory)).toEqual(restoredHistory);
+  });
+
   it('returns restored Firestore history when the local cache cannot be written', async () => {
     const error = new Error('Local cache write unavailable');
     const remoteId = 'restored-dose';
