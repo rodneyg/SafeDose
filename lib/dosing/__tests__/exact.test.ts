@@ -8,6 +8,8 @@ describe('Exact', () => {
       ['-1.25E+2', '-125', '1'],
       ['2e-3', '1', '500'],
       ['6/-8', '-3', '4'],
+      [' 6 / -8 ', '-3', '4'],
+      ['0/3', '0', '1'],
       ['-6/-8', '3', '4'],
       ['-0.00', '0', '1'],
       ['9007199254740993', '9007199254740993', '1'],
@@ -31,6 +33,10 @@ describe('Exact', () => {
         expect(() => new Exact(input)).toThrow('Invalid exact number');
       },
     );
+
+    it.each(['/3', ' /3', '3/', '3/ '])('rejects a missing fraction operand in %s', (input) => {
+      expect(() => new Exact(input)).toThrow('Invalid exact number');
+    });
 
     it('rejects zero denominators from fractions and constructor arguments', () => {
       expect(() => new Exact('1/0')).toThrow('Division by zero');
