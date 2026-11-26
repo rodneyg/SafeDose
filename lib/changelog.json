@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-702",
+    "date": "2026-11-26",
+    "title": "Use hosted Stripe checkout session URL",
+    "status": "published",
+    "prs": [
+      702
+    ],
+    "sections": {
+      "Improved": [
+        "Use hosted Stripe checkout session URL"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-701",
     "date": "2026-11-26",
     "title": "fix(deps): patch node-tar advisories",
