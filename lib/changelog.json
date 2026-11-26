@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-26-pr-695",
+    "date": "2026-11-26",
+    "title": "Clarify guest scan and dose log limits",
+    "status": "published",
+    "prs": [
+      695
+    ],
+    "sections": {
+      "Improved": [
+        "Clarify guest scan and dose log limits"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-693",
     "date": "2026-11-26",
     "title": "Prepare SafeDose PWA assets for Microsoft Store",
