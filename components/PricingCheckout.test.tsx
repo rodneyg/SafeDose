@@ -1,11 +1,11 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { loadStripe } from '@stripe/stripe-js/pure';
-
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
-jest.mock('@stripe/stripe-js/pure', () => ({ loadStripe: jest.fn() }));
-jest.mock('@stripe/stripe-js', () => ({ loadStripe: jest.fn().mockResolvedValue(null) }));
-jest.mock('../lib/stripeConfig', () => ({ publishableKey: 'test-placeholder' }));
+const mockRedirectUrl = jest.fn();
+jest.mock('../lib/checkoutRedirect', () => ({
+  ...jest.requireActual('../lib/checkoutRedirect'),
+  openCheckoutUrl: (...args: unknown[]) => mockRedirectUrl(...args),
+}));
 const mockLogAnalytics = jest.fn();
 let mockPlatform = 'ios';
 let mockOffer: string | undefined;
@@ -31,6 +31,7 @@ jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(k
 jest.mock('react-native', () => ({
   ...jest.requireActual('../__mocks__/react-native'),
   Platform: { OS: mockPlatform },
+  Linking: { openURL: jest.fn() },
   Animated: {
     Value: class { interpolate() { return 1; } }, View: 'View',
     timing: () => ({}), parallel: () => ({ start() {} }), sequence: () => ({ start() {} }),
@@ -38,9 +39,6 @@ jest.mock('react-native', () => ({
 }));
 
 let renderer: ReactTestRenderer;
-const loader = loadStripe as jest.Mock;
-const eagerLoader = jest.requireMock('@stripe/stripe-js').loadStripe;
-const message = 'Unable to load secure checkout. Please allow Stripe in your browser or network settings and try again.';
 const button = () => renderer.root.findAllByType('TouchableOpacity' as any)
   .find(node => node.props.activeOpacity === 0.9)!;
 const options = () => renderer.root.findAllByType('TouchableOpacity' as any)
@@ -55,6 +53,7 @@ beforeEach(() => {
   mockUser = { isAnonymous: false, getIdToken: jest.fn().mockResolvedValue('checkout-test-token') };
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  mockRedirectUrl.mockResolvedValue(undefined);
   jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Unexpected checkout request'));
   mountPricing();
 });
@@ -78,9 +77,8 @@ afterEach(() => {
   else global.window = originalWindow;
 });
 
-it('does not load Stripe while browsing pricing', () => {
-  expect(eagerLoader).not.toHaveBeenCalled();
-  expect(loader).not.toHaveBeenCalled();
+it('does not redirect while browsing pricing', () => {
+  expect(mockRedirectUrl).not.toHaveBeenCalled();
   expect(text()).toContain('Get Photo Scan');
   expect(text()).toContain('Unlimited photo scans');
   expect(text()).not.toMatch(/photo checks?/i);
@@ -108,26 +106,15 @@ it('links the pricing footer to subscription settings, legal pages, and support'
   ]);
 });
 
-it.each(['reject', 'null', 'throw'])('handles a %s loader failure and allows retry', async failure => {
-  if (failure === 'reject') loader.mockRejectedValueOnce(new Error('Failed to load Stripe.js'));
-  else if (failure === 'throw') loader.mockImplementationOnce(() => { throw new Error('blocked'); });
-  else loader.mockResolvedValueOnce(null);
+it('requests the checkout URL and redirects to it', async () => {
+  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session', url: 'https://checkout.stripe.com/c/pay/test-session' }) });
   await act(async () => { await button().props.onPress(); });
-  expect(text()).toContain(message);
-  expect(button().props.disabled).toBe(false);
-  expect(fetch).not.toHaveBeenCalled();
-
-  const redirectToCheckout = jest.fn().mockResolvedValue({});
-  loader.mockResolvedValueOnce({ redirectToCheckout });
-  (fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session' }) });
-  await act(async () => { await button().props.onPress(); });
-  expect(text()).not.toContain(message);
   expect(fetch).toHaveBeenCalledWith('https://example.invalid/api/create-checkout-session', expect.objectContaining({
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer checkout-test-token' },
     body: JSON.stringify({ offerKey: 'photo_check_monthly', successUrl: 'https://example.invalid/success?session_id={CHECKOUT_SESSION_ID}', cancelUrl: 'https://example.invalid/pricing', hasTrial: false }),
   }));
-  expect(redirectToCheckout).toHaveBeenCalledWith({ sessionId: 'test-session' });
+  expect(mockRedirectUrl).toHaveBeenCalledWith('https://checkout.stripe.com/c/pay/test-session');
 });
 
 it('takes a guest to sign in before loading Stripe', async () => {
@@ -139,7 +126,7 @@ it('takes a guest to sign in before loading Stripe', async () => {
   expect(mockNavigate).toHaveBeenCalledWith({
     pathname: '/login', params: { from: 'pricing', offer: 'photo_check_monthly' },
   });
-  expect(loader).not.toHaveBeenCalled();
+  expect(mockRedirectUrl).not.toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
 });
 it('keeps the monthly default and the legacy view event on native', () => {
@@ -212,23 +199,21 @@ describe('web pricing default experiment', () => {
     expect(mockLogAnalytics).toHaveBeenCalledWith('pricing_v1_annual_select_mo');
     expect(mockLogAnalytics).toHaveBeenCalledWith('pricing_v1_annual_select_yr');
 
-    const redirectToCheckout = jest.fn().mockResolvedValue({});
-    loader.mockResolvedValueOnce({ redirectToCheckout });
     (fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ error: 'Unavailable' }) })
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session' }) });
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sessionId: 'test-session', url: 'https://checkout.stripe.com/c/pay/test-session' }) });
 
     await act(async () => { await button().props.onPress(); });
     await act(async () => { await button().props.onPress(); });
     expect(mockLogAnalytics.mock.calls.filter(([name]) => name.endsWith('_checkout_start'))).toEqual([]);
-    expect(redirectToCheckout).not.toHaveBeenCalled();
+    expect(mockRedirectUrl).not.toHaveBeenCalled();
 
     await act(async () => { await button().props.onPress(); });
     expect(JSON.parse((fetch as jest.Mock).mock.lastCall[1].body).offerKey).toBe('photo_check_annual');
     expect(mockLogAnalytics.mock.calls.filter(([name]) => name.endsWith('_checkout_start'))).toEqual([
       ['pricing_v1_annual_checkout_start', { plan: 'photo_check_annual' }],
     ]);
-    expect(redirectToCheckout).toHaveBeenCalledWith({ sessionId: 'test-session' });
+    expect(mockRedirectUrl).toHaveBeenCalledWith('https://checkout.stripe.com/c/pay/test-session');
   });
 });

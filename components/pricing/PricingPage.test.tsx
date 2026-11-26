@@ -4,24 +4,16 @@ import PricingPage from './PricingPage';
 
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 const mockToast = jest.fn();
-const mockRedirect = jest.fn();
+const mockRedirectUrl = jest.fn();
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { isAnonymous: false, getIdToken: async () => 'checkout-test-token' } }),
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
-jest.mock('../../lib/stripeConfig', () => ({ __esModule: true, default: { publishableKey: 'mock-publishable' } }));
-function mockStripeModule() {
-  return {
-    loadStripe: jest.fn(async () => ({
-      redirectToCheckout: (...args: unknown[]) => mockRedirect(...args),
-    })),
-  };
-}
-
-// The PR branch and main use different Stripe entry points during this transition.
-jest.mock('@stripe/stripe-js', () => mockStripeModule());
-jest.mock('@stripe/stripe-js/pure', () => mockStripeModule());
+jest.mock('../../lib/checkoutRedirect', () => ({
+  ...jest.requireActual('../../lib/checkoutRedirect'),
+  openCheckoutUrl: (...args: unknown[]) => mockRedirectUrl(...args),
+}));
 jest.mock('@/components/pricing/PricingCard', () => 'PricingCard');
 jest.mock('@/components/pricing/PriceToggle', () => 'PriceToggle');
 jest.mock('@/components/pricing/PaymentProviders', () => 'PaymentProviders');
@@ -39,8 +31,8 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   globalThis.fetch = mockFetch;
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { origin: 'https://safedose.example' } } });
-  mockFetch.mockResolvedValue({ ok: true, json: async () => ({ sessionId: 'cs_mock' }) });
-  mockRedirect.mockResolvedValue({});
+  mockFetch.mockResolvedValue({ ok: true, json: async () => ({ sessionId: 'cs_mock', url: 'https://checkout.stripe.com/c/pay/cs_mock' }) });
+  mockRedirectUrl.mockResolvedValue(undefined);
   act(() => { tree = create(<PricingPage />); });
 });
 afterEach(() => {
@@ -75,14 +67,14 @@ it.each([false, true])('builds the Photo Scan request for annual=%s and redirect
     successUrl: 'https://safedose.example/success?session_id={CHECKOUT_SESSION_ID}',
     cancelUrl: 'https://safedose.example/pricing', hasTrial: false,
   });
-  expect(mockRedirect).toHaveBeenCalledWith({ sessionId: 'cs_mock' });
+  expect(mockRedirectUrl).toHaveBeenCalledWith('https://checkout.stripe.com/c/pay/cs_mock');
   expect(mockToast).not.toHaveBeenCalled();
 });
 
 it('keeps the free calculator out of checkout', async () => {
   await select('Free');
   expect(mockFetch).not.toHaveBeenCalled();
-  expect(mockRedirect).not.toHaveBeenCalled();
+  expect(mockRedirectUrl).not.toHaveBeenCalled();
   expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Free Plan Selected' }));
 });
 
@@ -92,13 +84,13 @@ it.each(['server', 'network', 'invalid-json'])('shows a clear error for %s failu
     ? async () => { throw new Error('Invalid JSON'); }
     : async () => ({ error: 'Service unavailable' }) });
   await select();
-  expect(mockRedirect).not.toHaveBeenCalled();
+  expect(mockRedirectUrl).not.toHaveBeenCalled();
   expect(mockToast).toHaveBeenCalledWith({ title: 'Checkout Error',
     description: 'Unable to initiate checkout. Please try again.', variant: 'destructive' });
 });
 
-it('shows a clear error when Stripe returns a redirect error', async () => {
-  mockRedirect.mockResolvedValue({ error: { message: 'Redirect unavailable' } });
+it('shows a clear error when browser redirect fails', async () => {
+  mockRedirectUrl.mockRejectedValue(new Error('Redirect unavailable'));
   await select();
   expect(mockToast).toHaveBeenCalledWith({ title: 'Checkout Error',
     description: 'Unable to initiate checkout. Please try again.', variant: 'destructive' });

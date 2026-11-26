@@ -50,8 +50,18 @@ module.exports = async (req, res) => {
       metadata: { offerKey: resolved.offerKey || '', source: trial ? 'full_pro_trial' : (resolved.offerKey || 'standard_subscription') },
       ...(trial ? { subscription_data: { trial_period_days: 7 } } : {}),
     });
+    const sessionUrl = typeof session.url === 'string' ? session.url : '';
+    let parsedSessionUrl;
+    try {
+      parsedSessionUrl = new URL(sessionUrl);
+    } catch {
+      throw billingError(503, 'Payments are temporarily unavailable.');
+    }
+    if (parsedSessionUrl.protocol !== 'https:' || parsedSessionUrl.username || parsedSessionUrl.password) {
+      throw billingError(503, 'Payments are temporarily unavailable.');
+    }
     await billingRefs(db).checkout(session.id).create({ uid, customerId, trial, status: 'pending' });
-    return res.status(200).json({ sessionId: session.id });
+    return res.status(200).json({ sessionId: session.id, url: parsedSessionUrl.toString() });
   } catch (error) {
     if (error.statusCode === 400 && !error.type) {
       return res.status(400).json({ error: 'Unsupported checkout offer.' });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getCheckoutStripe } from "../lib/checkoutStripe";
+import { checkoutHttpsUrl, openCheckoutUrl } from "../lib/checkoutRedirect";
 import { useAuth } from "../contexts/AuthContext";
 import { billingRequest } from "../lib/subscriptionStatus";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Platform } from "react-native";
@@ -173,24 +173,19 @@ export default function PricingPage() {
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const stripe = await getCheckoutStripe();
       const origin = getApiBaseUrl();
-      const { sessionId } = await billingRequest<{ sessionId: string }>(user, 'create-checkout-session', {
+      const { url } = await billingRequest<{ sessionId: string; url: string }>(user, 'create-checkout-session', {
         offerKey: selectedPlan.offerKey,
         successUrl: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}/pricing`,
         hasTrial: selectedPlan.hasTrial,
       });
-
-      if (typeof sessionId !== 'string' || !sessionId) {
-        throw new Error("Unable to open checkout. Please try again.");
-      }
+      const checkoutUrl = checkoutHttpsUrl(url);
 
       if (pricingDefault) {
         logAnalyticsEvent(pricingEvent(pricingDefault, 'checkout_start'), { plan: selectedPlan.offerKey });
       }
-      const result = await stripe.redirectToCheckout({ sessionId });
-      if (result.error) throw new Error(result.error.message);
+      await openCheckoutUrl(checkoutUrl);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to initiate checkout. Please try again.";
       setErrorMessage(message);

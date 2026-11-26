@@ -2,7 +2,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
 import { billingRequest } from "../../lib/subscriptionStatus";
-import { getCheckoutStripe, STRIPE_LOAD_ERROR } from "../../lib/checkoutStripe";
+import { checkoutHttpsUrl, openCheckoutUrl } from "../../lib/checkoutRedirect";
 import { useToast } from "@/hooks/use-toast";
 import PricingCard, { PricingPlan } from "@/components/pricing/PricingCard";
 import PriceToggle from "@/components/pricing/PriceToggle";
@@ -70,24 +70,20 @@ export default function PricingPage() {
         return;
       }
 
-      const stripe = await getCheckoutStripe();
-      const { sessionId } = await billingRequest<{ sessionId: string }>(user, 'create-checkout-session', {
+      const { url } = await billingRequest<{ sessionId: string; url: string }>(user, 'create-checkout-session', {
         offerKey,
         priceId,
         successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/pricing`,
         hasTrial: Boolean(plan.trialDays),
       });
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) throw new Error(error.message);
+      await openCheckoutUrl(checkoutHttpsUrl(url));
     } catch (error) {
       console.error("Checkout error:", error);
       
       // Provide user-friendly error messages
       let description = "Unable to initiate checkout. Please try again.";
-      if (error instanceof Error && error.message === STRIPE_LOAD_ERROR) {
-        description = STRIPE_LOAD_ERROR;
-      } else if (error instanceof Error && error.message.includes("configuration error")) {
+      if (error instanceof Error && error.message.includes("configuration error")) {
         description = "Payment system configuration error. Please contact support - this issue has been logged.";
       } else if (error instanceof Error && error.message.includes("temporarily unavailable")) {
         description = "Payment system temporarily unavailable. Please try again in a few moments.";

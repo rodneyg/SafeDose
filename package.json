@@ -55,7 +55,6 @@
     "@react-native-async-storage/async-storage": "1.24.0",
     "@react-navigation/bottom-tabs": "^7.22.0",
     "@react-navigation/native": "^7.0.14",
-    "@stripe/stripe-js": "^7.2.0",
     "@types/stripe": "^8.0.416",
     "@vercel/analytics": "^2.0.1",
     "base64-js": "^1.5.1",
