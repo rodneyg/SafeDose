@@ -1,7 +1,7 @@
 import { formatDrawToText, formatConcentration } from '../../lib/dosing';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
-import { Trash2, Calendar, Pill } from 'lucide-react-native';
+import { Trash2, Calendar, Pill, Download } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
 import { useDoseLogging } from '../../lib/hooks/useDoseLogging';
@@ -12,6 +12,7 @@ import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isFreeScanPlan } from '../../lib/upgradeNudges';
 import UpgradeNudge from '../../components/UpgradeNudge';
+import { exportDoseLogCsv } from '../../lib/exportDoseLogCsv';
 
 export default function LogsScreen() {
   const { user } = useAuth();
@@ -75,6 +76,20 @@ export default function LogsScreen() {
     ]);
   }, [deleteDoseLog, loadLogs]);
 
+  const handleExportCsv = useCallback(async () => {
+    try {
+      await exportDoseLogCsv(logs);
+    } catch (error) {
+      console.error('Error exporting dose logs:', error);
+      const failure = 'Could not export your dose log. Please try again.';
+      if (Platform.OS === 'web') {
+        window.alert(failure);
+      } else {
+        Alert.alert('Error', failure);
+      }
+    }
+  }, [logs]);
+
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     if (Number.isNaN(date.getTime())) return null;
@@ -126,8 +141,24 @@ export default function LogsScreen() {
   return (
     <View nativeID="dose-log-screen" style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Recent Doses</Text>
-        <Text style={styles.subtitle}>Your medication history</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Recent Doses</Text>
+            <Text style={styles.subtitle}>Your medication history</Text>
+          </View>
+          {logs.length > 0 && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Export dose log as CSV"
+              testID="export-csv-button"
+              style={styles.exportButton}
+              onPress={handleExportCsv}
+            >
+              <Download color="#005DBF" size={16} />
+              <Text style={styles.exportButtonText}>Export CSV</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView style={styles.logsList}>
@@ -232,6 +263,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  headerText: {
+    flex: 1,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#005DBF',
+    marginLeft: 12,
+  },
+  exportButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#005DBF',
+    marginLeft: 6,
   },
   title: {
     fontSize: 34,
