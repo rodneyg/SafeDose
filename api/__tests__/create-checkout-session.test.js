@@ -25,7 +25,7 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   process.env.STRIPE_WEBHOOK_SECRET = 'whsec_checkout_fixture';
   res = { status: jest.fn().mockReturnThis(), json: jest.fn(), setHeader: jest.fn() };
-  mockCreate.mockResolvedValue({ id: 'cs_checkout' });
+  mockCreate.mockResolvedValue({ id: 'cs_checkout', url: 'https://checkout.stripe.com/c/pay/cs_checkout' });
   mockBillingUser.mockResolvedValue({ uid: 'buyer', db: {} });
   mockGetCustomer.mockResolvedValue('cus_buyer');
 });
@@ -49,8 +49,19 @@ it.each(['photo_check_monthly', 'photo_check_annual'])('binds %s to the authenti
   });
   expect(mockStoreCheckout).toHaveBeenCalledWith({ uid: 'buyer', customerId: 'cus_buyer', status: 'pending', trial: false });
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.json).toHaveBeenCalledWith({ sessionId: 'cs_checkout' });
+  expect(res.json).toHaveBeenCalledWith({ sessionId: 'cs_checkout', url: 'https://checkout.stripe.com/c/pay/cs_checkout' });
 });
+
+it.each(['http://checkout.stripe.com/c/pay/cs_checkout', 'javascript:alert(1)', null])(
+  'rejects a non-HTTPS or missing Stripe session URL %p', async url => {
+    resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_photo', offerKey: 'photo_check_monthly' });
+    mockCreate.mockResolvedValueOnce({ id: 'cs_checkout', url });
+    await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', ...urls } }, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Payments are temporarily unavailable.' });
+    expect(mockStoreCheckout).not.toHaveBeenCalled();
+  },
+);
 
 it('preserves the legacy Full Pro seven-day trial', async () => {
   const priceId = 'price_1RUHgxAY2p4W374Yb5EWEtZ0';
