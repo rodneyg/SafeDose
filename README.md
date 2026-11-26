@@ -167,9 +167,11 @@ Built by SafeLab — advancing open tools for human systems.
   Each entry has `date`, `title`, and `status` frontmatter and bullets under
   New, Improved, or Fixed. Set `prs` to the PR numbers covered by the entry
   so manual backfills can skip them.
-- When a non-bot PR merges into `main`, the Publish changelog Action uses
-  the PR title for its entry, rebuilds `lib/changelog.json`, and commits both
-  to `main`. The `skip-changelog` label skips this step.
+- When a non-bot PR from this repository merges into `main`, the Publish
+  changelog Action uses the PR title for its entry, rebuilds
+  `lib/changelog.json`, and commits both to `main`. The `skip-changelog`
+  label skips this step. Fork PRs have read-only workflow tokens, so use the
+  manual backfill steps below for fork merges that need an entry.
 - For manual backfills, run `npm run changelog:add` with an authenticated
   GitHub CLI. It drafts missing entries from the latest published UTC date
   onward, including that date, and deduplicates by PR number. It uses
