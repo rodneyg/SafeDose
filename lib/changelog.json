@@ -42,6 +42,20 @@
     }
   },
   {
+    "id": "2026-11-26-pr-668",
+    "date": "2026-11-26",
+    "title": "Log a dose for an earlier date or time",
+    "status": "published",
+    "prs": [
+      668
+    ],
+    "sections": {
+      "Improved": [
+        "Log a dose for an earlier date or time"
+      ]
+    }
+  },
+  {
     "id": "2026-11-25-pr-676",
     "date": "2026-11-25",
     "title": "test: cover Stripe client and server config key rules (T-17085)",
