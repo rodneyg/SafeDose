@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-715",
+    "date": "2026-11-27",
+    "title": "Fix deletion of uncached SafeDose history logs",
+    "status": "published",
+    "prs": [
+      715
+    ],
+    "sections": {
+      "Improved": [
+        "Fix deletion of uncached SafeDose history logs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-713",
     "date": "2026-11-27",
     "title": "Fix scan storage growth and dose save reporting",
