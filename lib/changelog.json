@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-739",
+    "date": "2026-11-27",
+    "title": "Load the current plan when the saved promotion record is bad",
+    "status": "published",
+    "prs": [
+      739
+    ],
+    "sections": {
+      "Improved": [
+        "Load the current plan when the saved promotion record is bad"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-738",
     "date": "2026-11-27",
     "title": "Fix private SafeDose page titles",
