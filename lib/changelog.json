@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-714",
+    "date": "2026-11-27",
+    "title": "Fix web sign out confirmation in Settings",
+    "status": "published",
+    "prs": [
+      714
+    ],
+    "sections": {
+      "Improved": [
+        "Fix web sign out confirmation in Settings"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-713",
     "date": "2026-11-27",
     "title": "Fix scan storage growth and dose save reporting",
