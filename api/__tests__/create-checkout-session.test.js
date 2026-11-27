@@ -111,6 +111,14 @@ it('checks older Stripe subscription pages before offering a trial', async () =>
   expect(mockCreate).toHaveBeenCalledWith(expect.not.objectContaining({ subscription_data: expect.anything() }));
 });
 
+it('rejects separately allowed success and cancel origins when they differ', async () => {
+  const successUrl = 'https://safedose.rodneygainous.com/success?session_id={CHECKOUT_SESSION_ID}';
+  const cancelUrl = 'https://safe-dose.vercel.app/pricing';
+  await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', successUrl, cancelUrl } }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+});
+
 it('continues to allow a Photo Check offer checkout when no subscription exists', async () => {
   resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_photo', offerKey: 'photo_check_monthly' });
   await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', ...urls } }, res);

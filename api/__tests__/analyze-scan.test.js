@@ -247,6 +247,7 @@ describe('POST /api/analyze-scan', () => {
     'https://safe-dose-abc-team.vercel.app', 'http://safe-dose.vercel.app',
     'https://safe-dose.vercel.app/path', '', 'http://safedose.rodneygainous.com',
     'https://evil.rodneygainous.com', 'https://safedose.rodneygainous.com.evil.com',
+    'https://safe-dose.vercel.app:8443',
   ])('rejects untrusted origin %s before spending credits', async origin => {
     const res = mockRes();
     await handler({ method: 'POST', headers: { origin } }, res);
