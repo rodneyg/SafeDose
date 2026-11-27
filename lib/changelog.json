@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-738",
+    "date": "2026-11-27",
+    "title": "Fix private SafeDose page titles",
+    "status": "published",
+    "prs": [
+      738
+    ],
+    "sections": {
+      "Improved": [
+        "Fix private SafeDose page titles"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-736",
     "date": "2026-11-27",
     "title": "Review SafeDose draft PR 654",
