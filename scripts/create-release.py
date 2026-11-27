@@ -45,8 +45,7 @@ def bump_kind(message, labels):
     lines = (message or "").strip().splitlines()
     first = lines[0] if lines else ""
     body = message or ""
-    subject_prefix = first.split(":")[0] if ":" in first else first
-    if lowered & MAJOR_LABELS or "BREAKING CHANGE:" in body or subject_prefix.endswith("!"):
+    if lowered & MAJOR_LABELS or "BREAKING CHANGE:" in body or BREAKING_RE.match(first):
         return "major"
     if lowered & MINOR_LABELS or FEAT_MINOR_RE.match(first):
         return "minor"
@@ -70,6 +69,8 @@ def api(method, path, body=None):
             return json.loads(raw.decode()) if raw else {}
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode()
+        if method == "GET" and path.startswith("/releases/tags/") and exc.code == 404:
+            return None
         raise SystemExit(f"GitHub API {method} {path} failed: {exc.code} {detail}") from exc
 
 
@@ -120,10 +121,25 @@ def main():
     labels, pr_number, pr_title = pr_labels_and_number(sha)
     kind = bump_kind(message, labels)
     current, current_tag = latest_tag()
-    # If this commit is already tagged, do nothing.
     tagged = run(["git", "tag", "--points-at", sha], check=False).stdout.splitlines()
-    if any(TAG_RE.match(tag.strip()) for tag in tagged):
-        print("Commit already has a semver tag:", " ".join(tagged))
+    existing_tags = [tag.strip() for tag in tagged if TAG_RE.match(tag.strip())]
+    if existing_tags:
+        tag = sorted(existing_tags, key=lambda value: tuple(map(int, TAG_RE.match(value).groups())))[-1]
+        existing_release = api("GET", f"/releases/tags/{tag}")
+        if existing_release:
+            print("Commit already has a release:", existing_release.get("html_url") or tag)
+            return 0
+        notes = changelog_notes(pr_number) or message.strip() or f"Release {tag}"
+        body = {
+            "tag_name": tag,
+            "target_commitish": sha,
+            "name": tag,
+            "body": notes,
+            "draft": False,
+            "prerelease": False,
+        }
+        created = api("POST", "/releases", body)
+        print("Created missing release", created.get("html_url") or tag, "from", pr_title or tag)
         return 0
     next_version = bump(current, kind)
     tag = format_tag(next_version)
