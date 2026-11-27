@@ -35,7 +35,7 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { recordFirstScanExperimentSuccess } from '../../lib/firstScanExperiment';
 import { useEvaluationDataCapture } from '../../lib/hooks/useEvaluationDataCapture';
 import { useWebOffline } from '../../lib/hooks/useWebOffline';
-import { isMobileScanViewport, mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
+import { mobileScanCtaEvent, type MobileScanCtaArm } from '../../lib/mobileScanCtaExperiment';
 import { DosingPreset } from '../../lib/dosingPresets';
 import { loadPrescribedProtocol, protocolOccurrence, upcomingPrescribedDoses } from '../../lib/prescribedProtocol';
 import { localDateTimeFields } from '../../lib/protocolPlan';
@@ -853,7 +853,7 @@ export default function NewDoseScreen() {
         incrementScansUsed,
         returnIncompleteScan: true,
         onImageReady: startArm ? () => {
-          if (mobileScanArm.current === startArm && isMobileScanViewport(window.innerWidth)) {
+          if (mobileScanArm.current === startArm) {
             logAnalyticsEvent(mobileScanCtaEvent('start', startArm));
             mobileScanArm.current = undefined;
           }
