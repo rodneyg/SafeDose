@@ -71,7 +71,9 @@ export function parseScannedSyringe(scan: { type?: string | null; volume?: strin
   const volume = scan.volume?.replace(/\s/g, '').toLowerCase();
   if (!normalizedType || !volume) return { ok: false, error: 'Needs input: select the syringe type and volume from its label.' };
   const volumes = normalizedType === 'Insulin' ? ['0.3 ml', '0.5 ml', '1 ml'] : ['1 ml', '3 ml', '5 ml'];
-  const selected = volumes.find(option => option.replace(/\s/g, '') === volume);
+  const scannedVolume = volume.match(/^(\d+(?:\.\d+)?)ml$/);
+  const volumeAmount = scannedVolume ? parseInputNumber(scannedVolume[1]) : NaN;
+  const selected = volumes.find(option => parseInputNumber(option.replace(/\s*ml$/, '')) === volumeAmount);
   if (!selected) return { ok: false, error: 'Needs input: select a supported syringe volume from its label.' };
   if (normalizedType === 'Insulin') {
     const scale = scan.scale?.replace(/\s/g, '').toUpperCase();
