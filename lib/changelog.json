@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-718",
+    "date": "2026-11-27",
+    "title": "T-99484123229958971: Preserve mobile scan start after resize",
+    "status": "published",
+    "prs": [
+      718
+    ],
+    "sections": {
+      "Improved": [
+        "T-99484123229958971: Preserve mobile scan start after resize"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-717",
     "date": "2026-11-27",
     "title": "fix: recover malformed feedback and prompt storage",
