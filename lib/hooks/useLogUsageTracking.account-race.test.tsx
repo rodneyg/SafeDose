@@ -3,10 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDoc } from 'firebase/firestore';
 import { useLogUsageTracking } from './useLogUsageTracking';
 
-let currentUser: { uid: string; isAnonymous: boolean } | null = null;
+let mockCurrentUser: { uid: string; isAnonymous: boolean } | null = null;
 
 jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: currentUser }),
+  useAuth: () => ({ user: mockCurrentUser }),
 }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: jest.fn(), setItem: jest.fn() }));
 jest.mock('firebase/firestore', () => ({
@@ -23,7 +23,7 @@ const deferred = <T,>() => {
 
 afterEach(() => {
   jest.clearAllMocks();
-  currentUser = null;
+  mockCurrentUser = null;
 });
 
 it('ignores a previous account cache read that resolves after the new account', async () => {
@@ -32,21 +32,19 @@ it('ignores a previous account cache read that resolves after the new account', 
   jest.mocked(AsyncStorage.getItem).mockImplementation(key =>
     key === 'log_usage_old' ? oldCache.promise : newCache.promise,
   );
-  jest.mocked(getDoc).mockImplementation(async () => ({
-    exists: () => true,
-    data: () => ({ logsUsed: 4, plan: 'pro', lastLogReset: new Date().toISOString() }),
-  }) as Awaited<ReturnType<typeof getDoc>>);
+  const pendingRead = deferred<Awaited<ReturnType<typeof getDoc>>>();
+  jest.mocked(getDoc).mockImplementation(() => pendingRead.promise);
 
-  currentUser = { uid: 'old', isAnonymous: false };
+  mockCurrentUser = { uid: 'old', isAnonymous: false };
   const { result, rerender } = renderHook(() => useLogUsageTracking());
-  currentUser = { uid: 'new', isAnonymous: false };
+  mockCurrentUser = { uid: 'new', isAnonymous: false };
   rerender();
 
   await act(async () => { newCache.resolve(JSON.stringify({ logsUsed: 12, plan: 'free', limit: 10 })); });
-  await waitFor(() => expect(result.current.logUsageData).toMatchObject({ logsUsed: 4, plan: 'pro', limit: -1 }));
+  await waitFor(() => expect(result.current.logUsageData).toMatchObject({ logsUsed: 12, plan: 'free', limit: 10 }));
   await act(async () => { oldCache.resolve(JSON.stringify({ logsUsed: 99, plan: 'free', limit: 10 })); });
 
-  expect(result.current.logUsageData).toMatchObject({ logsUsed: 4, plan: 'pro', limit: -1 });
+  expect(result.current.logUsageData).toMatchObject({ logsUsed: 12, plan: 'free', limit: 10 });
 });
 
 it('ignores a previous account Firestore read that resolves after the new account', async () => {
@@ -55,9 +53,9 @@ it('ignores a previous account Firestore read that resolves after the new accoun
   jest.mocked(AsyncStorage.getItem).mockResolvedValue(null);
   jest.mocked(getDoc).mockImplementationOnce(() => oldRead.promise).mockImplementationOnce(() => newRead.promise);
 
-  currentUser = { uid: 'old', isAnonymous: false };
+  mockCurrentUser = { uid: 'old', isAnonymous: false };
   const { result, rerender } = renderHook(() => useLogUsageTracking());
-  currentUser = { uid: 'new', isAnonymous: false };
+  mockCurrentUser = { uid: 'new', isAnonymous: false };
   rerender();
 
   await act(async () => {

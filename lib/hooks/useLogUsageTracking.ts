@@ -243,7 +243,7 @@ export function useLogUsageTracking() {
           lastReset: data.lastLogReset 
         };
         setLogUsageData(newLogUsageData);
-        await saveCachedLogUsage(newLogUsageData);
+        await saveCachedLogUsage(user.uid, newLogUsageData);
         
         // If limit is -1, it means unlimited
         if (newLogUsageData.limit === -1) {
