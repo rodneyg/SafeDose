@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-704",
+    "date": "2026-11-27",
+    "title": "fix: expose SafeDose welcome title as a heading",
+    "status": "published",
+    "prs": [
+      704
+    ],
+    "sections": {
+      "Improved": [
+        "fix: expose SafeDose welcome title as a heading"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-700",
     "date": "2026-11-27",
     "title": "fix: patch xmldom resolution under Expo plist",
