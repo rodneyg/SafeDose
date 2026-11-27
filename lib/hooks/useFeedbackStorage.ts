@@ -91,8 +91,9 @@ export function useFeedbackStorage() {
       // Save locally first (always works)
       await saveFeedbackLocally(feedback);
       
-      // Try to save to Firestore (for authenticated users)
-      await saveFeedbackToFirestore(feedback);
+      // Send feedback to Firestore in the background so offline writes cannot
+      // hold up the dose completion flow. The helper handles rejected writes.
+      void saveFeedbackToFirestore(feedback);
       
       console.log('Feedback submitted successfully:', feedback.id);
     } catch (error) {
