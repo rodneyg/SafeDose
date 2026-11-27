@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-721",
+    "date": "2026-11-27",
+    "title": "fix: isolate profiles across account switches",
+    "status": "published",
+    "prs": [
+      721
+    ],
+    "sections": {
+      "Improved": [
+        "fix: isolate profiles across account switches"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-720",
     "date": "2026-11-27",
     "title": "T-99484123229959023: Clear stale planner concentration on unit change",
