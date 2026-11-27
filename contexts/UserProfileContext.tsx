@@ -29,12 +29,26 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
   const isLoadingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const profileOwnerRef = useRef<string | null>(null);
+  const loadIdRef = useRef(0);
 
   // Load profile from storage on mount
   useEffect(() => {
+    const previousOwner = profileOwnerRef.current;
+    const nextOwner = user?.uid ?? null;
+    const switchedFromAccount = previousOwner !== nextOwner && previousOwner !== null;
+    profileOwnerRef.current = nextOwner;
+
+    if (switchedFromAccount) {
+      setProfile(null);
+      void AsyncStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+      setIsLoading(true);
+    }
+
     if (user) {
-      loadProfile();
+      void loadProfile(user?.uid ?? null, user?.isAnonymous ?? false);
     } else {
+      void loadProfile(null, false);
       // No user available, stop loading
       console.log('[UserProfile] No user available, stopping loading state');
       setIsLoading(false);
@@ -43,38 +57,39 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     
     // Cleanup function to cancel any ongoing operations
     return () => {
-      if (abortControllerRef.current) {
-        console.log('[UserProfile] Aborting ongoing operations due to effect cleanup');
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
     };
-  }, [user]);
+  }, [user?.uid, user?.isAnonymous]);
 
   // Handle profile migration when user transitions from anonymous to authenticated
   useEffect(() => {
     const handleProfileMigration = async () => {
-      if (user && !user.isAnonymous && profile) {
+      const profileOwner = profile?.userId;
+      if (user && !user.isAnonymous && profile && profileOwner === user.uid) {
         // User has transitioned from anonymous to authenticated
         // Check if profile needs to be backed up to Firebase
         try {
-          const docRef = doc(db, 'userProfiles', user.uid);
+          const migrationUserId = user.uid;
+          const profileToMigrate = profile;
+          const docRef = doc(db, 'userProfiles', migrationUserId);
           const docSnap = await getDoc(docRef);
+          if (profileOwnerRef.current !== migrationUserId || profileOwner !== migrationUserId || profile?.userId !== migrationUserId) return;
           
           if (!docSnap.exists()) {
             // Profile doesn't exist in Firebase, backup the current profile
             console.log('[UserProfile] Backing up local profile to Firebase for authenticated user');
             const profileToBackup = {
-              ...profile,
-              userId: user.uid,
-              dateCreated: profile.dateCreated || new Date().toISOString()
+              ...profileToMigrate,
+              userId: migrationUserId,
+              dateCreated: profileToMigrate.dateCreated || new Date().toISOString()
             };
             
             await setDoc(docRef, profileToBackup);
+            if (profileOwnerRef.current !== migrationUserId) return;
             console.log('[UserProfile] ✅ Profile successfully backed up to Firebase');
             
             // Log detailed analytics for profile backup
@@ -88,6 +103,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
             
             // Update local profile with userId
             setProfile(profileToBackup);
+            if (profileOwnerRef.current !== migrationUserId) return;
             await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profileToBackup));
             
             // Update analytics user properties after backup
@@ -96,6 +112,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
             console.log('[UserProfile] Profile already exists in Firebase, no backup needed');
           }
         } catch (error) {
+          if (profileOwnerRef.current !== user?.uid || profile?.userId !== user?.uid) return;
           console.warn('[UserProfile] ⚠️ Failed to backup profile to Firebase:', error);
           
           // Log analytics for failed backup
@@ -110,7 +127,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     };
 
     handleProfileMigration();
-  }, [user, profile]);
+  }, [user?.uid, user?.isAnonymous, profile]);
 
   // Cleanup effect to ensure no memory leaks
   useEffect(() => {
@@ -128,13 +145,10 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     };
   }, []);
 
-  const loadProfile = async () => {
-    // Prevent concurrent calls to loadProfile
-    if (isLoadingRef.current) {
-      console.log('[UserProfile] Load already in progress, skipping duplicate call');
-      return;
-    }
-    
+  const loadProfile = async (loadUserId: string | null, loadUserIsAnonymous: boolean) => {
+    const loadId = ++loadIdRef.current;
+    const isCurrentLoad = () => loadIdRef.current === loadId && profileOwnerRef.current === loadUserId;
+    const controller = new AbortController();
     try {
       isLoadingRef.current = true;
       setIsLoading(true);
@@ -149,15 +163,13 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      abortControllerRef.current = new AbortController();
+      abortControllerRef.current = controller;
       
       // Set up a fallback timeout to ensure loading state eventually resolves
       loadingTimeoutRef.current = setTimeout(() => {
         console.warn('[UserProfile] ⚠️ Profile loading timeout reached, forcing loading state to false');
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-          abortControllerRef.current = null;
-        }
+        controller.abort();
+        if (!isCurrentLoad()) return;
         setIsLoading(false);
         isLoadingRef.current = false;
         
@@ -171,27 +183,27 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       
       console.log('[UserProfile] ========== LOADING PROFILE START ==========');
       console.log('[UserProfile] User state:', {
-        userId: user?.uid || 'No user',
-        isAnonymous: user?.isAnonymous || 'No user',
-        userType: user ? (user.isAnonymous ? 'anonymous' : 'authenticated') : 'none'
+        userId: loadUserId || 'No user',
+        isAnonymous: loadUserIsAnonymous,
+        userType: loadUserIsAnonymous ? 'anonymous' : 'authenticated'
       });
       
       let profileData: UserProfile | null = null;
       let dataSource = 'none';
 
       // For both anonymous and authenticated users, try Firebase first if user has UID
-      if (user?.uid) {
+      if (loadUserId) {
         // For all users with UID (anonymous and authenticated), try Firebase first
         console.log('[UserProfile] User with UID detected - trying Firebase first');
-        console.log('[UserProfile] User type:', user.isAnonymous ? 'anonymous' : 'authenticated');
+        console.log('[UserProfile] User type:', loadUserIsAnonymous ? 'anonymous' : 'authenticated');
         try {
           // Check if operation was aborted
-          if (abortControllerRef.current?.signal.aborted) {
+          if (controller.signal.aborted || !isCurrentLoad()) {
             console.log('[UserProfile] Operation aborted before Firebase call');
             return;
           }
           
-          const docRef = doc(db, 'userProfiles', user.uid);
+          const docRef = doc(db, 'userProfiles', loadUserId);
           
           // Create promise with timeout for Firebase operation
           const firebasePromise = getDoc(docRef);
@@ -202,25 +214,33 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
           const docSnap = await Promise.race([firebasePromise, timeoutPromise]);
           
           // Check if operation was aborted after Firebase call
-          if (abortControllerRef.current?.signal.aborted) {
+          if (controller.signal.aborted || !isCurrentLoad()) {
             console.log('[UserProfile] Operation aborted after Firebase call');
             return;
           }
           
           if (docSnap.exists()) {
             profileData = docSnap.data() as UserProfile;
+            if (!profileData.userId && loadUserIsAnonymous) {
+              profileData = { ...profileData, userId: loadUserId };
+            }
+            if (profileData.userId && profileData.userId !== loadUserId) {
+              profileData = null;
+              return;
+            }
             dataSource = 'firebase';
             console.log('[UserProfile] ✅ Profile loaded from Firebase:', profileData);
             
             // Also update local storage as cache
             await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+            if (controller.signal.aborted || !isCurrentLoad()) return;
             console.log('[UserProfile] Profile cached to local storage');
           } else {
             console.log('[UserProfile] No profile document found in Firebase');
           }
         } catch (firebaseError) {
           // Check if this is an abort error
-          if (abortControllerRef.current?.signal.aborted) {
+          if (controller.signal.aborted || !isCurrentLoad()) {
             console.log('[UserProfile] Firebase operation was aborted');
             return;
           }
@@ -236,14 +256,20 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         if (!profileData) {
           try {
             // Check if operation was aborted
-            if (abortControllerRef.current?.signal.aborted) {
+            if (controller.signal.aborted || !isCurrentLoad()) {
               console.log('[UserProfile] Operation aborted before local storage fallback');
               return;
             }
             
             const storedProfile = await AsyncStorage.getItem(USER_PROFILE_STORAGE_KEY);
+            if (controller.signal.aborted || !isCurrentLoad()) return;
             if (storedProfile) {
               profileData = JSON.parse(storedProfile) as UserProfile;
+              if (profileData.userId !== loadUserId) {
+                profileData = null;
+                await AsyncStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+                return;
+              }
               dataSource = 'local_storage_fallback';
               console.log('[UserProfile] ✅ Profile loaded from local storage (fallback):', profileData);
               
@@ -254,15 +280,15 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
               console.log('[UserProfile] Attempting to backup local profile to Firebase...');
               try {
                 // Check if operation was aborted
-                if (abortControllerRef.current?.signal.aborted) {
+                if (controller.signal.aborted || !isCurrentLoad()) {
                   console.log('[UserProfile] Operation aborted before backup attempt');
                   return;
                 }
                 
-                const docRef = doc(db, 'userProfiles', user.uid);
+                const docRef = doc(db, 'userProfiles', loadUserId);
                 const profileToBackup = {
                   ...profileData,
-                  userId: user.uid,
+                  userId: loadUserId,
                   dateCreated: profileData.dateCreated || new Date().toISOString()
                 };
                 
@@ -275,7 +301,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
                 await Promise.race([backupPromise, backupTimeoutPromise]);
                 
                 // Check if operation was aborted after backup
-                if (abortControllerRef.current?.signal.aborted) {
+                if (controller.signal.aborted || !isCurrentLoad()) {
                   console.log('[UserProfile] Operation aborted after backup');
                   return;
                 }
@@ -287,7 +313,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
                   isLicensedProfessional: profileToBackup.isLicensedProfessional,
                   isPersonalUse: profileToBackup.isPersonalUse,
                   isCosmeticUse: profileToBackup.isCosmeticUse,
-                  userId: user.uid,
+                  userId: loadUserId,
                   triggeredDuringLoad: true
                 });
                 
@@ -296,7 +322,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
                 dataSource = 'local_backup_to_firebase';
               } catch (backupError) {
                 // Check if this is an abort error
-                if (abortControllerRef.current?.signal.aborted) {
+                if (controller.signal.aborted || !isCurrentLoad()) {
                   console.log('[UserProfile] Backup operation was aborted');
                   return;
                 }
@@ -323,8 +349,8 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         console.log('[UserProfile] No user available - checking local storage only');
         try {
           // Check if operation was aborted
-          if (abortControllerRef.current?.signal.aborted) {
-            console.log('[UserProfile] Operation aborted before local storage check');
+        if (controller.signal.aborted || !isCurrentLoad()) {
+          console.log('[UserProfile] Operation aborted before local storage check');
             return;
           }
           
@@ -340,7 +366,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       }
 
       // Check if operation was aborted before setting final state
-      if (abortControllerRef.current?.signal.aborted) {
+      if (controller.signal.aborted || !isCurrentLoad()) {
         console.log('[UserProfile] Operation aborted before setting final profile state');
         return;
       }
@@ -356,12 +382,15 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         } : null
       });
 
-      setProfile(profileData);
-      
-      // Set analytics user properties if profile was loaded
-      if (profileData) {
-        setPersonalizationUserProperties(profileData);
+      if (profileData && loadUserIsAnonymous && loadUserId && profileData.userId !== loadUserId) {
+        profileData = { ...profileData, userId: loadUserId };
+        await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+        if (controller.signal.aborted || !isCurrentLoad()) return;
       }
+      setProfile(profileData);
+
+      // Set analytics user properties if profile was loaded
+      if (profileData) setPersonalizationUserProperties(profileData);
       
       console.log('[UserProfile] ========== LOADING PROFILE COMPLETE ==========');
     } catch (error) {
@@ -376,23 +405,23 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       });
     } finally {
       // Clear the loading timeout since we're completing
-      if (loadingTimeoutRef.current) {
+      if (isCurrentLoad() && loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
       
       // Only update loading state if this operation hasn't been aborted
-      if (!abortControllerRef.current?.signal.aborted) {
+      if (isCurrentLoad() && !controller.signal.aborted) {
         setIsLoading(false);
         console.log('[UserProfile] Loading state set to false');
       } else {
         console.log('[UserProfile] Operation was aborted, not updating loading state');
       }
       
-      isLoadingRef.current = false;
+      if (isCurrentLoad()) isLoadingRef.current = false;
       
       // Clean up abort controller
-      if (abortControllerRef.current) {
+      if (abortControllerRef.current === controller) {
         abortControllerRef.current = null;
       }
     }
@@ -400,8 +429,9 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
 
   const saveProfile = async (newProfile: UserProfile) => {
     try {
+      const profileToSave = user?.uid ? { ...newProfile, userId: user.uid } : newProfile;
       // Save to local storage first (as cache/fallback)
-      await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
+      await AsyncStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profileToSave));
       
       // Save to Firebase if user is available (both anonymous and authenticated users supported)
       if (user?.uid) {
@@ -411,14 +441,14 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         });
         try {
           const docRef = doc(db, 'userProfiles', user.uid);
-          await setDocWithEnv(docRef, newProfile);
+          await setDocWithEnv(docRef, profileToSave);
           console.log('User profile saved to Firebase');
           
           // Log detailed analytics for profile save to Firebase
           logAnalyticsEvent(ANALYTICS_EVENTS.PROFILE_SAVED_FIREBASE, {
-            isLicensedProfessional: newProfile.isLicensedProfessional,
-            isPersonalUse: newProfile.isPersonalUse,
-            isCosmeticUse: newProfile.isCosmeticUse,
+            isLicensedProfessional: profileToSave.isLicensedProfessional,
+            isPersonalUse: profileToSave.isPersonalUse,
+            isCosmeticUse: profileToSave.isCosmeticUse,
             userId: user.uid,
             userType: user.isAnonymous ? 'anonymous' : 'authenticated'
           });
@@ -431,9 +461,9 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
           
           // Log analytics for failed Firebase save
           logAnalyticsEvent(ANALYTICS_EVENTS.PROFILE_SAVE_FIREBASE_FAILED, {
-            isLicensedProfessional: newProfile.isLicensedProfessional,
-            isPersonalUse: newProfile.isPersonalUse,
-            isCosmeticUse: newProfile.isCosmeticUse,
+            isLicensedProfessional: profileToSave.isLicensedProfessional,
+            isPersonalUse: profileToSave.isPersonalUse,
+            isCosmeticUse: profileToSave.isCosmeticUse,
             error: (firebaseError as Error)?.message || 'Unknown error'
           });
           // Don't throw here - local storage save was successful
@@ -449,10 +479,10 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         });
       }
       
-      setProfile(newProfile);
+      setProfile(profileToSave);
       
       // Set analytics user properties based on profile
-      setPersonalizationUserProperties(newProfile);
+      setPersonalizationUserProperties(profileToSave);
     } catch (error) {
       console.error('Error saving user profile:', error);
       throw error;
