@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-711",
+    "date": "2026-11-27",
+    "title": "Fix offline worker cache identity and paths",
+    "status": "published",
+    "prs": [
+      711
+    ],
+    "sections": {
+      "Improved": [
+        "Fix offline worker cache identity and paths"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-709",
     "date": "2026-11-27",
     "title": "Fix undefined fields in Firestore dose logs",
