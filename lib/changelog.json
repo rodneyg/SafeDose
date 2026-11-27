@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-722",
+    "date": "2026-11-27",
+    "title": "docs: update Stripe checkout environment guide",
+    "status": "published",
+    "prs": [
+      722
+    ],
+    "sections": {
+      "Improved": [
+        "docs: update Stripe checkout environment guide"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-720",
     "date": "2026-11-27",
     "title": "T-99484123229959023: Clear stale planner concentration on unit change",
