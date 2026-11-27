@@ -50,6 +50,8 @@ export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
 
   // Load the saved prompt state on mount and when the auth user changes.
   useEffect(() => {
+    let isCurrent = true;
+    setIsLoading(true);
     const loadPromptState = async () => {
       try {
         const userId = user?.uid || 'anonymous';
@@ -63,21 +65,27 @@ export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
         
         const showCount = showCountStored ? parseInt(showCountStored, 10) : 0;
         const dontShowAgain = dontShowStored === 'true';
+        if (!isCurrent) return;
         
         stateRef.current = { showCount, dontShowAgain };
         setState(stateRef.current);
         console.log(`[BeforeFirstScan] Loaded state for ${userId}:`, { showCount, dontShowAgain });
       } catch (error) {
         console.error('[BeforeFirstScan] Error loading prompt state:', error);
-        // Default to initial state if there's an error
-        stateRef.current = { showCount: 0, dontShowAgain: false };
-        setState(stateRef.current);
+        if (isCurrent) {
+          // Default to initial state if there's an error
+          stateRef.current = { showCount: 0, dontShowAgain: false };
+          setState(stateRef.current);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) setIsLoading(false);
       }
     };
 
-    loadPromptState();
+    void loadPromptState();
+    return () => {
+      isCurrent = false;
+    };
   }, [user]);
 
   // Check if the prompt should be shown

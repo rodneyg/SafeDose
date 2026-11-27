@@ -2,8 +2,9 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePowerUserPromotion } from '../usePowerUserPromotion';
 
-const mockUser = { uid: 'test-user', isAnonymous: false };
+let mockUser = { uid: 'test-user', isAnonymous: false };
 const mockDb = {};
+const mockGetDoc = jest.fn();
 
 // Mock dependencies
 jest.mock('../../../contexts/AuthContext', () => ({
@@ -12,8 +13,8 @@ jest.mock('../../../contexts/AuthContext', () => ({
 
 jest.mock('firebase/firestore', () => ({
   getFirestore: () => mockDb,
-  doc: jest.fn(),
-  getDoc: jest.fn().mockResolvedValue({ exists: () => false }),
+  doc: (_db: unknown, _collection: string, uid: string) => ({ uid }),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
   setDoc: jest.fn()
 }));
 
@@ -25,6 +26,47 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 describe('usePowerUserPromotion', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUser = { uid: 'test-user', isAnonymous: false };
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+  });
+
+  it('ignores a previous account Firestore read that resolves after the current Plus account', async () => {
+    let resolveAccountA!: (value: { exists: () => boolean; data: () => { plan: string } }) => void;
+    let resolveAccountB!: (value: { exists: () => boolean; data: () => { plan: string } }) => void;
+    const accountARead = new Promise<{ exists: () => boolean; data: () => { plan: string } }>((resolve) => {
+      resolveAccountA = resolve;
+    });
+    const accountBRead = new Promise<{ exists: () => boolean; data: () => { plan: string } }>((resolve) => {
+      resolveAccountB = resolve;
+    });
+    mockGetDoc.mockImplementation((ref: { uid: string }) => ref.uid === 'account-a' ? accountARead : accountBRead);
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
+      doseCount: 4,
+      lastShownDate: null,
+      hasActiveSubscription: false,
+      plan: 'free',
+    }));
+
+    mockUser = { uid: 'account-a', isAnonymous: false };
+    const { result, rerender } = renderHook(() => usePowerUserPromotion());
+    mockUser = { uid: 'account-b', isAnonymous: false };
+    rerender({});
+
+    await act(async () => {
+      resolveAccountB({ exists: () => true, data: () => ({ plan: 'plus' }) });
+      await accountBRead;
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.promotionData.plan).toBe('plus');
+    expect(result.current.shouldShowPromotion()).toBe(false);
+
+    await act(async () => {
+      resolveAccountA({ exists: () => true, data: () => ({ plan: 'free' }) });
+      await accountARead;
+    });
+
+    expect(result.current.promotionData.plan).toBe('plus');
+    expect(result.current.shouldShowPromotion()).toBe(false);
   });
 
   it('exposes the documented subscription promotion result shape', async () => {
