@@ -37,7 +37,7 @@ export default function DatePickerSelect({
         <Text style={styles.label}>{label}</Text>
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel={label}
+          accessibilityLabel={value ? `${label}, ${items.find(item => item.value === value)?.label || value}` : label}
           accessibilityState={{ disabled, expanded: open }}
           disabled={disabled}
           style={[styles.pickerContainer, disabled && styles.pickerContainerDisabled]}
