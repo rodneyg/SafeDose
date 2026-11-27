@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-744",
+    "date": "2026-11-27",
+    "title": "T-994841232299592121513844: Exclude store screenshots from offline precache",
+    "status": "published",
+    "prs": [
+      744
+    ],
+    "sections": {
+      "Improved": [
+        "T-994841232299592121513844: Exclude store screenshots from offline precache"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-743",
     "date": "2026-11-27",
     "title": "Test dose history deletion retry after Firestore failure",
