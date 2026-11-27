@@ -1,4 +1,5 @@
 import { Link } from 'expo-router';
+import Head from 'expo-router/head';
 import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Linking, Platform } from 'react-native';
@@ -142,7 +143,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+      <Head><title>Settings | SafeDose</title></Head>
+      <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Link href="/changelog" style={{ color: '#007AFF', marginBottom: 24 }}>Changelog</Link>
         {/* Account Information */}
@@ -306,7 +309,8 @@ export default function SettingsScreen() {
           {(!user || user.isAnonymous) && signInFailed && <SignInError onRetry={handleSignIn} disabled={isSigningIn} />}
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 

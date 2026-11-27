@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import Head from 'expo-router/head';
 import { useAuth } from '../contexts/AuthContext';
 import { signInWithGoogle } from '../lib/googleAuth';
 import { HOME_ROUTE, loadRemoteUserProfile, routeAfterGoogleSignIn } from '../lib/onboardingState';
@@ -52,7 +53,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <>
+      <Head><title>Sign In | SafeDose</title></Head>
+      <View style={styles.container}>
       <Text style={styles.title}>Sign In</Text>
       <Text style={styles.description}>Continue with Google to sign in or create your SafeDose account.</Text>
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -75,7 +78,8 @@ export default function LoginScreen() {
       >
         <Text style={styles.buttonText}>Cancel</Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </>
   );
 }
 
