@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-723",
+    "date": "2026-11-27",
+    "title": "docs: correct SafeDose Google sign-in callback",
+    "status": "published",
+    "prs": [
+      723
+    ],
+    "sections": {
+      "Improved": [
+        "docs: correct SafeDose Google sign-in callback"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-722",
     "date": "2026-11-27",
     "title": "docs: update Stripe checkout environment guide",
