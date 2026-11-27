@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-743",
+    "date": "2026-11-27",
+    "title": "Test dose history deletion retry after Firestore failure",
+    "status": "published",
+    "prs": [
+      743
+    ],
+    "sections": {
+      "Improved": [
+        "Test dose history deletion retry after Firestore failure"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-741",
     "date": "2026-11-27",
     "title": "Fix failing check on SafeDose PR 665",
