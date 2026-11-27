@@ -1,34 +1,25 @@
-# T-19647 review of SafeDose PR 668
+# T-994841232299592121511047 review of SafeDose PR 671
 
-PR: https://github.com/rodneyg/SafeDose/pull/668
+PR: https://github.com/rodneyg/SafeDose/pull/671
 
 ## Reviewed revision and scope
 
-- PR head SHA: unavailable from `gh pr view` because this environment is not signed in. The merged PR revision in repository history is squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
-- The commit adds an optional local date and time field to the dose save step, validates that the selected time is no more than 30 days old and not in the future, stores the selected ISO timestamp, and keeps local history sorted newest first.
-- The follow-up PR 668 changelog commit is `5165261356bd69837270e5d9c883c03aee3ef4e6`.
+- PR head SHA: **unavailable**. `gh pr view` cannot run because this environment has no signed-in GitHub session, and three independent read-only network routes are denied by the proxy.
+- The checkout contains a shallow 100-commit main history beginning after PR 671. It does not contain the PR head ref or a commit associated with PR 671.
+- Current main contains dose logging fallback coverage, including local history after a Firestore read failure and save behavior after a Firestore write failure. That later main state cannot establish the exact PR 671 diff or head SHA.
 
 ## Findings
 
-- No correctness issue was found in the merged diff.
-- Blank input preserves existing behavior by resolving to the current time.
-- The parser strictly accepts a real local `YYYY-MM-DD HH:MM` value and rejects impossible dates and times.
-- Timestamp validation rejects dates more than 30 days old and dates beyond a one-minute clock-skew allowance. A value within that allowance is clamped to the current time, so a future timestamp is never stored.
-- The timestamp is validated again inside `useDoseLogging`, so callers cannot bypass the UI validation.
-- Backdated entries are inserted according to their timestamps, and the 100-entry local limit retains the newest entries.
-- Firestore ordering continues to use the saved `timestamp` field, so remote and local history share the same ordering basis.
-- The change is limited to the final save UI, timestamp helpers, dose logging, the context type, and helper tests.
+- No soundness finding can be made about the exact PR 671 revision without its diff or head commit.
+- The current main implementation reads local history before calling Firestore, returns local history if the Firestore helper returns no logs after a failure, and avoids overwriting the local cache in that failure path.
+- The current main test suite contains cases for Firestore read failure fallback, recovery after a later successful read, and Firestore write failure fallback. These are relevant context only, not a substitute for reviewing PR 671.
+- No code fix was made because changing current main without seeing the PR diff would be speculative.
 
 ## Test command output
 
-- `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed, 10 tests passed. Jest only selected the matching existing timestamp suite. Full output: `evidence/test-output.txt`.
-- `npm test -- --runInBand`: 186 suites passed, 2,138 tests passed. Full output: `evidence/full-test-output.txt`.
-- `npm run typecheck:dosing`: passed. Full output: `evidence/typecheck-dosing-output.txt`.
-- `npm run lint`: passed with 132 existing warnings and 0 errors. Full output: `evidence/lint-output.txt`.
-- `git diff --check 36d3387^ 36d3387`: passed with no whitespace errors. Result is appended to `evidence/test-output.txt`.
+- `npm test -- --runInBand lib/hooks/useDoseLogging.test.ts`: could not start. The checkout has no `node_modules` directory and the shell reported `jest: not found` (exit 127). Exact output is in `evidence/test-output.txt`.
+- Dependency installation was not attempted because outbound access to GitHub is already denied and the task explicitly says not to change lockfiles or package versions when dependencies cannot be installed.
 
 ## Final PR state
 
-Closed because PR 668 was already squash-merged before this task run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The repository history independently confirms the PR-numbered squash commit and its follow-up changelog commit, and `git merge-base --is-ancestor 36d3387 HEAD` confirms that the change is in the current mainline history.
-
-The required `gh pr view` confirmation could not be obtained because `gh auth status` reports that this environment is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Public API, public HTML, and read-only Git fetch fallbacks were also denied with HTTP 403 by the network proxy. Repeating a state-changing action would be unsafe and unnecessary because the PR-numbered change is already merged.
+**Unconfirmed draft, not mutated.** The task is blocked because neither the PR head SHA, diff, CI state, nor live draft state can be read, and the signed-in `gh pr ready` action is unavailable. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The required live confirmation via `gh pr view` failed; exact output is in `evidence/gh-pr-view.txt`.
