@@ -8,8 +8,10 @@ function generateServiceWorker(directory) {
   function walk(folder) {
     for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
       const filename = path.join(folder, entry.name);
-      if (entry.isDirectory()) walk(filename);
-      else if (/\.(html|js|css|png|jpg|jpeg|svg|webp|ico|ttf|otf|woff2?|webmanifest)$/.test(entry.name) && entry.name !== 'sw.js') {
+      if (entry.isDirectory()) {
+        const relativeFolder = path.relative(directory, filename).split(path.sep).join('/');
+        if (relativeFolder !== 'screenshots') walk(filename);
+      } else if (/\.(html|js|css|png|jpg|jpeg|svg|webp|ico|ttf|otf|woff2?|webmanifest)$/.test(entry.name) && entry.name !== 'sw.js') {
         files.push(path.relative(directory, filename).split(path.sep).join('/'));
       }
     }

@@ -55,6 +55,17 @@ describe('production service worker', () => {
     const second = generate();
     expect(second).not.toBe(first);
   });
+  test('excludes manifest screenshots while retaining app icons', () => {
+    fs.mkdirSync(path.join(directory, 'screenshots'));
+    fs.writeFileSync(path.join(directory, 'screenshots/home.png'), 'promotional screenshot');
+    fs.mkdirSync(path.join(directory, 'icons'));
+    fs.writeFileSync(path.join(directory, 'icons/icon-192.png'), 'app icon');
+
+    const worker = generate();
+
+    expect(worker).toContain('/icons/icon-192.png');
+    expect(worker).not.toContain('/screenshots/home.png');
+  });
   test('asset paths encode each URL path segment', () => {
     fs.writeFileSync(path.join(directory, 'asset #1.js'), 'asset');
     const worker = generate();
