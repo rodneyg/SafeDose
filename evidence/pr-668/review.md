@@ -20,8 +20,8 @@ PR: https://github.com/rodneyg/SafeDose/pull/668
 
 ## Test command output
 
-- Preserved output for `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed and 10 tests passed. See `evidence/../pr668-focused-test-output.txt`.
-- Preserved output for `npm test -- --runInBand`: 186 suites passed and 2,138 tests passed. See `evidence/../pr668-full-test-output.txt`.
+- Preserved output for `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed and 10 tests passed. See `../pr668-focused-test-output.txt`.
+- Preserved output for `npm test -- --runInBand`: 186 suites passed and 2,138 tests passed. See `../pr668-full-test-output.txt`.
 - Current rerun of `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts`: could not start because this checkout has no installed dependencies (`jest: not found`). See `evidence/pr-668/test-output.txt`. Per task rules, no install or lockfile change was attempted.
 - `git diff --check`: passed.
 
