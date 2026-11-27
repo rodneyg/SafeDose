@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-731",
+    "date": "2026-11-27",
+    "title": "test: cover SafeDose fulfillment guards",
+    "status": "published",
+    "prs": [
+      731
+    ],
+    "sections": {
+      "Improved": [
+        "test: cover SafeDose fulfillment guards"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-729",
     "date": "2026-11-27",
     "title": "Fix dose log cap with unreadable timestamps",
