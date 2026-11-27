@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-727",
+    "date": "2026-11-27",
+    "title": "Keep SafeDose splash visible until route resolves",
+    "status": "published",
+    "prs": [
+      727
+    ],
+    "sections": {
+      "Improved": [
+        "Keep SafeDose splash visible until route resolves"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-726",
     "date": "2026-11-27",
     "title": "Handle non-JSON billing error responses",
