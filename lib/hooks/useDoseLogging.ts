@@ -301,26 +301,39 @@ export function useDoseLogging() {
       const existingLogs = await AsyncStorage.getItem(storageKey);
       const logsList: DoseLog[] = existingLogs ? JSON.parse(existingLogs) : [];
       
-      // Find the log to get its Firestore ID
-      const logToDelete = logsList.find(log => log.id === logId);
-      
-      // Remove from local storage
-      const updatedLogs = logsList.filter(log => log.id !== logId);
-      await AsyncStorage.setItem(storageKey, JSON.stringify(updatedLogs));
-      
-      console.log('Dose log deleted locally:', logId);
-      
-      // Also delete from Firestore if user is authenticated and log has Firestore ID
-      if (user && !user.isAnonymous && logToDelete?.firestoreId) {
-        try {
-          const docRef = doc(db, 'dose_logs', logToDelete.firestoreId);
-          await deleteDoc(docRef);
-          console.log('Dose log deleted from Firestore:', logToDelete.firestoreId);
-        } catch (firestoreError) {
-          console.error('Error deleting from Firestore:', firestoreError);
-          // Don't throw - local deletion was successful
+      let logToDelete = logsList.find(log => log.id === logId);
+
+      // Cloud history can contain logs outside the 100-entry local cache.
+      // Resolve those by stable log ID before changing local data.
+      if (user && !user.isAnonymous && !logToDelete?.firestoreId) {
+        const doseLogsCollection = collection(db, 'dose_logs');
+        const q = query(
+          doseLogsCollection,
+          where('userId', '==', user.uid),
+          where('id', '==', logId)
+        );
+        const querySnapshot = await getDocs(q);
+        const matchingDoc = querySnapshot.docs[0];
+        if (matchingDoc) {
+          logToDelete = { ...matchingDoc.data(), firestoreId: matchingDoc.id } as DoseLog;
         }
       }
+
+      if (user && !user.isAnonymous && logToDelete?.firestoreId) {
+        const docRef = doc(db, 'dose_logs', logToDelete.firestoreId);
+        try {
+          await deleteDoc(docRef);
+        } catch (firestoreError) {
+          console.error('Error deleting from Firestore:', firestoreError);
+          throw firestoreError;
+        }
+        console.log('Dose log deleted from Firestore:', logToDelete.firestoreId);
+      }
+
+      // Keep the local copy if the cloud deletion fails, so retry remains possible.
+      const updatedLogs = logsList.filter(log => log.id !== logId);
+      await AsyncStorage.setItem(storageKey, JSON.stringify(updatedLogs));
+      console.log('Dose log deleted locally:', logId);
       
     } catch (error) {
       console.error('Error deleting dose log:', error);

@@ -330,30 +330,63 @@ describe('useDoseLogging', () => {
     mockDeleteDoc.mockRejectedValueOnce(error);
     const { result } = renderHook(() => useDoseLogging());
 
-    await expect(result.current.deleteDoseLog(newerLog.id)).resolves.toBeUndefined();
+    await expect(result.current.deleteDoseLog(newerLog.id)).rejects.toBe(error);
 
-    expect(storage.setItem).toHaveBeenCalledTimes(1);
-    expect(storage.setItem).toHaveBeenCalledWith(storageKey, JSON.stringify([olderLog]));
+    expect(storage.setItem).not.toHaveBeenCalled();
     expect(mockDoc).toHaveBeenCalledWith(mockDb, 'dose_logs', remoteId);
     expect(mockDeleteDoc).toHaveBeenCalledTimes(1);
     expect(mockDeleteDoc).toHaveBeenCalledWith(docRef);
     expect(console.error).toHaveBeenCalledWith('Error deleting from Firestore:', error);
   });
 
-  it('reports a local deletion failure without attempting Firestore deletion', async () => {
+  it('looks up and deletes a cloud log outside the local cache', async () => {
+    const cloudId = 'remote-old-dose';
+    const docRef = { id: cloudId } as ReturnType<typeof doc>;
+    const matchingDoc = {
+      id: cloudId,
+      data: () => ({ ...olderLog }),
+    };
+    storage.getItem.mockResolvedValueOnce(JSON.stringify([newerLog]));
+    mockGetDocs.mockResolvedValueOnce({ docs: [matchingDoc] } as Awaited<ReturnType<typeof getDocs>>);
+    mockDoc.mockReturnValueOnce(docRef);
+    mockDeleteDoc.mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.deleteDoseLog(olderLog.id)).resolves.toBeUndefined();
+
+    expect(mockGetDocs).toHaveBeenCalledTimes(1);
+    expect(mockDeleteDoc).toHaveBeenCalledWith(docRef);
+    expect(storage.setItem).toHaveBeenCalledWith(storageKey, JSON.stringify([newerLog]));
+  });
+
+  it('preserves the local log and reports a failed cloud lookup', async () => {
+    const error = new Error('Firestore lookup unavailable');
+    storage.getItem.mockResolvedValueOnce(JSON.stringify([newerLog]));
+    mockGetDocs.mockRejectedValueOnce(error);
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.deleteDoseLog(olderLog.id)).rejects.toBe(error);
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('reports a local deletion failure after cloud deletion succeeds', async () => {
     const error = new Error('Local storage write unavailable');
     storage.getItem.mockResolvedValueOnce(JSON.stringify([
       { ...newerLog, firestoreId: 'remote-newer-dose' },
       olderLog,
     ]));
     storage.setItem.mockRejectedValueOnce(error);
+    mockDoc.mockReturnValueOnce({ id: 'remote-newer-dose' } as ReturnType<typeof doc>);
+    mockDeleteDoc.mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => useDoseLogging());
 
     await expect(result.current.deleteDoseLog(newerLog.id)).rejects.toBe(error);
 
     expect(storage.setItem).toHaveBeenCalledWith(storageKey, JSON.stringify([olderLog]));
-    expect(mockDoc).not.toHaveBeenCalled();
-    expect(mockDeleteDoc).not.toHaveBeenCalled();
+    expect(mockDoc).toHaveBeenCalledTimes(1);
+    expect(mockDeleteDoc).toHaveBeenCalledTimes(1);
   });
 
   it('flushes all queued doses and skips a subsequent sync when the queue is empty', async () => {
