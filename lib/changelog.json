@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-734",
+    "date": "2026-11-27",
+    "title": "Review and ready SafeDose PR 666",
+    "status": "published",
+    "prs": [
+      734
+    ],
+    "sections": {
+      "Improved": [
+        "Review and ready SafeDose PR 666"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-733",
     "date": "2026-11-27",
     "title": "Review SafeDose draft PR 669",
