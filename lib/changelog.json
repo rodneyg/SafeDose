@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-725",
+    "date": "2026-11-27",
+    "title": "fix: expose web date and sign out names",
+    "status": "published",
+    "prs": [
+      725
+    ],
+    "sections": {
+      "Improved": [
+        "fix: expose web date and sign out names"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-724",
     "date": "2026-11-27",
     "title": "test: cover scan and checkout origin guards",
