@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-707",
+    "date": "2026-11-27",
+    "title": "T-99484123229957736: Keep dose completion moving while feedback syncs",
+    "status": "published",
+    "prs": [
+      707
+    ],
+    "sections": {
+      "Improved": [
+        "T-99484123229957736: Keep dose completion moving while feedback syncs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-706",
     "date": "2026-11-27",
     "title": "SafeDose: preserve pending dose feedback during stale reset",
