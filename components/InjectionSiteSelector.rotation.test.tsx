@@ -99,3 +99,29 @@ describe('InjectionSiteSelector rotation', () => {
     expect(queryByText(rotationWarning)).toBeNull();
   });
 });
+
+ describe('calendar day labels', () => {
+  it('counts a use before midnight as yesterday after midnight', () => {
+    const beforeMidnight = new Date(2026, 0, 20, 20);
+    jest.useFakeTimers({ now: new Date(2026, 0, 21, 8) });
+    const { getByText } = render(
+      <InjectionSiteSelector {...callbacks()} doseHistory={[{
+        ...dose('thigh_L', 0), timestamp: beforeMidnight.toISOString(),
+      }]} selectedSite="thigh_L" />,
+    );
+    expect(getByText('Yesterday')).toBeTruthy();
+    jest.useRealTimers();
+  });
+
+  it('counts local calendar days across the spring daylight saving change', () => {
+    const beforeMidnight = new Date(2026, 2, 8, 20);
+    jest.useFakeTimers({ now: new Date(2026, 2, 9, 8) });
+    const { getByText } = render(
+      <InjectionSiteSelector {...callbacks()} doseHistory={[{
+        ...dose('thigh_L', 0), timestamp: beforeMidnight.toISOString(),
+      }]} selectedSite="thigh_L" />,
+    );
+    expect(getByText('Yesterday')).toBeTruthy();
+    jest.useRealTimers();
+  });
+});
