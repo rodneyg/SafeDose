@@ -52,7 +52,9 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
       })
     );
 
-    // Fade out everything after a delay
+    // Only fade when a caller can handle the completed animation.
+    if (!onAnimationComplete) return;
+
     const fadeOutTimeout = setTimeout(() => {
       containerOpacity.value = withTiming(
         0,
@@ -66,7 +68,7 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
           }
         }
       );
-    }, 2200); // Show for 2.2 seconds total before fade out
+    }, 2200);
 
     return () => clearTimeout(fadeOutTimeout);
   }, [onAnimationComplete]);
