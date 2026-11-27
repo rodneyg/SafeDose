@@ -146,7 +146,20 @@
     "@expo/metro-config": {
       "postcss": "^8.5.23"
     },
-    "tar": "^7.5.21"
+    "tar": "^7.5.21",
+    "@expo/plist": {
+      "@xmldom/xmldom": "0.8.15"
+    },
+    "expo-cli": {
+      "@expo/plist": {
+        "@xmldom/xmldom": "0.8.15"
+      }
+    },
+    "xdl": {
+      "@expo/plist": {
+        "@xmldom/xmldom": "0.8.15"
+      }
+    }
   },
   "@vercel/node": {
     "ts-node": "10.9.1",
