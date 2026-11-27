@@ -63,7 +63,8 @@ export function useBeforeFirstScanPrompt(): BeforeFirstScanPrompt {
           AsyncStorage.getItem(dontShowKey),
         ]);
         
-        const showCount = showCountStored ? parseInt(showCountStored, 10) : 0;
+        const parsedShowCount = showCountStored ? Number.parseInt(showCountStored, 10) : 0;
+        const showCount = Number.isFinite(parsedShowCount) ? parsedShowCount : 0;
         const dontShowAgain = dontShowStored === 'true';
         if (!isCurrent) return;
         

@@ -106,6 +106,21 @@ describe('useFeedbackStorage', () => {
     expect(savedFeedback[49]).toMatchObject({ feedbackType: 'great' });
   });
 
+  it('replaces a stored non-list value before saving new feedback', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(JSON.stringify({ old: true }));
+    const { result } = renderHook(() => useFeedbackStorage());
+
+    await act(async () => {
+      await result.current.submitFeedback('great', doseInfo);
+    });
+
+    const savedFeedback = JSON.parse((AsyncStorage.setItem as jest.Mock).mock.calls[0][1]);
+    expect(savedFeedback).toHaveLength(1);
+    expect(savedFeedback[0]).toMatchObject({ feedbackType: 'great', doseInfo });
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(JSON.stringify({ old: true }));
+    await expect(result.current.getFeedbackHistory()).resolves.toEqual([]);
+  });
+
   it('uses anonymous local storage and skips Firestore for a signed-out user', async () => {
     mockUser = null;
     const { result } = renderHook(() => useFeedbackStorage());

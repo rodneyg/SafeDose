@@ -16,7 +16,8 @@ export function useFeedbackStorage() {
     try {
       const storageKey = `feedback_${user?.uid || 'anonymous'}`;
       const existingFeedback = await AsyncStorage.getItem(storageKey);
-      const feedbackList: DoseFeedback[] = existingFeedback ? JSON.parse(existingFeedback) : [];
+      const parsedFeedback: unknown = existingFeedback ? JSON.parse(existingFeedback) : [];
+      const feedbackList: DoseFeedback[] = Array.isArray(parsedFeedback) ? parsedFeedback : [];
       
       feedbackList.push(feedback);
       
@@ -109,7 +110,8 @@ export function useFeedbackStorage() {
     try {
       const storageKey = `feedback_${user?.uid || 'anonymous'}`;
       const feedbackData = await AsyncStorage.getItem(storageKey);
-      return feedbackData ? JSON.parse(feedbackData) : [];
+      const parsedFeedback: unknown = feedbackData ? JSON.parse(feedbackData) : [];
+      return Array.isArray(parsedFeedback) ? parsedFeedback : [];
     } catch (error) {
       console.error('Error loading feedback history:', error);
       return [];

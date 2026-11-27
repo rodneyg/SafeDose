@@ -59,6 +59,25 @@ test('remembers an opt-out before the view limit', async () => {
   expect(reopened.result.current.shouldShowPrompt()).toBe(false);
 });
 
+test('recovers an invalid saved count to zero and keeps the opt-out flag', async () => {
+  await AsyncStorage.setItem(countKey, 'not-a-number');
+  const { result } = renderHook(useBeforeFirstScanPrompt);
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+  expect(result.current.showCount).toBe(0);
+  expect(result.current.shouldShowPrompt()).toBe(true);
+  await act(result.current.markPromptAsShown);
+  expect(await AsyncStorage.getItem(countKey)).toBe('1');
+  expect(await AsyncStorage.getItem(optOutKey)).toBe('false');
+
+  await AsyncStorage.setItem(countKey, 'not-a-number');
+  await AsyncStorage.setItem(optOutKey, 'true');
+  const optedOut = renderHook(useBeforeFirstScanPrompt);
+  await waitFor(() => expect(optedOut.result.current.isLoading).toBe(false));
+  expect(optedOut.result.current.showCount).toBe(0);
+  expect(optedOut.result.current.shouldShowPrompt()).toBe(false);
+});
+
 test('ignores a previous account storage read that resolves after the current account opted out', async () => {
   const deferredValue = () => {
     let resolve!: (value: string | null) => void;
