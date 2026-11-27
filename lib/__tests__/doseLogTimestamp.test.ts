@@ -56,6 +56,21 @@ describe('parseLocalDateTimeInput', () => {
 });
 
 describe('sortLogsNewestFirst', () => {
+  it('keeps the newest dose when an unreadable timestamp is last at the 100 entry cap', () => {
+    const validLogs = Array.from({ length: 100 }, (_, index) => ({
+      id: `valid-${index}`,
+      timestamp: new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
+    }));
+    const newestDose = { id: 'newest-dose', timestamp: '2026-02-01T00:00:00.000Z' };
+    const cachedLogs = [...validLogs, { id: 'unreadable', timestamp: 'not-a-date' }];
+    const persistedLogs = sortLogsNewestFirst([...cachedLogs, newestDose]).slice(0, 100);
+
+    expect(persistedLogs).toHaveLength(100);
+    expect(persistedLogs[0]).toEqual(newestDose);
+    expect(persistedLogs.some((log) => log.id === 'unreadable')).toBe(false);
+    expect(persistedLogs.filter((log) => log.id.startsWith('valid-'))).toHaveLength(99);
+  });
+
   it('orders by timestamp so a backdated log sits in its place', () => {
     const logs = [
       { id: 'newest', timestamp: '2026-11-24T10:00:00.000Z' },

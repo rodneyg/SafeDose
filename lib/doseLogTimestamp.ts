@@ -48,6 +48,17 @@ export function timestampErrorMessage(reason: 'invalid' | 'future' | 'too_old'):
 }
 
 /** Newest first by timestamp. Returns a new array. */
+export function compareLogsNewestFirst<T extends { timestamp: string }>(a: T, b: T): number {
+  const aTime = new Date(a.timestamp).getTime();
+  const bTime = new Date(b.timestamp).getTime();
+  const aValid = Number.isFinite(aTime);
+  const bValid = Number.isFinite(bTime);
+  if (aValid !== bValid) return aValid ? -1 : 1;
+  if (!aValid) return 0;
+  return bTime - aTime;
+}
+
+/** Newest first by timestamp. Unreadable timestamps stay last. Returns a new array. */
 export function sortLogsNewestFirst<T extends { timestamp: string }>(logs: T[]): T[] {
-  return [...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return [...logs].sort(compareLogsNewestFirst);
 }
