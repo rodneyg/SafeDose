@@ -135,6 +135,22 @@ describe('useFeedbackStorage', () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
+  it('returns after the local save when the Firestore write never settles', async () => {
+    (addDocWithEnv as jest.Mock).mockImplementationOnce(() => new Promise(() => {}));
+    const { result } = renderHook(() => useFeedbackStorage());
+
+    await act(async () => {
+      await Promise.race([
+        result.current.submitFeedback('great', doseInfo),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('feedback submission waited for Firestore')), 50)),
+      ]);
+    });
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith('feedback_user-123', expect.any(String));
+    expect(addDocWithEnv).toHaveBeenCalledTimes(1);
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
   it('does not interrupt submission when local or cloud persistence fails', async () => {
     (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(new Error('storage unavailable'));
     (addDocWithEnv as jest.Mock).mockRejectedValueOnce(new Error('firestore unavailable'));
