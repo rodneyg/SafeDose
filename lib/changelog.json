@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-712",
+    "date": "2026-11-27",
+    "title": "Ignore stale prompt reads after account changes",
+    "status": "published",
+    "prs": [
+      712
+    ],
+    "sections": {
+      "Improved": [
+        "Ignore stale prompt reads after account changes"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-711",
     "date": "2026-11-27",
     "title": "Fix offline worker cache identity and paths",
