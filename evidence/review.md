@@ -1,41 +1,31 @@
-# PR 666 review evidence
+# T-994841232299592121511052 review of SafeDose PR 654
 
-- PR: https://github.com/rodneyg/SafeDose/pull/666
-- Title: Let users edit a saved dose log
-- Head branch: `claude/t-14282-edit-dose-log`
-- Head SHA: `21fcc4c1a042a21d7e8cbf16d4a72217c79c126d`
-- Observed final state: **closed**
-- Close event: the public Conversation page says `rodneyg closed this` on 2026-11-25.
+PR: https://github.com/rodneyg/SafeDose/pull/654
 
-## Test command output
+## Reviewed revision and scope
 
-No PR-head test command was run. The local checkout does not contain the PR head commit, has no Git remote, and cannot fetch through the environment proxy. Running tests against local `work` at `71622b14c7542ddd7d390674704444b273f02209` would not test PR 666.
-
-Access checks:
-
-```text
-$ gh auth status
-You are not logged into any GitHub hosts.
-
-$ gh pr view 666 --repo rodneyg/SafeDose --json ...
-To get started with GitHub CLI, please run: gh auth login
-
-$ git cat-file -e 21fcc4c1a042a21d7e8cbf16d4a72217c79c126d^{commit}
-fatal: Not a valid object name 21fcc4c1a042a21d7e8cbf16d4a72217c79c126d^{commit}
-
-$ curl https://api.github.com/repos/rodneyg/SafeDose/pulls/666
-curl: (56) CONNECT tunnel failed, response 403
-```
-
-The PR body says its added hook test file covers local editing, keeping other logs unchanged, dose-volume rescaling, clearing optional fields, missing and zero-dose cases, Firestore sync and failure behavior, and anonymous behavior. That claim could not be independently executed here.
+- PR head SHA: unavailable in this checkout. The required `gh pr view` lookup could not authenticate, direct GitHub HTTPS requests were denied by the environment proxy with HTTP 403, and the shallow checkout boundary predates PR 654. No SHA is guessed.
+- The current mainline snapshot contains the published PR 654 changelog entry and `api/__tests__/billing-failure-paths.test.js`.
+- The change is test-only. It covers failure behavior for portal creation, subscription status, and Stripe webhook endpoints using mocked Stripe and Firebase dependencies and fixture-only credentials.
 
 ## Findings
 
-1. The requested draft no longer has an actionable draft state. The newest public Conversation page shows **Closed** and an explicit close event dated 2026-11-25.
-2. The public Files page identifies six changed files and the last commit as `21fcc4c`. Its cached state is older and still says Draft, so it is not reliable for the final state.
-3. No code finding is asserted because the PR head was unavailable locally and the rendered diff could not substitute for executable source review.
-4. No PR action was taken. In particular, the PR was not marked ready, reopened, updated, merged, or closed again.
+- No correctness, security, or scope issue was found in the 260-line test file.
+- Authentication cases cover missing and malformed tokens, anonymous or incomplete claims, revoked or expired tokens, sanitized unexpected Firebase failures, and Bearer-token revocation checks.
+- Subscription status cases cover invalid methods, empty account defaults, paid account state, no-store caching, and sanitized storage failures.
+- Portal cases cover invalid methods, unusable or mode-mismatched Stripe keys, missing customer records, invalid return URL types before authentication, sanitized Stripe failures, and the default settings return URL.
+- Webhook cases cover invalid methods and signatures, missing webhook configuration, unreadable bodies, live/test mode mismatches, successful fulfillment delegation, sanitized fulfillment failure logging, and invalid Stripe keys.
+- Assertions agree with the current implementations in `lib/billing.server.js` and the three reviewed endpoint handlers. External calls are mocked, and no real Stripe, Firebase, purchase, or credential operation is performed.
+
+## Test command output
+
+- `npm ci --ignore-scripts`: failed because the environment proxy returned HTTP 403 from the npm registry. It did not change a lockfile or package version.
+- `npm test -- --runInBand api/__tests__/billing-failure-paths.test.js`: could not run because Jest was not installed after the blocked dependency fetch. Exact output is in `evidence/test-output.txt`.
+- `node --check api/__tests__/billing-failure-paths.test.js`, plus the same syntax check for all three endpoint handlers: passed. Exact output is in `evidence/node-check-output.txt`.
+- `git diff --check`: passed.
 
 ## Final PR state
 
-**Closed.** The reason available from the live public record is that `rodneyg` closed it on 2026-11-25; GitHub displays no written close comment. A `gh pr view` confirmation was attempted but could not run because this environment has no signed-in GitHub session. The final state was independently confirmed from the newer public Conversation page and its explicit close event.
+Merged before this review run. The published changelog entry identifies PR 654 by number and records the matching title as published on November 26, 2026. The test file is present in the current mainline snapshot. No `gh pr ready`, push, close, merge, comment, review, or PR-body update was attempted because repeating a state-changing action on an already merged PR would be unsafe.
+
+The requested final confirmation with `gh pr view` was attempted and failed because this session is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Direct API, HTML, and read-only Git fallbacks were also blocked by the network proxy. The repository changelog and current mainline contents are two independent local checks of the final merged state.
