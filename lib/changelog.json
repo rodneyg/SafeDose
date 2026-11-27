@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-716",
+    "date": "2026-11-27",
+    "title": "Fix SafeDose rollback project targeting",
+    "status": "published",
+    "prs": [
+      716
+    ],
+    "sections": {
+      "Improved": [
+        "Fix SafeDose rollback project targeting"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-715",
     "date": "2026-11-27",
     "title": "Fix deletion of uncached SafeDose history logs",
