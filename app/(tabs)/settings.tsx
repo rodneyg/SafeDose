@@ -1,13 +1,17 @@
 import { Link } from 'expo-router';
 import SignInError from '../../components/SignInError';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Linking, Platform } from 'react-native';
 import { LogOut, CreditCard, User, AlertCircle, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageTracking } from '../../lib/hooks/useUsageTracking';
 import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../../lib/analytics';
 import { signInWithGoogle } from '../../lib/googleAuth';
 import { formatPlanDisplayName } from '../../lib/plans';
+
+export function shouldSignOutOnWeb(confirm: (message: string) => boolean, message: string): boolean {
+  return confirm(message);
+}
 
 import { billingRequest, getSubscriptionStatus, SubscriptionStatus } from '../../lib/subscriptionStatus';
 import { getApiBaseUrl } from '../../lib/apiBase';
@@ -66,26 +70,37 @@ export default function SettingsScreen() {
     }
   };
 
+  const performSignOut = async () => {
+    try {
+      await logout();
+      // The UI updates automatically when auth state changes.
+    } catch (error) {
+      console.error('Sign out error:', error);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    }
+  };
+
   const handleSignOut = () => {
+    const message = user?.isAnonymous
+      ? 'Are you sure you want to start a new guest session? Your current usage will be reset.'
+      : 'Are you sure you want to sign out? You can sign back in anytime.';
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && shouldSignOutOnWeb(window.confirm.bind(window), message)) {
+        void performSignOut();
+      }
+      return;
+    }
+
     Alert.alert(
       'Sign Out',
-      user?.isAnonymous 
-        ? 'Are you sure you want to start a new guest session? Your current usage will be reset.'
-        : 'Are you sure you want to sign out? You can sign back in anytime.',
+      message,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              // Removed redundant success alert - the UI will update automatically
-            } catch (error) {
-              console.error('Sign out error:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-            }
-          },
+          onPress: performSignOut,
         },
       ]
     );
