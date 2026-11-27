@@ -89,8 +89,13 @@ function promote(url, dryRun) {
 }
 
 function redeployTag(sha, dryRun) {
+  const projectId = process.env.VERCEL_PROJECT_ID;
+  const orgId = process.env.VERCEL_ORG_ID;
+  if (!projectId || !orgId) {
+    throw new Error('Fallback redeploy requires VERCEL_PROJECT_ID and VERCEL_ORG_ID to target the safe-dose project.');
+  }
   const cmd = [
-    VERCEL, 'deploy', '--prod', '--yes', '--scope', SCOPE,
+    VERCEL, 'deploy', '--prod', '--yes', '--project', projectId, '--scope', orgId,
     '--force',
   ];
   if (dryRun) {

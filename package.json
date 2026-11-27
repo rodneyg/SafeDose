@@ -12,6 +12,7 @@
     "build": "npm run build:web",
     "test": "jest",
     "test:vercel-ignore": "node --test scripts/vercel-ignore.test.mjs scripts/changelog-deploy.test.mjs",
+    "test:rollback": "node --test scripts/rollback.test.mjs",
     "lint": "expo lint",
     "android": "expo run:android",
     "ios": "expo run:ios",

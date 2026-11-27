@@ -118,6 +118,7 @@ jobs:
       - run: npm ci
       - run: npm run test:dependabot-config
       - run: npm run test:vercel-ignore
+      - run: npm run test:rollback
       - run: npx jest --runInBand
 
   demo-regressions:
