@@ -62,7 +62,25 @@ describe('estimateVialSupply', () => {
 
   it('treats unreadable totals and zero doses as no vial context', () => {
     expect(estimateVialSupply([log({ totalAmount: 'abc' })])).toBeNull();
+    expect(estimateVialSupply([log({ totalAmount: '-1' })])).toBeNull();
     expect(estimateVialSupply([log({ doseValue: 0 })])).toBeNull();
+    expect(estimateVialSupply([log({ doseValue: -1 })])).toBeNull();
+  });
+
+  it('rejects mass doses for unit-counted vials', () => {
+    expect(estimateVialSupply([
+      log({ totalAmount: '100', totalAmountUnit: 'units', doseValue: 1, unit: 'mg' }),
+    ])).toBeNull();
+  });
+
+  it('ignores older logs with a different or invalid vial unit', () => {
+    const r = estimateVialSupply([
+      log(),
+      log({ totalAmount: '5000', totalAmountUnit: 'mcg' }),
+      log({ totalAmount: '-5' }),
+    ])!;
+    expect(r.loggedDoseCount).toBe(1);
+    expect(r.amountLeftExact).toBe('4.75');
   });
 
   it('matches vials with no substance name and skips logs without a total', () => {
