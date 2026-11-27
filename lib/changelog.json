@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-719",
+    "date": "2026-11-27",
+    "title": "Fix onboarding survey marker on account switch",
+    "status": "published",
+    "prs": [
+      719
+    ],
+    "sections": {
+      "Improved": [
+        "Fix onboarding survey marker on account switch"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-718",
     "date": "2026-11-27",
     "title": "T-99484123229958971: Preserve mobile scan start after resize",
