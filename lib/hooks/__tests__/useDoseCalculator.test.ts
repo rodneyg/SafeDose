@@ -143,6 +143,31 @@ it('uses the exact planner handoff and recomputes strength when the solution vol
   });
 });
 
+it('clears an exact planner concentration when a dose unit change replaces its concentration unit', () => {
+  const { result } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
+
+  act(() => {
+    result.current.setScreenStep('manualEntry');
+    result.current.setDose('1');
+    result.current.setMedicationInputType('concentration');
+    result.current.setConcentrationAmount('3.33');
+  });
+  act(() => result.current.handleNextDose());
+  act(() => result.current.handleNextMedicationSource());
+  act(() => result.current.setConcentrationExact('10/3'));
+  act(() => result.current.handleCalculateFinal());
+
+  expect(result.current.calculatedVolume).toBe(0.3);
+
+  act(() => result.current.setUnit('units'));
+  expect(result.current.concentrationUnit).toBe('units/ml');
+  act(() => result.current.setUnit('mg'));
+  expect(result.current.concentrationUnit).toBe('mg/ml');
+
+  act(() => result.current.handleCalculateFinal());
+  expect(result.current.calculatedVolume).toBeCloseTo(1 / 3.33, 6);
+});
+
 it('clears the previous dose, scan ownership, review, and error state on start over', () => {
   const { result } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
 
