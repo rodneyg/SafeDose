@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-745",
+    "date": "2026-11-27",
+    "title": "Reject sub-minute protocol schedule edits",
+    "status": "published",
+    "prs": [
+      745
+    ],
+    "sections": {
+      "Improved": [
+        "Reject sub-minute protocol schedule edits"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-744",
     "date": "2026-11-27",
     "title": "T-994841232299592121513844: Exclude store screenshots from offline precache",
