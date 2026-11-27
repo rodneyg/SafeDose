@@ -9,9 +9,27 @@ export async function billingRequest<T>(user: User, path: string, body = {}, sig
     body: JSON.stringify(body),
     signal,
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Could not load payment details.');
-  return data;
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch (error) {
+    if (!response.ok) throw new Error('Could not load payment details.');
+    throw error;
+  }
+
+  if (!response.ok) {
+    const serverError =
+      data !== null && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+        ? data.error
+        : undefined;
+    throw new Error(serverError || 'Could not load payment details.');
+  }
+
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Invalid payment details response.');
+  }
+
+  return data as T;
 }
 
 export interface SubscriptionStatus {
