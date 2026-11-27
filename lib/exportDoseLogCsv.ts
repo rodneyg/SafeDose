@@ -11,7 +11,7 @@ export async function exportDoseLogCsv(logs: DoseLog[]): Promise<void> {
   const fileName = doseLogCsvFileName();
 
   if (Platform.OS === 'web') {
-    const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

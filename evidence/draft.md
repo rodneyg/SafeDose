@@ -1,25 +1,32 @@
 # Draft PR update
 
 ## Screenshots
-Not applicable: test-only coverage fix.
+
+Not applicable: the CSV bytes and UI are unchanged.
 
 ## Recordings
-Not applicable: no interaction or flow changed.
+
+Not applicable: the interaction and flow are unchanged.
 
 ## What changed
-Added missing vial-supply tests for invalid negative inputs, incompatible units, and older logs from a different vial unit.
+
+Replaced a raw byte-order-mark character with the equivalent explicit Unicode escape in the web CSV export.
 
 ## Before / After
-Before: the new vial-supply code had branch paths that were not exercised by the 100% dosing coverage gate.
 
-After: focused tests exercise those paths without changing production behavior.
+Before: the source contained an invisible U+FEFF character that the formatting check rejected.
+
+After: the source uses `\\uFEFF`, which produces the same CSV byte-order mark without irregular source whitespace.
 
 ## Alignment
-This fixes the only reported failing check on draft PR 665 so the feature can be reviewed safely.
+
+This is a minimal check-only fix for the existing Export CSV feature.
 
 ## Changelog
-Not applicable: test-only change.
+
+Not applicable: there is no user-visible behavior change.
 
 ## Testing
-- Focused vial-supply behavior smoke test using TypeScript compilation and Node assertions.
-- Dosing Jest command attempted, but dependency installation is blocked by an HTTP 403 from the package registry.
+
+- Focused CSV tests could not run because dependencies are unavailable in the environment.
+- Verified at the byte level that the source no longer contains a literal U+FEFF character.
