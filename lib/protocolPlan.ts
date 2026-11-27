@@ -103,7 +103,8 @@ export function adjustProtocolTime(
   time: number,
   now: number,
 ): DoseTimeOffsets | null {
-  if (!Number.isSafeInteger(index) || index < 1 || !Number.isFinite(time) || time < now) return null;
+  if (!Number.isSafeInteger(index) || index < 1 || !Number.isSafeInteger(time) ||
+      time % MINUTE_MS !== 0 || time < now) return null;
   if (time <= protocolDoseTime(start, frequency, offsets, index - 1) ||
       time >= protocolDoseTime(start, frequency, offsets, index + 1)) return null;
   // A one-time edit stays in its slot even if nearby doses have also moved.

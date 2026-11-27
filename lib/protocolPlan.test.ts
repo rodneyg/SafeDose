@@ -78,6 +78,12 @@ describe('schedule preview', () => {
     expect(adjustProtocolTime(start, 2, {}, 1, first + 84 * hour, first + 85 * hour)).toBeNull();
   });
 
+  it('accepts only minute-aligned schedule edits', () => {
+    const minute = 60 * 1000;
+    expect(adjustProtocolTime(start, 2, {}, 1, first + 85 * hour + minute, first)).toEqual({ 1: 61 });
+    expect(adjustProtocolTime(start, 2, {}, 1, first + 85 * hour + 1, first)).toBeNull();
+  });
+
   it.each([['2026-02-30', '10:00'], ['2026-02-24', '24:00'], ['2026-2-24', '10:00']])(
     'rejects invalid dates or times %s %s', (date, time) => {
       expect(parseProtocolStart(date, time)).toBeNull();
