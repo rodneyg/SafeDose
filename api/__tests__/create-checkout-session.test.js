@@ -3,7 +3,11 @@ const mockCreate = jest.fn();
 const mockStoreCheckout = jest.fn();
 const mockGetCustomer = jest.fn();
 const mockBillingUser = jest.fn();
-jest.mock('stripe', () => jest.fn(() => ({ checkout: { sessions: { create: mockCreate } } })));
+const mockListSubscriptions = jest.fn();
+jest.mock('stripe', () => jest.fn(() => ({
+  checkout: { sessions: { create: mockCreate } },
+  subscriptions: { list: (...args) => mockListSubscriptions(...args) },
+})));
 jest.mock('../../lib/stripeConfig.server', () => ({ secretKey: 'sk_test_placeholder', mode: 'test' }));
 jest.mock('../../lib/firebaseAdmin.server', () => ({ getBillingFirebase: jest.fn() }));
 jest.mock('../../lib/billing.server', () => ({
@@ -28,6 +32,7 @@ beforeEach(() => {
   mockCreate.mockResolvedValue({ id: 'cs_checkout', url: 'https://checkout.stripe.com/c/pay/cs_checkout' });
   mockBillingUser.mockResolvedValue({ uid: 'buyer', db: {} });
   mockGetCustomer.mockResolvedValue('cus_buyer');
+  mockListSubscriptions.mockResolvedValue({ data: [] });
 });
 afterEach(() => {
   if (originalSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
@@ -72,6 +77,45 @@ it('preserves the legacy Full Pro seven-day trial', async () => {
     subscription_data: { trial_period_days: 7 },
   }));
   expect(mockStoreCheckout).toHaveBeenCalledWith(expect.objectContaining({ trial: true }));
+});
+
+it.each(['active', 'trialing'])('refuses a second checkout when Stripe reports an existing %s subscription', async status => {
+  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_full_pro' });
+  mockListSubscriptions.mockResolvedValueOnce({ data: [{ id: 'sub_existing', status, trial_start: null }] });
+  await handler({ method: 'POST', body: { priceId: 'price_full_pro', hasTrial: true, ...urls } }, res);
+  expect(mockListSubscriptions).toHaveBeenCalledWith({ customer: 'cus_buyer', status: 'all', limit: 100 });
+  expect(mockCreate).not.toHaveBeenCalled();
+  expect(res.status).toHaveBeenCalledWith(409);
+  expect(res.json).toHaveBeenCalledWith({ error: 'You already have an active subscription.' });
+});
+
+it('allows checkout without a trial when Stripe shows a prior trial subscription', async () => {
+  const priceId = 'price_1RUHgxAY2p4W374Yb5EWEtZ0';
+  resolveCheckoutPriceId.mockResolvedValue({ priceId });
+  mockListSubscriptions.mockResolvedValueOnce({ data: [{ id: 'sub_old_trial', status: 'canceled', trial_start: 1_700_000_000 }] });
+  await handler({ method: 'POST', body: { priceId, hasTrial: true, ...urls } }, res);
+  expect(mockCreate).toHaveBeenCalledWith(expect.not.objectContaining({ subscription_data: expect.anything() }));
+  expect(mockStoreCheckout).toHaveBeenCalledWith(expect.objectContaining({ trial: false }));
+});
+
+it('checks older Stripe subscription pages before offering a trial', async () => {
+  const priceId = 'price_1RUHgxAY2p4W374Yb5EWEtZ0';
+  resolveCheckoutPriceId.mockResolvedValue({ priceId });
+  mockListSubscriptions
+    .mockResolvedValueOnce({ data: [{ id: 'sub_page_one', status: 'canceled', trial_start: null }], has_more: true })
+    .mockResolvedValueOnce({ data: [{ id: 'sub_old_trial', status: 'canceled', trial_start: 1_700_000_000 }], has_more: false });
+  await handler({ method: 'POST', body: { priceId, hasTrial: true, ...urls } }, res);
+  expect(mockListSubscriptions).toHaveBeenNthCalledWith(2, {
+    customer: 'cus_buyer', status: 'all', limit: 100, starting_after: 'sub_page_one',
+  });
+  expect(mockCreate).toHaveBeenCalledWith(expect.not.objectContaining({ subscription_data: expect.anything() }));
+});
+
+it('continues to allow a Photo Check offer checkout when no subscription exists', async () => {
+  resolveCheckoutPriceId.mockResolvedValue({ priceId: 'price_photo', offerKey: 'photo_check_monthly' });
+  await handler({ method: 'POST', body: { offerKey: 'photo_check_monthly', ...urls } }, res);
+  expect(mockCreate).toHaveBeenCalledTimes(1);
+  expect(res.status).toHaveBeenCalledWith(200);
 });
 
 it.each(['offerKey', 'successUrl', 'cancelUrl'])('rejects missing %s', async missing => {
