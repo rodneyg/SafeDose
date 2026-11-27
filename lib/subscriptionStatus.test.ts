@@ -57,7 +57,7 @@ it('requests the subscription status with an empty body and forwards the signal'
 });
 
 it.each([
-  ['an empty body', async () => undefined],
+  ['an empty body', async () => { throw new SyntaxError('Unexpected end of JSON input'); }],
   ['a JSON null body', async () => null],
   ['an HTML body', async () => { throw new SyntaxError('Unexpected token < in JSON'); }],
 ])('throws the fallback error when an unsuccessful response has %s', async (_description, json) => {
