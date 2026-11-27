@@ -78,11 +78,12 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
   }, [user]);
 
   // Load promotion data from storage
-  const loadPromotionData = useCallback(async () => {
+  const loadPromotionData = useCallback(async (isCurrent: () => boolean) => {
     try {
       const userId = user?.uid || 'anonymous';
       const storageKey = `${POWER_USER_STORAGE_KEY}_${userId}`;
       const stored = await AsyncStorage.getItem(storageKey);
+      if (!isCurrent()) return;
       
       let data: PowerUserPromotionData = {
         doseCount: 0,
@@ -100,6 +101,7 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
         try {
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
+          if (!isCurrent()) return;
           if (userDoc.exists()) {
             const userData = userDoc.data();
             data.plan = userData.plan || 'free';
@@ -110,12 +112,13 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
         }
       }
 
+      if (!isCurrent()) return;
       setPromotionData(data);
       console.log(`[PowerUserPromotion] Loaded promotion data for ${userId}:`, data);
     } catch (error) {
       console.error('[PowerUserPromotion] Error loading promotion data:', error);
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   }, [user, db]);
 
@@ -133,7 +136,12 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
 
   // Load data on mount and when user changes
   useEffect(() => {
-    loadPromotionData();
+    let isCurrent = true;
+    setIsLoading(true);
+    void loadPromotionData(() => isCurrent);
+    return () => {
+      isCurrent = false;
+    };
   }, [loadPromotionData]);
 
   // Increment dose count
