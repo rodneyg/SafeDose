@@ -150,6 +150,13 @@ describe('dosing inputs', () => {
       });
     });
 
+    it('accepts equivalent decimal formatting for labeled syringe volumes', () => {
+      expect(parseScannedSyringe({ type: 'insulin', volume: '0.50 mL', scale: 'U-100' })).toEqual({
+        ok: true,
+        value: { type: 'Insulin', volume: '0.5 ml', insulinScale: 'U-100' },
+      });
+    });
+
     it.each([
       [{}, 'Needs input: select the syringe type and volume from its label.'],
       [{ type: 'other', volume: '1 ml' }, 'Needs input: select the syringe type and volume from its label.'],
