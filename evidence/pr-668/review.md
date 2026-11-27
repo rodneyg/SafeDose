@@ -22,11 +22,11 @@ PR: https://github.com/rodneyg/SafeDose/pull/668
 
 - Preserved output for `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed and 10 tests passed. See `../pr668-focused-test-output.txt`.
 - Preserved output for `npm test -- --runInBand`: 186 suites passed and 2,138 tests passed. See `../pr668-full-test-output.txt`.
-- Current rerun of `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts`: could not start because this checkout has no installed dependencies (`jest: not found`). See `evidence/pr-668/test-output.txt`. Per task rules, no install or lockfile change was attempted.
+- Current rerun of `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts`: could not start because this checkout has no installed dependencies (`jest: not found`). See `test-output.txt`. Per task rules, no install or lockfile change was attempted.
 - `git diff --check`: passed.
 
 ## Final PR state
 
 Closed because PR 668 was already squash-merged before this run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted because repeating a state-changing action on a merged PR would be unsafe.
 
-The required `gh pr view` confirmation could not be obtained: `gh auth status` reports no signed-in GitHub session, and both public API and HTML fallbacks were rejected with HTTP 403. The exact CLI result is in `evidence/pr-668/gh-pr-view.txt`. Independent repository evidence confirms the merged state: the published PR 668 changelog is present, the feature implementation and tests are in the current mainline tree, and preserved prior review evidence records squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
+The required `gh pr view` confirmation could not be obtained: `gh auth status` reports no signed-in GitHub session, and both public API and HTML fallbacks were rejected with HTTP 403. The exact CLI result is in `gh-pr-view.txt`. Independent repository evidence confirms the merged state: the published PR 668 changelog is present, the feature implementation and tests are in the current mainline tree, and preserved prior review evidence records squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
