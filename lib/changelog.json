@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-27-pr-741",
+    "date": "2026-11-27",
+    "title": "Fix failing check on SafeDose PR 665",
+    "status": "published",
+    "prs": [
+      741
+    ],
+    "sections": {
+      "Improved": [
+        "Fix failing check on SafeDose PR 665"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-27-pr-739",
+    "date": "2026-11-27",
+    "title": "Load the current plan when the saved promotion record is bad",
+    "status": "published",
+    "prs": [
+      739
+    ],
+    "sections": {
+      "Improved": [
+        "Load the current plan when the saved promotion record is bad"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-738",
     "date": "2026-11-27",
     "title": "Fix private SafeDose page titles",

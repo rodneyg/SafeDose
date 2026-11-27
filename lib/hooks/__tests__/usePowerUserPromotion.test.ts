@@ -187,6 +187,55 @@ describe('usePowerUserPromotion', () => {
     expect(result.current.shouldShowPromotion()).toBe(true);
   });
 
+  it.each([
+    ['is damaged', () => Promise.resolve('{"doseCount": 10,')],
+    ['cannot be read', () => Promise.reject(new Error('storage unavailable'))],
+  ])('still loads the current Plus plan when the saved record %s', async (_label, readRecord) => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    (AsyncStorage.getItem as jest.Mock).mockImplementation(readRecord);
+    mockGetDoc.mockResolvedValue({ exists: () => true, data: () => ({ plan: 'plus' }) });
+
+    const { result } = renderHook(() => usePowerUserPromotion());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.promotionData).toEqual({
+      doseCount: 0,
+      lastShownDate: null,
+      hasActiveSubscription: true,
+      plan: 'plus',
+    });
+  });
+
+  it.each([
+    ['is damaged', () => Promise.resolve('not json')],
+    ['cannot be read', () => Promise.reject(new Error('storage unavailable'))],
+  ])('does not carry the previous account into one whose saved record %s', async (_label, readRecord) => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) =>
+      key === 'powerUserPromotion_v2_account-a'
+        ? Promise.resolve(JSON.stringify({ doseCount: 10, lastShownDate: null }))
+        : readRecord());
+
+    mockUser = { uid: 'account-a', isAnonymous: false };
+    const { result, rerender } = renderHook(() => usePowerUserPromotion());
+    await waitFor(() => expect(result.current.promotionData.doseCount).toBe(10));
+
+    mockUser = { uid: 'account-b', isAnonymous: false };
+    rerender({});
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.promotionData.doseCount).toBe(0);
+    expect(result.current.shouldShowPromotion()).toBe(false);
+
+    await act(async () => {
+      await result.current.incrementDoseCount();
+    });
+    expect(AsyncStorage.setItem).toHaveBeenLastCalledWith(
+      'powerUserPromotion_v2_account-b',
+      expect.stringContaining('"doseCount":1,')
+    );
+  });
+
   it('should increment dose count', async () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
       doseCount: 3,
