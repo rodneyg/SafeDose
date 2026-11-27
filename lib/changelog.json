@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-729",
+    "date": "2026-11-27",
+    "title": "Fix dose log cap with unreadable timestamps",
+    "status": "published",
+    "prs": [
+      729
+    ],
+    "sections": {
+      "Improved": [
+        "Fix dose log cap with unreadable timestamps"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-728",
     "date": "2026-11-27",
     "title": "fix: make SafeDose releases retryable",
