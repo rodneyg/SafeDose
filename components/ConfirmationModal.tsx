@@ -21,6 +21,7 @@ export default function ConfirmationModal({
       animationType="fade"
       transparent
       visible={visible}
+      accessibilityLabel={title}
       onRequestClose={onCancel}
     >
       <View style={styles.overlay}>
