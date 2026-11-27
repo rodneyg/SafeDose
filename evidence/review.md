@@ -1,31 +1,32 @@
-# T-994841232299592121510913 review of SafeDose PR 669
+# T-994841232299592121511421 review of SafeDose PR 668
 
-PR: https://github.com/rodneyg/SafeDose/pull/669
+PR: https://github.com/rodneyg/SafeDose/pull/668
 
 ## Reviewed revision and scope
 
-- Final PR head SHA: `00bf799b1cc90fbd1dc493f41430c17535219175`.
-- Squash merge commit: `528a9fe44eb13c293cb66559d607fee9417cdc8c`.
-- Head branch: `test/large-vial-small-dose-coverage`.
-- The diff adds one 106-line test file, `lib/dosing/__tests__/largeVialSmallDose.test.ts`, with 27 cases and no production-code changes.
+- PR head SHA: unavailable from `gh pr view` because this environment is not signed in. The preserved review identifies the merged PR revision as squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
+- The current shallow checkout contains the merged feature but not that historical commit object. Its grafted base is `c6959c1b6283a41417e63a39224c2626fd9c0b6d`.
+- The change adds an optional local date and time field to the dose save step, validates that the time is no more than 30 days old and not in the future, stores the selected ISO timestamp, and sorts local history newest first.
 
 ## Findings
 
-- No correctness or scope issue was found.
-- Parser coverage includes 100, 500, 1000, and comma-formatted 1,000 mg vial amounts plus 0.25, 0.125, `.25`, and 250 dose inputs.
-- Planner coverage checks large-vial dilution math, scanned 1000 mg input, and the intentional 0.1 mL to 20 mL BAC-water validation window.
-- Dose coverage checks 0.25 mg, 0.125 mg, and 250 mcg inputs, including exact equivalence between 250 mcg and 0.25 mg.
-- Syringe coverage checks expected U-100 and U-40 markings for both large-vial and small-dose cases.
-- GitHub reported all 14 checks passed before merge.
+- No correctness or product-scope issue was found.
+- Blank input preserves the existing current-time behavior.
+- Parsing accepts a real local `YYYY-MM-DD HH:MM` value and rejects impossible dates and times.
+- Validation rejects dates more than 30 days old and dates beyond a one-minute clock-skew allowance. Values within that allowance are clamped to the current time, so a future timestamp is not stored.
+- `useDoseLogging` repeats timestamp validation, so another caller cannot bypass the UI check.
+- Backdated entries are sorted by timestamp, and the local 100-entry limit retains the newest entries.
+- Firestore continues to order the same saved `timestamp` field.
 
 ## Test command output
 
-- `npm test -- --runInBand lib/dosing/__tests__/largeVialSmallDose.test.ts`: could not run in this checkout because dependencies are not installed (`jest: not found`). No dependency installation or lockfile change was attempted. The exact output was observed in the terminal.
-- GitHub CI independently reported 14 passing checks on the PR.
-- `git diff --check`: passed for this review evidence change.
+- Preserved output for `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed and 10 tests passed. See `evidence/pr668-focused-test-output.txt`.
+- Preserved output for `npm test -- --runInBand`: 186 suites passed and 2,138 tests passed. See `evidence/pr668-full-test-output.txt`.
+- Current rerun of `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts`: could not start because this checkout has no installed dependencies (`jest: not found`). See `evidence/test-output.txt`. Per task rules, no install or lockfile change was attempted.
+- `git diff --check`: passed.
 
 ## Final PR state
 
-Merged before this review completed. Public GitHub PR HTML confirms that PR 669 was marked ready and then merged on November 26, 2026. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted because repeating a state-changing action on an already merged PR would be unsafe.
+Closed because PR 668 was already squash-merged before this run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted because repeating a state-changing action on a merged PR would be unsafe.
 
-`gh pr view` could not confirm the state because this environment is not signed in to GitHub. Public PR, commits, files, and merge-commit pages independently confirmed the final head SHA, diff, passing check count, and merged state.
+The required `gh pr view` confirmation could not be obtained: `gh auth status` reports no signed-in GitHub session, and both public API and HTML fallbacks were rejected with HTTP 403. The exact CLI result is in `evidence/gh-pr-view.txt`. Independent repository evidence confirms the merged state: the published PR 668 changelog is present, the feature implementation and tests are in the current mainline tree, and preserved prior review evidence records squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
