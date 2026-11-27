@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-732",
+    "date": "2026-11-27",
+    "title": "fix: normalize scanned syringe volume decimals",
+    "status": "published",
+    "prs": [
+      732
+    ],
+    "sections": {
+      "Improved": [
+        "fix: normalize scanned syringe volume decimals"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-731",
     "date": "2026-11-27",
     "title": "test: cover SafeDose fulfillment guards",
