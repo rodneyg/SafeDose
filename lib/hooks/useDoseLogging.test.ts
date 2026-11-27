@@ -192,8 +192,9 @@ describe('useDoseLogging', () => {
     }
   });
 
-  it('continues without throwing when local storage fails', async () => {
+  it('reports failure when local storage and Firestore both fail', async () => {
     storage.setItem.mockRejectedValueOnce(new Error('storage unavailable'));
+    mockAddDocWithEnv.mockRejectedValueOnce(new Error('cloud unavailable'));
     const { result } = renderHook(() => useDoseLogging());
 
     let response: Awaited<ReturnType<typeof result.current.logDose>>;
@@ -201,11 +202,22 @@ describe('useDoseLogging', () => {
       response = await result.current.logDose(doseInfo);
     });
 
-    expect(response!).toEqual({ success: true, localDoseCount: undefined });
+    expect(response!).toEqual({ success: false });
     expect(console.error).toHaveBeenCalledWith(
       '[useDoseLogging] Error saving dose log locally:',
       expect.any(Error)
     );
+    expect(incrementLogsUsed).not.toHaveBeenCalled();
+  });
+
+  it('reports success when Firestore saved the dose but local storage failed', async () => {
+    storage.setItem.mockRejectedValueOnce(new Error('storage unavailable'));
+    const { result } = renderHook(() => useDoseLogging());
+
+    await expect(result.current.logDose(doseInfo)).resolves.toEqual({
+      success: true,
+      localDoseCount: undefined,
+    });
     expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
   });
 

@@ -210,8 +210,14 @@ export function useDoseLogging() {
         doseLog.firestoreId = firestoreId;
       }
       
-      // Save locally (always works, now includes Firestore ID if available)
+      // Save locally (now includes Firestore ID if available)
       const localDoseCount = await saveDoseLogLocally(doseLog);
+
+      // A cloud copy can preserve the dose when browser storage is full. For a
+      // guest, however, a failed local write means there is no saved dose.
+      if (localDoseCount === undefined && !firestoreId) {
+        return { success: false };
+      }
       
       // Increment log usage count
       await incrementLogsUsed();
