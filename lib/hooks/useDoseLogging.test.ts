@@ -91,6 +91,25 @@ describe('useDoseLogging', () => {
     jest.restoreAllMocks();
   });
 
+  it('keeps a newly logged dose when the 101st cached record has an unreadable timestamp', async () => {
+    const cached = Array.from({ length: 99 }, (_, index) => doseLogAt(
+      `cached-${index}`,
+      new Date(Date.UTC(2026, 0, 1) + index * 60_000).toISOString(),
+    ));
+    cached.push(doseLogAt('unreadable', 'not-a-date'));
+    storage.getItem.mockResolvedValue(JSON.stringify(cached));
+    jest.useFakeTimers().setSystemTime(new Date('2026-02-01T00:00:00.000Z'));
+
+    const { result } = renderHook(() => useDoseLogging());
+    await act(async () => { await result.current.logDose(doseInfo); });
+
+    const persisted = JSON.parse(storage.setItem.mock.calls[0][1]) as DoseLog[];
+    expect(persisted).toHaveLength(100);
+    expect(persisted[0].timestamp).toBe('2026-02-01T00:00:00.000Z');
+    expect(persisted.some((log) => log.id === 'unreadable')).toBe(false);
+    expect(persisted.filter((log) => log.id.startsWith('cached-'))).toHaveLength(99);
+  });
+
   it('stores the correct instant across an America/Detroit date boundary', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-01-15T23:59:59.000-05:00'));
     const { result } = renderHook(() => useDoseLogging());

@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DoseLog, DoseLogContext } from '../../types/doseLog';
 import { useLogUsageTracking } from './useLogUsageTracking';
-import { resolveDoseTimestamp, sortLogsNewestFirst } from '../doseLogTimestamp';
+import { compareLogsNewestFirst, resolveDoseTimestamp, sortLogsNewestFirst } from '../doseLogTimestamp';
 
 /** Logs completed doses and exposes the current log-limit state. */
 export function useDoseLogging() {
