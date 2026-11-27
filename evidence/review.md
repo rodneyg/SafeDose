@@ -1,34 +1,41 @@
-# T-19647 review of SafeDose PR 668
+# PR 666 review evidence
 
-PR: https://github.com/rodneyg/SafeDose/pull/668
-
-## Reviewed revision and scope
-
-- PR head SHA: unavailable from `gh pr view` because this environment is not signed in. The merged PR revision in repository history is squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
-- The commit adds an optional local date and time field to the dose save step, validates that the selected time is no more than 30 days old and not in the future, stores the selected ISO timestamp, and keeps local history sorted newest first.
-- The follow-up PR 668 changelog commit is `5165261356bd69837270e5d9c883c03aee3ef4e6`.
-
-## Findings
-
-- No correctness issue was found in the merged diff.
-- Blank input preserves existing behavior by resolving to the current time.
-- The parser strictly accepts a real local `YYYY-MM-DD HH:MM` value and rejects impossible dates and times.
-- Timestamp validation rejects dates more than 30 days old and dates beyond a one-minute clock-skew allowance. A value within that allowance is clamped to the current time, so a future timestamp is never stored.
-- The timestamp is validated again inside `useDoseLogging`, so callers cannot bypass the UI validation.
-- Backdated entries are inserted according to their timestamps, and the 100-entry local limit retains the newest entries.
-- Firestore ordering continues to use the saved `timestamp` field, so remote and local history share the same ordering basis.
-- The change is limited to the final save UI, timestamp helpers, dose logging, the context type, and helper tests.
+- PR: https://github.com/rodneyg/SafeDose/pull/666
+- Title: Let users edit a saved dose log
+- Head branch: `claude/t-14282-edit-dose-log`
+- Head SHA: `21fcc4c1a042a21d7e8cbf16d4a72217c79c126d`
+- Observed final state: **closed**
+- Close event: the public Conversation page says `rodneyg closed this` on 2026-11-25.
 
 ## Test command output
 
-- `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed, 10 tests passed. Jest only selected the matching existing timestamp suite. Full output: `evidence/test-output.txt`.
-- `npm test -- --runInBand`: 186 suites passed, 2,138 tests passed. Full output: `evidence/full-test-output.txt`.
-- `npm run typecheck:dosing`: passed. Full output: `evidence/typecheck-dosing-output.txt`.
-- `npm run lint`: passed with 132 existing warnings and 0 errors. Full output: `evidence/lint-output.txt`.
-- `git diff --check 36d3387^ 36d3387`: passed with no whitespace errors. Result is appended to `evidence/test-output.txt`.
+No PR-head test command was run. The local checkout does not contain the PR head commit, has no Git remote, and cannot fetch through the environment proxy. Running tests against local `work` at `71622b14c7542ddd7d390674704444b273f02209` would not test PR 666.
+
+Access checks:
+
+```text
+$ gh auth status
+You are not logged into any GitHub hosts.
+
+$ gh pr view 666 --repo rodneyg/SafeDose --json ...
+To get started with GitHub CLI, please run: gh auth login
+
+$ git cat-file -e 21fcc4c1a042a21d7e8cbf16d4a72217c79c126d^{commit}
+fatal: Not a valid object name 21fcc4c1a042a21d7e8cbf16d4a72217c79c126d^{commit}
+
+$ curl https://api.github.com/repos/rodneyg/SafeDose/pulls/666
+curl: (56) CONNECT tunnel failed, response 403
+```
+
+The PR body says its added hook test file covers local editing, keeping other logs unchanged, dose-volume rescaling, clearing optional fields, missing and zero-dose cases, Firestore sync and failure behavior, and anonymous behavior. That claim could not be independently executed here.
+
+## Findings
+
+1. The requested draft no longer has an actionable draft state. The newest public Conversation page shows **Closed** and an explicit close event dated 2026-11-25.
+2. The public Files page identifies six changed files and the last commit as `21fcc4c`. Its cached state is older and still says Draft, so it is not reliable for the final state.
+3. No code finding is asserted because the PR head was unavailable locally and the rendered diff could not substitute for executable source review.
+4. No PR action was taken. In particular, the PR was not marked ready, reopened, updated, merged, or closed again.
 
 ## Final PR state
 
-Closed because PR 668 was already squash-merged before this task run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The repository history independently confirms the PR-numbered squash commit and its follow-up changelog commit, and `git merge-base --is-ancestor 36d3387 HEAD` confirms that the change is in the current mainline history.
-
-The required `gh pr view` confirmation could not be obtained because `gh auth status` reports that this environment is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Public API, public HTML, and read-only Git fetch fallbacks were also denied with HTTP 403 by the network proxy. Repeating a state-changing action would be unsafe and unnecessary because the PR-numbered change is already merged.
+**Closed.** The reason available from the live public record is that `rodneyg` closed it on 2026-11-25; GitHub displays no written close comment. A `gh pr view` confirmation was attempted but could not run because this environment has no signed-in GitHub session. The final state was independently confirmed from the newer public Conversation page and its explicit close event.
