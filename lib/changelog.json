@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-709",
+    "date": "2026-11-27",
+    "title": "Fix undefined fields in Firestore dose logs",
+    "status": "published",
+    "prs": [
+      709
+    ],
+    "sections": {
+      "Improved": [
+        "Fix undefined fields in Firestore dose logs"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-708",
     "date": "2026-11-27",
     "title": "T-99484123229957739: Increment scans from latest usage state",
