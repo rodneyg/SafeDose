@@ -55,3 +55,37 @@ it('requests the subscription status with an empty body and forwards the signal'
     expect.objectContaining({ body: '{}', signal }),
   );
 });
+
+it.each([
+  ['an empty body', async () => { throw new SyntaxError('Unexpected end of JSON input'); }],
+  ['a JSON null body', async () => null],
+  ['an HTML body', async () => { throw new SyntaxError('Unexpected token < in JSON'); }],
+])('throws the fallback error when an unsuccessful response has %s', async (_description, json) => {
+  jest.mocked(fetch).mockResolvedValue({ ok: false, json } as Response);
+
+  await expect(billingRequest(user, 'billing-path')).rejects.toThrow('Could not load payment details.');
+});
+
+it('throws the server error text even when other response fields are present', async () => {
+  jest.mocked(fetch).mockResolvedValue({
+    ok: false,
+    json: async () => ({ error: 'Billing provider unavailable.', detail: 'internal detail' }),
+  } as Response);
+
+  await expect(billingRequest(user, 'billing-path')).rejects.toThrow('Billing provider unavailable.');
+});
+
+it('rejects a successful response with a malformed body', async () => {
+  jest.mocked(fetch).mockResolvedValue({
+    ok: true,
+    json: async () => { throw new SyntaxError('Unexpected token < in JSON'); },
+  } as Response);
+
+  await expect(billingRequest(user, 'billing-path')).rejects.toThrow('Unexpected token < in JSON');
+});
+
+it('rejects a successful response with a null body', async () => {
+  jest.mocked(fetch).mockResolvedValue({ ok: true, json: async () => null } as Response);
+
+  await expect(billingRequest(user, 'billing-path')).rejects.toThrow('Invalid payment details response.');
+});
