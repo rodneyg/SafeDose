@@ -82,9 +82,6 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
     try {
       const userId = user?.uid || 'anonymous';
       const storageKey = `${POWER_USER_STORAGE_KEY}_${userId}`;
-      const stored = await AsyncStorage.getItem(storageKey);
-      if (!isCurrent()) return;
-      
       let data: PowerUserPromotionData = {
         doseCount: 0,
         lastShownDate: null,
@@ -92,9 +89,16 @@ export function usePowerUserPromotion(): UsePowerUserPromotionResult {
         plan: 'free'
       };
 
-      if (stored) {
-        data = { ...data, ...JSON.parse(stored) };
+      // A bad local record must not skip the plan check or keep another account's data.
+      try {
+        const stored = await AsyncStorage.getItem(storageKey);
+        if (stored) {
+          data = { ...data, ...JSON.parse(stored) };
+        }
+      } catch (error) {
+        console.error('[PowerUserPromotion] Error reading saved promotion data:', error);
       }
+      if (!isCurrent()) return;
 
       // For authenticated users, also check Firestore for subscription status
       if (user && !user.isAnonymous) {
