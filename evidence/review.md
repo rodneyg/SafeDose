@@ -1,32 +1,31 @@
-# T-994841232299592121511421 review of SafeDose PR 668
+# T-994841232299592121511052 review of SafeDose PR 654
 
-PR: https://github.com/rodneyg/SafeDose/pull/668
+PR: https://github.com/rodneyg/SafeDose/pull/654
 
 ## Reviewed revision and scope
 
-- PR head SHA: unavailable from `gh pr view` because this environment is not signed in. The preserved review identifies the merged PR revision as squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
-- The current shallow checkout contains the merged feature but not that historical commit object. Its grafted base is `c6959c1b6283a41417e63a39224c2626fd9c0b6d`.
-- The change adds an optional local date and time field to the dose save step, validates that the time is no more than 30 days old and not in the future, stores the selected ISO timestamp, and sorts local history newest first.
+- PR head SHA: unavailable in this checkout. The required `gh pr view` lookup could not authenticate, direct GitHub HTTPS requests were denied by the environment proxy with HTTP 403, and the shallow checkout boundary predates PR 654. No SHA is guessed.
+- The current mainline snapshot contains the published PR 654 changelog entry and `api/__tests__/billing-failure-paths.test.js`.
+- The change is test-only. It covers failure behavior for portal creation, subscription status, and Stripe webhook endpoints using mocked Stripe and Firebase dependencies and fixture-only credentials.
 
 ## Findings
 
-- No correctness or product-scope issue was found.
-- Blank input preserves the existing current-time behavior.
-- Parsing accepts a real local `YYYY-MM-DD HH:MM` value and rejects impossible dates and times.
-- Validation rejects dates more than 30 days old and dates beyond a one-minute clock-skew allowance. Values within that allowance are clamped to the current time, so a future timestamp is not stored.
-- `useDoseLogging` repeats timestamp validation, so another caller cannot bypass the UI check.
-- Backdated entries are sorted by timestamp, and the local 100-entry limit retains the newest entries.
-- Firestore continues to order the same saved `timestamp` field.
+- No correctness, security, or scope issue was found in the 260-line test file.
+- Authentication cases cover missing and malformed tokens, anonymous or incomplete claims, revoked or expired tokens, sanitized unexpected Firebase failures, and Bearer-token revocation checks.
+- Subscription status cases cover invalid methods, empty account defaults, paid account state, no-store caching, and sanitized storage failures.
+- Portal cases cover invalid methods, unusable or mode-mismatched Stripe keys, missing customer records, invalid return URL types before authentication, sanitized Stripe failures, and the default settings return URL.
+- Webhook cases cover invalid methods and signatures, missing webhook configuration, unreadable bodies, live/test mode mismatches, successful fulfillment delegation, sanitized fulfillment failure logging, and invalid Stripe keys.
+- Assertions agree with the current implementations in `lib/billing.server.js` and the three reviewed endpoint handlers. External calls are mocked, and no real Stripe, Firebase, purchase, or credential operation is performed.
 
 ## Test command output
 
-- Preserved output for `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts`: 1 suite passed and 10 tests passed. See `evidence/pr668-focused-test-output.txt`.
-- Preserved output for `npm test -- --runInBand`: 186 suites passed and 2,138 tests passed. See `evidence/pr668-full-test-output.txt`.
-- Current rerun of `npm test -- --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts`: could not start because this checkout has no installed dependencies (`jest: not found`). See `evidence/test-output.txt`. Per task rules, no install or lockfile change was attempted.
+- `npm ci --ignore-scripts`: failed because the environment proxy returned HTTP 403 from the npm registry. It did not change a lockfile or package version.
+- `npm test -- --runInBand api/__tests__/billing-failure-paths.test.js`: could not run because Jest was not installed after the blocked dependency fetch. Exact output is in `evidence/test-output.txt`.
+- `node --check api/__tests__/billing-failure-paths.test.js`, plus the same syntax check for all three endpoint handlers: passed. Exact output is in `evidence/node-check-output.txt`.
 - `git diff --check`: passed.
 
 ## Final PR state
 
-Closed because PR 668 was already squash-merged before this run. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted because repeating a state-changing action on a merged PR would be unsafe.
+Merged before this review run. The published changelog entry identifies PR 654 by number and records the matching title as published on November 26, 2026. The test file is present in the current mainline snapshot. No `gh pr ready`, push, close, merge, comment, review, or PR-body update was attempted because repeating a state-changing action on an already merged PR would be unsafe.
 
-The required `gh pr view` confirmation could not be obtained: `gh auth status` reports no signed-in GitHub session, and both public API and HTML fallbacks were rejected with HTTP 403. The exact CLI result is in `evidence/gh-pr-view.txt`. Independent repository evidence confirms the merged state: the published PR 668 changelog is present, the feature implementation and tests are in the current mainline tree, and preserved prior review evidence records squash commit `36d3387537903e407c907181f02a5f8fc0e9e838`.
+The requested final confirmation with `gh pr view` was attempted and failed because this session is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Direct API, HTML, and read-only Git fallbacks were also blocked by the network proxy. The repository changelog and current mainline contents are two independent local checks of the final merged state.

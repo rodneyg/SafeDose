@@ -1,0 +1,8 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/useDoseLogging.test.ts
+
+sh: 1: jest: not found
+
+diff_check=0
