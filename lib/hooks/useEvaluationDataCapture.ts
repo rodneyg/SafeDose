@@ -155,7 +155,13 @@ export function useEvaluationDataCapture() {
         timestamp: Date.now(),
         sessionId: sessionId || generateSessionId(),
         
-        image,
+        // Evaluation history needs image metadata for quality review, not the
+        // full scan payload. Keeping base64 here can exhaust browser storage.
+        image: image ? {
+          uri: image.uri,
+          mimeType: image.mimeType,
+          size: image.size,
+        } : undefined,
         prompt,
         userIntent,
         inputParameters,

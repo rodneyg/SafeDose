@@ -51,8 +51,9 @@ it('keeps an anonymous capture in local storage', async () => {
     id: expect.any(String),
     userId: null,
     sessionId: interaction.sessionId,
-    image: interaction.image,
+    image: { uri: interaction.image.uri, mimeType: interaction.image.mimeType, size: interaction.image.size },
   })]);
+  expect(stored[0].image).not.toHaveProperty('base64');
   expect(id).toBe(stored[0].id);
   expect(addDocWithEnv).not.toHaveBeenCalled();
   expect(result.current.isCapturing).toBe(false);
@@ -72,7 +73,11 @@ it('keeps the newest 500 captures and sends only image metadata to Firestore', a
 
   const stored = JSON.parse((await AsyncStorage.getItem(key)) ?? '[]');
   expect(stored).toHaveLength(500);
-  expect(stored[0]).toMatchObject({ userId: 'fixture-user', image: interaction.image });
+  expect(stored[0]).toMatchObject({
+    userId: 'fixture-user',
+    image: { uri: interaction.image.uri, mimeType: interaction.image.mimeType, size: interaction.image.size },
+  });
+  expect(stored[0].image).not.toHaveProperty('base64');
   expect(stored.slice(1)).toEqual(history.slice(0, 499));
   expect(collection).toHaveBeenCalledWith('fixture-db', 'evaluation_data');
   expect(addDocWithEnv).toHaveBeenCalledTimes(1);
