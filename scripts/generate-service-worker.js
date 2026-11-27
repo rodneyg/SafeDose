@@ -28,11 +28,17 @@ function generateServiceWorker(directory) {
   let bytes = 0;
   for (const file of files) {
     const content = fs.readFileSync(path.join(directory, file));
-    hash.update(file).update(content);
+    const nameBytes = Buffer.from(file, 'utf8');
+    const nameLength = Buffer.alloc(4);
+    nameLength.writeUInt32BE(nameBytes.length);
+    const contentLength = Buffer.alloc(8);
+    contentLength.writeBigUInt64BE(BigInt(content.length));
+    hash.update(nameLength).update(nameBytes).update(contentLength).update(content);
     bytes += content.length;
   }
+  const assets = files.map((file) => `/${file.split('/').map(encodeURIComponent).join('/')}`);
   const worker = template.replace('= __CACHE_NAME__', `= ${JSON.stringify(`safedose-static-${hash.digest('hex').slice(0, 16)}`)}`)
-    .replace('= __ASSETS__', `= ${JSON.stringify(files.map((file) => `/${file}`))}`);
+    .replace('= __ASSETS__', `= ${JSON.stringify(assets)}`);
   fs.writeFileSync(path.join(directory, 'sw.js'), worker);
   return { files: files.length, bytes };
 }

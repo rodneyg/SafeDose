@@ -48,6 +48,19 @@ describe('production service worker', () => {
     expect(generate()).not.toBe(original);
     expect(original).not.toContain('app.js.map');
   });
+  test('cache identity frames file names and contents with lengths', () => {
+    const first = generate();
+    fs.rmSync(path.join(directory, 'app.js'));
+    fs.writeFileSync(path.join(directory, 'app'), 'jsapp.js');
+    const second = generate();
+    expect(second).not.toBe(first);
+  });
+  test('asset paths encode each URL path segment', () => {
+    fs.writeFileSync(path.join(directory, 'asset #1.js'), 'asset');
+    const worker = generate();
+    expect(worker).toContain('/asset%20%231.js');
+    expect(worker).not.toContain('/asset #1.js');
+  });
   test('missing export fails instead of shipping an empty cache', () => {
     fs.unlinkSync(path.join(directory, 'index.html'));
     expect(generate).toThrow('Export the web app');
