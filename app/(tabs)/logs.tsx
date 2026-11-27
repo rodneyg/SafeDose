@@ -181,6 +181,9 @@ export default function LogsScreen() {
               const concentration = formatConcentration(log.doseValue, log.unit, log.calculatedVolume);
               const drawToText = formatDrawToText(log);
               const dateLabel = formatDate(log.timestamp);
+              const dateTimeLabel = dateLabel
+                ? `${dateLabel} at ${formatTime(log.timestamp)}`
+                : 'Date unavailable';
               return (
                 <View key={log.id} style={[styles.logCard, index === 0 && styles.mostRecentCard]}>
                   <View style={styles.logHeader}>
@@ -222,7 +225,7 @@ export default function LogsScreen() {
                     </View>
                     <TouchableOpacity
                       accessibilityRole="button"
-                      accessibilityLabel={`Delete log for ${getDisplaySubstanceName(log.substanceName)}, ${formatDate(log.timestamp)} at ${formatTime(log.timestamp)}`}
+                      accessibilityLabel={`Delete log for ${getDisplaySubstanceName(log.substanceName)}, ${dateTimeLabel}`}
                       style={styles.deleteButton}
                       onPress={() => handleDeleteLog(log)}
                     >
@@ -234,7 +237,7 @@ export default function LogsScreen() {
                     <View style={styles.timeInfo}>
                       <Calendar color="#62626D" size={14} />
                       <Text style={styles.timeText}>
-                        {dateLabel ? `${dateLabel} at ${formatTime(log.timestamp)}` : 'Date unavailable'}
+                        {dateTimeLabel}
                       </Text>
                     </View>
                     {index === 0 && (

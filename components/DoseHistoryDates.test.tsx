@@ -43,41 +43,56 @@ describe('dose history dates', () => {
       screen = create(<LogsScreen />);
     });
 
-    return screen!.root.findAllByType(Text).map(({ props }) =>
+    const text = screen!.root.findAllByType(Text).map(({ props }) =>
       React.Children.toArray(props.children).join(''),
     );
+    const deleteButton = screen!.root.find((node) =>
+      node.props.accessibilityRole === 'button' &&
+      typeof node.props.accessibilityLabel === 'string' &&
+      node.props.accessibilityLabel.startsWith('Delete log for'),
+    );
+    return { text, deleteLabel: deleteButton.props.accessibilityLabel as string };
   }
 
   const timeOptions = { hour: '2-digit', minute: '2-digit' } as const;
 
   it('shows the elapsed minutes for a dose on the same local day', async () => {
     const dose = new Date(2026, 0, 16, 0, 5);
-    const text = await renderedText(new Date(2026, 0, 16, 0, 10), dose.toISOString());
+    const { text, deleteLabel } = await renderedText(new Date(2026, 0, 16, 0, 10), dose.toISOString());
+    const dateTime = `5m ago at ${dose.toLocaleTimeString([], timeOptions)}`;
 
-    expect(text).toContain(`5m ago at ${dose.toLocaleTimeString([], timeOptions)}`);
+    expect(text).toContain(dateTime);
+    expect(deleteLabel).toBe(`Delete log for Test medication, ${dateTime}`);
   });
 
   it('labels a dose just before local midnight as yesterday', async () => {
     const dose = new Date(2026, 0, 15, 23, 55);
-    const text = await renderedText(new Date(2026, 0, 16, 0, 10), dose.toISOString());
+    const { text, deleteLabel } = await renderedText(new Date(2026, 0, 16, 0, 10), dose.toISOString());
+    const dateTime = `Yesterday at ${dose.toLocaleTimeString([], timeOptions)}`;
 
-    expect(text).toContain(`Yesterday at ${dose.toLocaleTimeString([], timeOptions)}`);
+    expect(text).toContain(dateTime);
+    expect(deleteLabel).toBe(`Delete log for Test medication, ${dateTime}`);
   });
 
   it.each(['2026-01-16T04:55:00.000Z', '2026-01-15T23:55:00.000-05:00'])(
     'shows the device-local date and time for the ISO timestamp %s',
     async (timestamp) => {
       const dose = new Date(Date.UTC(2026, 0, 16, 4, 55));
-      const text = await renderedText(new Date(2026, 0, 26, 12), timestamp);
+      const { text, deleteLabel } = await renderedText(new Date(2026, 0, 26, 12), timestamp);
+      const dateTime = `${dose.toLocaleDateString()} at ${dose.toLocaleTimeString([], timeOptions)}`;
 
-      expect(text).toContain(`${dose.toLocaleDateString()} at ${dose.toLocaleTimeString([], timeOptions)}`);
+      expect(text).toContain(dateTime);
+      expect(deleteLabel).toBe(`Delete log for Test medication, ${dateTime}`);
     },
   );
 
   it.each(['not-a-date', ''])('shows one fallback for an invalid timestamp (%j)', async (timestamp) => {
-    const text = await renderedText(new Date(2026, 0, 16, 0, 10), timestamp);
+    const { text, deleteLabel } = await renderedText(new Date(2026, 0, 16, 0, 10), timestamp);
 
     expect(text).toContain('Date unavailable');
     expect(text.join(' ')).not.toContain('Invalid Date');
+    expect(deleteLabel).toBe('Delete log for Test medication, Date unavailable');
+    expect(deleteLabel).not.toContain('null');
+    expect(deleteLabel).not.toContain('Invalid Date');
   });
 });
