@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-700",
+    "date": "2026-11-27",
+    "title": "fix: patch xmldom resolution under Expo plist",
+    "status": "published",
+    "prs": [
+      700
+    ],
+    "sections": {
+      "Improved": [
+        "fix: patch xmldom resolution under Expo plist"
+      ]
+    }
+  },
+  {
     "id": "2026-11-26-pr-703",
     "date": "2026-11-26",
     "title": "Add current product screenshots to README",
