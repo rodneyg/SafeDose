@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-710",
+    "date": "2026-11-27",
+    "title": "Fix injection site last-used calendar days",
+    "status": "published",
+    "prs": [
+      710
+    ],
+    "sections": {
+      "Improved": [
+        "Fix injection site last-used calendar days"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-709",
     "date": "2026-11-27",
     "title": "Fix undefined fields in Firestore dose logs",
