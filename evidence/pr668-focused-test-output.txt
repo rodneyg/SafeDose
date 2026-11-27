@@ -1,0 +1,14 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> safedose@1.0.0 test
+> jest --runInBand lib/__tests__/doseLogTimestamp.test.ts lib/hooks/__tests__/useDoseLogging.test.ts
+
+ts-jest[config] (WARN)
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /workspace/SafeDose/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+
+Test Suites: 1 passed, 1 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        3.522 s
+Ran all test suites matching lib/__tests__/doseLogTimestamp.test.ts|lib/hooks/__tests__/useDoseLogging.test.ts.
+diff_check=0
