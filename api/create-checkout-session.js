@@ -8,6 +8,23 @@ const { mapPriceIdToPlan } = require('../lib/plans');
 
 const allowRequest = createRateLimit(30);
 
+async function listCustomerSubscriptions(stripe, customerId) {
+  const subscriptions = [];
+  let startingAfter;
+  while (true) {
+    const page = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'all',
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+    subscriptions.push(...(page.data || []));
+    if (!page.has_more) return subscriptions;
+    startingAfter = page.data?.at(-1)?.id;
+    if (!startingAfter) throw new Error('Stripe returned an incomplete subscriptions page');
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -38,8 +55,13 @@ module.exports = async (req, res) => {
 
     const stripe = billingStripe();
     const resolved = await resolveCheckoutPriceId(stripe, { priceId, offerKey }, { mode: stripeConfig.mode });
-    const trial = hasTrial === true && !resolved.offerKey && mapPriceIdToPlan(resolved.priceId) === 'full-pro';
     const customerId = await getOrCreateCustomer(stripe, db, uid);
+    const subscriptions = await listCustomerSubscriptions(stripe, customerId);
+    if (subscriptions.some(subscription => ['active', 'trialing'].includes(subscription.status))) {
+      throw billingError(409, 'You already have an active subscription.');
+    }
+    const hadTrial = subscriptions.some(subscription => subscription.trial_start != null);
+    const trial = hasTrial === true && !hadTrial && !resolved.offerKey && mapPriceIdToPlan(resolved.priceId) === 'full-pro';
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
