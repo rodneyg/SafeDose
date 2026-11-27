@@ -18,6 +18,12 @@ interface InjectionSiteSelectorProps {
   onCancel: () => void;
 }
 
+function calendarDaysAgo(date: Date, now: Date): number {
+  const dateDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const nowDay = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor((nowDay - dateDay) / (1000 * 60 * 60 * 24));
+}
+
 export default function InjectionSiteSelector({
   doseHistory,
   selectedSite,
@@ -42,7 +48,7 @@ export default function InjectionSiteSelector({
       const wasUsedRecently = wasSiteUsedRecently(selectedSite, doseHistory, 7);
       if (wasUsedRecently) {
         const lastUsed = getLastUsedDate(selectedSite, doseHistory);
-        const daysAgo = lastUsed ? Math.floor((Date.now() - lastUsed.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+        const daysAgo = lastUsed ? calendarDaysAgo(lastUsed, new Date()) : 0;
         setWarningMessage(`Consider rotating to reduce scar tissue. Last used ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago.`);
         setShowWarning(true);
       } else {
@@ -90,9 +96,9 @@ export default function InjectionSiteSelector({
   };
 
   const formatLastUsed = (date: Date): string => {
-    const daysAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const daysAgo = calendarDaysAgo(date, new Date());
     if (daysAgo === 0) return 'Today';
-    if (daysAgo === 1) return '1 day ago';
+    if (daysAgo === 1) return 'Yesterday';
     if (daysAgo < 7) return `${daysAgo} days ago`;
     return `${Math.floor(daysAgo / 7)}w ago`;
   };

@@ -79,7 +79,7 @@ describe('InjectionSiteSelector', () => {
       expect(screen.getByText(label)).toBeTruthy();
     }
     expect(screen.getByText('Today')).toBeTruthy();
-    expect(screen.getByText('1 day ago')).toBeTruthy();
+    expect(screen.getByText('Yesterday')).toBeTruthy();
     expect(screen.getByText('3 days ago')).toBeTruthy();
     expect(screen.getByText('2w ago')).toBeTruthy();
 
