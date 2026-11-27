@@ -169,6 +169,29 @@ describe('useDoseLogging', () => {
     expect(incrementLogsUsed).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['without notes', undefined],
+    ['with notes', 'after breakfast'],
+  ])('omits undefined fields from the Firestore document %s', async (_label, notes) => {
+    const { result } = renderHook(() => useDoseLogging());
+
+    await act(async () => {
+      await result.current.logDose(doseInfo, notes);
+    });
+
+    const firestoreDocument = mockAddDocWithEnv.mock.calls[0][1] as Record<string, unknown>;
+    expect(Object.values(firestoreDocument)).not.toContain(undefined);
+    expect(firestoreDocument).toMatchObject({
+      userId: 'test-user-123',
+      substanceName: doseInfo.substanceName,
+    });
+    if (notes === undefined) {
+      expect(firestoreDocument).not.toHaveProperty('notes');
+    } else {
+      expect(firestoreDocument).toHaveProperty('notes', notes);
+    }
+  });
+
   it('continues without throwing when local storage fails', async () => {
     storage.setItem.mockRejectedValueOnce(new Error('storage unavailable'));
     const { result } = renderHook(() => useDoseLogging());

@@ -61,10 +61,11 @@ export function useDoseLogging() {
 
     try {
       const doseLogsCollection = collection(db, 'dose_logs');
-      const docRef = await addDocWithEnv(doseLogsCollection, {
-        ...doseLog,
-        userId: user.uid,
-      });
+      const firestoreDoseLog = Object.fromEntries(
+        Object.entries({ ...doseLog, userId: user.uid })
+          .filter(([, value]) => value !== undefined)
+      );
+      const docRef = await addDocWithEnv(doseLogsCollection, firestoreDoseLog);
       console.log('Dose log saved to Firestore:', doseLog.id, 'Document ID:', docRef.id);
       return docRef.id;
     } catch (error) {
