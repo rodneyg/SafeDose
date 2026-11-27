@@ -46,6 +46,7 @@ it('claims the prompt once on the second saved dose and preserves both data form
     await Promise.all([result.current.offerSurvey(2, 'scan'), result.current.offerSurvey(2, 'scan')]);
   });
   expect(result.current.prompt).toMatchObject({ sessionCount: 2, includeWhyHere: true });
+  expect(JSON.parse((await AsyncStorage.getItem('pmf_survey_data_test-user'))!)).toMatchObject({ hasShownBefore: true });
   expect(logAnalyticsEvent).toHaveBeenCalledTimes(2);
 
   await act(async () => result.current.finishSurvey({
@@ -115,4 +116,38 @@ it('drops an old account’s prompt on sign-in and uses only the current account
   expect(setDocWithEnv).not.toHaveBeenCalled();
   await act(async () => result.current.offerSurvey(2, 'scan'));
   expect(result.current.prompt).toMatchObject({ userId: 'returning', lastSessionType: 'scan' });
+});
+
+it('removes the marker when the account changes during its deferred write', async () => {
+  let finishWrite!: () => void;
+  let writeStarted!: () => void;
+  const started = new Promise<void>(resolve => { writeStarted = resolve; });
+  const writeGate = new Promise<void>(resolve => { finishWrite = resolve; });
+  jest.spyOn(AsyncStorage, 'setItem').mockImplementation(async (key, value) => {
+    if (key === 'pmf_survey_data_test-user') {
+      writeStarted();
+      await writeGate;
+    }
+    return AsyncStorage.multiSet([[key, value]]);
+  });
+
+  const { result, rerender } = renderHook(useOnboardingSurvey);
+  let offering!: Promise<void>;
+  act(() => { offering = result.current.offerSurvey(2, 'manual'); });
+  await started;
+  expect(await AsyncStorage.getItem('pmf_survey_data_test-user')).toBeNull();
+
+  mockUser = { uid: 'different-user', isAnonymous: false };
+  rerender({});
+  finishWrite();
+  await act(async () => offering);
+
+  expect(result.current.prompt).toBeNull();
+  expect(logAnalyticsEvent).not.toHaveBeenCalledWith(ANALYTICS_EVENTS.PMF_SURVEY_SHOWN, expect.anything());
+  expect(await AsyncStorage.getItem('pmf_survey_data_test-user')).toBeNull();
+
+  mockUser = { uid: 'test-user', isAnonymous: false };
+  rerender({});
+  await act(async () => result.current.offerSurvey(2, 'manual'));
+  expect(result.current.prompt).toMatchObject({ userId: 'test-user', sessionCount: 2 });
 });

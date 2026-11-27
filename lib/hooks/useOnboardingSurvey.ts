@@ -48,7 +48,12 @@ export function useOnboardingSurvey() {
 
       // Reuse the PMF marker so earlier completions and skips remain honored.
       await AsyncStorage.setItem(pmfKey, JSON.stringify({ hasShownBefore: true, shownAt: new Date().toISOString() }));
-      if (currentStorageId.current !== storageId) return;
+      if (currentStorageId.current !== storageId) {
+        // The account changed while storage was writing, so this prompt was
+        // abandoned before it could be displayed. Leave that account eligible.
+        await AsyncStorage.removeItem(pmfKey);
+        return;
+      }
 
       const includeWhyHere = whyHereShown !== 'true';
       const nextPrompt = { storageId, userId, isAnonymous, sessionCount, lastSessionType, includeWhyHere };
