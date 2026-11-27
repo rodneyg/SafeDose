@@ -28,6 +28,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-705",
+    "date": "2026-11-27",
+    "title": "T-99484123229957738: Prevent duplicate subscription checkout and trials",
+    "status": "published",
+    "prs": [
+      705
+    ],
+    "sections": {
+      "Improved": [
+        "T-99484123229957738: Prevent duplicate subscription checkout and trials"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-704",
     "date": "2026-11-27",
     "title": "fix: expose SafeDose welcome title as a heading",
