@@ -27,14 +27,16 @@ export function useLogUsageTracking() {
   });
   const [isOnline, setIsOnline] = useState(true);
 
-  // Load cached log usage data from AsyncStorage
-  const loadCachedLogUsage = async () => {
+  // Load cached log usage data from AsyncStorage for the requested account.
+  const loadCachedLogUsage = async (uid: string, isCurrent: () => boolean = () => true) => {
     try {
-      const cached = await AsyncStorage.getItem(`log_usage_${user?.uid || 'anonymous'}`);
+      const cached = await AsyncStorage.getItem(`log_usage_${uid || 'anonymous'}`);
       if (cached) {
         const parsed = JSON.parse(cached);
-        setLogUsageData(parsed);
-        console.log('Loaded cached log usage:', parsed);
+        if (isCurrent()) {
+          setLogUsageData(parsed);
+          console.log('Loaded cached log usage:', parsed);
+        }
       }
     } catch (error) {
       console.error('Error loading cached log usage:', error);
@@ -42,9 +44,9 @@ export function useLogUsageTracking() {
   };
 
   // Save log usage data to AsyncStorage
-  const saveCachedLogUsage = async (data: { logsUsed: number; plan: string; limit: number; lastReset?: string | null }) => {
+  const saveCachedLogUsage = async (uid: string, data: { logsUsed: number; plan: string; limit: number; lastReset?: string | null }) => {
     try {
-      await AsyncStorage.setItem(`log_usage_${user?.uid || 'anonymous'}`, JSON.stringify(data));
+      await AsyncStorage.setItem(`log_usage_${uid || 'anonymous'}`, JSON.stringify(data));
     } catch (error) {
       console.error('Error saving cached log usage:', error);
     }
@@ -74,39 +76,48 @@ export function useLogUsageTracking() {
   };
 
   useEffect(() => {
+    let active = true;
     checkNetworkStatus();
-    if (user?.uid) {
-      loadCachedLogUsage();
-    }
+    void loadCachedLogUsage(user?.uid || 'anonymous', () => active);
+    return () => { active = false; };
   }, [user]);
 
   useEffect(() => {
+    let active = true;
     const fetchLogUsageData = async () => {
       if (!user?.uid || !isOnline) {
         console.log('Skipping log usage Firestore fetch: no user UID or offline');
         return;
       }
+      const uid = user.uid;
+      const isAnonymous = user.isAnonymous;
+      const isCurrentAccount = () => active && user?.uid === uid;
 
       try {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db, 'users', uid);
         const operation = async () => {
           const userDoc = await getDoc(userDocRef);
+          if (!isCurrentAccount()) return null;
           let data;
           if (!userDoc.exists()) {
+            if (!isCurrentAccount()) return null;
             // Create new user document if it doesn't exist
             const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
             data = { logsUsed: 0, plan: 'free', lastLogReset: currentMonthStart };
             await setDoc(userDocRef, data, { merge: true });
+            if (!isCurrentAccount()) return null;
             console.log('Created new user log tracking:', data);
           } else {
             data = userDoc.data();
             
             // Ensure lastLogReset exists - add it if missing
             if (!data.lastLogReset) {
+              if (!isCurrentAccount()) return null;
               const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
               data.lastLogReset = currentMonthStart;
               data.logsUsed = 0; // Reset logsUsed when adding lastLogReset
               await setDoc(userDocRef, data, { merge: true });
+              if (!isCurrentAccount()) return null;
               console.log('Added lastLogReset to user document:', data);
             } else {
               // Monthly reset logic for logs
@@ -115,22 +126,25 @@ export function useLogUsageTracking() {
               const lastReset = new Date(data.lastLogReset).toISOString();
 
               if (new Date(lastReset) < new Date(currentMonthStart)) {
+                if (!isCurrentAccount()) return null;
                 data.logsUsed = 0;
                 data.lastLogReset = currentMonthStart;
                 await setDoc(userDocRef, data, { merge: true });
+                if (!isCurrentAccount()) return null;
                 console.log('Reset logsUsed to 0 for new month:', data);
               }
             }
           }
-          const limit = getLogLimitForPlan(data.plan || 'free', user.isAnonymous);
+          const limit = getLogLimitForPlan(data.plan || 'free', isAnonymous);
           const newLogUsageData = { 
             logsUsed: data.logsUsed || 0, 
             plan: data.plan || 'free', 
             limit, 
             lastReset: data.lastLogReset 
           };
+          if (!isCurrentAccount()) return newLogUsageData;
           setLogUsageData(newLogUsageData);
-          await saveCachedLogUsage(newLogUsageData);
+          await saveCachedLogUsage(uid, newLogUsageData);
           
           console.log('Fetched log usage data:', newLogUsageData);
           return newLogUsageData;
@@ -138,11 +152,12 @@ export function useLogUsageTracking() {
         await retryOperation(operation, MAX_RETRIES, INITIAL_BACKOFF);
       } catch (error) {
         console.error('Error fetching log usage data:', error);
-        await loadCachedLogUsage(); // Fallback to cached data
+        await loadCachedLogUsage(uid, isCurrentAccount); // Fallback to this account's cached data
       }
     };
 
-    fetchLogUsageData();
+    void fetchLogUsageData();
+    return () => { active = false; };
   }, [user, isOnline]);
 
   const checkLogUsageLimit = async () => {
@@ -287,7 +302,7 @@ export function useLogUsageTracking() {
         setLogUsageData((prev) => {
           const newData = { ...prev, logsUsed: prev.logsUsed + 1 };
           console.log('[useLogUsageTracking] Updated local log usage data:', newData);
-          saveCachedLogUsage(newData);
+          saveCachedLogUsage(user?.uid || 'anonymous', newData);
           return newData;
         });
         console.log('[useLogUsageTracking] ✅ Successfully incremented logs used');
