@@ -23,7 +23,10 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
 
 it('requires an explicit vial source for a new manual dose, even after a form reset', () => {
   const { result } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
@@ -222,4 +225,40 @@ it('restores only the latest confirmed calculation after starting over and remou
     dose: '2 mg', draw: 'Draw to 40.00 units (U-100 syringe)', vial: '10 mg', solutionVolume: '2 mL',
   }));
   expect(restored.result.current).toMatchObject({ screenStep: 'intro', dose: '', calculatedVolume: null });
+});
+
+
+it('preserves a completed dose awaiting feedback logging after eleven idle minutes', () => {
+  jest.useFakeTimers();
+  const { result } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
+
+  act(() => {
+    result.current.setScreenStep('manualEntry');
+    result.current.setDose('1');
+    result.current.handleGoToFeedback('start_over');
+  });
+  act(() => result.current.handleInjectionSiteSelected());
+  expect(result.current.screenStep).toBe('postDoseFeedback');
+  expect(result.current.feedbackContext).not.toBeNull();
+
+  act(() => { jest.advanceTimersByTime(11 * 60 * 1000); });
+
+  expect(result.current.screenStep).toBe('postDoseFeedback');
+  expect(result.current.feedbackContext).not.toBeNull();
+  expect(result.current.dose).toBe('1');
+});
+
+it('still resets an ordinary idle form after eleven minutes', () => {
+  jest.useFakeTimers();
+  const { result } = renderHook(() => useDoseCalculator({ checkUsageLimit }));
+
+  act(() => {
+    result.current.setScreenStep('manualEntry');
+    result.current.setDose('1');
+  });
+  act(() => { jest.advanceTimersByTime(11 * 60 * 1000); });
+
+  expect(result.current.screenStep).toBe('intro');
+  expect(result.current.dose).toBe('');
+  expect(result.current.stateHealth).toBe('recovering');
 });

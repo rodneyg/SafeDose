@@ -911,6 +911,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   useEffect(() => {
     const checkStateHealth = () => {
       const now = Date.now();
+      if (feedbackContext) return;
       if (now - lastActionTimestamp.current > 10 * 60 * 1000) {
         console.log('[useDoseCalculator] Detected stale state, resetting');
         resetFullForm();
@@ -920,7 +921,7 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
     };
     const intervalId = setInterval(checkStateHealth, 60000);
     return () => clearInterval(intervalId);
-  }, [resetFullForm]);
+  }, [feedbackContext, resetFullForm]);
 
   // The useEffect below was causing a navigation loop and has been removed
   // When users clicked "Scan" or "Enter Manually" from the intro screen,
