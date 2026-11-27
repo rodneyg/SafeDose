@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-730",
+    "date": "2026-11-27",
+    "title": "Ignore stale log usage reads after account switch",
+    "status": "published",
+    "prs": [
+      730
+    ],
+    "sections": {
+      "Improved": [
+        "Ignore stale log usage reads after account switch"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-729",
     "date": "2026-11-27",
     "title": "Fix dose log cap with unreadable timestamps",
