@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getFirestore, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -60,6 +60,8 @@ export function useUsageTracking() {
   const { user, auth } = useAuth();
   const db = getFirestore();
   const [state, setState] = useState<{ uid: string; usage: ScanUsage; verified: boolean }>();
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [isOnline, setIsOnline] = useState(true);
   const currentUsage = state?.uid === user?.uid ? state : undefined;
   const usageData = currentUsage?.usage ?? EMPTY_USAGE;
@@ -109,6 +111,7 @@ export function useUsageTracking() {
 
     const result = await readUsage(user);
     if (auth && auth.currentUser?.uid !== user.uid) return false;
+    stateRef.current = result;
     setState(result);
     await saveCachedScans(user.uid, result.usage);
     if (auth && auth.currentUser?.uid !== user.uid) return false;
@@ -120,10 +123,16 @@ export function useUsageTracking() {
     if (!user?.uid || !isOnline) return;
 
     try {
-      await updateDoc(doc(db, 'users', user.uid), { scansUsed: increment(1) });
-      const usage = { ...usageData, scansUsed: usageData.scansUsed + 1 };
-      setState({ uid: user.uid, usage, verified: currentUsage?.verified ?? false });
-      await saveCachedScans(user.uid, usage);
+      const uid = user.uid;
+      if (auth && auth.currentUser?.uid !== uid) return;
+      await updateDoc(doc(db, 'users', uid), { scansUsed: increment(1) });
+      if (auth && auth.currentUser?.uid !== uid) return;
+      const latest = stateRef.current?.uid === uid ? stateRef.current : undefined;
+      const usage = { ...(latest?.usage ?? EMPTY_USAGE), scansUsed: (latest?.usage.scansUsed ?? 0) + 1 };
+      const nextState = { uid, usage, verified: latest?.verified ?? false };
+      stateRef.current = nextState;
+      setState(nextState);
+      await saveCachedScans(uid, usage);
     } catch {
       console.warn('Could not update scan usage.');
     }
