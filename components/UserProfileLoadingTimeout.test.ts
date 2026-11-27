@@ -65,7 +65,8 @@ describe('UserProfile Loading Timeout and Race Condition Fixes', () => {
     expect(contextContent).toContain('setTimeout');
     expect(contextContent).toContain('15000'); // 15 second timeout
     expect(contextContent).toContain('AbortController');
-    expect(contextContent).toContain('isLoadingRef.current');
+    expect(contextContent).toContain('loadIdRef.current');
+    expect(contextContent).toContain('profileOwnerRef.current');
     
     console.log('✅ Timeout mechanism verified in code');
   });
@@ -93,10 +94,9 @@ describe('UserProfile Loading Timeout and Race Condition Fixes', () => {
     );
     
     // Verify race condition prevention
-    expect(contextContent).toContain('if (isLoadingRef.current)');
-    expect(contextContent).toContain('Load already in progress, skipping duplicate call');
-    expect(contextContent).toContain('isLoadingRef.current = true');
-    expect(contextContent).toContain('isLoadingRef.current = false');
+    expect(contextContent).toContain('const isCurrentLoad = () => loadIdRef.current === loadId');
+    expect(contextContent).toContain('controller.signal.aborted || !isCurrentLoad()');
+    expect(contextContent).toContain('if (isCurrentLoad()) isLoadingRef.current = false');
     
     console.log('✅ Race condition prevention verified in code');
   });
