@@ -1,14 +1,15 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDoc } from 'firebase/firestore';
+import { getDoc, updateDoc } from 'firebase/firestore';
 import { setDocWithEnv } from '../firestoreWithEnv';
 import { useUsageTracking } from './useUsageTracking';
 import { getSubscriptionStatus } from '../subscriptionStatus';
 
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 let mockUser: any;
-jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
+const mockAuth = { currentUser: null as any };
+jest.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser, auth: mockAuth }) }));
 const mockDb = {};
 jest.mock('firebase/firestore', () => ({ getFirestore: () => mockDb, doc: jest.fn(() => ({ path: 'users/member' })), getDoc: jest.fn(), setDoc: jest.fn(), updateDoc: jest.fn(), increment: jest.fn() }));
 jest.mock('../firestoreWithEnv', () => ({ setDocWithEnv: jest.fn() }));
@@ -18,11 +19,14 @@ jest.mock('expo-network', () => ({ getNetworkStateAsync: jest.fn(async () => ({ 
 jest.mock('../subscriptionStatus', () => ({ getSubscriptionStatus: jest.fn() }));
 let usage: ReturnType<typeof useUsageTracking>;
 let tree: ReactTestRenderer;
-function Probe() { usage = useUsageTracking(); return null; }
+let retainedIncrement: () => Promise<void>;
+function Probe() { usage = useUsageTracking(); retainedIncrement ??= usage.incrementScansUsed; return null; }
 beforeEach(() => {
   jest.clearAllMocks();
+  retainedIncrement = undefined as any;
   jest.spyOn(console, 'log').mockImplementation(() => {});
   mockUser = { uid: 'member', isAnonymous: false };
+  mockAuth.currentUser = mockUser;
   (getSubscriptionStatus as jest.Mock).mockReset().mockResolvedValue({ plan: 'free', hasActiveSubscription: false });
 });
 afterEach(() => { act(() => tree?.unmount()); jest.restoreAllMocks(); });
@@ -100,6 +104,32 @@ it('refreshes a free user to the existing photo_check paid plan before allowing 
 
   expect(usage.usageData).toMatchObject({ plan: 'photo_check', scansUsed: 3, limit: -1 });
   expect(onVerifiedUsage).toHaveBeenCalledWith(expect.objectContaining({ plan: 'photo_check', limit: -1 }));
+});
+
+it('increments from the refreshed preflight count through the retained callback', async () => {
+  const lastReset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  (getDoc as jest.Mock).mockResolvedValue({ metadata: { fromCache: false }, data: () => ({ scansUsed: 2, lastReset }) });
+  await act(async () => { tree = create(<Probe />); });
+  const increment = retainedIncrement;
+
+  await act(async () => { await usage.checkUsageLimit(); });
+  expect(usage.usageData.scansUsed).toBe(2);
+  await act(async () => { await increment(); });
+
+  expect(usage.usageData.scansUsed).toBe(3);
+  expect(AsyncStorage.setItem).toHaveBeenLastCalledWith(`usage_member`, JSON.stringify({ scansUsed: 3, lastReset }));
+  expect(updateDoc).toHaveBeenCalledTimes(1);
+});
+
+it('does not write usage after the active account changes', async () => {
+  await act(async () => { tree = create(<Probe />); });
+  const increment = retainedIncrement;
+  mockAuth.currentUser = { uid: 'different-account' };
+
+  await act(async () => { await increment(); });
+
+  expect(updateDoc).not.toHaveBeenCalled();
+  expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
 });
 
 it('creates free plan state when the user document is empty', async () => {
