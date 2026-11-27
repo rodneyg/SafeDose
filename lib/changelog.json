@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27-pr-717",
+    "date": "2026-11-27",
+    "title": "fix: recover malformed feedback and prompt storage",
+    "status": "published",
+    "prs": [
+      717
+    ],
+    "sections": {
+      "Improved": [
+        "fix: recover malformed feedback and prompt storage"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-716",
     "date": "2026-11-27",
     "title": "Fix SafeDose rollback project targeting",
