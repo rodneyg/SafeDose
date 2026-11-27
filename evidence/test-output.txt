@@ -1,8 +1,8 @@
 npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
 
 > safedose@1.0.0 test
-> jest --runInBand lib/hooks/useDoseLogging.test.ts
+> jest --runInBand api/__tests__/billing-failure-paths.test.js
 
 sh: 1: jest: not found
 
-EXIT_STATUS=127
+exit=127

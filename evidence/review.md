@@ -1,25 +1,31 @@
-# T-994841232299592121511047 review of SafeDose PR 671
+# T-994841232299592121511052 review of SafeDose PR 654
 
-PR: https://github.com/rodneyg/SafeDose/pull/671
+PR: https://github.com/rodneyg/SafeDose/pull/654
 
 ## Reviewed revision and scope
 
-- PR head SHA: **unavailable**. `gh pr view` cannot run because this environment has no signed-in GitHub session, and three independent read-only network routes are denied by the proxy.
-- The checkout contains a shallow 100-commit main history beginning after PR 671. It does not contain the PR head ref or a commit associated with PR 671.
-- Current main contains dose logging fallback coverage, including local history after a Firestore read failure and save behavior after a Firestore write failure. That later main state cannot establish the exact PR 671 diff or head SHA.
+- PR head SHA: unavailable in this checkout. The required `gh pr view` lookup could not authenticate, direct GitHub HTTPS requests were denied by the environment proxy with HTTP 403, and the shallow checkout boundary predates PR 654. No SHA is guessed.
+- The current mainline snapshot contains the published PR 654 changelog entry and `api/__tests__/billing-failure-paths.test.js`.
+- The change is test-only. It covers failure behavior for portal creation, subscription status, and Stripe webhook endpoints using mocked Stripe and Firebase dependencies and fixture-only credentials.
 
 ## Findings
 
-- No soundness finding can be made about the exact PR 671 revision without its diff or head commit.
-- The current main implementation reads local history before calling Firestore, returns local history if the Firestore helper returns no logs after a failure, and avoids overwriting the local cache in that failure path.
-- The current main test suite contains cases for Firestore read failure fallback, recovery after a later successful read, and Firestore write failure fallback. These are relevant context only, not a substitute for reviewing PR 671.
-- No code fix was made because changing current main without seeing the PR diff would be speculative.
+- No correctness, security, or scope issue was found in the 260-line test file.
+- Authentication cases cover missing and malformed tokens, anonymous or incomplete claims, revoked or expired tokens, sanitized unexpected Firebase failures, and Bearer-token revocation checks.
+- Subscription status cases cover invalid methods, empty account defaults, paid account state, no-store caching, and sanitized storage failures.
+- Portal cases cover invalid methods, unusable or mode-mismatched Stripe keys, missing customer records, invalid return URL types before authentication, sanitized Stripe failures, and the default settings return URL.
+- Webhook cases cover invalid methods and signatures, missing webhook configuration, unreadable bodies, live/test mode mismatches, successful fulfillment delegation, sanitized fulfillment failure logging, and invalid Stripe keys.
+- Assertions agree with the current implementations in `lib/billing.server.js` and the three reviewed endpoint handlers. External calls are mocked, and no real Stripe, Firebase, purchase, or credential operation is performed.
 
 ## Test command output
 
-- `npm test -- --runInBand lib/hooks/useDoseLogging.test.ts`: could not start. The checkout has no `node_modules` directory and the shell reported `jest: not found` (exit 127). Exact output is in `evidence/test-output.txt`.
-- Dependency installation was not attempted because outbound access to GitHub is already denied and the task explicitly says not to change lockfiles or package versions when dependencies cannot be installed.
+- `npm ci --ignore-scripts`: failed because the environment proxy returned HTTP 403 from the npm registry. It did not change a lockfile or package version.
+- `npm test -- --runInBand api/__tests__/billing-failure-paths.test.js`: could not run because Jest was not installed after the blocked dependency fetch. Exact output is in `evidence/test-output.txt`.
+- `node --check api/__tests__/billing-failure-paths.test.js`, plus the same syntax check for all three endpoint handlers: passed. Exact output is in `evidence/node-check-output.txt`.
+- `git diff --check`: passed.
 
 ## Final PR state
 
-**Unconfirmed draft, not mutated.** The task is blocked because neither the PR head SHA, diff, CI state, nor live draft state can be read, and the signed-in `gh pr ready` action is unavailable. No `gh pr ready`, push, close, merge, review, comment, or PR-body update was attempted. The required live confirmation via `gh pr view` failed; exact output is in `evidence/gh-pr-view.txt`.
+Merged before this review run. The published changelog entry identifies PR 654 by number and records the matching title as published on November 26, 2026. The test file is present in the current mainline snapshot. No `gh pr ready`, push, close, merge, comment, review, or PR-body update was attempted because repeating a state-changing action on an already merged PR would be unsafe.
+
+The requested final confirmation with `gh pr view` was attempted and failed because this session is not signed in. Its exact output is in `evidence/gh-pr-view.txt`. Direct API, HTML, and read-only Git fallbacks were also blocked by the network proxy. The repository changelog and current mainline contents are two independent local checks of the final merged state.

@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-27-pr-736",
+    "date": "2026-11-27",
+    "title": "Review SafeDose draft PR 654",
+    "status": "published",
+    "prs": [
+      736
+    ],
+    "sections": {
+      "Improved": [
+        "Review SafeDose draft PR 654"
+      ]
+    }
+  },
+  {
+    "id": "2026-11-27-pr-733",
+    "date": "2026-11-27",
+    "title": "Review SafeDose draft PR 669",
+    "status": "published",
+    "prs": [
+      733
+    ],
+    "sections": {
+      "Improved": [
+        "Review SafeDose draft PR 669"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-732",
     "date": "2026-11-27",
     "title": "fix: normalize scanned syringe volume decimals",
