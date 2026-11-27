@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-742",
+    "date": "2026-11-27",
+    "title": "Fix Delete label for unavailable dose dates",
+    "status": "published",
+    "prs": [
+      742
+    ],
+    "sections": {
+      "Improved": [
+        "Fix Delete label for unavailable dose dates"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-741",
     "date": "2026-11-27",
     "title": "Fix failing check on SafeDose PR 665",
