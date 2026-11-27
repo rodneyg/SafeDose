@@ -123,9 +123,11 @@ export default function useDoseCalculator({ checkUsageLimit, trackInteraction }:
   // Preserve the label unit for concentrations prefilled from a scan.
   useEffect(() => {
     if (scannedFields.current?.concentrationUnit) return;
-    setConcentrationUnit(current => validateUnitCompatibility(unit, current).isValid
-      ? current
-      : unit === 'units' ? 'units/ml' : unit === 'mcg' ? 'mcg/ml' : 'mg/ml');
+    setConcentrationUnit(current => {
+      if (validateUnitCompatibility(unit, current).isValid) return current;
+      setConcentrationExact(null);
+      return unit === 'units' ? 'units/ml' : unit === 'mcg' ? 'mcg/ml' : 'mg/ml';
+    });
   }, [unit]);
   useEffect(() => {
     if (!scannedFields.current) return;
