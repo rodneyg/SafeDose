@@ -27,3 +27,19 @@ test('each sitemap URL exports one set of metadata in its HTML head', () => {
     assert.equal([...head.matchAll(/<meta\b[^>]* name="description"[^>]* content="[^"]+"/g)].length, 1, file);
   }
 });
+
+
+test('private account and checkout return routes export only their page titles', () => {
+  const cases = [
+    ['login.html', 'Sign In | SafeDose'],
+    ['reset-password.html', 'Reset password | SafeDose'],
+    ['success.html', 'Subscription status | SafeDose'],
+    ['settings.html', 'Settings | SafeDose'],
+  ];
+  for (const [file, expected] of cases) {
+    const html = readFileSync(new URL(file, dist), 'utf8');
+    const head = html.split('</head>', 1)[0];
+    assert.deepEqual([...head.matchAll(/<title\b[^>]*>([^<]+)<\/title>/g)].map(([, title]) => title), [expected], file);
+    assert.doesNotMatch(head, /rel="canonical"|property="og:|name="twitter:/, file);
+  }
+});

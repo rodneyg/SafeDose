@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import Head from 'expo-router/head';
 import { useAuth } from '../contexts/AuthContext';
 import { billingRequest } from '../lib/subscriptionStatus';
 
@@ -40,7 +41,9 @@ export default function SuccessScreen() {
 
   const [title, message] = messages[status];
   return (
-    <View style={styles.container}>
+    <>
+      <Head><title>Subscription status | SafeDose</title></Head>
+      <View style={styles.container}>
       <Text accessibilityRole="header" style={styles.title}>{title}</Text>
       <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
       {(status === 'pending' || status === 'unavailable') && user && !user.isAnonymous && session_id && (
@@ -56,7 +59,8 @@ export default function SuccessScreen() {
       <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}>
         <Text style={styles.buttonText}>Continue to SafeDose</Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </>
   );
 }
 
