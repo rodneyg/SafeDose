@@ -14,6 +14,20 @@
     }
   },
   {
+    "id": "2026-11-27-pr-740",
+    "date": "2026-11-27",
+    "title": "Fix failing check on PR 667",
+    "status": "published",
+    "prs": [
+      740
+    ],
+    "sections": {
+      "Improved": [
+        "Fix failing check on PR 667"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-739",
     "date": "2026-11-27",
     "title": "Load the current plan when the saved promotion record is bad",
