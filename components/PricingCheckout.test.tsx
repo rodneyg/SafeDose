@@ -22,9 +22,12 @@ jest.mock('../lib/apiBase', () => ({ getApiBaseUrl: () => 'https://example.inval
 jest.mock('../contexts/UserProfileContext', () => ({ useUserProfile: () => ({ profile: null }) }));
 let mockUser: { isAnonymous: boolean; getIdToken: () => Promise<string> };
 const mockNavigate = jest.fn();
+const mockBack = jest.fn();
+const mockCanGoBack = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
 jest.mock('expo-router', () => ({
-  Link: 'Link', router: { back: jest.fn(), push: mockNavigate }, useLocalSearchParams: () => ({ offer: mockOffer }),
+  Link: 'Link', router: { back: mockBack, canGoBack: mockCanGoBack, push: mockNavigate, replace: mockReplace }, useLocalSearchParams: () => ({ offer: mockOffer }),
 }));
 jest.mock('./UpgradeEmailForm', () => 'UpgradeEmailForm');
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => String(key) }));
@@ -50,6 +53,7 @@ const text = () => renderer.root.findAllByType('Text' as any)
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCanGoBack.mockReturnValue(true);
   mockUser = { isAnonymous: false, getIdToken: jest.fn().mockResolvedValue('checkout-test-token') };
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -75,6 +79,36 @@ afterEach(() => {
   mockOffer = undefined;
   if (originalWindow === undefined) delete (global as any).window;
   else global.window = originalWindow;
+});
+
+const maybeLater = () => renderer.root.findAllByType('TouchableOpacity' as any)
+  .find(node => node.findAllByType('Text' as any)
+    .some(label => React.Children.toArray(label.props.children).join('') === 'Maybe Later'))!;
+
+describe('Maybe Later dismissal', () => {
+  beforeEach(() => {
+    act(() => renderer.unmount());
+    mockPlatform = 'web';
+    mountPricing();
+  });
+
+  it('exposes Maybe Later as a button on web', () => {
+    expect(maybeLater().props.accessibilityRole).toBe('button');
+  });
+
+  it('returns to the previous screen when one is available', () => {
+    mockCanGoBack.mockReturnValue(true);
+    act(() => maybeLater().props.onPress());
+    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('returns home when pricing was opened directly', () => {
+    mockCanGoBack.mockReturnValue(false);
+    act(() => maybeLater().props.onPress());
+    expect(mockReplace).toHaveBeenCalledWith('/');
+    expect(mockBack).not.toHaveBeenCalled();
+  });
 });
 
 it('does not redirect while browsing pricing', () => {

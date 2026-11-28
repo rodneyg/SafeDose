@@ -327,7 +327,7 @@ export default function PricingPage() {
 
       {/* Footer Actions */}
       <View style={styles.footerActions}>
-        <TouchableOpacity onPress={handleCancel}>
+        <TouchableOpacity onPress={handleCancel} accessibilityRole="button">
           <Text style={styles.footerLink}>Maybe Later</Text>
         </TouchableOpacity>
         
