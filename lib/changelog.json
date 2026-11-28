@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-28-pr-747",
+    "date": "2026-11-28",
+    "title": "SafeDose: expose Maybe Later as a button",
+    "status": "published",
+    "prs": [
+      747
+    ],
+    "sections": {
+      "Improved": [
+        "SafeDose: expose Maybe Later as a button"
+      ]
+    }
+  },
+  {
     "id": "2026-11-28-pr-746",
     "date": "2026-11-28",
     "title": "Add optional half-life remaining estimate",
