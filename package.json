@@ -110,7 +110,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@playwright/test": "^1.65.1",
-    "@testing-library/react-native": "^14.1.0",
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~18.3.31",
     "@types/react-test-renderer": "^18.3.2",
