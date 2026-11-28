@@ -60,10 +60,10 @@ test('checks rendered pages, rejects browser and HTTP errors, and blocks writes'
     broken = true;
     assert.equal(await runSmoke(origin, { log: line => logs.push(line) }), 1);
     assert.ok(logs.some(line => line.includes('HTTP 503; expected 4xx')));
-    if (requests.some(([, path]) => path === '/api/health')) {
-      assert.ok(logs.includes('PASS health availability on origin/main: HTTP 200, ok=true'));
-      assert.ok(logs.includes('FAIL health availability on origin/main: HTTP 503; expected 200'));
-    }
+    assert.equal(requests.filter(([, path]) => path === '/api/health').length, 2,
+      'the health endpoint present in the fixture must be requested in both smoke runs');
+    assert.ok(logs.includes('PASS health availability on origin/main: HTTP 200, ok=true'));
+    assert.ok(logs.includes('FAIL health availability on origin/main: HTTP 503; expected 200'));
     assert.ok(logs.some(line => line.startsWith('FAIL page /login: 1 page error(s)')));
     assert.ok(logs.some(line => line === 'FAIL page /pricing: 0 page error(s), 1 console error(s), 0 HTTP error(s)'));
     assert.ok(logs.some(line => line.includes('PAGE ERROR /login: Error: private diagnostic')));
