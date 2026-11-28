@@ -13,6 +13,7 @@ import { useWebOffline } from '../../lib/hooks/useWebOffline';
 import { isFreeScanPlan } from '../../lib/upgradeNudges';
 import UpgradeNudge from '../../components/UpgradeNudge';
 import { exportDoseLogCsv } from '../../lib/exportDoseLogCsv';
+import EstimatedRemaining from '../../components/EstimatedRemaining';
 
 export default function LogsScreen() {
   const { user } = useAuth();
@@ -164,6 +165,7 @@ export default function LogsScreen() {
       </View>
 
       <ScrollView style={styles.logsList}>
+        <EstimatedRemaining key={user?.uid ?? 'anonymous'} logs={logs} uid={user?.uid} />
         {isFocused && !offline && user?.uid && hasVerifiedUsage && isFreeScanPlan(usageData) && (
           <UpgradeNudge key={user.uid} userId={user.uid} kind="firstLogs" />
         )}
