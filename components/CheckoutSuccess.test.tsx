@@ -1,14 +1,17 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import SuccessScreen from '../app/success';
+import { router } from 'expo-router';
 import { billingRequest } from '../lib/subscriptionStatus';
 
-const mockRouter = { push: jest.fn(), replace: jest.fn() };
 let mockParams: { session_id?: string } = { session_id: 'test-session' };
 let mockUser: { isAnonymous?: boolean } | null = { isAnonymous: false };
 jest.mock('react-native-css-interop/jsx-runtime', () => jest.requireActual('react/jsx-runtime'));
 jest.mock('react-native', () => jest.requireActual('../__mocks__/react-native'));
-jest.mock('expo-router', () => ({ Link: 'Link', router: mockRouter, useLocalSearchParams: () => mockParams }));
+jest.mock('expo-router', () => {
+  const router = { push: jest.fn(), replace: jest.fn() };
+  return { Link: 'Link', router, useLocalSearchParams: () => mockParams };
+});
 jest.mock('../lib/subscriptionStatus', () => ({ billingRequest: jest.fn() }));
 jest.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
 
@@ -61,7 +64,7 @@ it('shows sign in and support to a guest and carries the checkout session to sig
     .find(node => renderedTextFrom(node) === 'Sign in');
   expect(signIn).toBeDefined();
   act(() => signIn!.props.onPress());
-  expect(mockRouter.push).toHaveBeenCalledWith({
+  expect(router.push).toHaveBeenCalledWith({
     pathname: '/login',
     params: { from: 'success', session_id: 'test-session' },
   });
