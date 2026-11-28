@@ -10,15 +10,17 @@ import { logAnalyticsEvent, ANALYTICS_EVENTS } from '../lib/analytics';
 export default function LoginScreen() {
   const { user, auth } = useAuth();
   const router = useRouter();
-  const { from, offer } = useLocalSearchParams<{ from?: string; offer?: string }>();
+  const { from, offer, session_id } = useLocalSearchParams<{ from?: string; offer?: string; session_id?: string }>();
   const [error, setError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
     if (from === 'pricing' && user && !user.isAnonymous) {
       router.replace({ pathname: '/pricing', params: offer ? { offer } : {} });
+    } else if (from === 'success' && user && !user.isAnonymous) {
+      router.replace({ pathname: '/success', params: typeof session_id === 'string' ? { session_id } : {} });
     }
-  }, [from, offer, router, user]);
+  }, [from, offer, router, session_id, user]);
 
   const handleGoogleSignIn = async () => {
     if (isSigningIn) return;
@@ -34,6 +36,10 @@ export default function LoginScreen() {
         logAnalyticsEvent(ANALYTICS_EVENTS.SIGN_IN_SUCCESS, { method: 'google' });
       }
       if (from === 'pricing') return;
+      if (from === 'success') {
+        router.replace({ pathname: '/success', params: typeof session_id === 'string' ? { session_id } : {} });
+        return;
+      }
       const route = await routeAfterGoogleSignIn({
         user: result.user,
         loadRemoteProfile: loadRemoteUserProfile,
