@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import LoginScreen from './login';
+import LoginScreen from '../app/login';
 import { signInWithGoogle } from '../lib/googleAuth';
 
 const mockRouter = { replace: jest.fn(), back: jest.fn(), canGoBack: jest.fn(() => true) };
