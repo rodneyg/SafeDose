@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-28-pr-748",
+    "date": "2026-11-28",
+    "title": "T-994841232299592121514054: require health probe in smoke fixture",
+    "status": "published",
+    "prs": [
+      748
+    ],
+    "sections": {
+      "Improved": [
+        "T-994841232299592121514054: require health probe in smoke fixture"
+      ]
+    }
+  },
+  {
     "id": "2026-11-28-pr-747",
     "date": "2026-11-28",
     "title": "SafeDose: expose Maybe Later as a button",
