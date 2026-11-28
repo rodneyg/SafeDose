@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-28-pr-746",
+    "date": "2026-11-28",
+    "title": "Add optional half-life remaining estimate",
+    "status": "published",
+    "prs": [
+      746
+    ],
+    "sections": {
+      "Improved": [
+        "Add optional half-life remaining estimate"
+      ]
+    }
+  },
+  {
     "id": "2026-11-27-pr-745",
     "date": "2026-11-27",
     "title": "Reject sub-minute protocol schedule edits",
