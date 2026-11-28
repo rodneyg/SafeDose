@@ -57,7 +57,6 @@ it('shows sign in and support to a guest and carries the checkout session to sig
   mockUser = { isAnonymous: true };
   const renderer = renderScreen();
   expect(renderedText(renderer)).toContain('Sign in');
-  expect(renderedText(renderer)).toContain('Support');
   const signIn = renderer.root.findAllByType('TouchableOpacity' as any)
     .find(node => renderedTextFrom(node) === 'Sign in');
   expect(signIn).toBeDefined();
@@ -66,7 +65,9 @@ it('shows sign in and support to a guest and carries the checkout session to sig
     pathname: '/login',
     params: { from: 'success', session_id: 'test-session' },
   });
-  expect(renderer.root.findByType('Link' as any).props.href).toBe('/support');
+  const supportLink = renderer.root.findByType('Link' as any);
+  expect(supportLink.props.children).toBe('Support');
+  expect(supportLink.props.href).toBe('/support');
   act(() => renderer.unmount());
 });
 
