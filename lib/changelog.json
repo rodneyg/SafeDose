@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-28-pr-752",
+    "date": "2026-11-28",
+    "title": "Fix signed-out SafeDose success page",
+    "status": "published",
+    "prs": [
+      752
+    ],
+    "sections": {
+      "Improved": [
+        "Fix signed-out SafeDose success page"
+      ]
+    }
+  },
+  {
     "id": "2026-11-28-pr-748",
     "date": "2026-11-28",
     "title": "T-994841232299592121514054: require health probe in smoke fixture",
