@@ -64,7 +64,7 @@ export default function SuccessScreen() {
           <Link href="/support" style={styles.supportLink}>Support</Link>
         </>
       )}
-      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}> 
+      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}>
         <Text style={styles.buttonText}>Continue to SafeDose</Text>
       </TouchableOpacity>
       </View>
