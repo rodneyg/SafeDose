@@ -61,7 +61,9 @@ async function uploadPhoto(screen: ReturnType<typeof render>) {
   const captureIndex = capturePhoto.mock.results.length;
   await act(async () => {
     fireEvent.press(screen.getByText('Take or Upload Photo'));
-    expect(capturePhoto).toHaveBeenCalledTimes(captureIndex + 1);
+  });
+  expect(capturePhoto).toHaveBeenCalledTimes(captureIndex + 1);
+  await act(async () => {
     await capturePhoto.mock.results[captureIndex].value;
   });
 }

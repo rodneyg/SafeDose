@@ -1,5 +1,4 @@
 import React from 'react';
-import '@testing-library/react-native/extend-expect';
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import NewDoseScreen from '../app/(tabs)/new-dose';
 import type { DoseLog, InjectionSite } from '../types/doseLog';
