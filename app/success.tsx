@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import Head from 'expo-router/head';
 import { useAuth } from '../contexts/AuthContext';
 import { billingRequest } from '../lib/subscriptionStatus';
@@ -56,7 +56,15 @@ export default function SuccessScreen() {
           <Text style={styles.buttonText}>Return to pricing</Text>
         </TouchableOpacity>
       )}
-      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}>
+      {(!user || user.isAnonymous) && (
+        <>
+          <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.push({ pathname: '/login', params: { from: 'success', ...(typeof session_id === 'string' ? { session_id } : {}) } })}>
+            <Text style={styles.buttonText}>Sign in</Text>
+          </TouchableOpacity>
+          <Link href="/support" style={styles.supportLink}>Support</Link>
+        </>
+      )}
+      <TouchableOpacity accessibilityRole="button" style={styles.button} onPress={() => router.replace('/(tabs)/new-dose')}> 
         <Text style={styles.buttonText}>Continue to SafeDose</Text>
       </TouchableOpacity>
       </View>
@@ -91,6 +99,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     marginBottom: 12,
     borderRadius: 12,
+  },
+  supportLink: {
+    color: '#005BC4',
+    textDecorationLine: 'underline',
+    paddingVertical: 12,
   },
   buttonText: {
     color: '#FFFFFF',
